@@ -206,6 +206,18 @@ namespace cryptonote
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
     res.version = MONERO_VERSION;
+
+    int32_t komodo_prevMoMheight();
+    extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
+    extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH;
+
+    res.notarizedhash = NOTARIZED_HASH.GetHex();
+    res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
+    res.notarized = (int)NOTARIZED_HEIGHT;
+    res.prevMoMheight = (int)komodo_prevMoMheight;
+    res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
+    res.notarized_MoM = NOTARIZED_MOM.GetHex();
+
     return true;
   }
   //-----------------------------------------------------------------------------------------------------------------
@@ -456,6 +468,42 @@ namespace cryptonote
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res)
+  {
+    PERF_TIMER(on_calc_MOM);
+    bool r;
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_CALC_MOM>(invoke_http_mode::JON, "/calc_MoM", req, res, r))
+      return r;
+
+    if(!calc_MoM(req)
+        return true;
+
+    calc_MoM(req) = result;
+    res = result;
+
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res)
+  {
+    PERF_TIMER(on_height_MoM);
+    bool r;
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_HEIGHT_MOM>(invoke_http_mode::JON, "/height_MoM", req, res, r))
+      return r;
+
+    res.status = "Failed";
+
+    if(!height_MoM(req))
+      return true;
+
+    height_MoM(req) = result;
+    res = result;
+
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_outs(const COMMAND_RPC_GET_OUTPUTS::request& req, COMMAND_RPC_GET_OUTPUTS::response& res)
   {

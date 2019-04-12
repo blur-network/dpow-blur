@@ -768,7 +768,7 @@ namespace cryptonote
       std::list<out_entry> outs;
 
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(amount)
+       KV_SERIALIZE(amount)
         KV_SERIALIZE_CONTAINER_POD_AS_BLOB(outs)
       END_KV_SERIALIZE_MAP()
     };
@@ -1029,6 +1029,13 @@ namespace cryptonote
       uint64_t height_without_bootstrap;
       bool was_bootstrap_ever_used;
       std::string version;
+      std::string notarizedhash;
+      std::string notarizedtxid;
+      int notarized;
+      int prevMoMheight;
+      int notarized_MoMdepth;
+      int notarized_MoM;
+
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(status)
@@ -1058,12 +1065,18 @@ namespace cryptonote
         KV_SERIALIZE(bootstrap_daemon_address)
         KV_SERIALIZE(height_without_bootstrap)
         KV_SERIALIZE(was_bootstrap_ever_used)
-	KV_SERIALIZE(version)
+	    KV_SERIALIZE(version)
+        KV_SERIALIZE(notarizedhash)
+        KV_SERIALIZE(notarizedtxid)
+        KV_SERIALIZE(notarized)
+        KV_SERIALIZE(prevMoMheight)
+        KV_SERIALIZE(notarized_MoMdepth)
+        KV_SERIALIZE(notarized_MoM)
       END_KV_SERIALIZE_MAP()
     };
   };
 
-    
+
   //-----------------------------------------------
   struct COMMAND_RPC_STOP_MINING
   {
@@ -2277,6 +2290,74 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
   };
+
+  struct COMMAND_RPC_CALC_MOM
+  {
+    struct request
+    {
+      int32_t height;
+      int32_t MoMdepth;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(height)
+        KV_SERIALIZE(MoMdepth)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      char coin;
+      int32_t height;
+      int32_t MoMdepth;
+      char MoM;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(coin)
+        KV_SERIALIZE(height)
+        KV_SERIALIZE(MoMdepth)
+        KV_SERIALIZE(MoM)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_HEIGHT_MOM
+  {
+    struct request
+    {
+      uint32_t height;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(height)
+      END_KV_SERIALIZE_MAP()
+     };
+
+    struct response
+    {
+      char coin;
+      int32_t height;
+      uint64_t timestamp;
+      int32_t depth;
+      char MoM;
+      char MoMoM;
+      int32_t MoMoMoffset;
+      int32_t MoMoMdepth;
+      int32_t kmdstarti;
+      int32_t kmdendi;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(coin)
+        KV_SERIALIZE(height)
+        KV_SERIALIZE(timestamp)
+        KV_SERIALIZE(depth)
+        KV_SERIALIZE(MoM)
+        KV_SERIALIZE(MoMoM)
+        KV_SERIALIZE(MoMoMoffset)
+        KV_SERIALIZE(MoMoMdepth)
+        KV_SERIALIZE(kmdstarti)
+        KV_SERIALIZE(kmdendi)
+      END_KV_SERIALIZE_MAP()
+     };
+   };
 
   struct COMMAND_RPC_SYNC_INFO
   {

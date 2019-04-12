@@ -39,6 +39,7 @@
 #include "cryptonote_core/cryptonote_core.h"
 #include "p2p/net_node.h"
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
+#include "komodo_rpcblockchain.h"
 
 // yes, epee doesn't properly use its full namespace when calling its
 // functions from macros.  *sigh*
@@ -118,7 +119,9 @@ namespace cryptonote
       MAP_URI_AUTO_JON2_IF("/set_limit", on_set_limit, COMMAND_RPC_SET_LIMIT, !m_restricted)
       MAP_URI_AUTO_JON2_IF("/out_peers", on_out_peers, COMMAND_RPC_OUT_PEERS, !m_restricted)
       MAP_URI_AUTO_JON2_IF("/in_peers", on_in_peers, COMMAND_RPC_IN_PEERS, !m_restricted)
-      MAP_URI_AUTO_JON2("/get_outs", on_get_outs, COMMAND_RPC_GET_OUTPUTS)      
+      MAP_URI_AUTO_JON2("/get_outs", on_get_outs, COMMAND_RPC_GET_OUTPUTS)
+      MAP_URI_AUTO_JON2("/calc_MoM", on_calc_MoM, COMMAND_RPC_CALC_MOM)
+      MAP_URI_AUTO_JON2("/height_MoM", on_height_MoM, COMMAND_RPC_HEIGHT_MOM)
       BEGIN_JSON_RPC_MAP("/json_rpc")
         MAP_JON_RPC("get_block_count",           on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
         MAP_JON_RPC("getblockcount",             on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
@@ -152,7 +155,9 @@ namespace cryptonote
         MAP_JON_RPC_WE_IF("relay_tx",            on_relay_tx,                   COMMAND_RPC_RELAY_TX, !m_restricted)
         MAP_JON_RPC_WE_IF("sync_info",           on_sync_info,                  COMMAND_RPC_SYNC_INFO, !m_restricted)
         MAP_JON_RPC_WE("get_txpool_backlog",     on_get_txpool_backlog,         COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG)
-        MAP_JON_RPC_WE("get_output_distribution", on_get_output_distribution, COMMAND_RPC_GET_OUTPUT_DISTRIBUTION)
+        MAP_JON_RPC_WE("get_output_distribution", on_get_output_distribution,   COMMAND_RPC_GET_OUTPUT_DISTRIBUTION)
+        MAP_JON_RPC_WE("/calc_MoM",              on_calc_MoM,                   COMMAND_RPC_CALC_MOM)
+        MAP_JON_ROC_WE("/height_MoM",            on_height_MoM,                 COMMAND_RPC_HEIGHT_MOM)
       END_JSON_RPC_MAP()
     END_URI_MAP2()
 
@@ -213,6 +218,8 @@ namespace cryptonote
     bool on_sync_info(const COMMAND_RPC_SYNC_INFO::request& req, COMMAND_RPC_SYNC_INFO::response& res, epee::json_rpc::error& error_resp);
     bool on_get_txpool_backlog(const COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG::request& req, COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG::response& res, epee::json_rpc::error& error_resp);
     bool on_get_output_distribution(const COMMAND_RPC_GET_OUTPUT_DISTRIBUTION::request& req, COMMAND_RPC_GET_OUTPUT_DISTRIBUTION::response& res, epee::json_rpc::error& error_resp);
+    bool on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error& error_resp);
+    bool on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error_resp);
     //-----------------------
 
 private:
