@@ -479,7 +479,7 @@ namespace cryptonote
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_CALC_MOM>(invoke_http_mode::JON_RPC, "calc_MoM", req, res, r))
       return r;
 
-    res = calc_MoM(req);
+    res = calc_MoM(req.height, req.MoMdepth);
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -490,7 +490,7 @@ namespace cryptonote
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_HEIGHT_MOM>(invoke_http_mode::JON_RPC, "height_MoM", req, res, r))
       return r;
 
-    res = height_MoM(req);
+    res = height_MoM(req.height);
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
