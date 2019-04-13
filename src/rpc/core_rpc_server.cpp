@@ -48,6 +48,8 @@ using namespace epee;
 #include "p2p/net_node.h"
 #include "version.h"
 #include "komodo_rpcblockchain.h"
+#include "common/strencodings.h"
+#include "common/uint256.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"
@@ -1823,17 +1825,18 @@ namespace cryptonote
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
 	res.version = MONERO_VERSION;
-    int32_t komodo_prevMoMheight();
-    extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
-    extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH;
+    {
+      int32_t komodo_prevMoMheight();
+      extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
+      extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH;
 
-    res.notarizedhash = NOTARIZED_HASH.GetHex();
-    res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
-    res.notarized = (int)NOTARIZED_HEIGHT;
-    res.prevMoMheight = (int)komodo_prevMoMheight;
-    res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
-    res.notarized_MoM = NOTARIZED_MOM.GetHex();
-
+      res.notarizedhash = NOTARIZED_HASH.GetHex();
+      res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
+      res.notarized = (int)NOTARIZED_HEIGHT;
+      res.prevMoMheight = (int)komodo_prevMoMheight;
+      res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
+      res.notarized_MoM = NOTARIZED_MOM.GetHex();
+    }
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------

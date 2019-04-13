@@ -1030,12 +1030,12 @@ namespace cryptonote
       uint64_t height_without_bootstrap;
       bool was_bootstrap_ever_used;
       std::string version;
-      uint256 notarizedhash;
-      uint256 notarizedtxid;
+      std::string notarizedhash;
+      std::string notarizedtxid;
       int32_t notarized;
       int32_t prevMoMheight;
       int32_t notarized_MoMdepth;
-      uint256 notarized_MoM;
+      std::string notarized_MoM;
 
 
       BEGIN_KV_SERIALIZE_MAP()
@@ -2310,7 +2310,7 @@ namespace cryptonote
       std::string coin;
       int32_t notarized;
       int32_t notarized_MoMdepth;
-      uint256 notarized_MoM;
+      std::string notarized_MoM;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(coin)
@@ -2341,7 +2341,7 @@ namespace cryptonote
       int32_t notarized_height;
       std::string MoM;
       std::string kmdtxid;
-      std::string MoMoM
+      std::string MoMoM;
       int32_t MoMoMoffset;
       int32_t MoMoMdepth;
       int32_t kmdstarti;
