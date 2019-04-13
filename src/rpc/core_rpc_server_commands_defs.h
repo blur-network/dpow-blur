@@ -33,6 +33,7 @@
 #include "cryptonote_basic/cryptonote_basic.h"
 #include "cryptonote_basic/difficulty.h"
 #include "crypto/hash.h"
+#include "common/uint256.h"
 
 namespace cryptonote
 {
@@ -1029,12 +1030,12 @@ namespace cryptonote
       uint64_t height_without_bootstrap;
       bool was_bootstrap_ever_used;
       std::string version;
-      std::string notarizedhash;
-      std::string notarizedtxid;
-      int notarized;
-      int prevMoMheight;
-      int notarized_MoMdepth;
-      int notarized_MoM;
+      uint256 notarizedhash;
+      uint256 notarizedtxid;
+      int32_t notarized;
+      int32_t prevMoMheight;
+      int32_t notarized_MoMdepth;
+      uint256 notarized_MoM;
 
 
       BEGIN_KV_SERIALIZE_MAP()
@@ -2300,22 +2301,22 @@ namespace cryptonote
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(height)
-        KV_SERIALIZE(MoMdepth)
+        KV_SERIALIZE(notarized_MoMdepth)
       END_KV_SERIALIZE_MAP()
     };
 
     struct response
     {
-      char coin;
-      int32_t height;
-      int32_t MoMdepth;
-      char MoM;
+      std::string coin;
+      int32_t notarized;
+      int32_t notarized_MoMdepth;
+      uint256 notarized_MoM;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(coin)
-        KV_SERIALIZE(height)
-        KV_SERIALIZE(MoMdepth)
-        KV_SERIALIZE(MoM)
+        KV_SERIALIZE(notarized)
+        KV_SERIALIZE(notarized_MoMdepth)
+        KV_SERIALIZE(notarized_MoM)
       END_KV_SERIALIZE_MAP()
     };
   };
@@ -2333,12 +2334,14 @@ namespace cryptonote
 
     struct response
     {
-      char coin;
+      std::string coin;
       int32_t height;
-      uint64_t timestamp;
+      uint32_t timestamp;
       int32_t depth;
-      char MoM;
-      char MoMoM;
+      int32_t notarized_height;
+      std::string MoM;
+      std::string kmdtxid;
+      std::string MoMoM
       int32_t MoMoMoffset;
       int32_t MoMoMdepth;
       int32_t kmdstarti;
@@ -2349,7 +2352,9 @@ namespace cryptonote
         KV_SERIALIZE(height)
         KV_SERIALIZE(timestamp)
         KV_SERIALIZE(depth)
+        KV_SERIALIZE(notarized_height)
         KV_SERIALIZE(MoM)
+        KV_SERIALIZE(kmdtxid)
         KV_SERIALIZE(MoMoM)
         KV_SERIALIZE(MoMoMoffset)
         KV_SERIALIZE(MoMoMdepth)

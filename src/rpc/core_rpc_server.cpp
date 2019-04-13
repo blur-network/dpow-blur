@@ -47,6 +47,7 @@ using namespace epee;
 #include "core_rpc_server_error_codes.h"
 #include "p2p/net_node.h"
 #include "version.h"
+#include "komodo_rpcblockchain.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"
@@ -206,18 +207,20 @@ namespace cryptonote
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
     res.version = MONERO_VERSION;
-
-    int32_t komodo_prevMoMheight();
-    extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
-    extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH;
-
-    res.notarizedhash = NOTARIZED_HASH.GetHex();
-    res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
-    res.notarized = (int)NOTARIZED_HEIGHT;
-    res.prevMoMheight = (int)komodo_prevMoMheight;
-    res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
-    res.notarized_MoM = NOTARIZED_MOM.GetHex();
-
+ //   {
+ //       komodo_prevMoMheight();
+ //       extern notarizedhash = epee::string_tools::buff_to_hex_nodelimer(NOTARIZED_HASH);
+ //       extern notarizedtxid = epee::string_tools::buff_to_hex_nodelimer(NOTARIZED_DESTTXID);
+ //       extern notarized = (int)NOTARIZED_HEIGHT;
+ //       extern prevMoMheight = (int)komodo_prevMoMheight();
+ //       extern notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
+ //       extern notarized_MoM = epee::string_tools::buff_to_hex_nodelimer(NOTARIZED_MOM);
+ //   }
+     //   res.notarizedhash = notarizedhash;
+     //   res.notarizedtxid = notarizedtxid;
+     //   res.notarized = notarized;
+     //   res.notarized_MoMdepth = notarized_MoMdepth;
+     //   res.notarized_MoM = notarized_MoM;
     return true;
   }
   //-----------------------------------------------------------------------------------------------------------------
@@ -469,41 +472,27 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res)
+  bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error&  error)
   {
     PERF_TIMER(on_calc_MOM);
     bool r;
-    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_CALC_MOM>(invoke_http_mode::JON, "/calc_MoM", req, res, r))
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_CALC_MOM>(invoke_http_mode::JON_RPC, "calc_MoM", req, res, r))
       return r;
 
-    if(!calc_MoM(req)
-        return true;
-
-    calc_MoM(req) = result;
-    res = result;
-
-    res.status = CORE_RPC_STATUS_OK;
+    res = calc_MoM(req);
     return true;
-
+  }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res)
+  bool core_rpc_server::on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error)
   {
     PERF_TIMER(on_height_MoM);
     bool r;
-    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_HEIGHT_MOM>(invoke_http_mode::JON, "/height_MoM", req, res, r))
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_HEIGHT_MOM>(invoke_http_mode::JON_RPC, "height_MoM", req, res, r))
       return r;
 
-    res.status = "Failed";
-
-    if(!height_MoM(req))
-      return true;
-
-    height_MoM(req) = result;
-    res = result;
-
-    res.status = CORE_RPC_STATUS_OK;
+    res = height_MoM(req);
     return true;
-
+  }
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_outs(const COMMAND_RPC_GET_OUTPUTS::request& req, COMMAND_RPC_GET_OUTPUTS::response& res)
   {
@@ -1834,6 +1823,17 @@ namespace cryptonote
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
 	res.version = MONERO_VERSION;
+    int32_t komodo_prevMoMheight();
+    extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
+    extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH;
+
+    res.notarizedhash = NOTARIZED_HASH.GetHex();
+    res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
+    res.notarized = (int)NOTARIZED_HEIGHT;
+    res.prevMoMheight = (int)komodo_prevMoMheight;
+    res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
+    res.notarized_MoM = NOTARIZED_MOM.GetHex();
+
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
