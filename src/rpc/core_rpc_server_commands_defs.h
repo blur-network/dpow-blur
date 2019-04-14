@@ -2310,7 +2310,7 @@ namespace cryptonote
       std::string coin;
       int32_t notarized;
       int32_t notarized_MoMdepth;
-      std::string notarized_MoM;
+      crypto::hash notarized_MoM;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(coin)
@@ -2339,9 +2339,9 @@ namespace cryptonote
       uint32_t timestamp;
       int32_t depth;
       int32_t notarized_height;
-      std::string MoM;
-      std::string kmdtxid;
-      std::string MoMoM;
+      crypto::hash MoM;
+      crypto::hash kmdtxid;
+      crypto::hash MoMoM;
       int32_t MoMoMoffset;
       int32_t MoMoMdepth;
       int32_t kmdstarti;
