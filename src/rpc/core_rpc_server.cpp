@@ -1888,12 +1888,29 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error&  error_resp)
   {
-    PERF_TIMER(on_calc_MOM);
+    int32_t height;
+    int32_t MoMdepth;
+    uint256 MoM;
+    
     bool r;
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_CALC_MOM>(invoke_http_mode::JON_RPC, "calc_MoM", req, res, r))
       return r;
-
-    res = calc_MoM(req.height, req.MoMdepth);
+    
+    if ( req.size() != 2 )
+      error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+      error_resp.message = "calc_MoM height MoMdepth\n";
+    LOCK(cs_main);
+    height = atoi(req.params[0].get_str().c_str());            // why are we using atoi here? only to get an int from c_str?
+    MoMdepth = atoi(req.params[1].get_str().c_str());          // I see there is a check for negative values below
+    if ( height <= 0 || MoMdepth <= 0 || MoMdepth >= height )  // but see if we can handle differently since we have tools
+          error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+          error_resp.message = "calc_MoM illegal height or MoMdepth\n";
+    //fprintf(stderr,"height_MoM height.%d\n",height);
+    MoM = komodo_calcMoM(height,MoMdepth);
+    res.push_back(std::make_pair("coin",(char *)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL)));
+    res.push_back(std::make_pair("height",height));
+    res.push_back(std::make_pair("MoMdepth",MoMdepth));
+    res.push_back(std::make_pair("MoM",epee::string_tools::pod_to_hex(MoM)); // pod_type is a struct of bytes
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
