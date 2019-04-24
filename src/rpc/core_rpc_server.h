@@ -39,6 +39,7 @@
 #include "cryptonote_core/cryptonote_core.h"
 #include "p2p/net_node.h"
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
+#include "komodo_rpcblockchain.h"
 
 // yes, epee doesn't properly use its full namespace when calling its
 // functions from macros.  *sigh*

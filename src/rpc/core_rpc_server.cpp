@@ -33,7 +33,6 @@
 #include "string_tools.h"
 #include "bitcoin/strencodings.h"
 #include "bitcoin/uint256.h"
-#include "komodo_rpcblockchain.h"
 
 using namespace epee;
 
@@ -1951,6 +1950,7 @@ namespace cryptonote
     int32_t heightMoM;
     int32_t notarized_height;
     int32_t MoMoMoffset;
+    int32_t MoMoMdepth;
     uint256 MoM;
     uint256 MoMoM;
     uint256 kmdtxid;
@@ -1972,11 +1972,10 @@ namespace cryptonote
         return false;
       }
      }
-    height = m_core.get_current_blockchain_height() - 1;
+    depth = m_core.get_current_blockchain_height() - height - 1;
     timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(height);
-
     //fprintf(stderr,"height_MoM height.%d\n",height);
-    depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
+    //depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
     res.coin = coin;
     res.notarized_height = height;
     res.timestamp = timestamp;
