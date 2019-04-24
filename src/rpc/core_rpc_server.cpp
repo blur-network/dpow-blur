@@ -33,7 +33,6 @@
 #include "string_tools.h"
 #include "bitcoin/strencodings.h"
 #include "bitcoin/uint256.h"
-#include "bitcoin/tinyformat.h"
 #include "komodo_rpcblockchain.h"
 
 using namespace epee;
@@ -219,9 +218,9 @@ namespace cryptonote
 
     res.notarizedhash = NOTARIZED_HASH.GetHex();
     res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
-    res.notarized = NOTARIZED_HEIGHT;
-    res.prevMoMheight = komodo_prevMoMheight;
-    res.notarized_MoMdepth = NOTARIZED_MOMDEPTH;
+    res.notarized = (int)NOTARIZED_HEIGHT;
+    res.prevMoMheight = (int)komodo_prevMoMheight;
+    res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
     res.notarized_MoM = NOTARIZED_MOM.GetHex();
 
     return true;
@@ -1812,7 +1811,7 @@ namespace cryptonote
       res.notarizedhash = NOTARIZED_HASH.GetHex();
       res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
       res.notarized = (int)NOTARIZED_HEIGHT;
-      res.prevMoMheight = komodo_prevMoMheight;
+      res.prevMoMheight = (int)komodo_prevMoMheight;
       res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
       res.notarized_MoM = NOTARIZED_MOM.GetHex();
     }
@@ -1947,16 +1946,16 @@ namespace cryptonote
     }
     std::string coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
     int32_t height;
-    uint32_t timestamp = 0;
+    uint32_t timestamp;
     int32_t depth;
     int32_t heightMoM;
-    int32_t notarized_height = 0;
-    int32_t MoMoMoffset = 0;
+    int32_t notarized_height;
+    int32_t MoMoMoffset;
     uint256 MoM;
-    uint256 MoMoM
+    uint256 MoMoM;
     uint256 kmdtxid;
-    int32_t kmdstarti = 0;
-    int32_t kmdendi = 0;
+    int32_t kmdstarti;
+    int32_t kmdendi;
 
     height = std::stoi(req.height.c_str());
     bool req_filled = height >= 1 ? 1 : 0;
