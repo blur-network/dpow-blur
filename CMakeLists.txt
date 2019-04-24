@@ -440,6 +440,10 @@ link_directories(${UNBOUND_LIBRARY_DIRS})
 include_directories(${EASYLOGGING_INCLUDE})
 link_directories(${EASYLOGGING_LIBRARY_DIRS})
 
+# Bitcoin Libraries
+include_directories(${BITCOIN_INCLUDE})
+link_directories({BITCOIN_LIBRARIES_DIR})
+
 # Final setup for liblmdb
 include_directories(${LMDB_INCLUDE})
 

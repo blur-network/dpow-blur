@@ -31,6 +31,11 @@
 
 #include "include_base_utils.h"
 #include "string_tools.h"
+#include "bitcoin/strencodings.h"
+#include "bitcoin/uint256.h"
+#include "bitcoin/tinyformat.h"
+#include "komodo_rpcblockchain.h"
+
 using namespace epee;
 
 #include "core_rpc_server.h"
@@ -47,15 +52,14 @@ using namespace epee;
 #include "core_rpc_server_error_codes.h"
 #include "p2p/net_node.h"
 #include "version.h"
-#include "komodo_rpcblockchain.h"
-#include "common/strencodings.h"
-#include "common/uint256.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"
 
 #define MAX_RESTRICTED_FAKE_OUTS_COUNT 40
 #define MAX_RESTRICTED_GLOBAL_FAKE_OUTS_COUNT 5000
+
+
 
 namespace
 {
@@ -69,7 +73,6 @@ namespace
 
 namespace cryptonote
 {
-
   //-----------------------------------------------------------------------------------
   void core_rpc_server::init_options(boost::program_options::options_description& desc)
   {
@@ -214,12 +217,12 @@ namespace cryptonote
     extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
     extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH;
 
-    res.notarizedhash = epee::string_tools::pod_to_hex(NOTARIZED_HASH);
-    res.notarizedtxid = epee::string_tools::pod_to_hex(NOTARIZED_DESTTXID);
-    res.notarized = (int)NOTARIZED_HEIGHT;
-    res.prevMoMheight = (int)komodo_prevMoMheight;
-    res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
-    res.notarized_MoM = epee::string_tools::pod_to_hex(NOTARIZED_MOM);
+    res.notarizedhash = NOTARIZED_HASH.GetHex();
+    res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
+    res.notarized = NOTARIZED_HEIGHT;
+    res.prevMoMheight = komodo_prevMoMheight;
+    res.notarized_MoMdepth = NOTARIZED_MOMDEPTH;
+    res.notarized_MoM = NOTARIZED_MOM.GetHex();
 
     return true;
   }
@@ -1809,7 +1812,7 @@ namespace cryptonote
       res.notarizedhash = NOTARIZED_HASH.GetHex();
       res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
       res.notarized = (int)NOTARIZED_HEIGHT;
-      res.prevMoMheight = (int)komodo_prevMoMheight;
+      res.prevMoMheight = komodo_prevMoMheight;
       res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
       res.notarized_MoM = NOTARIZED_MOM.GetHex();
     }
@@ -1891,37 +1894,113 @@ namespace cryptonote
     int32_t height;
     int32_t MoMdepth;
     uint256 MoM;
-    
-    bool r;
-    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_CALC_MOM>(invoke_http_mode::JON_RPC, "calc_MoM", req, res, r))
-      return r;
-    
-    if ( req.size() != 2 )
-      error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+
+  PERF_TIMER(on_calc_MoM);
+  {
+    boost::shared_lock<boost::shared_mutex> lock(m_bootstrap_daemon_mutex);
+    if (m_should_use_bootstrap_daemon)
+    {
+      res.status = "This command is unsupported for bootstrap daemon";
+      return false;
+    }
+  }
+
+    height = std::stoi(req.height.c_str());
+    MoMdepth = std::stoi(req.MoMdepth.c_str());
+
+    bool req_filled = (height == 0 || MoMdepth == 0) ? 1 : 0;
+    if (!req_filled) {
+      error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
       error_resp.message = "calc_MoM height MoMdepth\n";
-    LOCK(cs_main);
-    height = atoi(req.params[0].get_str().c_str());            // why are we using atoi here? only to get an int from c_str?
-    MoMdepth = atoi(req.params[1].get_str().c_str());          // I see there is a check for negative values below
-    if ( height <= 0 || MoMdepth <= 0 || MoMdepth >= height )  // but see if we can handle differently since we have tools
-          error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-          error_resp.message = "calc_MoM illegal height or MoMdepth\n";
+      return false;
+
+      if ( height <= 0 || MoMdepth <= 0 || MoMdepth >= height ) {  // this check appears to make the atoi() above safe, but double check later
+        error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+        error_resp.message = "calc_MoM illegal height or MoMdepth\n";
+        return false; }
+    }
     //fprintf(stderr,"height_MoM height.%d\n",height);
-    MoM = komodo_calcMoM(height,MoMdepth);
-    res.push_back(std::make_pair("coin",(char *)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL)));
-    res.push_back(std::make_pair("height",height));
-    res.push_back(std::make_pair("MoMdepth",MoMdepth));
-    res.push_back(std::make_pair("MoM",epee::string_tools::pod_to_hex(MoM)); // pod_type is a struct of bytes
+      MoM = komodo_calcMoM(height,MoMdepth);
+
+//    res.push_back(std::make_pair("coin",(char *)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL)));
+//    res.push_back(std::make_pair("height",height));
+//    res.push_back(std::make_pair("MoMdepth",MoMdepth));
+
+    std::string coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
+    res.coin = coin;
+    res.notarized_height = height;
+    res.notarized_MoMdepth = MoMdepth;
+    res.notarized_MoM = MoM.GetHex();
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error_resp)
   {
     PERF_TIMER(on_height_MoM);
-    bool r;
-    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_HEIGHT_MOM>(invoke_http_mode::JON_RPC, "height_MoM", req, res, r))
-      return r;
+    {
+      boost::shared_lock<boost::shared_mutex> lock(m_bootstrap_daemon_mutex);
+      if (m_should_use_bootstrap_daemon)
+      {
+        res.status = "This command is unsupported for bootstrap daemon";
+        return false;
+      }
+    }
+    std::string coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
+    int32_t height;
+    uint32_t timestamp = 0;
+    int32_t depth;
+    int32_t heightMoM;
+    int32_t notarized_height = 0;
+    int32_t MoMoMoffset = 0;
+    uint256 MoM;
+    uint256 MoMoM
+    uint256 kmdtxid;
+    int32_t kmdstarti = 0;
+    int32_t kmdendi = 0;
 
-    res = height_MoM(req.height);
+    height = std::stoi(req.height.c_str());
+    bool req_filled = height >= 1 ? 1 : 0;
+
+    if (!req_filled) {
+      error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
+      error_resp.message = "height MoMHeight\n";
+      return false;
+
+      if (m_core.get_current_blockchain_height() == 0 )
+      {
+        error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+        error_resp.message = "Error no active chain yet";
+        return false;
+      }
+     }
+    height = m_core.get_current_blockchain_height() - 1;
+    timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(height);
+
+    //fprintf(stderr,"height_MoM height.%d\n",height);
+    depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
+    res.coin = coin;
+    res.notarized_height = height;
+    res.timestamp = timestamp;
+    if ( depth > 0 )
+    {
+        res.depth = depth;
+        res.notarized_height = notarized_height;
+        res.MoM = MoM.GetHex();
+        res.kmdtxid = kmdtxid.GetHex();
+        if ( ASSETCHAINS_SYMBOL[0] != 0 )
+        {
+            res.MoMoM = MoMoM.GetHex();
+            res.MoMoMoffset = MoMoMoffset;
+            res.MoMoMdepth = MoMoMdepth;
+            res.kmdstarti = kmdstarti;
+            res.kmdendi = kmdendi;
+        }
+    } else {
+        error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+        error_resp.message = "Error no active chain yet";
+        return false; }
+
+    res.status = CORE_RPC_STATUS_OK;
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
