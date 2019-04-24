@@ -34,12 +34,10 @@ set(common_sources
   dns_utils.cpp
   error.cpp
   expect.cpp
-  uint256.cpp
   util.cpp
   i18n.cpp
   password.cpp
   perf_timer.cpp
-  strencodings.cpp
   threadpool.cpp
   aligned.c)
 
@@ -47,7 +45,6 @@ set(common_headers)
 
 set(common_private_headers
   apply_permutation.h
-  attributes.h
   base58.h
   boost_serialization_helper.h
   command_line.h
@@ -60,10 +57,7 @@ set(common_private_headers
   pod-class.h
   rpc_client.h
   scoped_message_writer.h
-  strencodings.h
-  tinyformat.h
   unordered_containers_boost_serialization.h
-  uint256.h
   util.h
   varint.h
   i18n.h
