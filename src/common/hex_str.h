@@ -62,6 +62,14 @@
     std::string short_long = too_long ? ("longer") : ("shorter");
     std::vector<uint8_t> out;
 
+    if (len != 64) {
+      MERROR("Tried to convert a hex string that is " << short_long << " than the required 64-character length.");
+      // if we have any vector as input that is not exactly 32 bytes in length,
+      // we clear the input with 32 zeroed bytes, and return a zeroed string.
+      std::fill(out.begin(), out.begin()+32, 0);
+      return out;
+    }
+
     for(size_t i = 0; i < len; i += 2) {
       std::istringstream strm(input.substr(i, 2));
       uint8_t x;
