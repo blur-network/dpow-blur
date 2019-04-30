@@ -84,7 +84,6 @@ namespace nodetool
     m_current_number_of_in_peers(0),
     m_allow_local_ip(false),
     m_hide_my_port(false),
-    m_no_igd(false),
     m_offline(false),
     is_closing(false),
     m_net_server( epee::net_utils::e_connection_type_P2P ) // this is a P2P connection of the main p2p node server, because this is class node_server<>
@@ -196,8 +195,6 @@ namespace nodetool
     bool is_peer_used(const peerlist_entry& peer);
     bool is_peer_used(const anchor_peerlist_entry& peer);
     bool is_addr_connected(const epee::net_utils::network_address& peer);
-    void add_upnp_port_mapping(uint32_t port);
-    void delete_upnp_port_mapping(uint32_t port);
     template<class t_callback>
     bool try_ping(basic_node_data& node_data, p2p_connection_context& context, const t_callback &cb);
     bool try_get_support_flags(const p2p_connection_context& context, std::function<void(p2p_connection_context&, const uint32_t&)> f);
@@ -269,7 +266,6 @@ namespace nodetool
     uint32_t m_ip_address;
     bool m_allow_local_ip;
     bool m_hide_my_port;
-    bool m_no_igd;
     bool m_offline;
     std::atomic<bool> is_closing;
     std::unique_ptr<boost::thread> mPeersLoggerThread;
@@ -289,6 +285,7 @@ namespace nodetool
     std::list<epee::net_utils::network_address>   m_priority_peers;
     std::vector<epee::net_utils::network_address> m_exclusive_peers;
     std::vector<epee::net_utils::network_address> m_seed_nodes;
+    bool m_fallback_seed_nodes_added;
     std::list<nodetool::peerlist_entry> m_command_line_peers;
     uint64_t m_peer_livetime;
     //keep connections to initiate some interactions
@@ -307,8 +304,8 @@ namespace nodetool
     cryptonote::network_type m_nettype;
   };
 
-    const int64_t default_limit_up = P2P_DEFAULT_LIMIT_RATE_UP;      // kB/s
-    const int64_t default_limit_down = P2P_DEFAULT_LIMIT_RATE_DOWN;  // kB/s
+    const int64_t default_limit_up = 2048;    // kB/s
+    const int64_t default_limit_down = 8192;  // kB/s
     extern const command_line::arg_descriptor<std::string> arg_p2p_bind_ip;
     extern const command_line::arg_descriptor<std::string, false, true, 2> arg_p2p_bind_port;
     extern const command_line::arg_descriptor<uint32_t>    arg_p2p_external_port;
@@ -319,7 +316,6 @@ namespace nodetool
     extern const command_line::arg_descriptor<std::vector<std::string> > arg_p2p_seed_node;
     extern const command_line::arg_descriptor<bool> arg_p2p_hide_my_port;
 
-    extern const command_line::arg_descriptor<bool>        arg_no_igd;
     extern const command_line::arg_descriptor<bool>        arg_offline;
     extern const command_line::arg_descriptor<int64_t>     arg_out_peers;
     extern const command_line::arg_descriptor<int64_t>     arg_in_peers;

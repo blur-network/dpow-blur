@@ -52,8 +52,9 @@ set(common_private_headers
   dns_utils.h
   error.h
   expect.h
+  hex_str.h
   http_connection.h
-  int-util.h
+  int_util.h
   pod-class.h
   rpc_client.h
   scoped_message_writer.h

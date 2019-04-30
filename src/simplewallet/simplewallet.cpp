@@ -108,14 +108,6 @@ typedef cryptonote::simple_wallet sw;
     m_auto_refresh_enabled.store(auto_refresh_enabled, std::memory_order_relaxed); \
   })
 
-#define LONG_PAYMENT_ID_SUPPORT_CHECK() \
-  do { \
-    if (!m_long_payment_id_support) { \
-      fail_msg_writer() << tr("Long payment IDs are obsolete. Use --long-payment-id-support if you really must use one, and warn the recipient they are using an obsolete feature that will disappear in the future."); \
-      return true; \
-    } \
-  } while(0)
-
 enum TransferType {
   Transfer,
   TransferLocked,
@@ -144,7 +136,6 @@ namespace
   const command_line::arg_descriptor<bool> arg_create_address_file = {"create-address-file", sw::tr("Create an address file for new wallets"), false};
   const command_line::arg_descriptor<std::string> arg_subaddress_lookahead = {"subaddress-lookahead", tools::wallet2::tr("Set subaddress lookahead sizes to <major>:<minor>"), ""};
   const command_line::arg_descriptor<bool> arg_use_english_language_names = {"use-english-language-names", sw::tr("Display English language names"), false};
-  const command_line::arg_descriptor<bool> arg_long_payment_id_support = {"long-payment-id-support", sw::tr("Support obsolete long (unencrypted) payment ids"), false};
 
   const command_line::arg_descriptor< std::vector<std::string> > arg_command = {"command", ""};
 
@@ -726,8 +717,6 @@ bool simple_wallet::change_password(const std::vector<std::string> &args)
 
 bool simple_wallet::payment_id(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
-  LONG_PAYMENT_ID_SUPPORT_CHECK();
-
   crypto::hash payment_id;
   if (args.size() > 0)
   {
@@ -1700,8 +1689,6 @@ bool simple_wallet::set_refresh_type(const std::vector<std::string> &args/* = st
 
 bool simple_wallet::set_confirm_missing_payment_id(const std::vector<std::string> &args/* = std::vector<std::string>()*/)
 {
-  LONG_PAYMENT_ID_SUPPORT_CHECK();
-
   const auto pwd_container = get_and_verify_password();
   if (pwd_container)
   {
@@ -1961,8 +1948,8 @@ simple_wallet::simple_wallet()
 {
   m_cmd_binder.set_handler("start_mining",
                            boost::bind(&simple_wallet::start_mining, this, _1),
-                           tr("start_mining [<number_of_threads>] [bg_mining] [ignore_battery]"),
-                           tr("Start mining in the daemon (bg_mining and ignore_battery are optional booleans)."));
+                           tr("start_mining [<number_of_threads>]"),
+                           tr("Start mining in the daemon."));
   m_cmd_binder.set_handler("stop_mining",
                            boost::bind(&simple_wallet::stop_mining, this, _1),
                            tr("Stop mining in the daemon."));
@@ -2009,10 +1996,6 @@ simple_wallet::simple_wallet()
                            boost::bind(&simple_wallet::sweep_single, this, _1),
                            tr("sweep_single [<priority>] <key_image> <address> [<payment_id>]"),
                            tr("Send a single output of the given key image to an address without change."));
-  m_cmd_binder.set_handler("donate",
-                           boost::bind(&simple_wallet::donate, this, _1),
-                           tr("donate [index=<N1>[,<N2>,...]] [<priority>] <amount> [<payment_id>]"),
-                           tr("Donate <amount> to the development team ."));
   m_cmd_binder.set_handler("sign_transfer",
                            boost::bind(&simple_wallet::sign_transfer, this, _1),
                            tr("sign_transfer <file>"),
@@ -3497,11 +3480,7 @@ bool simple_wallet::open_wallet(const boost::program_options::variables_map& vm)
     {
       // only suggest removing cache if the password was actually correct
       bool password_is_correct = false;
-      try
-      {
-        password_is_correct = m_wallet->verify_password(password);
-      }
-      catch (...) { } // guard against I/O errors
+      password_is_correct = m_wallet->verify_password(password);
       if (password_is_correct)
         fail_msg_writer() << boost::format(tr("You may want to remove the file \"%s\" and try again")) % m_wallet_file;
     }
@@ -3611,22 +3590,13 @@ bool simple_wallet::start_mining(const std::vector<std::string>& args)
     fail_msg_writer() << tr("wallet is null");
     return true;
   }
-  COMMAND_RPC_START_MINING::request req = AUTO_VAL_INIT(req); 
+  COMMAND_RPC_START_MINING::request req = AUTO_VAL_INIT(req);
   req.miner_address = m_wallet->get_account().get_public_address_str(m_wallet->nettype());
 
   bool ok = true;
   size_t max_mining_threads_count = (std::max)(tools::get_max_concurrency(), static_cast<unsigned>(2));
   size_t arg_size = args.size();
-  if(arg_size >= 3)
-  {
-    if (!parse_bool_and_use(args[2], [&](bool r) { req.ignore_battery = r; }))
-      return true;
-  }
-  if(arg_size >= 2)
-  {
-    if (!parse_bool_and_use(args[1], [&](bool r) { req.do_background_mining = r; }))
-      return true;
-  }
+
   if(arg_size >= 1)
   {
     uint16_t num = 1;
@@ -3641,7 +3611,7 @@ bool simple_wallet::start_mining(const std::vector<std::string>& args)
 
   if (!ok)
   {
-    fail_msg_writer() << tr("invalid arguments. Please use start_mining [<number_of_threads>] [do_bg_mining] [ignore_battery], "
+    fail_msg_writer() << tr("invalid arguments. Please use start_mining [<number_of_threads>], "
       "<number_of_threads> should be from 1 to ") << max_mining_threads_count;
     return true;
   }
@@ -3755,13 +3725,6 @@ void simple_wallet::on_money_received(uint64_t height, const crypto::hash &txid,
     std::vector<tx_extra_field> tx_extra_fields;
     parse_tx_extra(tx.extra, tx_extra_fields); // failure ok
     tx_extra_nonce extra_nonce;
-    if (find_tx_extra_field_by_type(tx_extra_fields, extra_nonce))
-    {
-      crypto::hash payment_id = crypto::null_hash;
-      if (get_payment_id_from_tx_extra_nonce(extra_nonce.nonce, payment_id))
-        message_writer(console_color_red, false) <<
-          (m_long_payment_id_support ? tr("WARNING: this transaction uses an unencrypted payment ID: consider using subaddresses instead.") : tr("WARNING: this transaction uses an unencrypted payment ID: these are obsolete. Support will be withdrawn in the future. Use subaddresses instead."));
-   }
   }
   if (m_auto_refresh_refreshing)
     m_cmd_binder.print_prompt();
@@ -5054,44 +5017,6 @@ bool simple_wallet::sweep_below(const std::vector<std::string> &args_)
     return true;
   }
   return sweep_main(below, std::vector<std::string>(++args_.begin(), args_.end()));
-}
-//----------------------------------------------------------------------------------------------------
-bool simple_wallet::donate(const std::vector<std::string> &args_)
-{
-  if(m_wallet->nettype() != cryptonote::MAINNET)
-  {
-    fail_msg_writer() << tr("donations are not enabled on the testnet or on the stagenet");
-    return true;
-  }
-
-  std::vector<std::string> local_args = args_;
-  if(local_args.empty() || local_args.size() > 4)
-  {
-     fail_msg_writer() << tr("usage: donate [index=<N1>[,<N2>,...]] [<priority>] <amount> [<payment_id>]");
-     return true;
-  }
-  std::string amount_str;
-  std::string payment_id_str;
-  // get payment id and pop
-  crypto::hash payment_id;
-  crypto::hash8 payment_id8;
-  if (tools::wallet2::parse_long_payment_id (local_args.back(), payment_id ) ||
-      tools::wallet2::parse_short_payment_id(local_args.back(), payment_id8))
-  {
-    payment_id_str = local_args.back();
-    local_args.pop_back();
-  }
-  // get amount and pop
-  amount_str = local_args.back();
-  local_args.pop_back();
-  // push back address, amount, payment id
-  local_args.push_back(BLUR_DONATION_ADDR);
-  local_args.push_back(amount_str);
-  if (!payment_id_str.empty())
-    local_args.push_back(payment_id_str);
-  message_writer() << (boost::format(tr("Donating %s BLUR to The BLUR Project (www.blur.cash / %s ).")) % amount_str % BLUR_DONATION_ADDR).str(); 
-  transfer(local_args);
-  return true;
 }
 //----------------------------------------------------------------------------------------------------
 bool simple_wallet::accept_loaded_tx(const std::function<size_t()> get_num_txes, const std::function<const tools::wallet2::tx_construction_data&(size_t)> &get_tx, const std::string &extra_message)
@@ -6619,7 +6544,6 @@ bool simple_wallet::address_book(const std::vector<std::string> &args/* = std::v
     {
       if (tools::wallet2::parse_long_payment_id(args[3], payment_id))
       {
-        LONG_PAYMENT_ID_SUPPORT_CHECK();
         description_start += 2;
       }
       else if (tools::wallet2::parse_short_payment_id(args[3], info.payment_id))
@@ -6804,8 +6728,8 @@ bool simple_wallet::wallet_info(const std::vector<std::string> &args)
     type = tr("Normal");
   message_writer() << tr("Type: ") << type;
   message_writer() << tr("Network type: ") << (
-    m_wallet->nettype() == cryptonote::TESTNET ? tr("Testnet") :
-    m_wallet->nettype() == cryptonote::STAGENET ? tr("Stagenet") : tr("Mainnet"));
+    m_wallet->nettype() == (cryptonote::TESTNET)) ? (tr("Testnet")) :
+    (m_wallet->nettype() == cryptonote::STAGENET) ? (tr("Stagenet")) : (tr("Mainnet"));
   return true;
 }
 //----------------------------------------------------------------------------------------------------
@@ -7324,7 +7248,6 @@ int main(int argc, char* argv[])
   command_line::add_arg(desc_params, arg_create_address_file);
   command_line::add_arg(desc_params, arg_subaddress_lookahead);
   command_line::add_arg(desc_params, arg_use_english_language_names);
-  command_line::add_arg(desc_params, arg_long_payment_id_support);
 
   po::positional_options_description positional_options;
   positional_options.add(arg_command.name, -1);
@@ -7358,30 +7281,10 @@ int main(int argc, char* argv[])
   }
   else
   {
-    tools::signal_handler::install([&w](int type) {
-      if (tools::password_container::is_prompting.load())
-      {
-        // must be prompting for password so return and let the signal stop prompt
-        return;
-      }
-#ifdef WIN32
-      if (type == CTRL_C_EVENT)
-#else
-      if (type == SIGINT)
-#endif
-      {
-        // if we're pressing ^C when refreshing, just stop refreshing
-        w.interrupt();
-      }
-      else
-      {
-        w.stop();
-      }
-    });
     w.run();
 
     w.deinit();
   }
   return 0;
-  //CATCH_ENTRY_L0("main", 1);
+//  CATCH_ENTRY_L0("main", 1);
 }

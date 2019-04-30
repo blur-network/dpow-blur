@@ -33,7 +33,7 @@
 #include "cryptonote_basic/cryptonote_basic.h"
 #include "cryptonote_basic/difficulty.h"
 #include "crypto/hash.h"
-
+#include "bitcoin/uint256.h"
 namespace cryptonote
 {
   //-----------------------------------------------
@@ -969,14 +969,10 @@ namespace cryptonote
     {
       std::string miner_address;
       uint64_t    threads_count;
-      bool        do_background_mining;
-      bool        ignore_battery;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(miner_address)
         KV_SERIALIZE(threads_count)
-        KV_SERIALIZE(do_background_mining)        
-        KV_SERIALIZE(ignore_battery)        
       END_KV_SERIALIZE_MAP()
     };
 
@@ -1029,9 +1025,9 @@ namespace cryptonote
       uint64_t height_without_bootstrap;
       bool was_bootstrap_ever_used;
       std::string version;
-      std::string notarizedhash;
-      std::string notarizedtxid;
-      int32_t notarized;
+      std::string notarized_hash;
+      std::string notarized_txid;
+      int32_t notarized_height;
       int32_t prevMoMheight;
       int32_t notarized_MoMdepth;
       std::string notarized_MoM;
@@ -1066,9 +1062,9 @@ namespace cryptonote
         KV_SERIALIZE(height_without_bootstrap)
         KV_SERIALIZE(was_bootstrap_ever_used)
 	    KV_SERIALIZE(version)
-        KV_SERIALIZE(notarizedhash)
-        KV_SERIALIZE(notarizedtxid)
-        KV_SERIALIZE(notarized)
+        KV_SERIALIZE(notarized_hash)
+        KV_SERIALIZE(notarized_txid)
+        KV_SERIALIZE(notarized_height)
         KV_SERIALIZE(prevMoMheight)
         KV_SERIALIZE(notarized_MoMdepth)
         KV_SERIALIZE(notarized_MoM)
@@ -1141,7 +1137,6 @@ namespace cryptonote
       uint64_t speed;
       uint32_t threads_count;
       std::string address;
-      bool is_background_mining_enabled;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(status)
@@ -1149,7 +1144,6 @@ namespace cryptonote
         KV_SERIALIZE(speed)
         KV_SERIALIZE(threads_count)
         KV_SERIALIZE(address)
-        KV_SERIALIZE(is_background_mining_enabled)
       END_KV_SERIALIZE_MAP()
     };
   };
@@ -2316,7 +2310,7 @@ namespace cryptonote
         KV_SERIALIZE(coin)
         KV_SERIALIZE(notarized_height)
         KV_SERIALIZE(notarized_MoMdepth)
-        KV_SERIALIZE(notarized_MoM)
+        KV_SERIALIZE(notarized_MoM);
         KV_SERIALIZE(status)
       END_KV_SERIALIZE_MAP()
     };
@@ -2336,12 +2330,12 @@ namespace cryptonote
     struct response
     {
       std::string coin;
-      int32_t height;
+      int32_t prevMoMheight;
       uint32_t timestamp;
-      int32_t depth;
+      int32_t notarized_MoMdepth;
       int32_t notarized_height;
-      std::string MoM;
-      std::string kmdtxid;
+      std::string notarized_MoM;
+      std::string notarized_desttxid;
       std::string MoMoM;
       int32_t MoMoMoffset;
       int32_t MoMoMdepth;
@@ -2351,12 +2345,12 @@ namespace cryptonote
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(coin)
-        KV_SERIALIZE(height)
+        KV_SERIALIZE(prevMoMheight)
         KV_SERIALIZE(timestamp)
-        KV_SERIALIZE(depth)
+        KV_SERIALIZE(notarized_MoMdepth)
         KV_SERIALIZE(notarized_height)
-        KV_SERIALIZE(MoM)
-        KV_SERIALIZE(kmdtxid)
+        KV_SERIALIZE(notarized_MoM)
+        KV_SERIALIZE(notarized_desttxid)
         KV_SERIALIZE(MoMoM)
         KV_SERIALIZE(MoMoMoffset)
         KV_SERIALIZE(MoMoMdepth)

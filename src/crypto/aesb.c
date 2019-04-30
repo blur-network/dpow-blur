@@ -19,7 +19,7 @@ Issue Date: 20/12/2007
 */
 
 #include <stdint.h>
-#include "common/int-util.h"
+#include "common/int_util.h"
 
 #if defined(__cplusplus)
 extern "C"

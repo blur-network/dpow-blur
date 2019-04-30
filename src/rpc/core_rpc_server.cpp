@@ -1,22 +1,22 @@
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
-// 
+//
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without modification, are
 // permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this list of
 //    conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice, this list
 //    of conditions and the following disclaimer in the documentation and/or other
 //    materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its contributors may be
 //    used to endorse or promote products derived from this software without specific
 //    prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -26,19 +26,18 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
 #include "include_base_utils.h"
 #include "string_tools.h"
-#include "bitcoin/strencodings.h"
-#include "bitcoin/uint256.h"
 
 using namespace epee;
 
 #include "core_rpc_server.h"
 #include "common/command_line.h"
 #include "common/util.h"
+#include "common/hex_str.h"
 #include "common/perf_timer.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_basic/account.h"
@@ -50,6 +49,9 @@ using namespace epee;
 #include "core_rpc_server_error_codes.h"
 #include "p2p/net_node.h"
 #include "version.h"
+#include "komodo_rpcblockchain.h"
+#include "bitcoin/arith_uint256.h"
+#include "bitcoin/uint256.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"
@@ -140,6 +142,31 @@ namespace cryptonote
     );
   }
   //------------------------------------------------------------------------------------------------------------------------------
+int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,int32_t nHeight,uint256 *MoMoMp,int32_t *MoMoMoffsetp,int32_t *MoMoMdepthp,int32_t *kmdstartip,int32_t *kmdendip)
+{
+    int32_t depth;
+    int32_t notarized_height;
+    uint256 MoM;
+    uint256 kmdtxid;
+
+    //arith_uint256 a_MoM = UintToArith256(MoM);
+    std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin() + 32);
+    //arith_uint256 a_kmdtxid = UintToArith256(kmdtxid);
+    std::vector<uint8_t> v_kmdtxid(kmdtxid.begin(), kmdtxid.begin() + 32);
+
+    depth = komodo_MoMdata(&notarized_height,&MoM,&kmdtxid,nHeight,MoMoMp,MoMoMoffsetp,MoMoMdepthp,kmdstartip,kmdendip);
+    std::fill(v_MoM.begin(), v_MoM.begin()+32, 0);
+    std::fill(v_kmdtxid.begin(), v_kmdtxid.begin()+32, 0);
+    *notarized_heightp = 0;
+    if ( depth > 0 && notarized_height > 0 && nHeight > notarized_height-depth && nHeight <= notarized_height )
+    {
+        *MoMp = MoM;
+        *notarized_heightp = notarized_height;
+        *kmdtxidp = kmdtxid;
+    }
+    return(depth);
+}
+//------------------------------------------------------------
   bool core_rpc_server::check_core_ready()
   {
     if(!m_p2p.get_payload_object().is_synchronized())
@@ -210,18 +237,6 @@ namespace cryptonote
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
     res.version = MONERO_VERSION;
-
-    int32_t komodo_prevMoMheight();
-    extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
-    extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH;
-
-    res.notarizedhash = NOTARIZED_HASH.GetHex();
-    res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
-    res.notarized = (int)NOTARIZED_HEIGHT;
-    res.prevMoMheight = (int)komodo_prevMoMheight;
-    res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
-    res.notarized_MoM = NOTARIZED_MOM.GetHex();
-
     return true;
   }
   //-----------------------------------------------------------------------------------------------------------------
@@ -718,26 +733,26 @@ namespace cryptonote
       return ok;
 
     std::vector<crypto::hash> vh;
-    
+
     for (size_t i = 0; i < req.heights.size(); i++)
     {
       block blk;
       bool orphan = false;
       crypto::hash block_hash = m_core.get_block_id_by_height(req.heights[i]);
       bool have_block = m_core.get_block_by_hash(block_hash, blk, &orphan);
-    
+
       for(auto& btxs: blk.tx_hashes)
         vh.push_back(btxs);
     }
-    
+
     std::list<crypto::hash> missed_txs;
     std::list<transaction> txs;
     bool r = m_core.get_transactions(vh, txs, missed_txs);
-    
+
     std::list<std::string> tx_hashes;
     for(auto& tx: txs)
       tx_hashes.push_back(string_tools::pod_to_hex(get_transaction_hash(tx)));
-    
+
     if(!r)
     {
       res.status = "Failed";
@@ -1034,7 +1049,7 @@ namespace cryptonote
     boost::thread::attributes attrs;
     attrs.set_stack_size(THREAD_STACK_SIZE);
 
-    if(!m_core.get_miner().start(info.address, static_cast<size_t>(req.threads_count), attrs, req.do_background_mining, req.ignore_battery))
+    if(!m_core.get_miner().start(info.address, static_cast<size_t>(req.threads_count), attrs))
     {
       res.status = "Failed, mining not started";
       LOG_PRINT_L0(res.status);
@@ -1063,8 +1078,7 @@ namespace cryptonote
 
     const miner& lMiner = m_core.get_miner();
     res.active = lMiner.is_mining();
-    res.is_background_mining_enabled = lMiner.get_is_background_mining_enabled();
-    
+
     if ( lMiner.is_mining() ) {
       res.speed = lMiner.get_speed();
       res.threads_count = lMiner.get_threads_count();
@@ -1163,7 +1177,7 @@ namespace cryptonote
       return r;
 
     m_core.get_pool_transactions_and_spent_keys_info(res.transactions, res.spent_key_images, !request_has_rpc_origin || !m_restricted);
-    
+
     if (req.json_only)
     {
       for(auto& tx: res.transactions)
@@ -1194,7 +1208,7 @@ namespace cryptonote
     bool r;
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_BLOCKS_JSON>(invoke_http_mode::JON, "/get_blocks_json", req, res, r))
       return r;
-    
+
     for (size_t i = 0; i < req.heights.size(); i++)
     {
       if(m_core.get_current_blockchain_height() <= req.heights[i])
@@ -1202,7 +1216,7 @@ namespace cryptonote
         LOG_ERROR("Requested block at height " << req.heights[i] << " which is greater than top block height " << m_core.get_current_blockchain_height() - 1);
         continue;
       }
-      
+
       block blk;
       bool orphan = false;
       crypto::hash block_hash = m_core.get_block_id_by_height(req.heights[i]);
@@ -1210,7 +1224,7 @@ namespace cryptonote
       {
         LOG_ERROR("Block with hash " << block_hash << " not found in database");
       }
-    
+
       res.blocks.push_back(obj_to_json_str(blk));
     }
     res.status = CORE_RPC_STATUS_OK;
@@ -1403,7 +1417,7 @@ namespace cryptonote
       error_resp.message = "Wrong block blob";
       return false;
     }
-    
+
     // Fixing of high orphan issue for most pools
     // Thanks Boolberry!
     block b = AUTO_VAL_INIT(b);
@@ -1802,18 +1816,6 @@ namespace cryptonote
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
     res.version = MONERO_VERSION;
-    {
-      int32_t komodo_prevMoMheight();
-      extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
-      extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH;
-
-      res.notarizedhash = NOTARIZED_HASH.GetHex();
-      res.notarizedtxid = NOTARIZED_DESTTXID.GetHex();
-      res.notarized = (int)NOTARIZED_HEIGHT;
-      res.prevMoMheight = (int)komodo_prevMoMheight;
-      res.notarized_MoMdepth = (int)NOTARIZED_MOMDEPTH;
-      res.notarized_MoM = NOTARIZED_MOM.GetHex();
-    }
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -1903,8 +1905,8 @@ namespace cryptonote
     }
   }
 
-    height = std::stoi(req.height.c_str());
-    MoMdepth = std::stoi(req.MoMdepth.c_str());
+    height = std::stoi(req.height);
+    MoMdepth = std::stoi(req.MoMdepth);
 
     bool req_filled = (height == 0 || MoMdepth == 0) ? 1 : 0;
     if (!req_filled) {
@@ -1912,13 +1914,16 @@ namespace cryptonote
       error_resp.message = "calc_MoM height MoMdepth\n";
       return false;
 
-      if ( height <= 0 || MoMdepth <= 0 || MoMdepth >= height ) {  // this check appears to make the atoi() above safe, but double check later
+      if ( height <= 0 || MoMdepth <= 0 || MoMdepth >= height ) {
         error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
         error_resp.message = "calc_MoM illegal height or MoMdepth\n";
         return false; }
     }
     //fprintf(stderr,"height_MoM height.%d\n",height);
       MoM = komodo_calcMoM(height,MoMdepth);
+      //MoM_arith = UintToArith256(MoM);
+      std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin()+32);
+      std::string str_MoM = bytes256_to_hex(v_MoM);
 
 //    res.push_back(std::make_pair("coin",(char *)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL)));
 //    res.push_back(std::make_pair("height",height));
@@ -1928,7 +1933,7 @@ namespace cryptonote
     res.coin = coin;
     res.notarized_height = height;
     res.notarized_MoMdepth = MoMdepth;
-    res.notarized_MoM = MoM.GetHex();
+    res.notarized_MoM = str_MoM;
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -1944,21 +1949,8 @@ namespace cryptonote
       }
     }
     std::string coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
-    int32_t height;
-    uint32_t timestamp;
-    int32_t depth;
-    int32_t heightMoM;
-    int32_t notarized_height;
-    int32_t MoMoMoffset;
-    int32_t MoMoMdepth;
-    uint256 MoM;
-    uint256 MoMoM;
-    uint256 kmdtxid;
-    int32_t kmdstarti;
-    int32_t kmdendi;
-
-    height = std::stoi(req.height.c_str());
-    bool req_filled = height >= 1 ? 1 : 0;
+    int32_t height = std::stoi(req.height);
+    bool req_filled = (height >= 1) ? 1 : 0;
 
     if (!req_filled) {
       error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
@@ -1972,22 +1964,43 @@ namespace cryptonote
         return false;
       }
      }
-    depth = m_core.get_current_blockchain_height() - height - 1;
+    int32_t timestamp;
+    int32_t notarized_height;
+    uint256 MoM;
+    uint256 kmdtxid;
+    uint256 MoMoM;
+    int32_t MoMoMoffset;
+    int32_t MoMoMdepth;
+    int32_t kmdstarti;
+    int32_t kmdendi;
+
     timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(height);
     //fprintf(stderr,"height_MoM height.%d\n",height);
-    //depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
     res.coin = coin;
     res.notarized_height = height;
     res.timestamp = timestamp;
+    int32_t depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
     if ( depth > 0 )
     {
-        res.depth = depth;
+        int32_t komodo_prevMoMheight();
+        res.notarized_MoMdepth = depth;
         res.notarized_height = notarized_height;
-        res.MoM = MoM.GetHex();
-        res.kmdtxid = kmdtxid.GetHex();
+
+        std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin() + 32);
+        std::string str_MoM = bytes256_to_hex(v_MoM);
+
+        std::vector<uint8_t> v_kmdtxid(kmdtxid.begin(), kmdtxid.begin() + 32);
+        std::string str_kmdtxid = bytes256_to_hex(v_kmdtxid);
+
+        res.notarized_MoM = str_MoM;
+        res.notarized_desttxid = str_kmdtxid;
+
         if ( ASSETCHAINS_SYMBOL[0] != 0 )
         {
-            res.MoMoM = MoMoM.GetHex();
+        std::vector<uint8_t> v_MoMoM(MoMoM.begin(), MoMoM.begin() + 32);
+        std::string str_MoMoM = bytes256_to_hex(v_MoMoM);
+
+            res.MoMoM = str_MoMoM;
             res.MoMoMoffset = MoMoMoffset;
             res.MoMoMdepth = MoMoMdepth;
             res.kmdstarti = kmdstarti;

@@ -53,8 +53,11 @@
     obj.pushKV("notarized_MoM",         NOTARIZED_MOM.GetHex());
 }*/
 
-#include <wallet/wallet.h>
-#include <base58.h>
+#include <wallet/api/wallet.h>
+#include <bitcoin/base58.h>
+#include <bitcoin/uint256.h>
+#include <bitcoin/tinyformat.h>
+#include <bitcoin/strencodings.h>
 
 #define SATOSHIDEN ((uint64_t)100000000L)
 #define dstr(x) ((double)(x) / SATOSHIDEN)
