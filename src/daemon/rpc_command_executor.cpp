@@ -448,7 +448,7 @@ bool t_rpc_command_executor::show_status() {
     % get_sync_percentage(ires)
     % (ires.testnet ? "testnet" : ires.stagenet ? "stagenet" : "mainnet")
     % bootstrap_msg
-    % (!has_mining_info ? "mining info unavailable" : mining_busy ? "syncing" : mres.active ? ( ( mres.is_background_mining_enabled ? "smart " : "" ) + std::string("mining at ") + get_mining_speed(mres.speed) ) : "not mining")
+    % (!has_mining_info ? "mining info unavailable" : mining_busy ? "syncing" : mres.active ? (std::string("mining at ") + get_mining_speed(mres.speed) ) : "not mining")
     % get_mining_speed(ires.difficulty / ires.target)
     % (unsigned)hfres.version
     % get_fork_extra_info(hfres.earliest_height, net_height, ires.target)
@@ -487,15 +487,15 @@ bool t_rpc_command_executor::print_connections() {
     }
   }
 
-  tools::msg_writer() << std::setw(30) << std::left << "Remote Host"
-      << std::setw(10) << "In/Out"
+  tools::msg_writer() << std::setw(25) << std::left << "Remote Host"
+      << std::setw(7) << "In/Out"
       << std::setw(20) << "Peer id"
-      << std::setw(20) << "Support Flags"
-      << std::setw(30) << "Recv/Sent (inactive,sec)"
-      << std::setw(25) << "State"
-      << std::setw(20) << "Livetime(sec)"
+      << std::setw(15) << "Support Flags"
+      << std::setw(25) << "Recv/Sent (inactive,sec)"
+      << std::setw(15) << "State"
+      << std::setw(15) << "Livetime(sec)"
       << std::setw(12) << "Down (kB/s)"
-      << std::setw(14) << "Down(now)"
+      << std::setw(10) << "Down(now)"
       << std::setw(10) << "Up (kB/s)"
       << std::setw(13) << "Up(now)"
       << std::endl;
@@ -505,15 +505,15 @@ bool t_rpc_command_executor::print_connections() {
     std::string address = info.ip + ":" + info.port;
     std::string in_out = info.incoming ? "INC " : "OUT ";
     tools::msg_writer()
-     << std::setw(30) << std::left << address
-     << std::setw(10) << std::left << in_out
+     << std::setw(25) << std::left << address
+     << std::setw(7) << std::left << in_out
      << std::setw(20) << epee::string_tools::pad_string(info.peer_id, 16, '0', true)
-     << std::setw(10) << info.support_flags
-     << std::setw(30) << std::to_string(info.recv_count) + "("  + std::to_string(info.recv_idle_time) + ")/" + std::to_string(info.send_count) + "(" + std::to_string(info.send_idle_time) + ")"
-     << std::setw(25) << info.state
-     << std::setw(20) << info.live_time
+     << std::setw(15) << info.support_flags
+     << std::setw(25) << std::to_string(info.recv_count) + "("  + std::to_string(info.recv_idle_time) + ")/" + std::to_string(info.send_count) + "(" + std::to_string(info.send_idle_time) + ")"
+     << std::setw(15) << info.state
+     << std::setw(15) << info.live_time
      << std::setw(12) << info.avg_download
-     << std::setw(14) << info.current_download
+     << std::setw(10) << info.current_download
      << std::setw(10) << info.avg_upload
      << std::setw(13) << info.current_upload;
 
@@ -1050,14 +1050,12 @@ bool t_rpc_command_executor::print_transaction_pool_stats() {
   return true;
 }
 
-bool t_rpc_command_executor::start_mining(cryptonote::account_public_address address, uint64_t num_threads, cryptonote::network_type nettype, bool do_background_mining, bool ignore_battery) {
+bool t_rpc_command_executor::start_mining(cryptonote::account_public_address address, uint64_t num_threads, cryptonote::network_type nettype) {
   cryptonote::COMMAND_RPC_START_MINING::request req;
   cryptonote::COMMAND_RPC_START_MINING::response res;
   req.miner_address = cryptonote::get_account_address_as_str(nettype, false, address);
   req.threads_count = num_threads;
-  req.do_background_mining = do_background_mining;
-  req.ignore_battery = ignore_battery;
-  
+
   std::string fail_message = "Mining did not start";
 
   if (m_is_rpc)
