@@ -46,7 +46,7 @@
 #include "misc_language.h"
 #include "profile_tools.h"
 #include "file_io_utils.h"
-#include "common/int_util.h"
+#include "common/int-util.h"
 #include "common/threadpool.h"
 #include "common/boost_serialization_helper.h"
 #include "warnings.h"
@@ -101,9 +101,9 @@ static const struct {
   {  8, 185000, 0, 1540624740 },
   {  9, 211000, 0, 1543147200 },
   { 10, 342000, 0, 1551395401 }
-//  { 11, 418000, 0, 1555734000 }
-  //      Set hardfork v11 block for 418,000 - height takes precendence over timestamp
-  //      Timestamp set for 04/20/2019 @ 4:20am UTC  (Actual hardfork will occur on/around 4/23)
+//  { 11, 450000, 0, 1557532800 }
+  //      Set hardfork v11 block for 450,000 - height takes precendence over timestamp
+  //      But lets make sure we definitely have enough time afterward... if its too early, things stall.
 
 };
 

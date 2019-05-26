@@ -32,7 +32,6 @@
 #include "wallet_manager.h"
 #include "wallet.h"
 #include "common_defines.h"
-#include "common/dns_utils.h"
 #include "common/util.h"
 #include "version.h"
 #include "net/http_client.h"
@@ -274,7 +273,7 @@ bool WalletManagerImpl::isMining() const
     return mres.active;
 }
 
-bool WalletManagerImpl::startMining(const std::string &address, uint32_t *threads)
+bool WalletManagerImpl::startMining(const std::string &address, uint32_t threads)
 {
     cryptonote::COMMAND_RPC_START_MINING::request mreq;
     cryptonote::COMMAND_RPC_START_MINING::response mres;
@@ -297,15 +296,6 @@ bool WalletManagerImpl::stopMining()
     return mres.status == CORE_RPC_STATUS_OK;
 }
 
-std::string WalletManagerImpl::resolveOpenAlias(const std::string &address, const NetworkType nettype) const
-{
-    cryptonote::address_parse_info info;
-    cryptonote::network_type m_nettype = (nettype == MAINNET) ? (cryptonote::MAINNET) : (cryptonote::TESTNET);
-    bool m_address = cryptonote::get_account_address_from_str(info, m_nettype, address);
-    if (!m_address)
-      return "";
-    return address;
-}
 ///////////////////// WalletManagerFactory implementation //////////////////////
 WalletManager *WalletManagerFactory::getWalletManager()
 {

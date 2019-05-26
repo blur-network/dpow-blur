@@ -48,7 +48,6 @@
 #include "common/i18n.h"
 #include "common/command_line.h"
 #include "common/util.h"
-#include "common/dns_utils.h"
 #include "common/base58.h"
 #include "common/scoped_message_writer.h"
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
@@ -125,8 +124,8 @@ namespace
   const command_line::arg_descriptor<std::string> arg_generate_from_multisig_keys = {"generate-from-multisig-keys", sw::tr("Generate a master wallet from multisig wallet keys"), ""};
   const auto arg_generate_from_json = wallet_args::arg_generate_from_json();
   const command_line::arg_descriptor<std::string> arg_mnemonic_language = {"mnemonic-language", sw::tr("Language for mnemonic"), ""};
-  const command_line::arg_descriptor<std::string> arg_electrum_seed = {"electrum-seed", sw::tr("Specify Electrum seed for wallet recovery/creation"), ""};
-  const command_line::arg_descriptor<bool> arg_restore_deterministic_wallet = {"restore-deterministic-wallet", sw::tr("Recover wallet using Electrum-style mnemonic seed"), false};
+//  const command_line::arg_descriptor<std::string> arg_electrum_seed = {"electrum-seed", sw::tr("(If you are restoring from seed, this is not the option you are looking for!) Specify Electrum seed for wallet recovery/creation"), ""};
+  const command_line::arg_descriptor<bool> arg_restore_deterministic_wallet = {"restore-deterministic", sw::tr("Restore wallet from a deterministic (default) mnemonic seed (Do NOT enter seed on command line! Specify this option only, and follow the prompts. Enter your seed one line at a time as input to the terminal, once prompted)."), false};
   const command_line::arg_descriptor<bool> arg_restore_multisig_wallet = {"restore-multisig-wallet", sw::tr("Recover multisig wallet using Electrum-style mnemonic seed"), false};
   const command_line::arg_descriptor<bool> arg_non_deterministic = {"non-deterministic", sw::tr("Generate non-deterministic view and spend keys"), false};
   const command_line::arg_descriptor<bool> arg_trusted_daemon = {"trusted-daemon", sw::tr("Enable commands which rely on a trusted daemon"), false};
@@ -294,42 +293,6 @@ namespace
   std::string get_version_string(uint32_t version)
   {
     return boost::lexical_cast<std::string>(version >> 16) + "." + boost::lexical_cast<std::string>(version & 0xffff);
-  }
-
-  std::string oa_prompter(const std::string &url, const std::vector<std::string> &addresses, bool dnssec_valid)
-  {
-    if (addresses.empty())
-      return {};
-    // prompt user for confirmation.
-    // inform user of DNSSEC validation status as well.
-    std::string dnssec_str;
-    if (dnssec_valid)
-    {
-      dnssec_str = tr("DNSSEC validation passed");
-    }
-    else
-    {
-      dnssec_str = tr("WARNING: DNSSEC validation was unsuccessful, this address may not be correct!");
-    }
-    std::stringstream prompt;
-    prompt << tr("For URL: ") << url
-           << ", " << dnssec_str << std::endl
-           << tr(" BLUR Address = ") << addresses[0]
-           << std::endl
-           << tr("Is this OK? (Y/n) ")
-    ;
-    // prompt the user for confirmation given the dns query and dnssec status
-    std::string confirm_dns_ok = input_line(prompt.str());
-    if (std::cin.eof())
-    {
-      return {};
-    }
-    if (!command_line::is_yes(confirm_dns_ok))
-    {
-      std::cout << tr("you have cancelled the transfer request") << std::endl;
-      return {};
-    }
-    return addresses[0];
   }
 
   bool parse_subaddress_indices(const std::string& arg, std::set<uint32_t>& subaddr_indices)
@@ -2554,12 +2517,10 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
               return false;
             if (m_electrum_seed.empty())
             {
-              fail_msg_writer() << tr("specify a recovery parameter with the --electrum-seed=\"multisig seed here\"");
+//              fail_msg_writer() << tr("specify a recovery parameter with the --electrum-seed=\"multisig seed here\"");
               return false;
             }
-        }
-        else
-        {
+        } else {     
           m_electrum_seed = "";
           do
           {
@@ -2569,12 +2530,12 @@ bool simple_wallet::init(const boost::program_options::variables_map& vm)
               return false;
             if (electrum_seed.empty())
             {
-              fail_msg_writer() << tr("specify a recovery parameter with the --electrum-seed=\"words list here\"");
+//              fail_msg_writer() << tr("specify a recovery parameter with the --electrum-seed=\"words list here\"");
               return false;
             }
             m_electrum_seed += electrum_seed + " ";
           } while (might_be_partial_seed(m_electrum_seed));
-        }
+        } 
       }
 
       if (m_restore_multisig_wallet)
@@ -3089,7 +3050,7 @@ bool simple_wallet::handle_command_line(const boost::program_options::variables_
   m_generate_from_multisig_keys   = command_line::get_arg(vm, arg_generate_from_multisig_keys);
   m_generate_from_json            = command_line::get_arg(vm, arg_generate_from_json);
   m_mnemonic_language             = command_line::get_arg(vm, arg_mnemonic_language);
-  m_electrum_seed                 = command_line::get_arg(vm, arg_electrum_seed);
+//  m_electrum_seed                 = command_line::get_arg(vm, arg_electrum_seed);
   m_restore_deterministic_wallet  = command_line::get_arg(vm, arg_restore_deterministic_wallet);
   m_restore_multisig_wallet       = command_line::get_arg(vm, arg_restore_multisig_wallet);
   m_non_deterministic             = command_line::get_arg(vm, arg_non_deterministic);
@@ -4354,7 +4315,7 @@ bool simple_wallet::transfer_main(int transfer_type, const std::vector<std::stri
   {
     cryptonote::address_parse_info info;
     cryptonote::tx_destination_entry de;
-    if (!cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), local_args[i], oa_prompter))
+    if (!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), local_args[i]))
     {
       fail_msg_writer() << tr("failed to parse address");
       return true;
@@ -4674,7 +4635,7 @@ bool simple_wallet::sweep_main(uint64_t below, const std::vector<std::string> &a
   }
 
   cryptonote::address_parse_info info;
-  if (!cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), local_args[0], oa_prompter))
+  if (!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), local_args[0]))
   {
     fail_msg_writer() << tr("failed to parse address");
     return true;
@@ -4874,7 +4835,7 @@ bool simple_wallet::sweep_single(const std::vector<std::string> &args_)
   }
 
   cryptonote::address_parse_info info;
-  if (!cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), local_args[1], oa_prompter))
+  if (!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), local_args[1]))
   {
     fail_msg_writer() << tr("failed to parse address");
     return true;
@@ -5328,7 +5289,7 @@ bool simple_wallet::get_tx_proof(const std::vector<std::string> &args)
   }
 
   cryptonote::address_parse_info info;
-  if(!cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), args[1], oa_prompter))
+  if(!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), args[1]))
   {
     fail_msg_writer() << tr("failed to parse address");
     return true;
@@ -5396,7 +5357,7 @@ bool simple_wallet::check_tx_key(const std::vector<std::string> &args_)
   }
 
   cryptonote::address_parse_info info;
-  if(!cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), local_args[2], oa_prompter))
+  if(!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), local_args[2]))
   {
     fail_msg_writer() << tr("failed to parse address");
     return true;
@@ -5460,7 +5421,7 @@ bool simple_wallet::check_tx_proof(const std::vector<std::string> &args)
 
   // parse address
   cryptonote::address_parse_info info;
-  if(!cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), args[1], oa_prompter))
+  if(!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), args[1]))
   {
     fail_msg_writer() << tr("failed to parse address");
     return true;
@@ -5678,7 +5639,7 @@ bool simple_wallet::check_reserve_proof(const std::vector<std::string> &args)
   }
 
   cryptonote::address_parse_info info;
-  if(!cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), args[0], oa_prompter))
+  if(!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), args[0]))
   {
     fail_msg_writer() << tr("failed to parse address");
     return true;
@@ -6529,7 +6490,7 @@ bool simple_wallet::address_book(const std::vector<std::string> &args/* = std::v
   else if (args[0] == "add")
   {
     cryptonote::address_parse_info info;
-    if(!cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), args[1], oa_prompter))
+    if(!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), args[1]))
     {
       fail_msg_writer() << tr("failed to parse address");
       return true;
@@ -6789,7 +6750,7 @@ bool simple_wallet::verify(const std::vector<std::string> &args)
   }
 
   cryptonote::address_parse_info info;
-  if(!cryptonote::get_account_address_from_str_or_url(info, m_wallet->nettype(), address_string, oa_prompter))
+  if(!cryptonote::get_account_address_from_str(info, m_wallet->nettype(), address_string))
   {
     fail_msg_writer() << tr("failed to parse address");
     return true;
@@ -7240,7 +7201,7 @@ int main(int argc, char* argv[])
   command_line::add_arg(desc_params, arg_restore_deterministic_wallet );
   command_line::add_arg(desc_params, arg_restore_multisig_wallet );
   command_line::add_arg(desc_params, arg_non_deterministic );
-  command_line::add_arg(desc_params, arg_electrum_seed );
+//  command_line::add_arg(desc_params, arg_electrum_seed );
   command_line::add_arg(desc_params, arg_trusted_daemon);
   command_line::add_arg(desc_params, arg_allow_mismatched_daemon_version);
   command_line::add_arg(desc_params, arg_restore_height);
