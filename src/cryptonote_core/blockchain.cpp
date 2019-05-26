@@ -57,7 +57,9 @@
 #if defined(PER_BLOCK_CHECKPOINT)
 #include "blocks/blocks.h"
 #endif
-
+#if defined(KOMODO_NOTARIZATIONS)
+#include "komodo_validation015.h"
+#endif
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "blockchain"
 
@@ -414,10 +416,15 @@ bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline
     load_compiled_in_block_hashes();
 #endif
 
+#if defined(KOMODO_NOTARIZATIONS)
+  int32_t komodo_init();
+  komodo_init();
+  MINFO("Komodo initialized.  Blocks will be checked against notarized checkpoints!");
+#endif
+
   MINFO("Blockchain initialized. last block: " << m_db->height() - 1 << ", " << epee::misc_utils::get_time_interval_string(timestamp_diff) << " time ago, current difficulty: " << get_difficulty_for_next_block());
   m_db->block_txn_stop();
 
-  //XMR-CHERRY-PICK: Pop top if block version disagrees with the ideal fork version #3749
   uint64_t num_popped_blocks = 0;
   while (true)
   {
@@ -1454,6 +1461,28 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       bvc.m_verifivation_failed = true;
       return false;
     }
+
+#if defined(KOMODO_NOTARIZATIONS)
+int32_t notarized_height;
+uint64_t nHeight = bei.height;
+uint256 hash;
+
+crypto::hash hash_blob = m_db->get_block_hash_by_height(bei.height);
+hash = hash_blob.GetHex();
+
+  if ( komodo_checkpoint(&notarized_height, (int32_t)nHeight,hash) < 0 )
+  {
+    if ( bei.height != 0 && m_db->get_block_hash_by_height(bei.height) == hash )
+    {
+     //fprintf(stderr,"got a pre notarization block that matches height.%d\n",(int32_t)nHeight);
+       return true;
+    } else {
+      LOG_ERROR("Notarization error! Forked chain's top block: " << hash << " older than last notarized height: " << std::to_string(notarized_height) << ". Failed height: " << std::to_string(nHeight));
+      bvc.m_verifivation_failed = true;
+//      return state.DoS(100, error("%s: forked chain %d older than last notarized (height %d) vs %d", __func__,nHeight, notarized_height));
+    }
+  }
+#endif
 
     // Check the block's hash against the difficulty target for its alt chain
     difficulty_type current_diff = get_next_difficulty_for_alternative_chain(alt_chain, bei);
