@@ -53,8 +53,7 @@
     obj.pushKV("notarized_MoM",         NOTARIZED_MOM.GetHex());
 }*/
 
-#include <wallet/wallet.h>
-#include <key_io.h>
+#include <wallet/wallet2.h>
 #include <base58.h>
 
 #define SATOSHIDEN ((uint64_t)100000000L)
@@ -77,17 +76,18 @@ typedef union _bits256 bits256;
 struct sha256_vstate { uint64_t length; uint32_t state[8],curlen; uint8_t buf[64]; };
 struct rmd160_vstate { uint64_t length; uint8_t buf[64]; uint32_t curlen, state[5]; };
 int32_t KOMODO_TXINDEX = 1;
-void ImportAddress(CWallet*, const CTxDestination& dest, const std::string& strLabel);
+void ImportAddress(CWallet* const pwallet, const CBitcoinAddress& address, const std::string& strLabel);
 
 int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsize,uint256 txid,int32_t n)
 {
-    static uint256 zero; int32_t i,m; uint8_t *ptr; CTransactionRef tx=0; uint256 hashBlock;
+    static uint256 zero; int32_t i,m; uint8_t *ptr; CTransaction tx; uint256 hashBlock;
+    CTransactionRef txref=0;
     LOCK(cs_main);
     if ( KOMODO_TXINDEX != 0 )
     {
-        if ( GetTransaction(txid,tx,Params().GetConsensus(),hashBlock,false) == 0 )
+        if ( GetTransaction(txid,tx,hashBlock,false) == 0 )
         {
-            //fprintf(stderr,"ht.%d couldnt get txid.%s\n",height,txid.GetHex().c_str());
+            fprintf(stderr,"ht.%d couldnt get txid.%s\n",height,txid.GetHex().c_str());
             return(-1);
         }
     }
@@ -100,35 +100,37 @@ int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsi
             if ( it != pwallet->mapWallet.end() )
             {
                 const CWalletTx& wtx = it->second;
-                tx = wtx.tx;
-                //fprintf(stderr,"found tx in wallet\n");
+                txref = wtx.tx;
+                fprintf(stderr,"found tx in wallet\n");
             }
         }
     }
-    if ( tx != 0 && n >= 0 && n <= (int32_t)tx->vout.size() ) // vout.size() seems off by 1
+
+    if ( txref != 0 && n >= 0 && n <= (int32_t)txref->vout.size() ) // vout.size() seems off by 1
     {
-        ptr = (uint8_t *)tx->vout[n].scriptPubKey.data();
-        m = tx->vout[n].scriptPubKey.size();
+        ptr = (uint8_t *)txref->vout[n].scriptPubKey.data();
+        m = txref->vout[n].scriptPubKey.size();
         for (i=0; i<maxsize&&i<m; i++)
             scriptPubKey[i] = ptr[i];
-        //fprintf(stderr,"got scriptPubKey[%d] via rawtransaction ht.%d %s\n",m,height,txid.GetHex().c_str());
+        fprintf(stderr,"got scriptPubKey[%d] via rawtransaction ht.%d %s\n",m,height,txid.GetHex().c_str());
         return(i);
     }
-    else if ( tx != 0 )
-        fprintf(stderr,"gettxout_scriptPubKey ht.%d n.%d > voutsize.%d\n",height,n,(int32_t)tx->vout.size());
+    else if ( txref != 0 )
+        fprintf(stderr,"gettxout_scriptPubKey ht.%d n.%d > voutsize.%d\n",height,n,(int32_t)txref->vout.size());
+
     return(-1);
 }
 
 int32_t komodo_importaddress(std::string addr)
 {
-    CTxDestination address; CWallet * const pwallet = vpwallets[0];
+    CBitcoinAddress address(addr);
+    CWallet * const pwallet = vpwallets[0];
     if ( pwallet != 0 )
     {
         LOCK2(cs_main, pwallet->cs_wallet);
-        address = DecodeDestination(addr);
-        if ( IsValidDestination(address) != 0 )
+        if ( address.IsValid() != 0 )
         {
-            isminetype mine = IsMine(*pwallet, address);
+            isminetype mine = IsMine(*pwallet, address.Get());
             if ( (mine & ISMINE_SPENDABLE) != 0 || (mine & ISMINE_WATCH_ONLY) != 0 )
             {
                 //printf("komodo_importaddress %s already there\n",EncodeDestination(address).c_str());
@@ -136,12 +138,12 @@ int32_t komodo_importaddress(std::string addr)
             }
             else
             {
-                printf("komodo_importaddress %s\n",EncodeDestination(address).c_str());
+                printf("komodo_importaddress %s\n",addr.c_str());
                 ImportAddress(pwallet, address, addr);
                 return(1);
             }
         }
-        printf("%s -> komodo_importaddress.(%s) failed valid.%d\n",addr.c_str(),EncodeDestination(address).c_str(),IsValidDestination(address));
+        printf("%s -> komodo_importaddress failed valid.%d\n",addr.c_str(),address.IsValid());
     }
     return(-1);
 }
@@ -571,9 +573,9 @@ CBlockIndex *komodo_chainactive(int32_t height)
     {
         if ( height <= tipindex->nHeight )
             return(chainActive[height]);
-        // else fprintf(stderr,"komodo_chainactive height %d > active.%d\n",height,chainActive.Tip()->nHeight);
+        else fprintf(stderr,"komodo_chainactive height %d > active.%d\n",height,chainActive.Tip()->nHeight);
     }
-    //fprintf(stderr,"komodo_chainactive null chainActive.Tip() height %d\n",height);
+    fprintf(stderr,"komodo_chainactive null chainActive.Tip() height %d\n",height);
     return(0);
 }
 
@@ -582,7 +584,7 @@ uint32_t komodo_heightstamp(int32_t height)
     CBlockIndex *ptr;
     if ( height > 0 && (ptr= komodo_chainactive(height)) != 0 )
         return(ptr->nTime);
-    //else fprintf(stderr,"komodo_heightstamp null ptr for block.%d\n",height);
+    else fprintf(stderr,"komodo_heightstamp null ptr for block.%d\n",height);
     return(0);
 }
 
@@ -656,70 +658,70 @@ const char *Notaries_elected0[][2] =
 
 const char *Notaries_elected1[][4] =
 {
-    {"0dev1_jl777", "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828", "RNJmgYaFF5DbnrNUX6pMYz9rcnDKC2tuAc", "GWsW2A1ud72KoKJZysVLtEAYmgYZZzbMxG"},
-    {"0dev2_kolo", "030f34af4b908fb8eb2099accb56b8d157d49f6cfb691baa80fdd34f385efed961", "RLj9h7zfnx4X9hvquR3sEwzHvcvF61W2Rc", "GVHt2jSLAysFAArwNBiraBzz5XFVPQ91Kd"},
-    {"0dev3_kolo", "025af9d2b2a05338478159e9ac84543968fd18c45fd9307866b56f33898653b014", "RTZi9uC1wEu3PD9eoL4R7KyeAse7uvdHuS", "Gc8SVWdgKGhmPg5kG6jQSZzLKmyNFcpSGB"},
-    {"0dev4_decker", "028eea44a09674dda00d88ffd199a09c9b75ba9782382cc8f1e97c0fd565fe5707", "RDECKVXcWCgPpMrKqQmMX7PxzQVLCzcR5a", "GMnvf6yGtEV7ppnRJBSLrMQf9Jpaa99hQA"},
-    {"a-team_SH", "03b59ad322b17cb94080dc8e6dc10a0a865de6d47c16fb5b1a0b5f77f9507f3cce", "RSuXRScqHNbRFqjur2C3tf3oDoauBs2B1i", "GbUFm44VfQQ9GJg1Jns3Du4VNhv9YrtZxD"},
-    {"artik_AR", "029acf1dcd9f5ff9c455f8bb717d4ae0c703e089d16cf8424619c491dff5994c90", "RXF3aHUaWDUY4fRRYmBNALoHWkgSQCiJ4f", "GfomutvEtFHG58MX1XrMVaoyff1gkqs4LM"},
-    {"artik_EU", "03f54b2c24f82632e3cdebe4568ba0acf487a80f8a89779173cdb78f74514847ce", "RL2SkPSCGMvcHqZ56ErfMxbQGdA4nk7MZp", "GUbB5zsrePjLJJVAZ1XehCc6RXVKA7EFXz"},
-    {"artik_NA", "0224e31f93eff0cc30eaf0b2389fbc591085c0e122c4d11862c1729d090106c842", "RFssbc211PJdVy1bvcvAG5X2N4ovPAoy5o", "GQSbwDTfPR7MWRwhPPb9bKXiWy9AhVzXub"},
-    {"artik_SH", "02bdd8840a34486f38305f311c0e2ae73e84046f6e9c3dd3571e32e58339d20937", "RNoz2DKPZ2ppMxgYx5tce9sjZBHefvPvNB", "GXNiMpm3w4dYNRceQrZbyPtRi5cu77J9aM"},
-    {"badass_EU", "0209d48554768dd8dada988b98aca23405057ac4b5b46838a9378b95c3e79b9b9e", "RVxtoUT9CXbC1LdhztNAf9yR5ySnFnSPQh", "GeXd95toaZPv1oZoTf39zPz7Esn2XT79Kb"},
-    {"badass_NA", "02afa1a9f948e1634a29dc718d218e9d150c531cfa852843a1643a02184a63c1a7", "R9XBrbj8iKkwy9M4erUqRaBinAiZSTXav3", "GJ5vCDAo6MZfycHA7d9pkpCQw53on3cxQc"},
-    {"batman_AR", "033ecb640ec5852f42be24c3bf33ca123fb32ced134bed6aa2ba249cf31b0f2563", "RVvcVXkqWmMmjQdFnqwQbtPrdU7DFpHA3G", "GeVLq9CVtoAVjsZMFccPw8QYnNSTcEkLFk"},
-    {"batman_SH", "02ca5898931181d0b8aafc75ef56fce9c43656c0b6c9f64306e7c8542f6207018c", "RY5TZSnmtGZLFMpnJTE6gDRyk1zDvMktcc", "GgeBu4ESGJN4FpksmDu61TSftvKUKSemPj"},
-    {"ca333_EU", "03fc87b8c804f12a6bd18efd43b0ba2828e4e38834f6b44c0bfee19f966a12ba99", "RUvwCVA1NfDB6ZWrEgVYZHWGjMzpxm19r1", "GdVfY6bfkh1u72SwhTAXtXWxtGL5GjdbTL"},
-    {"chainmakers_EU", "02f3b08938a7f8d2609d567aebc4989eeded6e2e880c058fdf092c5da82c3bc5ee", "RSQUoSfM7R7SnatK6Udsb5t39movCpUKQE", "GayD9471VSvAo3pQZFJrvKtjJg9AW5DV5S"},
-    {"chainmakers_NA", "0276c6d1c65abc64c8559710b8aff4b9e33787072d3dda4ec9a47b30da0725f57a", "RLF3sBrXAdofwDnS2114mkBMSBeJDd5Doy", "GUonCoJBYfcPwgiXUmg46zC3b5yYaorVq4"},
-    {"chainstrike_SH", "0370bcf10575d8fb0291afad7bf3a76929734f888228bc49e35c5c49b336002153", "RXrQPqU4SwARri1m2n7232TDECvjzXCJh4", "GgR8jSuipxy9sAwrVYn1NGTuP7FzS42Su9"},
-    {"cipi_AR", "02c4f89a5b382750836cb787880d30e23502265054e1c327a5bfce67116d757ce8", "RBZxvAMqt1QhkvmiMRqDGRBW9QaQjqPEpF", "GL8hFmoWG3DRmPhopCWCbfCCJJuf542tkj"},
-    {"cipi_NA", "02858904a2a1a0b44df4c937b65ee1f5b66186ab87a751858cf270dee1d5031f18", "RD2uPC7aUkX9tQTYgRvDb2HQPWa22VttEE", "GMbdioZErnKstsPe9CbCvGJ6YQuGNLf8nL"},
-    {"crackers_EU", "03bc819982d3c6feb801ec3b720425b017d9b6ee9a40746b84422cbbf929dc73c3", "RA7nJEoqNGu13P7Gv4mWfoJTmpZ9ac2Bh2", "GJgWdrFVkJhj3r3NNqSW13K9vitPt7tqBi"},
-    {"crackers_NA", "03205049103113d48c7c7af811b4c8f194dafc43a50d5313e61a22900fc1805b45", "RQcBfvJLyB96GCuTBRUNckQESw8LYjHQaC", "GZAv1Xk1MCwpGfqYeC9MwzQvbqTawzgQ94"},
-    {"dwy_EU", "0259c646288580221fdf0e92dbeecaee214504fdc8bbdf4a3019d6ec18b7540424", "RWVt3CDvXXAw5NeyMrjUC8s7YssAJ9j4A4", "Gf4cNofauYyf5qb4pdQTXNsohnCQeSNPn1"},
-    {"emmanux_SH", "033f316114d950497fc1d9348f03770cd420f14f662ab2db6172df44c389a2667a", "RBHCkuYMUbQph7MZsHcZYfGfyqBm8Y4jFQ", "GKqw6Wz1rdDYhaHfL4HYsuHN8jX1V844aN"},
-    {"etszombi_EU", "0281b1ad28d238a2b217e0af123ce020b79e91b9b10ad65a7917216eda6fe64bf7", "RPjUmFNcWEW9Bu275kPxzRXyWDz6bfQpPD", "GYJD6rpGtGJsCMxCYX4xKfYff8KLyodbVJ"},
-    {"fullmoon_AR", "03380314c4f42fa854df8c471618751879f9e8f0ff5dbabda2bd77d0f96cb35676", "RAtXFwGsgtsHJGuKhJBMbB8vri3SRVQYeu", "GKTFbYiY4vg1JjqRA4rLvR9d1cNgrFbtED"},
-    {"fullmoon_NA", "030216211d8e2a48bae9e5d7eb3a42ca2b7aae8770979a791f883869aea2fa6eef", "RAtyzPtx7yeH7jhFkD7e2dhf2p429Cn3tQ", "GKTiL1LcW1T18CdMCyndMsiMBiPGWAvmzi"},
-    {"fullmoon_SH", "03f34282fa57ecc7aba8afaf66c30099b5601e98dcbfd0d8a58c86c20d8b692c64", "R9WsywChUgTumbK2cf1RdjHrWMZV3nfs3a", "GJ5cKYeMriGdn4F85RgQxyJYfFtjJiSk3g"},
-    {"goldenman_EU", "02d6f13a8f745921cdb811e32237bb98950af1a5952be7b3d429abd9152f8e388d", "RHzbQkW7oLK43GKEPK78rSCs7WDiaa4dbw", "GSZKkMwnBN7n3jFKr5n8BgDZGQYxyc2PfU"},
-    {"indenodes_AR", "02ec0fa5a40f47fd4a38ea5c89e375ad0b6ddf4807c99733c9c3dc15fb978ee147", "RFQNjTfcvSAmf8D83og1NrdHj1wH2fc5X4", "GPy7557HJTyVfb9DWaLzi6dysvGXQJsyzP"},
-    {"indenodes_EU", "0221387ff95c44cb52b86552e3ec118a3c311ca65b75bf807c6c07eaeb1be8303c", "RPknkGAHMwUBvfKQfvw9FyatTZzicSiN4y", "GYKX5sbwjyGuw8FW8hc8bDbacUKxwq7naD"},
-    {"indenodes_NA", "02698c6f1c9e43b66e82dbb163e8df0e5a2f62f3a7a882ca387d82f86e0b3fa988", "RMqbQz4NPNbG15QBwy9EFvLn4NX5Fa7w5g", "GWQKkbW2mQPz1YLHQjpDbAMUDGrKXqLTzm"},
-    {"indenodes_SH", "0334e6e1ec8285c4b85bd6dae67e17d67d1f20e7328efad17ce6fd24ae97cdd65e", "RQipE6ycbVVb9vCkhqrK8PGZs2p5YmiBtg", "GZHYZiRGyXJKAP8rAcXJTdHG1w9KsJRjgj"},
-    {"jackson_AR", "038ff7cfe34cb13b524e0941d5cf710beca2ffb7e05ddf15ced7d4f14fbb0a6f69", "RUc5sa136Agwb9dSfMKn1oc7myHkUzeZf4", "GdApDBShUCVfbcZY87zmM3covsczkp5Khi"},
-    {"jeezy_EU", "023cb3e593fb85c5659688528e9a4f1c4c7f19206edc7e517d20f794ba686fd6d6", "RCA8H1npFPW5pnJRzycF8tFEJmn6XZhD4j", "GLircdEUdRJoqFEXTkHEU8FvTg7LtR8epc"},
-    {"karasugoi_NA", "02a348b03b9c1a8eac1b56f85c402b041c9bce918833f2ea16d13452309052a982", "RJD5jRidYW9Cu8qxjg9HDCsx6J3A4wQ4LU", "GSmp53AHvXwvubn4CSpGYSteFCNQMwPgYB"},
-    {"komodoninja_EU", "038e567b99806b200b267b27bbca2abf6a3e8576406df5f872e3b38d30843cd5ba", "RWgpXEycP4rVkFp3j7WzV6E2LfR842WswN", "GfFYrrRGm6fDkik9BtBypLEiVZkNLZndVn"},
-    {"komodoninja_SH", "033178586896915e8456ebf407b1915351a617f46984001790f0cce3d6f3ada5c2", "RVAUHZ4QGzxmW815b98oMv943FCms6AzUi", "GdjCdAW4f2mVWawB3uonhA9kC9Y2EJQ7Tm"},
-    {"komodopioneers_SH", "033ace50aedf8df70035b962a805431363a61cc4e69d99d90726a2d48fb195f68c", "RGxBQho3stt6EiApWTzFZxDvqqsM8GwAuk", "GRWukKEiFvgpFB6uyEfEuCEczkCbY6zzeZ"},
-    {"libscott_SH", "03301a8248d41bc5dc926088a8cf31b65e2daf49eed7eb26af4fb03aae19682b95", "RHuUpCbaGbv27fsjC1p6xwtwRzKQ1exqaA", "GSUD9p3Eedik88openV6JBudateeJJkGqK"},
-    {"lukechilds_AR", "031aa66313ee024bbee8c17915cf7d105656d0ace5b4a43a3ab5eae1e14ec02696", "RPxsaGNqTKzPnbm5q7QXwu7b6EZWuLxJG3", "GYXbuspVqMo7o4hBHt5XH98HF8tmJCbsaH"},
-    {"madmax_AR", "03891555b4a4393d655bf76f0ad0fb74e5159a615b6925907678edc2aac5e06a75", "RQ5JmyvjzGMxZvs2auTabXVQeuxrA2oBjy", "GYe37bNQNJAgaPo83g8ZvmW6opJ6WH6cUm"},
-    {"meshbits_AR", "02957fd48ae6cb361b8a28cdb1b8ccf5067ff68eb1f90cba7df5f7934ed8eb4b2c", "RV8Khq8SbYQALx9eMQ8meseWpFiZS8seL1", "Gdh43Sa6yaCtMR5jpAokz7fCyA3oi2Tp2i"},
-    {"meshbits_SH", "025c6e94877515dfd7b05682b9cc2fe4a49e076efe291e54fcec3add78183c1edb", "RH1vUjh6JBX7dpPR3C89U8hzErp1uoa2by", "GRaepM8kgDKqeHKWVxo8oNigPm9GE1Nbow"},
-    {"metaphilibert_AR", "02adad675fae12b25fdd0f57250b0caf7f795c43f346153a31fe3e72e7db1d6ac6", "RKdXYhrQxB3LtwGpysGenKFHFTqSi5g7EF", "GUCFtKJ5LCr4uQCvSdwe7ZFyQNAh3xazcD"},
-    {"metaphilibert_SH", "0284af1a5ef01503e6316a2ca4abf8423a794e9fc17ac6846f042b6f4adedc3309", "RRrqjqDPZ9XC6xJMeKgf7GNHjiU88hJQ16", "GaRa5Sf3wBKv7RET76MeSWNytcoNUVqUBT"},
-    {"patchkez_SH", "0296270f394140640f8fa15684fc11255371abb6b9f253416ea2734e34607799c4", "RBp1xHCAb3XcLAV49F8wUYw3aBvhHKKEwa", "GLNkHtdpy5LLLdR9c1ovonwjj6FwhymnMF"},
-    {"pbca26_NA", "0276aca53a058556c485bbb60bdc54b600efe402a8b97f0341a7c04803ce204cb5", "REX8jNcUki4NyNde3ovr5ZgjwnCyRZYczv", "GP5s4z498js6yqZjWabqQohS6gYDpuQuS8"},
-    {"peer2cloud_AR", "034e5563cb885999ae1530bd66fab728e580016629e8377579493b386bf6cebb15", "RH2Tuan5wt9x19aBPgTHPtkh2koWCEsjEK", "GRbCFCDkKuxg1cWGrT8Gj8mPBf8kVmSAFN"},
-    {"peer2cloud_SH", "03396ac453b3f23e20f30d4793c5b8ab6ded6993242df4f09fd91eb9a4f8aede84", "RSp8vhyL6hN3yqn5V1qje62pBgBE9fv3Eh", "GbNsGKQzUjAmzJiAwnWiyL3WLaWUSeFkrR"},
-    {"polycryptoblog_NA", "02708dcda7c45fb54b78469673c2587bfdd126e381654819c4c23df0e00b679622", "RE3P8D8rcWZBeKmT8DURPdezW87MU5Ho3F", "GNc7TpaWzYMuenhYaz9Qisfgf2SbsjMs9Z"},
-    {"hyper_AR", "020f2f984d522051bd5247b61b080b4374a7ab389d959408313e8062acad3266b4", "RTWpNfpcQgGYnrtgdUyqoPiF9r2CJoAw6Z", "Gc5YiHGGni5GoKpn6Feq8diwJkMSjoRa1y"},
-    {"hyper_EU", "03d00cf9ceace209c59fb013e112a786ad583d7de5ca45b1e0df3b4023bb14bf51", "RQMyeeSyKFUTd7cYTM1Fq7nSt6zJZKNubi", "GYvhzFtdhHHBdaYdv7gFAMo931KYxqeE3r"},
-    {"hyper_SH", "0383d0b37f59f4ee5e3e98a47e461c861d49d0d90c80e9e16f7e63686a2dc071f3", "RFCZc3SnyEtUTSVDkHEvrm7tCdhiDMufLx", "GPmHwetTMGhCTuRKD3uvC18aMY2xbqtJ8i"},
-    {"hyper_NA", "03d91c43230336c0d4b769c9c940145a8c53168bf62e34d1bccd7f6cfc7e5592de", "RTdEgZV1QEsBTphiRRdk4FcstTBJ8wAkRX", "GcBy2AvfnGfuUHdotCJjPVda3MWYXv53Hc"},
-    {"popcornbag_AR", "02761f106fb34fbfc5ddcc0c0aa831ed98e462a908550b280a1f7bd32c060c6fa3", "RWPhKTa5Huepz19TYrxAE65rQn3D3xPrNw", "GexRf51jfwTYzU5Z1dd9ZL6YZgNTS6Kjem"},
-    {"popcornbag_NA", "03c6085c7fdfff70988fda9b197371f1caf8397f1729a844790e421ee07b3a93e8", "RVQAwUJdFVVK2Pjiq4rYkvMSiZucHtJA7X", "GdxuH5kHdXJ32rfpHqXY6AN8sUErZdSwfm"},
-    {"alien_AR", "0348d9b1fc6acf81290405580f525ee49b4749ed4637b51a28b18caa26543b20f0", "RBHzJTW73U3nyHyxBwiG92bJckxZowPY87", "GKrie4wmRVrWykv3eiPFUGbzmfHpAkrYe4"},
-    {"alien_EU", "020aab8308d4df375a846a9e3b1c7e99597b90497efa021d50bcf1bbba23246527", "RUdfZrpAhYyT4LVz6Vyj2K14yK1uC2K4Dz", "GdCPuUFq5anB4oS5ZGeiMZ1m8DM9Ue51ej"},
-    {"thegaltmines_NA", "031bea28bec98b6380958a493a703ddc3353d7b05eb452109a773eefd15a32e421", "RAusaHRqdMmML3szif3Wai1ZSEWCyu7X9Y", "GKUbutsW1Pa5LWp6BRiVux2Fb8qTNG8YUW"},
-    {"titomane_AR", "029d19215440d8cb9cc6c6b7a4744ae7fb9fb18d986e371b06aeb34b64845f9325", "RWk4WLiAv6MKWLozJbj1jyhayKtjwbtX7M", "GfJnqx9qJ8A3Wok5mNQ15DiH8EDzJwkbF3"},
-    {"titomane_EU", "0360b4805d885ff596f94312eed3e4e17cb56aa8077c6dd78d905f8de89da9499f", "RCTgouafkve3rCSaqmm89TUpKGvQSTFr5M", "GM2R9X2L8xSmrfNgJYS7UhVWUBFenMz1kw"},
-    {"titomane_SH", "03573713c5b20c1e682a2e8c0f8437625b3530f278e705af9b6614de29277a435b", "RAqoFL81YGFJ7hidAYUw2rzX8wjFKPCecP", "GKQXawZfvJ428AeidK9vN71DHr4Vk88WD4"},
-    {"webworker01_NA", "03bb7d005e052779b1586f071834c5facbb83470094cff5112f0072b64989f97d7", "RMbNsa4Nf3BAd16BQaAAmfzAgnuorUDrCr", "GWA7DBW334ytdU2GsLqA6uzrqhF4Bju86K"},
-    {"xrobesx_NA", "03f0cc6d142d14a40937f12dbd99dbd9021328f45759e26f1877f2a838876709e1", "RLQoAcs1RaqW1xfN2NJwoZWW5twexPhuGB", "GUyXWEJfoceE2RbTV8yw8oXCEoGuLCYxUT"},
+    {"0dev1_jl777"       , "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828" , "RNJmgYaFF5DbnrNUX6pMYz9rcnDKC2tuAc"},
+    {"0dev2_kolo"        , "030f34af4b908fb8eb2099accb56b8d157d49f6cfb691baa80fdd34f385efed961" , "RLj9h7zfnx4X9hvquR3sEwzHvcvF61W2Rc"},
+    {"0dev3_kolo"        , "025af9d2b2a05338478159e9ac84543968fd18c45fd9307866b56f33898653b014" , "RTZi9uC1wEu3PD9eoL4R7KyeAse7uvdHuS"},
+    {"0dev4_decker"      , "028eea44a09674dda00d88ffd199a09c9b75ba9782382cc8f1e97c0fd565fe5707" , "RDECKVXcWCgPpMrKqQmMX7PxzQVLCzcR5a"},
+    {"a-team_SH"         , "03b59ad322b17cb94080dc8e6dc10a0a865de6d47c16fb5b1a0b5f77f9507f3cce" , "RSuXRScqHNbRFqjur2C3tf3oDoauBs2B1i"},
+    {"artik_AR"          , "029acf1dcd9f5ff9c455f8bb717d4ae0c703e089d16cf8424619c491dff5994c90" , "RXF3aHUaWDUY4fRRYmBNALoHWkgSQCiJ4f"},
+    {"artik_EU"          , "03f54b2c24f82632e3cdebe4568ba0acf487a80f8a89779173cdb78f74514847ce" , "RL2SkPSCGMvcHqZ56ErfMxbQGdA4nk7MZp"},
+    {"artik_NA"          , "0224e31f93eff0cc30eaf0b2389fbc591085c0e122c4d11862c1729d090106c842" , "RFssbc211PJdVy1bvcvAG5X2N4ovPAoy5o"},
+    {"artik_SH"          , "02bdd8840a34486f38305f311c0e2ae73e84046f6e9c3dd3571e32e58339d20937" , "RNoz2DKPZ2ppMxgYx5tce9sjZBHefvPvNB"},
+    {"badass_EU"         , "0209d48554768dd8dada988b98aca23405057ac4b5b46838a9378b95c3e79b9b9e" , "RVxtoUT9CXbC1LdhztNAf9yR5ySnFnSPQh"},
+    {"badass_NA"         , "02afa1a9f948e1634a29dc718d218e9d150c531cfa852843a1643a02184a63c1a7" , "R9XBrbj8iKkwy9M4erUqRaBinAiZSTXav3"},
+    {"batman_AR"         , "033ecb640ec5852f42be24c3bf33ca123fb32ced134bed6aa2ba249cf31b0f2563" , "RVvcVXkqWmMmjQdFnqwQbtPrdU7DFpHA3G"},
+    {"batman_SH"         , "02ca5898931181d0b8aafc75ef56fce9c43656c0b6c9f64306e7c8542f6207018c" , "RY5TZSnmtGZLFMpnJTE6gDRyk1zDvMktcc"},
+    {"ca333_EU"          , "03fc87b8c804f12a6bd18efd43b0ba2828e4e38834f6b44c0bfee19f966a12ba99" , "RUvwCVA1NfDB6ZWrEgVYZHWGjMzpxm19r1"},
+    {"chainmakers_EU"    , "02f3b08938a7f8d2609d567aebc4989eeded6e2e880c058fdf092c5da82c3bc5ee" , "RSQUoSfM7R7SnatK6Udsb5t39movCpUKQE"},
+    {"chainmakers_NA"    , "0276c6d1c65abc64c8559710b8aff4b9e33787072d3dda4ec9a47b30da0725f57a" , "RLF3sBrXAdofwDnS2114mkBMSBeJDd5Doy"},
+    {"chainstrike_SH"    , "0370bcf10575d8fb0291afad7bf3a76929734f888228bc49e35c5c49b336002153" , "RXrQPqU4SwARri1m2n7232TDECvjzXCJh4"},
+    {"cipi_AR"           , "02c4f89a5b382750836cb787880d30e23502265054e1c327a5bfce67116d757ce8" , "RBZxvAMqt1QhkvmiMRqDGRBW9QaQjqPEpF"},
+    {"cipi_NA"           , "02858904a2a1a0b44df4c937b65ee1f5b66186ab87a751858cf270dee1d5031f18" , "RD2uPC7aUkX9tQTYgRvDb2HQPWa22VttEE"},
+    {"crackers_EU"       , "03bc819982d3c6feb801ec3b720425b017d9b6ee9a40746b84422cbbf929dc73c3" , "RA7nJEoqNGu13P7Gv4mWfoJTmpZ9ac2Bh2"},
+    {"crackers_NA"       , "03205049103113d48c7c7af811b4c8f194dafc43a50d5313e61a22900fc1805b45" , "RQcBfvJLyB96GCuTBRUNckQESw8LYjHQaC"},
+    {"dwy_EU"            , "0259c646288580221fdf0e92dbeecaee214504fdc8bbdf4a3019d6ec18b7540424" , "RWVt3CDvXXAw5NeyMrjUC8s7YssAJ9j4A4"},
+    {"emmanux_SH"        , "033f316114d950497fc1d9348f03770cd420f14f662ab2db6172df44c389a2667a" , "RBHCkuYMUbQph7MZsHcZYfGfyqBm8Y4jFQ"},
+    {"etszombi_EU"       , "0281b1ad28d238a2b217e0af123ce020b79e91b9b10ad65a7917216eda6fe64bf7" , "RPjUmFNcWEW9Bu275kPxzRXyWDz6bfQpPD"},
+    {"fullmoon_AR"       , "03380314c4f42fa854df8c471618751879f9e8f0ff5dbabda2bd77d0f96cb35676" , "RAtXFwGsgtsHJGuKhJBMbB8vri3SRVQYeu"},
+    {"fullmoon_NA"       , "030216211d8e2a48bae9e5d7eb3a42ca2b7aae8770979a791f883869aea2fa6eef" , "RAtyzPtx7yeH7jhFkD7e2dhf2p429Cn3tQ"},
+    {"fullmoon_SH"       , "03f34282fa57ecc7aba8afaf66c30099b5601e98dcbfd0d8a58c86c20d8b692c64" , "R9WsywChUgTumbK2cf1RdjHrWMZV3nfs3a"},
+    {"goldenman_EU"      , "02d6f13a8f745921cdb811e32237bb98950af1a5952be7b3d429abd9152f8e388d" , "RHzbQkW7oLK43GKEPK78rSCs7WDiaa4dbw"},
+    {"indenodes_AR"      , "02ec0fa5a40f47fd4a38ea5c89e375ad0b6ddf4807c99733c9c3dc15fb978ee147" , "RFQNjTfcvSAmf8D83og1NrdHj1wH2fc5X4"},
+    {"indenodes_EU"      , "0221387ff95c44cb52b86552e3ec118a3c311ca65b75bf807c6c07eaeb1be8303c" , "RPknkGAHMwUBvfKQfvw9FyatTZzicSiN4y"},
+    {"indenodes_NA"      , "02698c6f1c9e43b66e82dbb163e8df0e5a2f62f3a7a882ca387d82f86e0b3fa988" , "RMqbQz4NPNbG15QBwy9EFvLn4NX5Fa7w5g"},
+    {"indenodes_SH"      , "0334e6e1ec8285c4b85bd6dae67e17d67d1f20e7328efad17ce6fd24ae97cdd65e" , "RQipE6ycbVVb9vCkhqrK8PGZs2p5YmiBtg"},
+    {"jackson_AR"        , "038ff7cfe34cb13b524e0941d5cf710beca2ffb7e05ddf15ced7d4f14fbb0a6f69" , "RUc5sa136Agwb9dSfMKn1oc7myHkUzeZf4"},
+    {"jeezy_EU"          , "023cb3e593fb85c5659688528e9a4f1c4c7f19206edc7e517d20f794ba686fd6d6" , "RCA8H1npFPW5pnJRzycF8tFEJmn6XZhD4j"},
+    {"karasugoi_NA"      , "02a348b03b9c1a8eac1b56f85c402b041c9bce918833f2ea16d13452309052a982" , "RJD5jRidYW9Cu8qxjg9HDCsx6J3A4wQ4LU"},
+    {"komodoninja_EU"    , "038e567b99806b200b267b27bbca2abf6a3e8576406df5f872e3b38d30843cd5ba" , "RWgpXEycP4rVkFp3j7WzV6E2LfR842WswN"},
+    {"komodoninja_SH"    , "033178586896915e8456ebf407b1915351a617f46984001790f0cce3d6f3ada5c2" , "RVAUHZ4QGzxmW815b98oMv943FCms6AzUi"},
+    {"komodopioneers_SH" , "033ace50aedf8df70035b962a805431363a61cc4e69d99d90726a2d48fb195f68c" , "RGxBQho3stt6EiApWTzFZxDvqqsM8GwAuk"},
+    {"libscott_SH"       , "03301a8248d41bc5dc926088a8cf31b65e2daf49eed7eb26af4fb03aae19682b95" , "RHuUpCbaGbv27fsjC1p6xwtwRzKQ1exqaA"},
+    {"lukechilds_AR"     , "031aa66313ee024bbee8c17915cf7d105656d0ace5b4a43a3ab5eae1e14ec02696" , "RPxsaGNqTKzPnbm5q7QXwu7b6EZWuLxJG3"},
+    {"madmax_AR"         , "03891555b4a4393d655bf76f0ad0fb74e5159a615b6925907678edc2aac5e06a75" , "RQ5JmyvjzGMxZvs2auTabXVQeuxrA2oBjy"},
+    {"meshbits_AR"       , "02957fd48ae6cb361b8a28cdb1b8ccf5067ff68eb1f90cba7df5f7934ed8eb4b2c" , "RV8Khq8SbYQALx9eMQ8meseWpFiZS8seL1"},
+    {"meshbits_SH"       , "025c6e94877515dfd7b05682b9cc2fe4a49e076efe291e54fcec3add78183c1edb" , "RH1vUjh6JBX7dpPR3C89U8hzErp1uoa2by"},
+    {"metaphilibert_AR"  , "02adad675fae12b25fdd0f57250b0caf7f795c43f346153a31fe3e72e7db1d6ac6" , "RKdXYhrQxB3LtwGpysGenKFHFTqSi5g7EF"},
+    {"metaphilibert_SH"  , "0284af1a5ef01503e6316a2ca4abf8423a794e9fc17ac6846f042b6f4adedc3309" , "RRrqjqDPZ9XC6xJMeKgf7GNHjiU88hJQ16"},
+    {"patchkez_SH"       , "0296270f394140640f8fa15684fc11255371abb6b9f253416ea2734e34607799c4" , "RBp1xHCAb3XcLAV49F8wUYw3aBvhHKKEwa"},
+    {"pbca26_NA"         , "0276aca53a058556c485bbb60bdc54b600efe402a8b97f0341a7c04803ce204cb5" , "REX8jNcUki4NyNde3ovr5ZgjwnCyRZYczv"},
+    {"peer2cloud_AR"     , "034e5563cb885999ae1530bd66fab728e580016629e8377579493b386bf6cebb15" , "RH2Tuan5wt9x19aBPgTHPtkh2koWCEsjEK"},
+    {"peer2cloud_SH"     , "03396ac453b3f23e20f30d4793c5b8ab6ded6993242df4f09fd91eb9a4f8aede84" , "RSp8vhyL6hN3yqn5V1qje62pBgBE9fv3Eh"},
+    {"polycryptoblog_NA" , "02708dcda7c45fb54b78469673c2587bfdd126e381654819c4c23df0e00b679622" , "RE3P8D8rcWZBeKmT8DURPdezW87MU5Ho3F"},
+    {"hyper_AR"          , "020f2f984d522051bd5247b61b080b4374a7ab389d959408313e8062acad3266b4" , "RTWpNfpcQgGYnrtgdUyqoPiF9r2CJoAw6Z"},
+    {"hyper_EU"          , "03d00cf9ceace209c59fb013e112a786ad583d7de5ca45b1e0df3b4023bb14bf51" , "RQMyeeSyKFUTd7cYTM1Fq7nSt6zJZKNubi"},
+    {"hyper_SH"          , "0383d0b37f59f4ee5e3e98a47e461c861d49d0d90c80e9e16f7e63686a2dc071f3" , "RFCZc3SnyEtUTSVDkHEvrm7tCdhiDMufLx"},
+    {"hyper_NA"          , "03d91c43230336c0d4b769c9c940145a8c53168bf62e34d1bccd7f6cfc7e5592de" , "RTdEgZV1QEsBTphiRRdk4FcstTBJ8wAkRX"},
+    {"popcornbag_AR"     , "02761f106fb34fbfc5ddcc0c0aa831ed98e462a908550b280a1f7bd32c060c6fa3" , "RWPhKTa5Huepz19TYrxAE65rQn3D3xPrNw"},
+    {"popcornbag_NA"     , "03c6085c7fdfff70988fda9b197371f1caf8397f1729a844790e421ee07b3a93e8" , "RVQAwUJdFVVK2Pjiq4rYkvMSiZucHtJA7X"},
+    {"alien_AR"          , "0348d9b1fc6acf81290405580f525ee49b4749ed4637b51a28b18caa26543b20f0" , "RBHzJTW73U3nyHyxBwiG92bJckxZowPY87"},
+    {"alien_EU"          , "020aab8308d4df375a846a9e3b1c7e99597b90497efa021d50bcf1bbba23246527" , "RUdfZrpAhYyT4LVz6Vyj2K14yK1uC2K4Dz"},
+    {"thegaltmines_NA"   , "031bea28bec98b6380958a493a703ddc3353d7b05eb452109a773eefd15a32e421" , "RAusaHRqdMmML3szif3Wai1ZSEWCyu7X9Y"},
+    {"titomane_AR"       , "029d19215440d8cb9cc6c6b7a4744ae7fb9fb18d986e371b06aeb34b64845f9325" , "RWk4WLiAv6MKWLozJbj1jyhayKtjwbtX7M"},
+    {"titomane_EU"       , "0360b4805d885ff596f94312eed3e4e17cb56aa8077c6dd78d905f8de89da9499f" , "RCTgouafkve3rCSaqmm89TUpKGvQSTFr5M"},
+    {"titomane_SH"       , "03573713c5b20c1e682a2e8c0f8437625b3530f278e705af9b6614de29277a435b" , "RAqoFL81YGFJ7hidAYUw2rzX8wjFKPCecP"},
+    {"webworker01_NA"    , "03bb7d005e052779b1586f071834c5facbb83470094cff5112f0072b64989f97d7" , "RMbNsa4Nf3BAd16BQaAAmfzAgnuorUDrCr"},
+    {"xrobesx_NA"        , "03f0cc6d142d14a40937f12dbd99dbd9021328f45759e26f1877f2a838876709e1" , "RLQoAcs1RaqW1xfN2NJwoZWW5twexPhuGB"},
 };
 
 struct notarized_checkpoint
@@ -735,21 +737,24 @@ portable_mutex_t komodo_mutex;
 
 void komodo_importpubkeys()
 {
-    int32_t i,n,j,m,offset,val,dispflag = 0; std::string addr; char *ptr;
-    offset = 2;
-    if ( strcmp(ASSETCHAINS_SYMBOL,"GAME") == 0 )
-        offset++;
+    int32_t i,n,j,m,offset = 1,val,dispflag = 0; char *pubkey;
+
     n = (int32_t)(sizeof(Notaries_elected1)/sizeof(*Notaries_elected1));
+
     for (i=0; i<n; i++) // each year add new notaries too
     {
         if ( Notaries_elected1[i][offset] == 0 )
             continue;
         if ( (m= (int32_t)strlen((char *)Notaries_elected1[i][offset])) > 0 )
         {
-            addr.resize(m);
-            ptr = (char *)addr.data();
-            for (j=0; j<m; j++)
-                ptr[j] = Notaries_elected1[i][offset][j];
+	    pubkey = (char*) Notaries_elected1[i][offset];
+	    //fprintf(stderr,"pubkey=%s\n", pubkey );
+
+	    const std::vector<unsigned char> vPubkey(pubkey, pubkey + m);
+	    std::string addr = CBitcoinAddress(CPubKey(ParseHex(pubkey)).GetID()).ToString();
+
+	    //fprintf(stderr,"addr=%s\n", addr.c_str() );
+
             if ( (val= komodo_importaddress(addr)) < 0 )
                 fprintf(stderr,"error importing (%s)\n",addr.c_str());
             else if ( val == 0 )
@@ -762,9 +767,9 @@ void komodo_importpubkeys()
 
 int32_t komodo_init()
 {
-    NOTARY_PUBKEY = gArgs.GetArg("-pubkey", "");
+    NOTARY_PUBKEY = GetArg("-pubkey", "");
     decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
-    if ( gArgs.GetBoolArg("-txindex", DEFAULT_TXINDEX) == 0 )
+    if ( GetBoolArg("-txindex", DEFAULT_TXINDEX) == 0 )
     {
         fprintf(stderr,"txindex is off, import notary pubkeys\n");
         KOMODO_NEEDPUBKEYS = 1;
@@ -837,8 +842,8 @@ int32_t komodo_notaries(uint8_t pubkeys[64][33],int32_t height,uint32_t timestam
                 did0 = 1;
             }
             memcpy(pubkeys,elected_pubkeys0,n0 * 33);
-            //if ( ASSETCHAINS_SYMBOL[0] != 0 )
-            //fprintf(stderr,"%s height.%d t.%u elected.%d notaries\n",ASSETCHAINS_SYMBOL,height,timestamp,n0);
+            if ( ASSETCHAINS_SYMBOL[0] != 0 )
+              fprintf(stderr,"%s height.%d t.%u elected.%d notaries\n",ASSETCHAINS_SYMBOL,height,timestamp,n0);
             return(n0);
         }
         else //if ( (timestamp != 0 && timestamp <= KOMODO_NOTARIES_TIMESTAMP2) || height <= KOMODO_NOTARIES_HEIGHT2 )
@@ -951,7 +956,7 @@ int32_t komodo_notarizeddata(int32_t nHeight,uint256 *notarized_hashp,uint256 *n
                 {
                     if ( NPOINTS[i].nHeight >= nHeight )
                     {
-                        //printf("flag.1 i.%d np->ht %d [%d].ht %d >= nHeight.%d, last.%d num.%d\n",i,np->nHeight,i,NPOINTS[i].nHeight,nHeight,last_NPOINTSi,NUM_NPOINTS);
+                        LogPrintf("flag.1 i.%d np->ht %d [%d].ht %d >= nHeight.%d, last.%d num.%d\n",i,np->nHeight,i,NPOINTS[i].nHeight,nHeight,last_NPOINTSi,NUM_NPOINTS);
                         flag = 1;
                         break;
                     }
@@ -996,12 +1001,12 @@ void komodo_notarized_update(int32_t nHeight,int32_t notarized_height,uint256 no
         char fname[512];int32_t latestht = 0;
         //decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
         pthread_mutex_init(&komodo_mutex,NULL);
-#ifdef _WIN32
-        sprintf(fname,"%s\\notarizations",GetDataDir().string().c_str());
-#else
-        sprintf(fname,"%s/notarizations",GetDataDir().string().c_str());
-#endif
-        printf("fname.(%s)\n",fname);
+//#ifdef _WIN32
+//        sprintf(fname,"%s\\notarizations",GetDefaultDataDir().string().c_str());
+//#else
+//        sprintf(fname,"%s/notarizations",GetDefaultDataDir().string().c_str());
+//#endif
+//       printf("fname.(%s)\n",fname);
         if ( (fp= fopen(fname,"rb+")) == 0 )
             fp = fopen(fname,"wb+");
         else
@@ -1029,7 +1034,7 @@ void komodo_notarized_update(int32_t nHeight,int32_t notarized_height,uint256 no
             if ( ftell(fp) !=  fpos )
                 fseek(fp,fpos,SEEK_SET);
         }
-        fprintf(stderr,"finished loading %s [%s]\n",fname,NOTARY_PUBKEY.c_str());
+        LogPrintf("dpow: finished loading %s [%s]\n",fname,NOTARY_PUBKEY.c_str());
         didinit = 1;
     }
     if ( notarized_height == 0 )
@@ -1045,7 +1050,7 @@ void komodo_notarized_update(int32_t nHeight,int32_t notarized_height,uint256 no
         fprintf(stderr,"komodo_notarized_update reject nHeight.%d notarized_height.%d:%d\n",nHeight,notarized_height,(int32_t)pindex->nHeight);
         return;
     }
-    //fprintf(stderr,"komodo_notarized_update nHeight.%d notarized_height.%d prev.%d\n",nHeight,notarized_height,NPOINTS!=0?NPOINTS[NUM_NPOINTS-1].notarized_height:-1);
+    fprintf(stderr,"komodo_notarized_update nHeight.%d notarized_height.%d prev.%d\n",nHeight,notarized_height,NPOINTS!=0?NPOINTS[NUM_NPOINTS-1].notarized_height:-1);
     portable_mutex_lock(&komodo_mutex);
     NPOINTS = (struct notarized_checkpoint *)realloc(NPOINTS,(NUM_NPOINTS+1) * sizeof(*NPOINTS));
     np = &NPOINTS[NUM_NPOINTS++];
@@ -1071,6 +1076,7 @@ void komodo_notarized_update(int32_t nHeight,int32_t notarized_height,uint256 no
 
 int32_t komodo_checkpoint(int32_t *notarized_heightp,int32_t nHeight,uint256 hash)
 {
+
     int32_t notarized_height; uint256 zero,notarized_hash,notarized_desttxid; CBlockIndex *notary; CBlockIndex *pindex;
     memset(&zero,0,sizeof(zero));
     //komodo_notarized_update(0,0,zero,zero,zero,0);
@@ -1080,7 +1086,7 @@ int32_t komodo_checkpoint(int32_t *notarized_heightp,int32_t nHeight,uint256 has
     *notarized_heightp = notarized_height;
     if ( notarized_height >= 0 && notarized_height <= pindex->nHeight && (notary= mapBlockIndex[notarized_hash]) != 0 )
     {
-        //printf("nHeight.%d -> (%d %s)\n",pindex->nHeight,notarized_height,notarized_hash.ToString().c_str());
+        printf("nHeight.%d -> (%d %s)\n",pindex->nHeight,notarized_height,notarized_hash.ToString().c_str());
         if ( notary->nHeight == notarized_height ) // if notarized_hash not in chain, reorg
         {
             if ( nHeight < notarized_height )
@@ -1101,6 +1107,7 @@ int32_t komodo_checkpoint(int32_t *notarized_heightp,int32_t nHeight,uint256 has
 
 void komodo_voutupdate(int32_t txi,int32_t vout,uint8_t *scriptbuf,int32_t scriptlen,int32_t height,int32_t *specialtxp,int32_t *notarizedheightp,uint64_t value,int32_t notarized,uint64_t signedmask)
 {
+
     static uint256 zero; static uint8_t crypto777[33];
     int32_t MoMdepth,opretlen,len = 0; uint256 hash,desttxid,MoM;
     if ( scriptlen == 35 && scriptbuf[0] == 33 && scriptbuf[34] == 0xac )
@@ -1145,12 +1152,12 @@ void komodo_voutupdate(int32_t txi,int32_t vout,uint8_t *scriptbuf,int32_t scrip
                     }
                     else
                     {
-                        //fprintf(stderr,"VALID %s MoM.%s [%d]\n",ASSETCHAINS_SYMBOL,MoM.ToString().c_str(),MoMdepth);
+                        fprintf(stderr,"VALID %s MoM.%s [%d]\n",ASSETCHAINS_SYMBOL,MoM.ToString().c_str(),MoMdepth);
                     }
                 }
                 komodo_notarized_update(height,*notarizedheightp,hash,desttxid,MoM,MoMdepth);
                 fprintf(stderr,"%s ht.%d NOTARIZED.%d %s %sTXID.%s lens.(%d %d)\n",ASSETCHAINS_SYMBOL,height,*notarizedheightp,hash.ToString().c_str(),"KMD",desttxid.ToString().c_str(),opretlen,len);
-            } //else fprintf(stderr,"notarized.%d ht %d vs prev %d vs height.%d\n",notarized,*notarizedheightp,NOTARIZED_HEIGHT,height);
+            } else fprintf(stderr,"notarized.%d ht %d vs prev %d vs height.%d\n",notarized,*notarizedheightp,NOTARIZED_HEIGHT,height);
         }
     }
 }
@@ -1159,6 +1166,7 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
 {
     static int32_t hwmheight;
     uint64_t signedmask; uint8_t scriptbuf[4096],pubkeys[64][33],scriptPubKey[35]; uint256 zero; int32_t i,j,k,numnotaries,notarized,scriptlen,numvalid,specialtx,notarizedheight,len,numvouts,numvins,height,txn_count;
+
     if ( KOMODO_NEEDPUBKEYS != 0 )
     {
         komodo_importpubkeys();
@@ -1167,29 +1175,33 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
     memset(&zero,0,sizeof(zero));
     komodo_notarized_update(0,0,zero,zero,zero,0);
     numnotaries = komodo_notaries(pubkeys,pindex->nHeight,pindex->GetBlockTime());
+
     if ( pindex->nHeight > hwmheight )
         hwmheight = pindex->nHeight;
     else
     {
         if ( pindex->nHeight != hwmheight )
-            printf("%s hwmheight.%d vs pindex->nHeight.%d t.%u reorg.%d\n",ASSETCHAINS_SYMBOL,hwmheight,pindex->nHeight,(uint32_t)pindex->nTime,hwmheight-pindex->nHeight);
+            LogPrintf("dpow: %s hwmheight.%d vs pindex->nHeight.%d t.%u reorg.%d\n",ASSETCHAINS_SYMBOL,hwmheight,pindex->nHeight,(uint32_t)pindex->nTime,hwmheight-pindex->nHeight);
     }
+
     if ( pindex != 0 )
     {
         height = pindex->nHeight;
         txn_count = block.vtx.size();
+        //fprintf(stderr, "txn_count=%d\n", txn_count);
         for (i=0; i<txn_count; i++)
         {
             //txhash = block.vtx[i]->GetHash();
-            numvouts = block.vtx[i]->vout.size();
+            numvouts = block.vtx[i].vout.size();
             specialtx = notarizedheight = notarized = 0;
             signedmask = 0;
-            numvins = block.vtx[i]->vin.size();
+            numvins = block.vtx[i].vin.size();
+	    //fprintf(stderr, "tx=%d, numvouts=%d, numvins=%d\n", i, numvouts, numvins );
             for (j=0; j<numvins; j++)
             {
                 if ( i == 0 && j == 0 )
                     continue;
-                if ( block.vtx[i]->vin[j].prevout.hash != zero && (scriptlen= gettxout_scriptPubKey(height,scriptPubKey,sizeof(scriptPubKey),block.vtx[i]->vin[j].prevout.hash,block.vtx[i]->vin[j].prevout.n)) == 35 )
+                if ( block.vtx[i].vin[j].prevout.hash != zero && (scriptlen= gettxout_scriptPubKey(height,scriptPubKey,sizeof(scriptPubKey),block.vtx[i].vin[j].prevout.hash,block.vtx[i].vin[j].prevout.n)) == 35 )
                 {
                     for (k=0; k<numnotaries; k++)
                         if ( memcmp(&scriptPubKey[1],pubkeys[k],33) == 0 )
@@ -1197,30 +1209,31 @@ void komodo_connectblock(CBlockIndex *pindex,CBlock& block)
                             signedmask |= (1LL << k);
                             break;
                         }
-                } // else if ( block.vtx[i]->vin[j].prevout.hash != zero ) printf("%s cant get scriptPubKey for ht.%d txi.%d vin.%d\n",ASSETCHAINS_SYMBOL,height,i,j);
+                }//   else if ( block.vtx[i].vin[j].prevout.hash != zero ) printf("%s cant get scriptPubKey for ht.%d txi.%d vin.%d\n",ASSETCHAINS_SYMBOL,height,i,j);
             }
             numvalid = bitweight(signedmask);
             if ( numvalid >= KOMODO_MINRATIFY )
                 notarized = 1;
-            //if ( NOTARY_PUBKEY33[0] != 0 )
-            //    printf("(tx.%d: ",i);
+            if ( NOTARY_PUBKEY33[0] != 0 )
+                printf("(tx.%d: ",i);
             for (j=0; j<numvouts; j++)
             {
-                //if ( NOTARY_PUBKEY33[0] != 0 )
-                //    printf("%.8f ",dstr(block.vtx[i]->vout[j].nValue));
-                len = block.vtx[i]->vout[j].scriptPubKey.size();
+                if ( NOTARY_PUBKEY33[0] != 0 )
+                    printf("%.8f ",dstr(block.vtx[i].vout[j].nValue));
+                len = block.vtx[i].vout[j].scriptPubKey.size();
                 if ( len >= (int32_t)sizeof(uint32_t) && len <= (int32_t)sizeof(scriptbuf) )
                 {
-                    memcpy(scriptbuf,block.vtx[i]->vout[j].scriptPubKey.data(),len);
-                    komodo_voutupdate(i,j,scriptbuf,len,height,&specialtx,&notarizedheight,(uint64_t)block.vtx[i]->vout[j].nValue,notarized,signedmask);
+                    memcpy(scriptbuf,block.vtx[i].vout[j].scriptPubKey.data(),len);
+                    komodo_voutupdate(i,j,scriptbuf,len,height,&specialtx,&notarizedheight,(uint64_t)block.vtx[i].vout[j].nValue,notarized,signedmask);
                 }
             }
-            //if ( NOTARY_PUBKEY33[0] != 0 )
-            //    printf(") ");
-            //if ( NOTARY_PUBKEY33[0] != 0 )
-            //    printf("%s ht.%d\n",ASSETCHAINS_SYMBOL,height);
-            //printf("[%s] ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d notarized.%d special.%d\n",ASSETCHAINS_SYMBOL,height,i,(long long)signedmask,numvins,numvouts,notarized,specialtx);
+            if ( NOTARY_PUBKEY33[0] != 0 )
+                printf(") ");
+            if ( NOTARY_PUBKEY33[0] != 0 )
+                printf("%s ht.%d\n",ASSETCHAINS_SYMBOL,height);
+            LogPrintf("dpow: [%s] ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d notarized.%d special.%d\n",ASSETCHAINS_SYMBOL,height,i,(long long)signedmask,numvins,numvouts,notarized,specialtx);
         }
     } else fprintf(stderr,"komodo_connectblock: unexpected null pindex\n");
+
 }
 
