@@ -153,8 +153,8 @@ namespace cryptonote
         MAP_JON_RPC_WE_IF("sync_info",           on_sync_info,                  COMMAND_RPC_SYNC_INFO, !m_restricted)
         MAP_JON_RPC_WE("get_txpool_backlog",     on_get_txpool_backlog,         COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG)
         MAP_JON_RPC_WE("get_output_distribution", on_get_output_distribution,   COMMAND_RPC_GET_OUTPUT_DISTRIBUTION)
-        MAP_JON_RPC_WE_IF("/calc_MoM",              on_calc_MoM,                   COMMAND_RPC_CALC_MOM, !m_restricted)
-        MAP_JON_RPC_WE_IF("/height_MoM",            on_height_MoM,                 COMMAND_RPC_HEIGHT_MOM, !m_restricted)
+        MAP_JON_RPC_WE_IF("calc_MoM",              on_calc_MoM,                   COMMAND_RPC_CALC_MOM, !m_restricted)
+        MAP_JON_RPC_WE_IF("height_MoM",            on_height_MoM,                 COMMAND_RPC_HEIGHT_MOM, !m_restricted)
       END_JSON_RPC_MAP()
     END_URI_MAP2()
 
