@@ -192,8 +192,6 @@ if(NOT MANUAL_SUBMODULES)
     endfunction ()
     
     message(STATUS "Checking submodules")
-    check_submodule(external/miniupnp)
-    check_submodule(external/unbound)
     check_submodule(external/rapidjson)
   endif()
 endif()
@@ -229,22 +227,8 @@ message(STATUS "BOOST_IGNORE_SYSTEM_PATHS defaults to ${BOOST_IGNORE_SYSTEM_PATH
 option(BOOST_IGNORE_SYSTEM_PATHS "Ignore boost system paths for local boost installation" ${BOOST_IGNORE_SYSTEM_PATHS_DEFAULT})
 
 
-if (NOT DEFINED ENV{DEVELOPER_LIBUNBOUND_OLD})
-  message(STATUS "Could not find DEVELOPER_LIBUNBOUND_OLD in env (not required)")
-elseif ("$ENV{DEVELOPER_LIBUNBOUND_OLD}" EQUAL 1)
-  message(STATUS "Found: env DEVELOPER_LIBUNBOUND_OLD = 1, will use the work around")
-  add_definitions(-DDEVELOPER_LIBUNBOUND_OLD)
-elseif ("$ENV{DEVELOPER_LIBUNBOUND_OLD}" EQUAL 0)
-  message(STATUS "Found: env DEVELOPER_LIBUNBOUND_OLD = 0")
-else()
-  message(STATUS "Found: env DEVELOPER_LIBUNBOUND_OLD with bad value. Will NOT use the work around")
-endif()
-
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 enable_testing()
-
-option(BUILD_DOCUMENTATION "Build the Doxygen documentation." ON)
-option(BUILD_TESTS "Build tests." OFF)
 
 # Check whether we're on a 32-bit or 64-bit system
 if(CMAKE_SIZEOF_VOID_P EQUAL "8")
@@ -261,7 +245,6 @@ else()
 endif()
 message(STATUS "Building for a ${ARCH_WIDTH}-bit system")
 
-# Check if we're on FreeBSD so we can exclude the local miniupnpc (it should be installed from ports instead)
 # CMAKE_SYSTEM_NAME checks are commonly known, but specifically taken from libsdl's CMakeLists
 if(CMAKE_SYSTEM_NAME MATCHES "kFreeBSD.*|FreeBSD")
   set(FREEBSD TRUE)
@@ -431,10 +414,6 @@ ExternalProject_Add(generate_translations_header
   INSTALL_COMMAND cmake -E echo "")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/translations")
 add_subdirectory(external)
-
-# Final setup for libunbound
-include_directories(${UNBOUND_INCLUDE})
-link_directories(${UNBOUND_LIBRARY_DIRS})
 
 # Final setup for easylogging++
 include_directories(${EASYLOGGING_INCLUDE})
@@ -903,34 +882,8 @@ if(BUILD_TESTS)
   add_subdirectory(tests)
 endif()
 
-if(BUILD_DOCUMENTATION)
-  set(DOC_GRAPHS "YES" CACHE STRING "Create dependency graphs (needs graphviz)")
-  set(DOC_FULLGRAPHS "NO" CACHE STRING "Create call/callee graphs (large)")
-
-  find_program(DOT_PATH dot)
-
-  if (DOT_PATH STREQUAL "DOT_PATH-NOTFOUND")
-    message("Doxygen: graphviz not found - graphs disabled")
-    set(DOC_GRAPHS "NO")
-  endif()
-
-  find_package(Doxygen)
-  if(DOXYGEN_FOUND)
-    configure_file("cmake/Doxyfile.in" "Doxyfile" @ONLY)
-    configure_file("cmake/Doxygen.extra.css.in" "Doxygen.extra.css" @ONLY)
-    add_custom_target(doc
-      ${DOXYGEN_EXECUTABLE} ${CMAKE_CURRENT_BINARY_DIR}/Doxyfile
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-      COMMENT "Generating API documentation with Doxygen.." VERBATIM)
-  endif()
-endif()
-
 # when ON - will install libwallet_merged into "lib"
 option(BUILD_GUI_DEPS "Build GUI dependencies." OFF)
-
-# This is not nice, distribution packagers should not enable this, but depend
-# on libunbound shipped with their distribution instead
-option(INSTALL_VENDORED_LIBUNBOUND "Install libunbound binary built from source vendored with this repo." OFF)
 
 
 CHECK_C_COMPILER_FLAG(-std=c11 HAVE_C11)
