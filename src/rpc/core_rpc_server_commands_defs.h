@@ -1027,7 +1027,7 @@ namespace cryptonote
       std::string version;
       std::string notarized_hash;
       std::string notarized_txid;
-      int32_t notarized_height;
+      int32_t notarized;
       int32_t prevMoMheight;
       int32_t notarized_MoMdepth;
       std::string notarized_MoM;
@@ -1061,10 +1061,10 @@ namespace cryptonote
         KV_SERIALIZE(bootstrap_daemon_address)
         KV_SERIALIZE(height_without_bootstrap)
         KV_SERIALIZE(was_bootstrap_ever_used)
-	    KV_SERIALIZE(version)
+	KV_SERIALIZE(version)
         KV_SERIALIZE(notarized_hash)
         KV_SERIALIZE(notarized_txid)
-        KV_SERIALIZE(notarized_height)
+        KV_SERIALIZE(notarized)
         KV_SERIALIZE(prevMoMheight)
         KV_SERIALIZE(notarized_MoMdepth)
         KV_SERIALIZE(notarized_MoM)

@@ -50,8 +50,8 @@ using namespace epee;
 #include "p2p/net_node.h"
 #include "version.h"
 #include "komodo_rpcblockchain.h"
-#include "bitcoin/arith_uint256.h"
-#include "bitcoin/uint256.h"
+#include "common/arith_uint256.h"
+#include "common/uint256.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"
@@ -73,6 +73,8 @@ namespace
 
 namespace cryptonote
 {
+  char ASSETCHAINS_SYMBOL[65] = { "BLUR" };
+
   //-----------------------------------------------------------------------------------
   void core_rpc_server::init_options(boost::program_options::options_description& desc)
   {
@@ -142,31 +144,6 @@ namespace cryptonote
     );
   }
   //------------------------------------------------------------------------------------------------------------------------------
-int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,int32_t nHeight,uint256 *MoMoMp,int32_t *MoMoMoffsetp,int32_t *MoMoMdepthp,int32_t *kmdstartip,int32_t *kmdendip)
-{
-    int32_t depth;
-    int32_t notarized_height;
-    uint256 MoM;
-    uint256 kmdtxid;
-
-    //arith_uint256 a_MoM = UintToArith256(MoM);
-    std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin() + 32);
-    //arith_uint256 a_kmdtxid = UintToArith256(kmdtxid);
-    std::vector<uint8_t> v_kmdtxid(kmdtxid.begin(), kmdtxid.begin() + 32);
-
-    depth = komodo_MoMdata(&notarized_height,&MoM,&kmdtxid,nHeight,MoMoMp,MoMoMoffsetp,MoMoMdepthp,kmdstartip,kmdendip);
-    std::fill(v_MoM.begin(), v_MoM.begin()+32, 0);
-    std::fill(v_kmdtxid.begin(), v_kmdtxid.begin()+32, 0);
-    *notarized_heightp = 0;
-    if ( depth > 0 && notarized_height > 0 && nHeight > notarized_height-depth && nHeight <= notarized_height )
-    {
-        *MoMp = MoM;
-        *notarized_heightp = notarized_height;
-        *kmdtxidp = kmdtxid;
-    }
-    return(depth);
-}
-//------------------------------------------------------------
   bool core_rpc_server::check_core_ready()
   {
     if(!m_p2p.get_payload_object().is_synchronized())
@@ -237,6 +214,17 @@ int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,in
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
     res.version = MONERO_VERSION;
+    {
+        int32_t komodo_prevMoMheight();
+        extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
+        extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH;
+        res.notarized_hash = NOTARIZED_HASH.GetHex();
+        res.notarized_txid =  NOTARIZED_DESTTXID.GetHex();
+        res.notarized = (int)(NOTARIZED_HEIGHT);
+        res.prevMoMheight = (int)(komodo_prevMoMheight());
+        res.notarized_MoMdepth = (int)(NOTARIZED_MOMDEPTH);
+        res.notarized_MoM = NOTARIZED_MOM.GetHex();
+     }
     return true;
   }
   //-----------------------------------------------------------------------------------------------------------------
@@ -1816,6 +1804,17 @@ int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,in
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
     res.version = MONERO_VERSION;
+    {
+        int32_t komodo_prevMoMheight();
+        extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
+        extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH;
+        res.notarized_hash = NOTARIZED_HASH.GetHex();
+        res.notarized_txid =  NOTARIZED_DESTTXID.GetHex();
+        res.notarized = (int)(NOTARIZED_HEIGHT);
+        res.prevMoMheight = (int)(komodo_prevMoMheight());
+        res.notarized_MoMdepth = (int)(NOTARIZED_MOMDEPTH);
+        res.notarized_MoM = NOTARIZED_MOM.GetHex();
+     }
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -1922,14 +1921,15 @@ int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,in
     //fprintf(stderr,"height_MoM height.%d\n",height);
       MoM = komodo_calcMoM(height,MoMdepth);
       //MoM_arith = UintToArith256(MoM);
-      std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin()+32);
-      std::string str_MoM = bytes256_to_hex(v_MoM);
+      arith_uint256 v_MoM = UintToArith256(MoM);
+      std::string str_MoM = v_MoM.GetHex();
 
-//    res.push_back(std::make_pair("coin",(char *)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL)));
-//    res.push_back(std::make_pair("height",height));
-//    res.push_back(std::make_pair("MoMdepth",MoMdepth));
+    //res.push_back(std::make_pair("coin",(char *)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL)));
+    //res.push_back(std::make_pair("height",height));
+    //res.push_back(std::make_pair("MoMdepth",MoMdepth));
 
-    std::string coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
+
+    char* coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
     res.coin = coin;
     res.notarized_height = height;
     res.notarized_MoMdepth = MoMdepth;
@@ -1956,15 +1956,20 @@ int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,in
       error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
       error_resp.message = "height MoMHeight\n";
       return false;
+    }
 
-      if (m_core.get_current_blockchain_height() == 0 )
+      if (height == 0 )
       {
-        error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-        error_resp.message = "Error no active chain yet";
-        return false;
+        if (m_core.get_current_blockchain_height() == 0 )
+        {
+          error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+          error_resp.message = "Error no active chain yet";
+          return false;
+        }
+        height = (int32_t)(m_core.get_current_blockchain_height());
       }
-     }
-    int32_t timestamp;
+
+    uint64_t timestamp;
     int32_t notarized_height;
     uint256 MoM;
     uint256 kmdtxid;
@@ -1976,39 +1981,41 @@ int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,in
 
     timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(height);
     //fprintf(stderr,"height_MoM height.%d\n",height);
+    int32_t depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
     res.coin = coin;
     res.notarized_height = height;
     res.timestamp = timestamp;
-    int32_t depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
     if ( depth > 0 )
     {
-        int32_t komodo_prevMoMheight();
         res.notarized_MoMdepth = depth;
         res.notarized_height = notarized_height;
 
-        std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin() + 32);
-        std::string str_MoM = bytes256_to_hex(v_MoM);
+//        std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin() + 32);
+        arith_uint256 v_MoM = UintToArith256(MoM);
+        std::string str_MoM = v_MoM.GetHex();
 
-        std::vector<uint8_t> v_kmdtxid(kmdtxid.begin(), kmdtxid.begin() + 32);
-        std::string str_kmdtxid = bytes256_to_hex(v_kmdtxid);
+        arith_uint256 v_kmdtxid = UintToArith256(kmdtxid);
+        std::string str_kmdtxid = v_kmdtxid.GetHex();
 
         res.notarized_MoM = str_MoM;
         res.notarized_desttxid = str_kmdtxid;
 
         if ( ASSETCHAINS_SYMBOL[0] != 0 )
         {
-        std::vector<uint8_t> v_MoMoM(MoMoM.begin(), MoMoM.begin() + 32);
-        std::string str_MoMoM = bytes256_to_hex(v_MoMoM);
+        arith_uint256 v_MoMoM = UintToArith256(MoMoM);
+        std::string str_MoMoM = v_MoMoM.GetHex();
 
             res.MoMoM = str_MoMoM;
             res.MoMoMoffset = MoMoMoffset;
             res.MoMoMdepth = MoMoMdepth;
             res.kmdstarti = kmdstarti;
             res.kmdendi = kmdendi;
+            res.status = CORE_RPC_STATUS_OK;
+            return true;
         }
     } else {
         error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-        error_resp.message = "Error no active chain yet";
+        error_resp.message = "Error: no MoM for height";
         return false; }
 
     res.status = CORE_RPC_STATUS_OK;
