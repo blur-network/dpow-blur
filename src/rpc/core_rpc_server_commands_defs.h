@@ -1027,9 +1027,9 @@ namespace cryptonote
       std::string version;
       std::string notarized_hash;
       std::string notarized_txid;
-      int32_t notarized;
-      int32_t prevMoMheight;
-      int32_t notarized_MoMdepth;
+      uint64_t notarized;
+      uint64_t prevMoMheight;
+      uint64_t notarized_MoMdepth;
       std::string notarized_MoM;
 
 
@@ -2289,8 +2289,8 @@ namespace cryptonote
   {
     struct request
     {
-      std::string height;
-      std::string MoMdepth;
+      uint64_t height;
+      uint64_t MoMdepth;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(height)
@@ -2301,8 +2301,8 @@ namespace cryptonote
     struct response
     {
       std::string coin;
-      int32_t notarized_height;
-      int32_t notarized_MoMdepth;
+      uint64_t notarized_height;
+      uint64_t notarized_MoMdepth;
       std::string notarized_MoM;
       std::string status;
 
@@ -2320,7 +2320,7 @@ namespace cryptonote
   {
     struct request
     {
-      std::string height;
+      uint64_t height;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(height)
@@ -2330,17 +2330,17 @@ namespace cryptonote
     struct response
     {
       std::string coin;
-      int32_t prevMoMheight;
-      uint32_t timestamp;
-      int32_t notarized_MoMdepth;
-      int32_t notarized_height;
+      uint64_t prevMoMheight;
+      uint64_t timestamp;
+      uint64_t notarized_MoMdepth;
+      uint64_t notarized_height;
       std::string notarized_MoM;
       std::string notarized_desttxid;
       std::string MoMoM;
-      int32_t MoMoMoffset;
-      int32_t MoMoMdepth;
-      int32_t kmdstarti;
-      int32_t kmdendi;
+      uint64_t MoMoMoffset;
+      uint64_t MoMoMdepth;
+      uint64_t kmdstarti;
+      uint64_t kmdendi;
       std::string status;
 
       BEGIN_KV_SERIALIZE_MAP()

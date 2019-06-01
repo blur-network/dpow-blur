@@ -74,8 +74,7 @@ namespace
 
 namespace cryptonote
 {
-  char ASSETCHAINS_SYMBOL[65] = { "BLUR" };
-
+ const char ASSETCHAINS_SYMBOL[64] = { "BLUR" };
   //-----------------------------------------------------------------------------------
   void core_rpc_server::init_options(boost::program_options::options_description& desc)
   {
@@ -1869,8 +1868,8 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error&  error_resp)
   {
-    int32_t height;
-    int32_t MoMdepth;
+    uint64_t height;
+    uint64_t MoMdepth;
     uint256 MoM;
 
   PERF_TIMER(on_calc_MoM);
@@ -1883,10 +1882,10 @@ namespace cryptonote
     }
   }
 
-    height = std::stoi(req.height);
-    MoMdepth = std::stoi(req.MoMdepth);
+    height = req.height;
+    MoMdepth = req.MoMdepth;
 
-    bool req_filled = (height == 0 || MoMdepth == 0) ? 1 : 0;
+    bool req_filled = (height != 0 && MoMdepth != 0);
     if (!req_filled) {
       error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
       error_resp.message = "calc_MoM height MoMdepth\n";
@@ -1908,7 +1907,7 @@ namespace cryptonote
     //res.push_back(std::make_pair("MoMdepth",MoMdepth));
 
 
-    char* coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
+    char* coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : "BLUR");
     res.coin = coin;
     res.notarized_height = height;
     res.notarized_MoMdepth = MoMdepth;
@@ -1928,7 +1927,7 @@ namespace cryptonote
       }
     }
     std::string coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
-    int32_t height = std::stoi(req.height);
+    uint64_t height = req.height;
     bool req_filled = (height >= 1) ? 1 : 0;
 
     if (!req_filled) {
@@ -1945,22 +1944,22 @@ namespace cryptonote
           error_resp.message = "Error no active chain yet";
           return false;
         }
-        height = (int32_t)(m_core.get_current_blockchain_height());
+        height = m_core.get_current_blockchain_height();
       }
 
     uint64_t timestamp;
-    int32_t notarized_height;
+    uint64_t notarized_height;
     uint256 MoM;
     uint256 kmdtxid;
     uint256 MoMoM;
-    int32_t MoMoMoffset;
-    int32_t MoMoMdepth;
-    int32_t kmdstarti;
-    int32_t kmdendi;
+    uint64_t MoMoMoffset;
+    uint64_t MoMoMdepth;
+    uint64_t kmdstarti;
+    uint64_t kmdendi;
 
     timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(height);
     //fprintf(stderr,"height_MoM height.%d\n",height);
-    int32_t depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
+    uint64_t depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
     res.coin = coin;
     res.notarized_height = height;
     res.timestamp = timestamp;
