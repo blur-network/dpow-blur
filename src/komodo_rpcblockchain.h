@@ -17,14 +17,13 @@
 #define komodo_rpcblockchain_h
 
 
-uint64_t komodo_MoMdata(uint64_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,uint64_t height,uint256 *MoMoMp,uint64_t *MoMoMoffsetp,uint64_t *MoMoMdepthp,uint64_t *kmdstartip,uint64_t *kmdendip);
-uint256 komodo_calcMoM(uint64_t height,uint64_t MoMdepth);
+int32_t komodo_MoMdata(int32_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,int32_t height,uint256 *MoMoMp,int32_t *MoMoMoffsetp,int32_t *MoMoMdepthp, int32_t *kmdstartip, int32_t *kmdendip);
 
 
-uint64_t komodo_MoM(uint64_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,uint64_t nHeight,uint256 *MoMoMp,uint64_t *MoMoMoffsetp,uint64_t *MoMoMdepthp,uint64_t *kmdstartip,uint64_t *kmdendip)
+int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,int32_t nHeight,uint256 *MoMoMp,int32_t *MoMoMoffsetp,int32_t *MoMoMdepthp,int32_t *kmdstartip,int32_t *kmdendip)
 {
-    uint64_t depth;
-    uint64_t notarized_ht;
+    int32_t depth;
+    int32_t notarized_ht;
     uint256 MoM;
     uint256 kmdtxid;
 

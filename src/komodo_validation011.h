@@ -54,14 +54,24 @@
 }*/
 
 #include "cryptonote_core/cryptonote_tx_utils.h"
-#include "wallet/api/wallet2_api.h"
 #include "cryptonote_core/blockchain.h"
 #include "crypto/crypto.h"
 #include "crypto/hash-ops.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
-#include "common/base58.h"
 #include "common/hex_str.h"
 #include "rpc/core_rpc_server.h"
+#include <limits.h>
+#include <assert.h>
+#include <stddef.h>
+#include <string.h>
+
+#ifdef _MSC_VER
+#include <malloc.h>
+#elif !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__DragonFly__)
+ #include <alloca.h>
+#else
+ #include <stdlib.h>
+#endif
 
 #define SATOSHIDEN ((uint64_t)100000000L)
 #define dstr(x) ((double)(x) / SATOSHIDEN)
@@ -79,11 +89,29 @@
 
 const char ASSETCHAINS_SYMBOL[65] = { "BLUR" };
 
-union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4]; uint64_t txid; };
+union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4]; uint64_t txid;};
 typedef union _bits256 bits256;
 
 struct sha256_vstate { uint64_t length; uint32_t state[8],curlen; uint8_t buf[64]; };
 struct rmd160_vstate { uint64_t length; uint8_t buf[64]; uint32_t curlen, state[5]; };
+
+uint64_t widen(int32_t si) {
+  si = INT_MIN;
+  uint64_t ui;
+try {
+  if (si < 0) {
+   throw si; 
+  } else {
+    ui = (uint64_t)si;
+  }
+  return ui;
+}
+ catch (int32_t &si) {
+ std::cerr << "Error, negative integer cannot be converted to uint safely!";
+ return 0;
+ } 
+}
+
 //int32_t KOMODO_TXINDEX = 1;
 /*void ImportAddress(CWallet* const pwallet, const CBitcoinAddress& address, const std::string& strLabel);
 
@@ -569,7 +597,7 @@ int32_t init_hexbytes_noT(char *hexbytes,unsigned char *message,long len)
     return((int32_t)len*2+1);
 }
 
-uint32_t komodo_chainactive_timestamp()
+int32_t komodo_chainactive_timestamp()
 {
    cryptonote::BlockchainDB* m_db = nullptr;
    cryptonote::block b;
@@ -580,7 +608,7 @@ uint32_t komodo_chainactive_timestamp()
     else return(0);
 }
 
-uint64_t komodo_chainactive(uint64_t height)
+int32_t komodo_chainactive(uint64_t height)
 {
     cryptonote::BlockchainDB* m_db = nullptr;
     uint64_t tipindex = (m_db->height()-1);
@@ -594,7 +622,7 @@ uint64_t komodo_chainactive(uint64_t height)
     return(0);
 }
 
-uint32_t komodo_heightstamp(uint64_t height)
+int32_t komodo_heightstamp(uint64_t height)
 {
     cryptonote::BlockchainDB* m_db = nullptr;
     cryptonote::block b = m_db->get_block_from_height((uint64_t)(height));
@@ -786,7 +814,7 @@ int32_t komodo_init()
     decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
     return(0);
 }
-/*
+
 size_t tree_hash_count(size_t count)
 {
   assert( count >= 3 ); // cases for 0,1,2 are handled elsewhere
@@ -796,49 +824,51 @@ size_t tree_hash_count(size_t count)
   while(pow < count) pow <<= 1;
   return pow >> 1;
 }
-
-bits256 iguana_merkle(char *root_hash, size_t count)
+/*
+void merkle(const char (*hashes)[HASH_SIZE], size_t count, char *root_hash)
 {
-  const char (*hashes)[crypto::HASH_SIZE];
   assert(count > 0);
   if (count == 1) {
-    memcpy(root_hash, hashes, crypto::HASH_SIZE);
+    memcpy(root_hash, hashes, HASH_SIZE);
   } else if (count == 2) {
-    cn_fast_hash(hashes, 2 * crypto::HASH_SIZE, root_hash);
+    crypto::cn_fast_hash(hashes, 2 * HASH_SIZE, root_hash);
   } else {
     size_t i, j;
     
     size_t cnt = tree_hash_count(count);
 
-    char (*ints)[crypto::HASH_SIZE];
-    size_t ints_size = count * crypto::HASH_SIZE;
+    char (*ints)[HASH_SIZE];
+    size_t ints_size = count * HASH_SIZE;
     ints = alloca(ints_size);   memset( ints , 0 , ints_size);  // allocate, and zero out as extra protection for using uninitialized mem
 
-    memcpy(ints, hashes, (2 * cnt - count) * crypto::HASH_SIZE);
+    memcpy(ints, hashes, (2 * cnt - count) * HASH_SIZE);
 
     for (i = 2 * cnt - count, j = 2 * cnt - count; j < cnt; i += 2, ++j) {
-      cn_fast_hash(hashes[i], 64, ints[j]);
+      crypto::cn_fast_hash(hashes[i], 64, ints[j]);
     }
     assert(i == count);
 
     while (cnt > 2) {
       cnt >>= 1;
       for (i = 0, j = 0; j < cnt; i += 2, ++j) {
-        cn_fast_hash(ints[i], 64, ints[j]);
+        crypto::cn_fast_hash(ints[i], 64, ints[j]);
       }
     }
 
-    cn_fast_hash(ints[0], 64, root_hash);
-  } */
- bits256 iguana_merkle(cryptonote::block& b, int txn_count)
+    crypto::cn_fast_hash(ints[0], 64, root_hash);
+  }
+  
+}
+*/
+ bits256 iguana_merkle(cryptonote::block& b, int txn_count)  
  {
+ // this should be changed to accept the merkle root.  We don't need
+ // to take a block if we're using roots anyway.
   
   int i,n=0,prev; uint8_t serialized[sizeof(crypto::hash) * 2];
-    //const crypto::hash tree_hash = cryptonote::get_tx_tree_hash(b.tx_hashes);
-    std::string tree_str = epee::string_tools::pod_to_hex((cryptonote::get_tx_tree_hash(b.tx_hashes)));
-    uint256 tree_uint = (uint256)hex_to_bytes256(tree_str);
+    crypto::hash tree_hash = cryptonote::get_tx_tree_hash(b.tx_hashes);
     bits256 *tree = nullptr;
-    memcpy(&tree,&tree_uint,sizeof(tree_uint));
+    memcpy(&tree,&tree_hash,sizeof(tree_hash));
     
     if ( txn_count == 1 )
         return(tree[0]);
@@ -860,43 +890,43 @@ bits256 iguana_merkle(char *root_hash, size_t count)
     return(tree[n]);
 }
 
-uint256 komodo_calcMoM(uint64_t height,uint64_t MoMdepth)
+uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth)
 {
     cryptonote::BlockchainDB* m_db = nullptr;
 
     static uint256 zero;
-    bits256 MoM, *tree;
+    bits256 *MoM, *tree;
     std::vector<cryptonote::block> blocks; 
-    uint64_t i;
+    int32_t i;
+    uint64_t uMoMdepth = widen(MoMdepth);
 
-    if ( MoMdepth >= height )
+
+    if ( uMoMdepth >= height )
         return(zero);
     
     tree = (bits256*)calloc(MoMdepth * 3,sizeof(*tree));
 
-    for (uint64_t j=0; j < (uint64_t)(MoMdepth); j++) {
+    for (uint64_t j=0; j < uMoMdepth; j++) {
       uint64_t h_diff = height - j;
       cryptonote::block b = m_db->get_block_from_height(h_diff);
       blocks.push_back(b);
     }
+    
+    std::vector<std::vector<uint8_t>> merkles;
 
-    cryptonote::blobdata merkleblob;
-    for (i=0; i<MoMdepth; i++)
+    for (i=0; i < MoMdepth; i++)
     {
-        if (komodo_chainactive(height - i) != 0) {
-            merkleblob = epee::string_tools::pod_to_hex(cryptonote::get_tx_tree_hash(blocks[i].tx_hashes));
-            std::vector<uint8_t> merkleuint = hex_to_bytes256(merkleblob);
-            memcpy(&tree[i],&merkleuint,sizeof(merkleuint));
-        }
-        else
-        {
+        if (komodo_chainactive(height - i) == 0) {
             free(tree);
             return(zero);
         }
+          std::string merkle_str = epee::string_tools::pod_to_hex(cryptonote::get_tx_tree_hash(blocks[i].tx_hashes));
+          std::vector<uint8_t> merkle = hex_to_bytes256(merkle_str);
+          merkles.push_back(merkle);
     }
-    MoM = iguana_merkle(blocks[i],MoMdepth);
-    free(tree);
-    return(*(uint256 *)&MoM);
+    memset(MoM, 0, crypto::HASH_SIZE);
+    /*iguana_merkle(blocks[i],MoMdepth);*/ 
+    return(*(uint256*)MoM);
 }
 
 int32_t komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp)
@@ -996,7 +1026,7 @@ int32_t komodo_notarized_height(uint64_t *prevMoMheightp, uint256 *hashp,uint256
     return(NOTARIZED_HEIGHT);
 }
 
-uint64_t komodo_MoMdata(uint64_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,uint64_t height,uint256 *MoMoMp, uint64_t *MoMoMoffsetp, uint64_t *MoMoMdepthp, uint64_t *kmdstartip, uint64_t *kmdendip)
+int32_t komodo_MoMdata(int32_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,int32_t height,uint256 *MoMoMp, int32_t *MoMoMoffsetp, int32_t *MoMoMdepthp, int32_t *kmdstartip, int32_t *kmdendip)
 {
     struct notarized_checkpoint *np = 0;
     if ( (np= komodo_npptr(height)) != 0 )
@@ -1069,14 +1099,14 @@ int32_t komodo_notarizeddata(uint64_t nHeight,uint256 *notarized_hashp,uint256 *
     memset(notarized_desttxidp,0,sizeof(*notarized_desttxidp));
     return(0);
 }
-/*
-void komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 notarized_hash,uint256 notarized_desttxid,uint256 MoM,uint64_t MoMdepth)
+
+void komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 notarized_hash,uint256 notarized_desttxid,uint256 MoM,int32_t MoMdepth)
 {
-    static int didinit; static uint256 zero; static FILE *fp; CBlockIndex *pindex; struct notarized_checkpoint *np,N; long fpos;
+    static int didinit; static uint256 zero; static FILE *fp; uint64_t pindex; struct notarized_checkpoint *np,N; long fpos;
     if ( didinit == 0 )
     {
-        char fname[512];int32_t latestht = 0;
-        //decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
+        char fname[512]; uint64_t latestht = 0;
+        decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
         pthread_mutex_init(&komodo_mutex,NULL);
 //#ifdef _WIN32
 //        sprintf(fname,"%s\\notarizations",GetDefaultDataDir().string().c_str());
@@ -1111,7 +1141,7 @@ void komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 
             if ( ftell(fp) !=  fpos )
                 fseek(fp,fpos,SEEK_SET);
         }
-        LogPrintf("dpow: finished loading %s [%s]\n",fname,NOTARY_PUBKEY.c_str());
+        printf("dpow: finished loading %s [%s]\n",fname,NOTARY_PUBKEY.c_str());
         didinit = 1;
     }
     if ( notarized_height == 0 )
@@ -1121,13 +1151,18 @@ void komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 
         fprintf(stderr,"komodo_notarized_update REJECT notarized_height %d > %d nHeight\n",notarized_height,nHeight);
         return;
     }
-    pindex = komodo_chainactive(notarized_height);
-    if ( pindex == 0 || pindex->GetBlockHash() != notarized_hash || notarized_height != pindex->nHeight )
+    pindex = widen(komodo_chainactive(notarized_height));
+    cryptonote::BlockchainDB *m_db = nullptr;
+    crypto::hash db_hash = m_db->get_block_hash_from_height(pindex);
+    uint256 hash;
+    std::vector<unsigned char> db_v = hex_to_bytes256(epee::string_tools::pod_to_hex(db_hash));
+    hash = *(uint256*)&db_v;
+    if ( pindex == 0 || hash != notarized_hash || notarized_height != pindex )
     {
-        fprintf(stderr,"komodo_notarized_update reject nHeight.%d notarized_height.%d:%d\n",nHeight,notarized_height,(int32_t)pindex->nHeight);
+        fprintf(stderr,"komodo_notarized_update reject nHeight.%llu notarized_height.%llu:%llu\n",nHeight,notarized_height, pindex);
         return;
     }
-    fprintf(stderr,"komodo_notarized_update nHeight.%d notarized_height.%d prev.%d\n",nHeight,notarized_height,NPOINTS!=0?NPOINTS[NUM_NPOINTS-1].notarized_height:-1);
+    fprintf(stderr,"komodo_notarized_update nHeight.%llu notarized_height.%llu prev.%d\n",nHeight,notarized_height,NPOINTS!=0?NPOINTS[NUM_NPOINTS-1].notarized_height:-1);
     portable_mutex_lock(&komodo_mutex);
     NPOINTS = (struct notarized_checkpoint *)realloc(NPOINTS,(NUM_NPOINTS+1) * sizeof(*NPOINTS));
     np = &NPOINTS[NUM_NPOINTS++];
@@ -1151,20 +1186,21 @@ void komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 
     portable_mutex_unlock(&komodo_mutex);
 }
 
-int32_t komodo_checkpoint(int32_t *notarized_heightp,int32_t nHeight,uint256 hash)
+int32_t komodo_checkpoint(int32_t *notarized_heightp, int32_t nHeight, crypto::hash hash)
 {
-
-    int32_t notarized_height; uint256 zero,notarized_hash,notarized_desttxid; CBlockIndex *notary; CBlockIndex *pindex;
+    cryptonote::BlockchainDB *m_db = nullptr;
+    
+    int32_t notarized_height; uint256 zero,notarized_hash,notarized_desttxid; uint64_t notary; uint64_t pindex;
     memset(&zero,0,sizeof(zero));
     //komodo_notarized_update(0,0,zero,zero,zero,0);
-    if ( (pindex= chainActive.Tip()) == 0 )
+    if ( (pindex= m_db->height()) == 0 )
         return(-1);
-    notarized_height = komodo_notarizeddata(pindex->nHeight,&notarized_hash,&notarized_desttxid);
+    notarized_height = komodo_notarizeddata(pindex,&notarized_hash,&notarized_desttxid);
     *notarized_heightp = notarized_height;
-    if ( notarized_height >= 0 && notarized_height <= pindex->nHeight && (notary= mapBlockIndex[notarized_hash]) != 0 )
+    if ( notarized_height >= 0 && notarized_height <= pindex && (notary= m_db->get_block_height(hash) != 0 ))
     {
-        printf("nHeight.%d -> (%d %s)\n",pindex->nHeight,notarized_height,notarized_hash.ToString().c_str());
-        if ( notary->nHeight == notarized_height ) // if notarized_hash not in chain, reorg
+        printf("nHeight.%d -> (%d %s)\n",pindex,notarized_height,notarized_hash);
+        if ( notary == notarized_height ) // if notarized_hash not in chain, reorg
         {
             if ( nHeight < notarized_height )
             {
@@ -1176,12 +1212,12 @@ int32_t komodo_checkpoint(int32_t *notarized_heightp,int32_t nHeight,uint256 has
                 fprintf(stderr,"nHeight.%d == NOTARIZED_HEIGHT.%d, diff hash\n",nHeight,notarized_height);
                 return(-1);
             }
-        } else fprintf(stderr,"unexpected error notary_hash %s ht.%d at ht.%d\n",notarized_hash.ToString().c_str(),notarized_height,notary->nHeight);
+        } else fprintf(stderr,"unexpected error notary_hash %s ht.%d at ht.%d\n",notarized_hash,notarized_height,notary);
     } else if ( notarized_height > 0 )
-        fprintf(stderr,"%s couldnt find notarized.(%s %d) ht.%d\n",ASSETCHAINS_SYMBOL,notarized_hash.ToString().c_str(),notarized_height,pindex->nHeight);
+        fprintf(stderr,"%s couldnt find notarized.(%s %d) ht.%d\n",ASSETCHAINS_SYMBOL,notarized_hash,notarized_height,pindex);
     return(0);
 }
-
+/*
 void komodo_voutupdate(int32_t txi,int32_t vout,uint8_t *scriptbuf,int32_t scriptlen,int32_t height,int32_t *specialtxp,int32_t *notarizedheightp,uint64_t value,int32_t notarized,uint64_t signedmask)
 {
 
