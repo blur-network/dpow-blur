@@ -58,6 +58,8 @@
 #include "crypto/crypto.h"
 #include "crypto/hash-ops.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
+#include "blockchain_db/lmdb/db_lmdb.h"
+#include "komodo_rpcblockchain.h"
 #include "common/hex_str.h"
 #include "rpc/core_rpc_server.h"
 #include <limits.h>
@@ -95,24 +97,10 @@ typedef union _bits256 bits256;
 struct sha256_vstate { uint64_t length; uint32_t state[8],curlen; uint8_t buf[64]; };
 struct rmd160_vstate { uint64_t length; uint8_t buf[64]; uint32_t curlen, state[5]; };
 
-uint64_t widen(int32_t si) {
-  si = INT_MIN;
-  uint64_t ui;
-try {
-  if (si < 0) {
-   throw si; 
-  } else {
-    ui = (uint64_t)si;
-  }
-  return ui;
-}
- catch (int32_t &si) {
- std::cerr << "Error, negative integer cannot be converted to uint safely!";
- return 0;
- } 
-}
+cryptonote::BlockchainDB *m_db;
 
 //int32_t KOMODO_TXINDEX = 1;
+
 /*void ImportAddress(CWallet* const pwallet, const CBitcoinAddress& address, const std::string& strLabel);
 
 int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsize, uint256 txid,int32_t n)
@@ -608,25 +596,30 @@ int32_t komodo_chainactive_timestamp()
     else return(0);
 }
 
-int32_t komodo_chainactive(uint64_t height)
+bool komodo_chainactive(uint64_t &height, cryptonote::block_header &tipindex)
 {
-    cryptonote::BlockchainDB* m_db = nullptr;
-    uint64_t tipindex = (m_db->height()-1);
-    if (tipindex != 0)
+    crypto::hash hash = m_db->get_block_hash_from_height(height);
+    LOG_PRINT_L3("KomodoValidation::" << __func__);
+    cryptonote::block_header b = m_db->get_block_header(hash);
+    crypto::hash tiphash = m_db->top_block_hash();
+    tipindex = m_db->get_block_header(tiphash);
+    
+    if (m_db->height() != 0)
     {
-        if ( height <= tipindex )
-            return(tipindex);
+        if ( height <= m_db->height() )
+            return true;
         else fprintf(stderr,"komodo_chainactive height %d > active.%d\n",height,tipindex);
     }
     fprintf(stderr,"komodo_chainactive null chainActive.Tip() height %d\n",height);
-    return(0);
+    return false;
 }
 
 int32_t komodo_heightstamp(uint64_t height)
 {
     cryptonote::BlockchainDB* m_db = nullptr;
-    cryptonote::block b = m_db->get_block_from_height((uint64_t)(height));
-    if ( height > 0 && (komodo_chainactive(height)) != 0 )
+    cryptonote::block_header b;
+    bool activechain = komodo_chainactive(height, b);
+    if ( height > 0 && (activechain))
         return(b.timestamp);
     else fprintf(stderr,"komodo_heightstamp null ptr for block.%d\n",height);
     return(0);
@@ -825,23 +818,23 @@ size_t tree_hash_count(size_t count)
   return pow >> 1;
 }
 /*
-void merkle(const char (*hashes)[HASH_SIZE], size_t count, char *root_hash)
+void merkle(const char (*hashes)[crypto::HASH_SIZE], size_t count, char *root_hash)
 {
   assert(count > 0);
   if (count == 1) {
-    memcpy(root_hash, hashes, HASH_SIZE);
+    memcpy(root_hash, hashes, crypto::HASH_SIZE);
   } else if (count == 2) {
-    crypto::cn_fast_hash(hashes, 2 * HASH_SIZE, root_hash);
+    crypto::cn_fast_hash(hashes, 2 * crypto::HASH_SIZE, root_hash);
   } else {
     size_t i, j;
     
     size_t cnt = tree_hash_count(count);
 
-    char (*ints)[HASH_SIZE];
-    size_t ints_size = count * HASH_SIZE;
+    char (*ints)[crypto::HASH_SIZE];
+    size_t ints_size = count * sizeof(crypto::HASH_SIZE);
     ints = alloca(ints_size);   memset( ints , 0 , ints_size);  // allocate, and zero out as extra protection for using uninitialized mem
 
-    memcpy(ints, hashes, (2 * cnt - count) * HASH_SIZE);
+    memcpy(ints, hashes, (2 * cnt - count) * crypto::HASH_SIZE);
 
     for (i = 2 * cnt - count, j = 2 * cnt - count; j < cnt; i += 2, ++j) {
       crypto::cn_fast_hash(hashes[i], 64, ints[j]);
@@ -857,18 +850,15 @@ void merkle(const char (*hashes)[HASH_SIZE], size_t count, char *root_hash)
 
     crypto::cn_fast_hash(ints[0], 64, root_hash);
   }
-  
-}
-*/
- bits256 iguana_merkle(cryptonote::block& b, int txn_count)  
+  */
+
+ bits256 iguana_merkle(bits256 *root_hash, int txn_count)  
  {
- // this should be changed to accept the merkle root.  We don't need
- // to take a block if we're using roots anyway.
   
   int i,n=0,prev; uint8_t serialized[sizeof(crypto::hash) * 2];
-    crypto::hash tree_hash = cryptonote::get_tx_tree_hash(b.tx_hashes);
+   // crypto::hash tree_hash = cryptonote::get_tx_tree_hash(b.tx_hashes);
     bits256 *tree = nullptr;
-    memcpy(&tree,&tree_hash,sizeof(tree_hash));
+    memcpy(&tree,&root_hash,sizeof(root_hash));
     
     if ( txn_count == 1 )
         return(tree[0]);
@@ -890,29 +880,51 @@ void merkle(const char (*hashes)[HASH_SIZE], size_t count, char *root_hash)
     return(tree[n]);
 }
 
+
+uint256 komodo_calcMoM(int32_t height,int32_t MoMdepth)
+{
+    static uint256 zero; bits256 MoM,*tree; 
+    int32_t i;
+
+    crypto::hash hash = m_db->get_block_hash_from_height(height);
+    cryptonote::block_header pindex;
+
+
+    if ( MoMdepth >= height )
+        return(zero);
+
+    tree = (bits256 *)calloc(MoMdepth * 3,sizeof(*tree));
+
+    for (i=0; i<MoMdepth; i++)
+    {
+        uint64_t h_diff = (uint64_t)(height - i);    
+        bool active = komodo_chainactive(h_diff, pindex);
+        
+        if (active){
+          memcpy(&tree[i],0,sizeof(bits256));
+        } else {
+            free(tree);
+            return(zero);
+        }
+    }
+    MoM = iguana_merkle(tree,MoMdepth);
+    free(tree);
+    return(*(uint256 *)&MoM);
+}
+/*
 uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth)
 {
-    cryptonote::BlockchainDB* m_db = nullptr;
-
     static uint256 zero;
     bits256 *MoM, *tree;
     std::vector<cryptonote::block> blocks; 
     int32_t i;
-    uint64_t uMoMdepth = widen(MoMdepth);
 
-
-    if ( uMoMdepth >= height )
+    if ( MoMdepth >= height )
         return(zero);
     
     tree = (bits256*)calloc(MoMdepth * 3,sizeof(*tree));
 
-    for (uint64_t j=0; j < uMoMdepth; j++) {
-      uint64_t h_diff = height - j;
-      cryptonote::block b = m_db->get_block_from_height(h_diff);
-      blocks.push_back(b);
-    }
-    
-    std::vector<std::vector<uint8_t>> merkles;
+    std::vector<std::vector<uint8_t>> txs;
 
     for (i=0; i < MoMdepth; i++)
     {
@@ -925,10 +937,10 @@ uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth)
           merkles.push_back(merkle);
     }
     memset(MoM, 0, crypto::HASH_SIZE);
-    /*iguana_merkle(blocks[i],MoMdepth);*/ 
+    iguana_merkle(blocks[i],MoMdepth); 
     return(*(uint256*)MoM);
 }
-
+*/
 int32_t komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp)
 {
     static uint8_t elected_pubkeys0[64][33],elected_pubkeys1[64][33],did0,did1; static int32_t n0,n1;
@@ -1102,7 +1114,7 @@ int32_t komodo_notarizeddata(uint64_t nHeight,uint256 *notarized_hashp,uint256 *
 
 void komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 notarized_hash,uint256 notarized_desttxid,uint256 MoM,int32_t MoMdepth)
 {
-    static int didinit; static uint256 zero; static FILE *fp; uint64_t pindex; struct notarized_checkpoint *np,N; long fpos;
+    static int didinit; static uint256 zero; static FILE *fp; cryptonote::block_header pindex; struct notarized_checkpoint *np,N; long fpos;
     if ( didinit == 0 )
     {
         char fname[512]; uint64_t latestht = 0;
@@ -1151,13 +1163,11 @@ void komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 
         fprintf(stderr,"komodo_notarized_update REJECT notarized_height %d > %d nHeight\n",notarized_height,nHeight);
         return;
     }
-    pindex = widen(komodo_chainactive(notarized_height));
-    cryptonote::BlockchainDB *m_db = nullptr;
-    crypto::hash db_hash = m_db->get_block_hash_from_height(pindex);
-    uint256 hash;
-    std::vector<unsigned char> db_v = hex_to_bytes256(epee::string_tools::pod_to_hex(db_hash));
-    hash = *(uint256*)&db_v;
-    if ( pindex == 0 || hash != notarized_hash || notarized_height != pindex )
+    bool active = komodo_chainactive(*(uint64_t*)&notarized_height, pindex);
+//    crypto::hash db_hash = m_db->get_block_hash_from_height(m_db->height());
+//    uint256 hash;
+//    std::vector<unsigned char> db_v = hex_to_bytes256(epee::string_tools::pod_to_hex(db_hash));
+    if ( (!active) || notarized_height >= m_db->height() )
     {
         fprintf(stderr,"komodo_notarized_update reject nHeight.%llu notarized_height.%llu:%llu\n",nHeight,notarized_height, pindex);
         return;
@@ -1188,18 +1198,19 @@ void komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 
 
 int32_t komodo_checkpoint(int32_t *notarized_heightp, int32_t nHeight, crypto::hash hash)
 {
-    cryptonote::BlockchainDB *m_db = nullptr;
     
-    int32_t notarized_height; uint256 zero,notarized_hash,notarized_desttxid; uint64_t notary; uint64_t pindex;
+    int32_t notarized_height; uint256 zero,notarized_hash,notarized_desttxid; uint64_t notary; cryptonote::block_header pindex;
     memset(&zero,0,sizeof(zero));
     //komodo_notarized_update(0,0,zero,zero,zero,0);
-    if ( (pindex= m_db->height()) == 0 )
+    uint64_t activeheight = m_db->height();
+    bool active = komodo_chainactive(activeheight,pindex); 
+    if (!active)
         return(-1);
-    notarized_height = komodo_notarizeddata(pindex,&notarized_hash,&notarized_desttxid);
+    notarized_height = komodo_notarizeddata(m_db->height(),&notarized_hash,&notarized_desttxid);
     *notarized_heightp = notarized_height;
-    if ( notarized_height >= 0 && notarized_height <= pindex && (notary= m_db->get_block_height(hash) != 0 ))
+    if ( notarized_height >= 0 && notarized_height <= m_db->height() && (notary= m_db->get_block_height(hash) != 0 ))
     {
-        printf("nHeight.%d -> (%d %s)\n",pindex,notarized_height,notarized_hash);
+        printf("nHeight.%d -> (%d %s)\n",m_db->height(),notarized_height,notarized_hash);
         if ( notary == notarized_height ) // if notarized_hash not in chain, reorg
         {
             if ( nHeight < notarized_height )
