@@ -1004,7 +1004,7 @@ namespace cryptonote
       int32_t notarized;
       int32_t prevMoMheight;
       int32_t notarized_MoMdepth;
-      int32_t notarized_MoM;
+      std::string notarized_MoM;
       std::string status;
       
       BEGIN_KV_SERIALIZE_MAP()
