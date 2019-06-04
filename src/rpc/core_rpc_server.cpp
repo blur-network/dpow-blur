@@ -1919,7 +1919,8 @@ namespace cryptonote
     }
     
       MoM = komodo_calcMoM(height,MoMdepth);
-      std::string str_MoM = MoM.GetHex();
+      std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin()+32);
+      std::string str_MoM = bytes256_to_hex(v_MoM);
 
     char* coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : "BLUR");
     res.coin = coin;
@@ -1940,9 +1941,12 @@ namespace cryptonote
         error_resp.message = "Error no active chain yet";
         return false;
       }
-      uint64_t height = m_core.get_current_blockchain_height();
+      uint64_t height = m_core.get_current_blockchain_height()-1;
 
-    int32_t timestamp;
+      cryptonote::block blk = m_core.get_blockchain_storage().get_db().get_block_from_height(req.height);
+
+
+    uint64_t timestamp = blk.timestamp;
     int32_t notarized_height;
     uint256 MoM;
     uint256 kmdtxid;
@@ -1952,7 +1956,6 @@ namespace cryptonote
     int32_t kmdstarti;
     int32_t kmdendi;
 
-    timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(height);
     //fprintf(stderr,"height_MoM height.%d\n",height);
     int32_t depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
     res.coin = coin;
