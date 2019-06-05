@@ -49,8 +49,8 @@ using namespace epee;
 #include "core_rpc_server_error_codes.h"
 #include "p2p/net_node.h"
 #include "version.h"
-#include "komodo_rpcblockchain.h"
-#include "komodo_validation011.h"
+#include "komodo/komodo_rpcblockchain.h"
+#include "komodo/komodo_validation011.h"
 #include "common/arith_uint256.h"
 #include "common/uint256.h"
 

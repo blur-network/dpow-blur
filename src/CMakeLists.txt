@@ -30,8 +30,6 @@
 
 if (WIN32 OR STATIC)
   add_definitions(-DSTATICLIB)
-  # miniupnp changed their static define
-  add_definitions(-DMINIUPNP_STATICLIB)
 endif ()
 
 # warnings are cleared only for GCC on Linux
@@ -102,6 +100,7 @@ add_subdirectory(ringct)
 add_subdirectory(checkpoints)
 add_subdirectory(cryptonote_basic)
 add_subdirectory(cryptonote_core)
+add_subdirectory(komodo)
 add_subdirectory(multisig)
 if(NOT IOS)
   add_subdirectory(blockchain_db)
