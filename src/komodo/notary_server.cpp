@@ -38,13 +38,14 @@
 using namespace epee;
 
 #include "notary_server.h"
+#include "wallet/wallet_args.h"
 #include "common/command_line.h"
 #include "common/i18n.h"
 #include "cryptonote_config.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_basic/account.h"
 #include "multisig/multisig.h"
-#include "notary_server_commands_defs.h"
+//#include "notary_server_commands_defs.h"
 #include "misc_language.h"
 #include "string_coding.h"
 #include "string_tools.h"
@@ -85,19 +86,19 @@ namespace tools
   }
 
   //------------------------------------------------------------------------------------------------------------------------------
-  notary_server::notary_server():m_notary_wallet(NULL), rpc_login_file(), m_stop(false), m_trusted_daemon(false), m_vm(NULL)
+  notary_server::notary_server():m_wallet(NULL), rpc_login_file(), m_stop(false), m_trusted_daemon(false), m_vm(NULL)
   {
   }
   //------------------------------------------------------------------------------------------------------------------------------
   notary_server::~notary_server()
   {
-    if (m_notary_wallet)
-      delete m_notary_wallet;
+    if (m_wallet)
+      delete m_wallet;
   }
   //------------------------------------------------------------------------------------------------------------------------------
   void notary_server::set_wallet(wallet2 *cr)
   {
-    m_notary_wallet = cr;
+    m_wallet = cr;
   }
   //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::run()
@@ -105,7 +106,7 @@ namespace tools
     m_stop = false;
     m_net_server.add_idle_handler([this](){
       try {
-        if (m_notary_wallet) m_notary_wallet->refresh();
+        if (m_wallet) m_wallet->refresh();
       } catch (const std::exception& ex) {
         LOG_ERROR("Exception at while refreshing, what=" << ex.what());
       }
@@ -126,11 +127,11 @@ namespace tools
   //------------------------------------------------------------------------------------------------------------------------------
   void notary_server::stop()
   {
-    if (m_notary_wallet)
+    if (m_wallet)
     {
-      m_notary_wallet->store();
-      delete m_notary_wallet;
-      m_notary_wallet = NULL;
+      m_wallet->store();
+      delete m_wallet;
+      m_wallet = NULL;
     }
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -144,8 +145,8 @@ namespace tools
     tools::wallet2 *walvars;
     std::unique_ptr<tools::wallet2> tmpwal;
 
-    if (m_notary_wallet)
-      walvars = m_notary_wallet;
+    if (m_wallet)
+      walvars = m_wallet;
     else
     {
       tmpwal = tools::wallet2::make_dummy(*m_vm, password_prompter);
@@ -241,7 +242,7 @@ namespace tools
   }
   bool notary_server::not_open(epee::json_rpc::error& er)
   {
-      er.code = WALLET_RPC_ERROR_CODE_NOT_OPEN;
+      er.code = -22;
       er.message = "No wallet file";
       return false;
   }
@@ -252,10 +253,10 @@ int main(int argc, char** argv)
 
 namespace po = boost::program_options;
 
-  const auto arg_notary_wallet_file = notary_wallet_args::arg_notary_wallet_file();
-  const auto arg_from_json = notary_wallet_args::arg_generate_from_json();
+  const auto arg_notary_wallet_file = wallet_args::arg_wallet_file();
+  const auto arg_from_json = wallet_args::arg_generate_from_json();
 
-  po::options_description desc_params(notary_wallet_args::tr("Wallet options"));
+  po::options_description desc_params(wallet_args::tr("Wallet options"));
   tools::wallet2::init_options(desc_params);
   command_line::add_arg(desc_params, arg_rpc_bind_port);
   command_line::add_arg(desc_params, arg_rpc_bind_port);
@@ -268,14 +269,14 @@ namespace po = boost::program_options;
   command_line::add_arg(desc_params, arg_notary_wallet_dir);
   command_line::add_arg(desc_params, arg_prompt_for_password);
 
-  const auto vm = notary_wallet_args::main(
+  const auto vm = wallet_args::main(
     argc, argv,
-    "blur-notary-server [--wallet-file=<file>|--generate-from-json=<file>|--wallet-dir=<directory>] [--rpc-bind-port=<port>]",
+    "notary-server-rpc [--wallet-file=<file>|--generate-from-json=<file>|--wallet-dir=<directory>] [--rpc-bind-port=<port>]",
     tools::notary_server::tr("This is the DPoW RPC notarization wallet. It needs to connect to a BLUR daemon to work correctly. If you are not intending to create notarization transactions, use the BLUR RPC wallet instead."),
     desc_params,
     po::positional_options_description(),
     [](const std::string &s, bool emphasis){ epee::set_console_color(emphasis ? epee::console_color_white : epee::console_color_default, true); std::cout << s << std::endl; if (emphasis) epee::reset_console_color(); },
-    "blur-notary-server.log",
+    "notary-server-rpc.log",
     true
   );
   if (!vm)
@@ -296,7 +297,7 @@ namespace po = boost::program_options;
 
     const auto notary_wallet_file = command_line::get_arg(*vm, arg_notary_wallet_file);
     const auto from_json = command_line::get_arg(*vm, arg_from_json);
-    const auto notary_wallet_dir = command_line::get_arg(*vm, arg_notary_notary_wallet_dir);
+    const auto notary_wallet_dir = command_line::get_arg(*vm, arg_notary_wallet_dir);
     const auto prompt_for_password = command_line::get_arg(*vm, arg_prompt_for_password);
     const auto password_prompt = prompt_for_password ? password_prompter : nullptr;
 

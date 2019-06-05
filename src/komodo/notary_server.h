@@ -62,7 +62,7 @@ namespace tools
     void set_wallet(wallet2 *cr);
   private:
   
-      CHAIN_HTTP_TO_MAP2(connection_context); //forward http requests to uri map\
+      CHAIN_HTTP_TO_MAP2(connection_context);
   
     BEGIN_URI_MAP2()
       BEGIN_JSON_RPC_MAP("/json_rpc")
