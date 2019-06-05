@@ -271,12 +271,12 @@ namespace po = boost::program_options;
 
   const auto vm = wallet_args::main(
     argc, argv,
-    "notary-server-rpc [--wallet-file=<file>|--generate-from-json=<file>|--wallet-dir=<directory>] [--rpc-bind-port=<port>]",
+    "blur-notary-server-rpc [--wallet-file=<file>|--generate-from-json=<file>|--wallet-dir=<directory>] [--rpc-bind-port=<port>]",
     tools::notary_server::tr("This is the DPoW RPC notarization wallet. It needs to connect to a BLUR daemon to work correctly. If you are not intending to create notarization transactions, use the BLUR RPC wallet instead."),
     desc_params,
     po::positional_options_description(),
     [](const std::string &s, bool emphasis){ epee::set_console_color(emphasis ? epee::console_color_white : epee::console_color_default, true); std::cout << s << std::endl; if (emphasis) epee::reset_console_color(); },
-    "notary-server-rpc.log",
+    "blur-notary-server-rpc.log",
     true
   );
   if (!vm)

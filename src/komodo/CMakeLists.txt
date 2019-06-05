@@ -30,5 +30,5 @@ target_link_libraries(notary_server
     ${EXTRA_LIBRARIES})
 set_property(TARGET notary_server
   PROPERTY
-    OUTPUT_NAME "notary-server-rpc")
+    OUTPUT_NAME "blur-notary-server-rpc")
 install(TARGETS notary_server DESTINATION bin)
