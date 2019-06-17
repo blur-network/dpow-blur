@@ -75,21 +75,23 @@
  #include <stdlib.h>
 #endif
 
-#define SATOSHIDEN ((uint64_t)100000000L)
+static const uint64_t SATOSHIDEN = ((uint64_t)100000000L);
 #define dstr(x) ((double)(x) / SATOSHIDEN)
 #define portable_mutex_t pthread_mutex_t
 #define portable_mutex_init(ptr) pthread_mutex_init(ptr,NULL)
 #define portable_mutex_lock pthread_mutex_lock
 #define portable_mutex_unlock pthread_mutex_unlock
 
-#define CRYPTO777_PUBSECPSTR "020e46e79a2a8d12b9b5d12c7a91adb4e454edfae43c0a0cb805427d2ac7613fd9"
-#define KOMODO_MINRATIFY 11
-#define KOMODO_ELECTION_GAP 2000
-#define KOMODO_ASSETCHAIN_MAXLEN 65
-#define KOMODO_NOTARIES_TIMESTAMP1 1525132800 // May 1st 2018 1530921600 // 7/7/2017
-#define KOMODO_NOTARIES_HEIGHT1 ((814000 / KOMODO_ELECTION_GAP) * KOMODO_ELECTION_GAP)
+static const std::string CRYPTO777_PUBSECPSTR = "020e46e79a2a8d12b9b5d12c7a91adb4e454edfae43c0a0cb805427d2ac7613fd9";
+static const uint64_t KOMODO_MINRATIFY = 11;
+static const uint64_t  KOMODO_ELECTION_GAP = 2000;
+static const uint64_t  KOMODO_ASSETCHAIN_MAXLEN = 65;
+static const uint64_t  KOMODO_NOTARIES_TIMESTAMP1 = 1525132800; // May 1st 2018 1530921600 // 7/7/2017
+static const uint64_t  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP) * KOMODO_ELECTION_GAP);
 
-const char ASSETCHAINS_SYMBOL[65] = { "BLUR" };
+namespace komodo {
+
+const char ASSETCHAINS_SYMBOL[5] = { "BLUR" };
 
 union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4]; uint64_t txid;};
 typedef union _bits256 bits256;
@@ -1369,3 +1371,4 @@ void komodo_connectblock(uint64_t& height,cryptonote::block& b)
 */
 }
 
+} // namespace komodo

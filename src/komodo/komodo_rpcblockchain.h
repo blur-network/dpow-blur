@@ -16,6 +16,7 @@
 #ifndef komodo_rpcblockchain_h
 #define komodo_rpcblockchain_h
 
+namespace komodo {
 
 int32_t komodo_MoMdata(int32_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,int32_t height,uint256 *MoMoMp,int32_t *MoMoMoffsetp,int32_t *MoMoMdepthp, int32_t *kmdstartip, int32_t *kmdendip);
 
@@ -47,6 +48,7 @@ int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,in
     return(depth);
 }
 
+} // namespace komodo
 
 #endif /* komodo_rpcblockchain_h */
 

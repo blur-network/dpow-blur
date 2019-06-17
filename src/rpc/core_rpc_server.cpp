@@ -51,7 +51,6 @@ using namespace epee;
 #include "version.h"
 #include "komodo/komodo_rpcblockchain.h"
 #include "komodo/komodo_validation011.h"
-#include "common/arith_uint256.h"
 #include "common/uint256.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
@@ -74,7 +73,6 @@ namespace
 
 namespace cryptonote
 {
- const char ASSETCHAINS_SYMBOL[64] = { "BLUR" };
   //-----------------------------------------------------------------------------------
   void core_rpc_server::init_options(boost::program_options::options_description& desc)
   {
@@ -1883,14 +1881,14 @@ namespace cryptonote
       komodo_checkpoint(&notarized_height, height, hash)      
 */
       
-      res.assetchains_symbol = "BLUR";
+      res.assetchains_symbol = komodo::ASSETCHAINS_SYMBOL;
       res.current_chain_height = height;
-      res.notarized_hash = NOTARIZED_HASH.GetHex();
-      res.notarized_txid = NOTARIZED_DESTTXID.GetHex();
-      res.notarized = NOTARIZED_HEIGHT;
-      res.prevMoMheight = komodo_prevMoMheight();
-      res.notarized_MoMdepth = NOTARIZED_MOMDEPTH;
-      res.notarized_MoM = NOTARIZED_MOM.GetHex();
+      res.notarized_hash = komodo::NOTARIZED_HASH.GetHex();
+      res.notarized_txid = komodo::NOTARIZED_DESTTXID.GetHex();
+      res.notarized = komodo::NOTARIZED_HEIGHT;
+      res.prevMoMheight = komodo::komodo_prevMoMheight();
+      res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
+      res.notarized_MoM = komodo::NOTARIZED_MOM.GetHex();
 
      res.status = "OK";
      return true;
@@ -1918,11 +1916,11 @@ namespace cryptonote
       return false; 
     }
     
-      MoM = komodo_calcMoM(height,MoMdepth);
+      MoM = komodo::komodo_calcMoM(height,MoMdepth);
       std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin()+32);
       std::string str_MoM = bytes256_to_hex(v_MoM);
 
-    char* coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : "BLUR");
+    char* coin = (char*)(komodo::ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : "BLUR");
     res.coin = coin;
     res.notarized_height = height;
     res.notarized_MoMdepth = MoMdepth;
@@ -1933,7 +1931,7 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error_resp)
   {
-    std::string coin = (char*)(ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : ASSETCHAINS_SYMBOL);
+    std::string coin = (char*)(komodo::ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : komodo::ASSETCHAINS_SYMBOL);
 
       if (req.height == 0 || m_core.get_current_blockchain_height() == 0 )
       {
@@ -1957,7 +1955,7 @@ namespace cryptonote
     int32_t kmdendi;
 
     //fprintf(stderr,"height_MoM height.%d\n",height);
-    int32_t depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
+    int32_t depth = komodo::komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
     res.coin = coin;
     res.notarized_height = notarized_height;
     res.timestamp = timestamp;
@@ -1977,7 +1975,7 @@ namespace cryptonote
         res.notarized_MoM = str_MoM;
         res.notarized_desttxid = str_kmdtxid;
 
-        if ( ASSETCHAINS_SYMBOL[0] != 0 )
+        if ( komodo::ASSETCHAINS_SYMBOL[0] != 0 )
         {
         std::vector<uint8_t> v_MoMoM(MoMoM.begin(), MoMoM.begin()+32);
         std::string str_MoMoM = bytes256_to_hex(v_MoMoM);

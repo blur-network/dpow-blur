@@ -44,10 +44,13 @@
 // functions from macros.  *sigh*
 using namespace epee;
 
+namespace komodo {
+
       int32_t komodo_prevMoMheight();
       extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
       extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH; 
 
+}
 
 namespace cryptonote
 {
