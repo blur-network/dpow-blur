@@ -6,15 +6,17 @@
 /**
  * Utilities for converting data from/to strings.
  */
-#ifndef BITCOIN_UTIL_STRENCODINGS_H
-#define BITCOIN_UTIL_STRENCODINGS_H
 
-#include <bitcoin/attributes.h>
+#ifndef BITCOIN_STRENCODINGS_H
+#define BITCOIN_STRENCODINGS_H
 
-#include <cstdint>
-#include <iterator>
-#include <string>
+#include "attributes.h"
+#include <stdbool.h>
+
+#include <stdint.h>
+#include <stdlib.h>
 #include <vector>
+#include <string.h>
 
 #define ARRAYLEN(array)     (sizeof(array)/sizeof((array)[0]))
 
@@ -240,3 +242,4 @@ constexpr char ToUpper(char c)
 std::string Capitalize(std::string str);
 
 #endif // BITCOIN_UTIL_STRENCODINGS_H
+

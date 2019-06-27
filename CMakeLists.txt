@@ -177,6 +177,25 @@ else()
   message(STATUS "Building without build tag")
 endif()
 
+if(NOT MANUAL_SUBMODULES)
+  find_package(Git)
+  if(GIT_FOUND)
+    function (check_submodule relative_path)
+      execute_process(COMMAND git rev-parse "HEAD" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${relative_path} OUTPUT_VARIABLE localHead)
+      execute_process(COMMAND git rev-parse "HEAD:${relative_path}" WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} OUTPUT_VARIABLE checkedHead)
+      string(COMPARE EQUAL "${localHead}" "${checkedHead}" upToDate)
+      if (upToDate)
+        message(STATUS "Submodule '${relative_path}' is up-to-date")
+      else()
+        message(FATAL_ERROR "Submodule '${relative_path}' is not up-to-date. Please update with\ngit submodule update --init \nor run cmake with -DMANUAL_SUBMODULES=1")
+      endif()
+    endfunction ()
+    
+    message(STATUS "Checking submodules")
+    check_submodule(external/rapidjson)
+  endif()
+endif()
+
 set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
 set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
 
@@ -226,6 +245,10 @@ else()
 endif()
 message(STATUS "Building for a ${ARCH_WIDTH}-bit system")
 
+# CMAKE_SYSTEM_NAME checks are commonly known, but specifically taken from libsdl's CMakeLists
+if(CMAKE_SYSTEM_NAME MATCHES "kFreeBSD.*|FreeBSD")
+  set(FREEBSD TRUE)
+endif()
 
 # Check if we're on DragonFly BSD. See the README.md for build instructions.
 if(CMAKE_SYSTEM_NAME MATCHES "DragonFly.*")
@@ -396,7 +419,7 @@ add_subdirectory(external)
 include_directories(${EASYLOGGING_INCLUDE})
 link_directories(${EASYLOGGING_LIBRARY_DIRS})
 
-# Bitcoin Libraries
+include_directories(${BITCOIN_INCLUDE})
 link_directories(${BITCOIN_LIBRARY})
 
 # Final setup for liblmdb
