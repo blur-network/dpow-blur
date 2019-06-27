@@ -66,6 +66,8 @@
     }
 */
 #include "cryptonote_core/blockchain.h"
+#include "cryptonote_core/cryptonote_core.h"
+#include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "crypto/crypto.h"
 #include "crypto/hash-ops.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
@@ -113,7 +115,9 @@ namespace komodo {
 class komodo_core
 {
   public:
+    class node_server;
     komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p);
+
 
   int32_t komodo_chainactive_timestamp();
   bool komodo_chainactive(uint64_t &height, cryptonote::block &b);

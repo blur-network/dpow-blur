@@ -7,11 +7,10 @@
 #define BITCOIN_UINT256_H
 
 #include <assert.h>
-#include <cstring>
-#include <stdexcept>
 #include <stdint.h>
-#include <string>
+#include <iterator>
 #include <vector>
+#include <string>
 
 /** Template base class for fixed-sized opaque blobs. */
 template<unsigned int BITS>
@@ -146,3 +145,4 @@ inline uint256 uint256S(const std::string& str)
 }
 
 #endif // BITCOIN_UINT256_H
+

@@ -60,3 +60,4 @@ inline uint64_t bswap_64(uint64_t x)
 
 #endif // defined(MAC_OSX)
 
+#endif // BITCOIN_BYTESWAP_H

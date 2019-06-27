@@ -9,8 +9,8 @@
 #include <strencodings.h>
 #include <int_util.h>
 
-#include <stdio.h>
-#include <string.h>
+#include <stdio>
+#include <string>
 
 template <unsigned int BITS>
 base_uint<BITS>::base_uint(const std::string& str)

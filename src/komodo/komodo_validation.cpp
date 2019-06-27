@@ -44,13 +44,15 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "komodo_validation011.h"
+#include "komodo_validation.h"
+#include "notary_server.h"
 #include "cryptonote_core/blockchain.h"
 #include "rpc/core_rpc_server.h"
 #include "crypto/crypto.h"
 #include "p2p/net_node.h"
 #include "crypto/hash-ops.h"
 #include "p2p/net_node.h"
+#include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "komodo_rpcblockchain.h"
@@ -78,7 +80,7 @@ namespace komodo {
   //------------------------------------------------------------------
   bool komodo_core::check_core_ready()
   {
-/*    if(!m_p2p.get_payload_object().is_synchronized())
+   /* if(!m_p2p.get_payload_object().is_synchronized())
     {
       return false;
     }*/
