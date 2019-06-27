@@ -13,7 +13,7 @@
  *                                                                            *
  ******************************************************************************/
 
-// Parts of this file are have been modified for compatibility with the Blur Nework
+// Parts of this file have been modified for compatibility with the Blur Nework
 // The copyright notice below applies to only those portions that have been changed.
 //
 // Copyright (c) Blur Network, 2018-2019
@@ -116,7 +116,7 @@ class komodo_core
     komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p);
 
   int32_t komodo_chainactive_timestamp();
-  bool komodo_chainactive(uint64_t &height, cryptonote::block *b);
+  bool komodo_chainactive(uint64_t &height, cryptonote::block &b);
   int32_t komodo_heightstamp(uint64_t height);
 //  size_t tree_hash_count(size_t count);
   void komodo_disconnect(uint64_t height,cryptonote::block block);
@@ -127,12 +127,14 @@ class komodo_core
   void komodo_voutupdate(int32_t txi,int32_t vout,uint8_t *scriptbuf,int32_t scriptlen,int32_t height,int32_t *specialtxp,int32_t *notarizedheightp,uint64_t value,int32_t notarized,uint64_t signedmask);
   void komodo_connectblock(uint64_t& height,cryptonote::block& b);
   int32_t komodo_init();
+  int32_t komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp);
 
   private:
     cryptonote::core& m_core;
     nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& m_p2p;
     bool check_core_ready();
     bool check_core_busy();
+
 };
 
   const char ASSETCHAINS_SYMBOL[5] = { "BLUR" };
@@ -141,8 +143,7 @@ class komodo_core
   int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp);
   int32_t iguana_rwbignum(int32_t rwflag,uint8_t *serialized,int32_t len,uint8_t *endianedp);
   bits256 iguana_merkle(bits256 *root_hash, int txn_count);
-  int32_t komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp);
-  void komodo_importpubkeys();
+    void komodo_importpubkeys();
   void komodo_clearstate();
   int32_t komodo_importaddress(std::string addr);
   uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth);
@@ -644,15 +645,40 @@ const char *Notaries_elected1[][4] =
     {"xrobesx_NA"        , "03f0cc6d142d14a40937f12dbd99dbd9021328f45759e26f1877f2a838876709e1" , "RLQoAcs1RaqW1xfN2NJwoZWW5twexPhuGB"},
 };
 
-struct notarized_checkpoint
-{
-    uint256 notarized_hash,notarized_desttxid,MoM,MoMoM;
-    int32_t nHeight,notarized_height,MoMdepth,MoMoMdepth,MoMoMoffset,kmdstarti,kmdendi;
-} *NPOINTS;
 std::string NOTARY_PUBKEY;
 uint8_t NOTARY_PUBKEY33[33];
 uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
-int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS;
 portable_mutex_t komodo_mutex;
+
+uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth)
+{
+    static uint256 zero;
+    bits256 *MoM, *tree;
+    std::vector<cryptonote::transaction> txs;
+    std::vector<cryptonote::block> blocks;
+    int32_t i;
+
+    if ( MoMdepth >= height )
+        return(zero);
+
+    tree = (bits256*)calloc(MoMdepth * 3,sizeof(*tree));
+
+    for (i=0; i < MoMdepth; i++)
+    {
+
+       cryptonote::block block;
+//        if (komodo_core::komodo_chainactive(height - i, &block) == 0) {
+//            free(tree);
+            return(zero);
+//        }
+//          std::string merkle_str = epee::string_tools::pod_to_hex(cryptonote::get_tx_tree_hash(blocks[i].tx_hashes));
+//          std::vector<uint8_t> merkle = hex_to_bytes256(merkle_str);
+//          merkles.push_back(merkle);
+    }
+    memset(MoM, 0, crypto::HASH_SIZE);
+//    iguana_merkle(blocks[i],MoMdepth);
+    return(*(uint256*)MoM);
+}
+
 
 } //namespace komodo

@@ -50,6 +50,8 @@ namespace komodo {
       extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
       extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH; 
 
+  uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth);
+
 }
 
 namespace cryptonote

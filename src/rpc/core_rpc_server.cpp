@@ -1956,7 +1956,7 @@ namespace cryptonote
     int32_t kmdendi;
 
     //fprintf(stderr,"height_MoM height.%d\n",height);
-    int32_t depth = komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
+    int32_t depth = komodo::komodo_MoM(&notarized_height,&MoM,&kmdtxid,height,&MoMoM,&MoMoMoffset,&MoMoMdepth,&kmdstarti,&kmdendi);
     res.coin = coin;
     res.notarized_height = notarized_height;
     res.timestamp = timestamp;
