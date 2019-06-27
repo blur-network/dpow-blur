@@ -29,7 +29,6 @@
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 set(common_sources
-  arith_uint256.cpp
   base58.cpp
   command_line.cpp
   error.cpp
@@ -39,24 +38,17 @@ set(common_sources
   i18n.cpp
   password.cpp
   perf_timer.cpp
-  strencodings.cpp
   threadpool.cpp
-  uint256.cpp
   aligned.c)
 
 set(common_headers)
 
 set(common_private_headers
   apply_permutation.h
-  arith_uint256.h
-  attributes.h
   base58.h
-  byteswap.h
   boost_serialization_helper.h
   command_line.h
   common_fwd.h
-  common.h
-  endian.h
   error.h
   expect.h
   hex_str.h
@@ -65,10 +57,8 @@ set(common_private_headers
   pod-class.h
   rpc_client.h
   scoped_message_writer.h
-  strencodings.h
   unordered_containers_boost_serialization.h
   util.h
-  uint256.h
   varint.h
   i18n.h
   password.h
