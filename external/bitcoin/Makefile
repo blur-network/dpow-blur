@@ -7,20 +7,18 @@ AR ?= ar
 RANLIB ?= ranlib
 
 SRC = \
-	arith_uint256.cpp \
-	arith_uint256.h \
-	attributes.h \
-        base58.cpp \
-	base58.h \
-        bitcoin.cpp \
-        bitcoin.h \
-	byteswap.h \
-	common.h \
-	strencodings.cpp \
-	strencodings.h \
-	tinyformat.h \
-	uint256.cpp \
-        uint256.h
+	src/arith_uint256.cpp \
+	src/arith_uint256.h \
+	src/attributes.h \
+        src/base58.cpp \
+	src/base58.h \
+	src/byteswap.h \
+	src/common.h \
+	src/strencodings.cpp \
+	src/strencodings.h \
+	src/tinyformat.h \
+	src/uint256.cpp \
+        src/uint256.h
 
 all: lib
 
@@ -46,6 +44,6 @@ libbitcoin.a: $(OBJ)
 .PHONY: clean
 
 clean:
-	rm -rf libbitcoin.a $(OBJ) CMakeCache.txt CMakeFiles
+	rm -rf libbitcoin.a $(OBJ) CMakeCache.txt CMakeFiles bitcoin-config.cmake bitcoin-targets.cmake bitcoin.o
 
 distclean: clean

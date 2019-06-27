@@ -1,11 +1,32 @@
-
-
-
 message(STATUS "Adding bitcoin-specfic dependencies for DPoW integrations")
 
 cmake_minimum_required(VERSION 2.8.7)
 
 project(bitcoin LANGUAGES C CXX)
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+
+add_library(bitcoin
+  ${PROJECT_NAME}.cpp
+  ${PROJECT_NAME}.h)
+
+include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
+include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+
+target_link_libraries(bitcoin)
+
+# GUI/libwallet install target
+if (BUILD_GUI_DEPS)
+    if(IOS)
+        set(lib_folder lib-${ARCH})
+    else()
+        set(lib_folder lib)
+    endif()
+    install(TARGETS bitcoin
+        ARCHIVE DESTINATION ${lib_folder}
+        LIBRARY DESTINATION ${lib_folder})
+endif()
+set_property(TARGET bitcoin APPEND PROPERTY COMPILE_FLAGS "-fPIC")
 
 include(CMakePackageConfigHelpers)
 include(GNUInstallDirs)
@@ -25,11 +46,7 @@ set(source_files
   arith_uint256.cpp
   base58.cpp
   strencodings.cpp
-  uint256.cpp)
-
-
-set(header_files
-  ${PROJECT_NAME}.h
+  uint256.cpp
   arith_uint256.h
   attributes.h
   base58.h
@@ -38,6 +55,10 @@ set(header_files
   strencodings.h
   tinyformat.h
   uint256.h)
+
+
+set(header_files
+  ${PROJECT_NAME}.h)
 
 # Compile options
 
@@ -52,9 +73,9 @@ set(compile_options
             # Optimizations
             -Os $<$<BOOL:${target_arch}>:-march=${target_arch}> -fno-exceptions
             # Warnings
-            -Wall -Wextra -Wmissing-prototypes -Wdiv-by-zero -Wbad-function-cast -Wcast-align
-            -Wcast-qual -Wfloat-equal -Wmissing-declarations -Wnested-externs -Wno-unknown-pragmas
-            -Wpointer-arith -Wredundant-decls -Wstrict-prototypes -Wswitch-enum -Wno-type-limits>
+            -Wall -Wextra -Wdiv-by-zero  -Wcast-align
+            -Wcast-qual -Wfloat-equal -Wmissing-declarations -Wno-unknown-pragmas
+            -Wpointer-arith -Wredundant-decls -Wswitch-enum -Wno-type-limits>
 
         # MSVC
         $<$<C_COMPILER_ID:MSVC>:
@@ -67,19 +88,9 @@ set(compile_options
             /wd4310 # suppress warning "cast truncates constant value"
         >)
 
-# Prefix project files with the project root
-
-function(prefix_project_paths list_name)
-    list(TRANSFORM "${list_name}"
-            PREPEND "${PROJECT_SOURCE_DIR}/"
-            OUTPUT_VARIABLE prefixed_list)
-    set("project_${list_name}" ${prefixed_list} PARENT_SCOPE)
-endfunction()
-
 
 # Main library
 
-add_library("${PROJECT_NAME}")
 add_library("${PROJECT_NAME}::${PROJECT_NAME}" ALIAS "${PROJECT_NAME}")
 
 target_sources("${PROJECT_NAME}" PRIVATE ${project_source_files})
@@ -129,8 +140,3 @@ export(EXPORT "${targets_export_name}"
         NAMESPACE "${PROJECT_NAME}::")
 
 export(PACKAGE "${PROJECT_NAME}")
-
-
-set(BITCOIN_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "Bitcoin Include path")
-set(BITCOIN_LIBRARY_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "Bitcoin Library name")
-
