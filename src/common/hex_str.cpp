@@ -7,7 +7,7 @@
 #include "scoped_message_writer.h"
 
 
-  std::string bytes256_to_hex(const std::vector<uint8_t> &input)
+  std::string bytes256_to_hex(std::vector<uint8_t> &input)
   {
     static const char characters[] = "0123456789abcdef";
     std::string ret(input.size() * 2, 0);
