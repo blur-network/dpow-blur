@@ -51,7 +51,8 @@ using namespace epee;
 #include "version.h"
 #include "komodo/komodo_rpcblockchain.h"
 #include "komodo/komodo_validation011.h"
-#include "common/uint256.h"
+#include "bitcoin/uint256.h"
+#include "bitcoin/arith_uint256.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"
@@ -1868,7 +1869,7 @@ namespace cryptonote
   {
       const char* ASSETCHAINS_SYMBOL[5] = { "BLUR" };
 
-      uint64_t height = m_core.get_current_blockchain_height();
+      uint64_t height = m_core.get_blockchain_storage().get_db().height()-1;
 
       if (height <= 0) {
         error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
@@ -1878,9 +1879,9 @@ namespace cryptonote
 
 /*
       notarized_checkpoint *np = 0;
-      komodo_checkpoint(&notarized_height, height, hash)      
+      komodo_checkpoint(&notarized_height, height, hash)
 */
-      
+
       res.assetchains_symbol = komodo::ASSETCHAINS_SYMBOL;
       res.current_chain_height = height;
       res.notarized_hash = komodo::NOTARIZED_HASH.GetHex();
@@ -1909,13 +1910,13 @@ namespace cryptonote
       error_resp.message = "Wrong parameters: calc_MoM, height, MoMdepth";
       return false;
     }
-    
-    if ( height <= 0 || MoMdepth >= height ) {
+
+    if ( MoMdepth >= height ) {
       error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
       error_resp.message = "calc_MoM illegal height or MoMdepth";
-      return false; 
+      return false;
     }
-    
+
       MoM = komodo::komodo_calcMoM(height,MoMdepth);
       std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin()+32);
       std::string str_MoM = bytes256_to_hex(v_MoM);
@@ -1939,7 +1940,7 @@ namespace cryptonote
         error_resp.message = "Error no active chain yet";
         return false;
       }
-      uint64_t height = m_core.get_current_blockchain_height()-1;
+      uint64_t height = m_core.get_blockchain_storage().get_db().height()-1;
 
       cryptonote::block blk = m_core.get_blockchain_storage().get_db().get_block_from_height(req.height);
 
@@ -1965,11 +1966,9 @@ namespace cryptonote
         res.notarized_height = notarized_height;
 
         std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin() + 32);
-//        arith_uint256 v_MoM = UintToArith256(MoM);
         std::string str_MoM = bytes256_to_hex(v_MoM);
 
         std::vector<uint8_t> v_kmdtxid(kmdtxid.begin(), kmdtxid.begin() + 32);
-//        arith_uint256 v_kmdtxid = UintToArith256(kmdtxid);
         std::string str_kmdtxid = bytes256_to_hex(v_kmdtxid);
 
         res.notarized_MoM = str_MoM;

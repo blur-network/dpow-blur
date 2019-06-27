@@ -1,7 +1,10 @@
 set(notary_sources
+  komodo_validation.cpp
   notary_server.cpp)
 
-set(notary_headers)
+set(notary_headers
+  komodo_validation011.h
+  komodo_rpcblockchain.h)
 
 set(notary_private_headers
   notary_server.h)
@@ -32,3 +35,5 @@ set_property(TARGET notary_server
   PROPERTY
     OUTPUT_NAME "blur-notary-server-rpc")
 install(TARGETS notary_server DESTINATION bin)
+
+
