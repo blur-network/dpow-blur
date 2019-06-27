@@ -3,9 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include <common/strencodings.h>
+#include "strencodings.h"
 
-#include <common/tinyformat.h>
+#include "tinyformat.h"
 
 #include <algorithm>
 #include <cstdlib>
