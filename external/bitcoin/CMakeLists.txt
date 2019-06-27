@@ -78,8 +78,6 @@ set(source_files
   arith_uint256.h
   attributes.h
   base58.h
-  byteswap.h
-  common.h
   endian.h
   strencodings.h
   tinyformat.h

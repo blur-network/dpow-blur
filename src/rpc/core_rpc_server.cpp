@@ -51,8 +51,7 @@ using namespace epee;
 #include "version.h"
 #include "komodo/komodo_rpcblockchain.h"
 #include "komodo/komodo_validation.h"
-#include "bitcoin/uint256.h"
-#include "bitcoin/arith_uint256.h"
+#include "bitcoin/bitcoin.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"

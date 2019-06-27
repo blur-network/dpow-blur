@@ -8,9 +8,10 @@
 
 #include <assert.h>
 #include <stdint.h>
+#include <stdlib.h>
 #include <iterator>
 #include <vector>
-#include <string>
+#include <string.h>
 
 /** Template base class for fixed-sized opaque blobs. */
 template<unsigned int BITS>

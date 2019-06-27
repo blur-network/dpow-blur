@@ -72,8 +72,7 @@
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "komodo_rpcblockchain.h"
 #include "common/hex_str.h"
-#include "bitcoin/uint256.h"
-#include "bitcoin/arith_uint256.h"
+#include "bitcoin/bitcoin.h"
 #include "rpc/core_rpc_server.h"
 #include <limits.h>
 #include <assert.h>

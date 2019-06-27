@@ -33,7 +33,7 @@
 #include "cryptonote_basic/cryptonote_basic.h"
 #include "cryptonote_basic/difficulty.h"
 #include "crypto/hash.h"
-#include "bitcoin/uint256.h"
+#include "bitcoin/bitcoin.h"
 namespace cryptonote
 {
   //-----------------------------------------------

@@ -12,8 +12,6 @@ SRC = \
 	src/attributes.h \
         src/base58.cpp \
 	src/base58.h \
-	src/byteswap.h \
-	src/common.h \
 	src/strencodings.cpp \
 	src/strencodings.h \
 	src/tinyformat.h \
