@@ -50,7 +50,7 @@ using namespace epee;
 #include "p2p/net_node.h"
 #include "version.h"
 #include "komodo/komodo_rpcblockchain.h"
-#include "komodo/komodo_validation011.h"
+#include "komodo/komodo_validation.h"
 #include "bitcoin/uint256.h"
 #include "bitcoin/arith_uint256.h"
 

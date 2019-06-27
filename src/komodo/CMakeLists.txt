@@ -3,7 +3,7 @@ set(notary_sources
   notary_server.cpp)
 
 set(notary_headers
-  komodo_validation011.h
+  komodo_validation.h
   komodo_rpcblockchain.h)
 
 set(notary_private_headers

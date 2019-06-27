@@ -44,7 +44,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "komodo_validation011.h"
+#include "komodo_validation.h"
 #include "cryptonote_core/blockchain.h"
 #include "rpc/core_rpc_server.h"
 #include "crypto/crypto.h"
