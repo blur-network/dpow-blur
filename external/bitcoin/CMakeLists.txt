@@ -27,6 +27,22 @@
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 message(STATUS "Adding bitcoin-specfic dependencies for DPoW integrations")
-set(BITCOIN_INCLUDE "${CMAKE_CURRENT_SOURCE_DIR}" CACHE STRING "Bitcoin Include path")
+
+set(bitcoin_sources
+  arith_uint256.cpp
+  strencodings.cpp
+  uint256.cpp)
+
+set(bitcoin_private_headers
+  arith_uint256.h 
+  attributes.h
+  endian.h
+  byteswap.h
+  common.h
+  uint256.h
+  strencodings.h)
+
+add_library(bitcoin STATIC ${bitcoin_sources} ${bitcoin_private_headers})
+
 set(BITCOIN_LIBRARY "bitcoin" CACHE STRING "Bitcoin Library name")
 

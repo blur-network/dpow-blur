@@ -244,7 +244,7 @@ endif()
 # elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
 #   set(BSDI TRUE)
 
-include_directories(external/rapidjson/include external/easylogging++ external/bitcoin src contrib/epee/include external)
+include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external)
 
 if(APPLE)
   include_directories(SYSTEM /usr/include/malloc)
@@ -397,8 +397,7 @@ include_directories(${EASYLOGGING_INCLUDE})
 link_directories(${EASYLOGGING_LIBRARY_DIRS})
 
 # Bitcoin Libraries
-include_directories(${BITCOIN_INCLUDE})
-link_directories(${BITCOIN_LIBRARY_DIR})
+link_directories(${BITCOIN_LIBRARY})
 
 # Final setup for liblmdb
 include_directories(${LMDB_INCLUDE})

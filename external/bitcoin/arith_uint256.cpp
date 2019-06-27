@@ -7,6 +7,7 @@
 
 #include "uint256.h"
 #include "strencodings.h"
+#include "bitcoin/common.h"
 
 #include <stdio.h>
 #include <string.h>

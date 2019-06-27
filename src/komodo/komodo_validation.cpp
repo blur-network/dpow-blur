@@ -270,7 +270,7 @@ void komodo_importpubkeys()
 	    pubkey = (char*) Notaries_elected1[i][offset];
 	    //fprintf(stderr,"pubkey=%s\n", pubkey );
 
-	    const std::vector<unsigned char> vPubkey(pubkey, pubkey + m);
+	    std::vector<unsigned char> vPubkey(pubkey, pubkey + m);
 	    std::string addr = bytes256_to_hex(vPubkey);
 
 	    //fprintf(stderr,"addr=%s\n", addr.c_str() );
