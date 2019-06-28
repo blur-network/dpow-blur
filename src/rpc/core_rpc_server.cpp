@@ -1880,15 +1880,22 @@ namespace cryptonote
       notarized_checkpoint *np = 0;
       komodo_checkpoint(&notarized_height, height, hash)
 */
+      std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
+      std::string s_hash = bytes256_to_hex(v_hash);
+      std::vector<uint8_t> v_txid(komodo::NOTARIZED_DESTTXID.begin(), komodo::NOTARIZED_DESTTXID.begin()+32);
+      std::string s_txid = bytes256_to_hex(v_txid);
+      std::vector<uint8_t> v_MoM(komodo::NOTARIZED_MOM.begin(), komodo::NOTARIZED_MOM.begin()+32);
+      std::string s_MoM = bytes256_to_hex(v_MoM);
+
 
       res.assetchains_symbol = komodo::ASSETCHAINS_SYMBOL;
       res.current_chain_height = height;
-      res.notarized_hash = komodo::NOTARIZED_HASH.GetHex();
-      res.notarized_txid = komodo::NOTARIZED_DESTTXID.GetHex();
+      res.notarized_hash = s_hash;
+      res.notarized_txid = s_txid;
       res.notarized = komodo::NOTARIZED_HEIGHT;
       res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
-      res.notarized_MoM = komodo::NOTARIZED_MOM.GetHex();
+      res.notarized_MoM = s_MoM;
 
      res.status = "OK";
      return true;

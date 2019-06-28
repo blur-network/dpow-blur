@@ -111,7 +111,8 @@ target_link_libraries(rpc
     ${Boost_REGEX_LIBRARY}
     ${Boost_THREAD_LIBRARY}
   PRIVATE
-    ${EXTRA_LIBRARIES})
+    ${EXTRA_LIBRARIES}
+    ${BITCOIN_LIBRARY})
 
 target_link_libraries(daemon_messages
   LINK_PRIVATE
