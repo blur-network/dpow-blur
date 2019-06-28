@@ -985,7 +985,7 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
   };
-  
+
   //-----------------------------------------------
   struct COMMAND_RPC_GET_NTZ_DATA
   {
@@ -994,11 +994,13 @@ namespace cryptonote
       BEGIN_KV_SERIALIZE_MAP()
       END_KV_SERIALIZE_MAP()
     };
-    
+
     struct response
     {
       std::string assetchains_symbol;
       uint64_t current_chain_height;
+      std::string current_chain_hash;
+      std::string current_chain_pow;
       std::string notarized_hash;
       std::string notarized_txid;
       int32_t notarized;
@@ -1006,10 +1008,12 @@ namespace cryptonote
       int32_t notarized_MoMdepth;
       std::string notarized_MoM;
       std::string status;
-      
+
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(assetchains_symbol)
         KV_SERIALIZE(current_chain_height)
+        KV_SERIALIZE(current_chain_hash)
+        KV_SERIALIZE(current_chain_pow)
         KV_SERIALIZE(notarized_hash)
         KV_SERIALIZE(notarized_txid)
         KV_SERIALIZE(notarized)

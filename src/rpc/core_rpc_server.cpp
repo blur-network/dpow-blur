@@ -31,6 +31,7 @@
 
 #include "include_base_utils.h"
 #include "string_tools.h"
+#include "span.h"
 
 using namespace epee;
 
@@ -1881,21 +1882,31 @@ namespace cryptonote
       komodo_checkpoint(&notarized_height, height, hash)
 */
       std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
-      std::string s_hash = bytes256_to_hex(v_hash);
+      std::string n_hash = bytes256_to_hex(v_hash);
       std::vector<uint8_t> v_txid(komodo::NOTARIZED_DESTTXID.begin(), komodo::NOTARIZED_DESTTXID.begin()+32);
-      std::string s_txid = bytes256_to_hex(v_txid);
+      std::string n_txid = bytes256_to_hex(v_txid);
       std::vector<uint8_t> v_MoM(komodo::NOTARIZED_MOM.begin(), komodo::NOTARIZED_MOM.begin()+32);
-      std::string s_MoM = bytes256_to_hex(v_MoM);
+      std::string n_MoM = bytes256_to_hex(v_MoM);
+      cryptonote::block blk = m_core.get_blockchain_storage().get_db().get_top_block();
+      crypto::hash c_hash = m_core.get_blockchain_storage().get_db().top_block_hash();
+      crypto::hash c_pow = cryptonote::get_block_longhash(blk, height);
+      epee::span<const uint8_t> vc_hash = as_byte_span(c_hash);
+      std::string s_hash = span_to_hex(vc_hash);
+      epee::span<const uint8_t> vc_pow = as_byte_span(c_pow);;
+      std::string s_pow = span_to_hex(vc_pow);
 
 
       res.assetchains_symbol = komodo::ASSETCHAINS_SYMBOL;
       res.current_chain_height = height;
-      res.notarized_hash = s_hash;
-      res.notarized_txid = s_txid;
+      res.current_chain_hash = s_hash;
+      res.current_chain_pow = s_pow;
+      res.notarized_hash = n_hash;
+    /*res.notarized_pow = n_pow;*/
+      res.notarized_txid = n_txid;
       res.notarized = komodo::NOTARIZED_HEIGHT;
       res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
-      res.notarized_MoM = s_MoM;
+      res.notarized_MoM = n_MoM;
 
      res.status = "OK";
      return true;

@@ -34,7 +34,6 @@ set(common_sources
   error.cpp
   expect.cpp
   util.cpp
-  hex_str.cpp
   i18n.cpp
   password.cpp
   perf_timer.cpp
