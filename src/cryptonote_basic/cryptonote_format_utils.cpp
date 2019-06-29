@@ -38,7 +38,6 @@ using namespace epee;
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
-#include "common/hex_str.h"
 #include "wipeable_string.h"
 #include "string_tools.h"
 #include "serialization/string.h"
@@ -47,6 +46,7 @@ using namespace epee;
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
 #include "difficulty.h"
+#include "common/hex_str.h"
 #include "ringct/rctSigs.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY

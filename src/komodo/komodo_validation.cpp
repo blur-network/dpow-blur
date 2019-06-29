@@ -46,6 +46,7 @@
 
 #include "komodo_validation.h"
 #include "cryptonote_core/blockchain.h"
+#include "common/hex_str.h"
 #include "rpc/core_rpc_server.h"
 #include "crypto/crypto.h"
 #include "p2p/net_node.h"

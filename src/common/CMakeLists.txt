@@ -33,6 +33,7 @@ set(common_sources
   command_line.cpp
   error.cpp
   expect.cpp
+  hex_str.cpp
   util.cpp
   i18n.cpp
   password.cpp
