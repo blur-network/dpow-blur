@@ -51,10 +51,8 @@
 #include "p2p/net_node.h"
 #include "crypto/hash-ops.h"
 #include "p2p/net_node.h"
-#include "cryptonote_basic/cryptonote_format_utils.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "komodo_rpcblockchain.h"
-#include "common/hex_str.h"
 #include "bitcoin/bitcoin.h"
 #include <limits.h>
 #include <assert.h>

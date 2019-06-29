@@ -33,7 +33,7 @@
 
 #define TX_EXTRA_PADDING_MAX_COUNT          255
 #define TX_EXTRA_NONCE_MAX_COUNT            255
-#define TX_EXTRA_NTZ_MAX_COUNT              4096
+#define TX_EXTRA_NTZ_MAX_COUNT              4095
 
 #define TX_EXTRA_TAG_PADDING                0x00
 #define TX_EXTRA_TAG_PUBKEY                 0x01
@@ -42,12 +42,61 @@
 #define TX_EXTRA_TAG_ADDITIONAL_PUBKEYS     0x04
 #define TX_EXTRA_MYSTERIOUS_MINERGATE_TAG   0xDE
 #define TX_EXTRA_NTZ_TXN_TAG                0x05
+#define TX_EXTRA_NTZ_PADDING                0x05
 
 #define TX_EXTRA_NONCE_PAYMENT_ID           0x00
 #define TX_EXTRA_NONCE_ENCRYPTED_PAYMENT_ID 0x01
 
 namespace cryptonote
 {
+
+  struct tx_extra_ntz_padding
+  {
+    size_t size;
+
+    // load
+    template <template <bool> class Archive>
+    bool do_serialize(Archive<false>& ar)
+    {
+      // size - 1 - because of variant tag
+      for (size = 1; size <= TX_EXTRA_NTZ_MAX_COUNT; ++size)
+      {
+        std::ios_base::iostate state = ar.stream().rdstate();
+        bool eof = EOF == ar.stream().peek();
+        ar.stream().clear(state);
+
+        if (eof)
+          break;
+
+        uint8_t zero;
+        if (!::do_serialize(ar, zero))
+          return false;
+
+        if (0 != zero)
+          return false;
+      }
+
+      return size <= TX_EXTRA_NTZ_MAX_COUNT;
+    }
+
+    // store
+    template <template <bool> class Archive>
+    bool do_serialize(Archive<true>& ar)
+    {
+      if(TX_EXTRA_NTZ_MAX_COUNT < size)
+        return false;
+
+      // i = 1 - because of variant tag
+      for (size_t i = 1; i < size; ++i)
+      {
+        uint8_t zero = 0;
+        if (!::do_serialize(ar, zero))
+          return false;
+      }
+      return true;
+    }
+  };
+
   struct tx_extra_padding
   {
     size_t size;
@@ -194,10 +243,11 @@ namespace cryptonote
   //   varint tag;
   //   varint size;
   //   varint data[];
-  typedef boost::variant<tx_extra_padding, tx_extra_pub_key, tx_extra_nonce, tx_extra_merge_mining_tag, tx_extra_additional_pub_keys, tx_extra_mysterious_minergate, tx_extra_ntz_txn> tx_extra_field;
+  typedef boost::variant<tx_extra_padding, tx_extra_ntz_padding, tx_extra_pub_key, tx_extra_nonce, tx_extra_merge_mining_tag, tx_extra_additional_pub_keys, tx_extra_mysterious_minergate, tx_extra_ntz_txn> tx_extra_field;
 }
 
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_padding, TX_EXTRA_TAG_PADDING);
+VARIANT_TAG(binary_archive, cryptonote::tx_extra_ntz_padding, TX_EXTRA_NTZ_PADDING);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_pub_key, TX_EXTRA_TAG_PUBKEY);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_nonce, TX_EXTRA_NONCE);
 VARIANT_TAG(binary_archive, cryptonote::tx_extra_merge_mining_tag, TX_EXTRA_MERGE_MINING_TAG);

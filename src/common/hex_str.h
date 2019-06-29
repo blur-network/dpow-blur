@@ -77,3 +77,25 @@ using namespace epee;
     }
     return ret;
   }
+  //----------------------------------------------------------------
+  std::vector<uint8_t> hex_to_bytes4096(const std::string &input)
+  {
+    size_t len = input.length();
+    bool too_long = (len > 4096) ? 1 : 0;
+    std::string short_long = too_long ? ("longer") : ("shorter");
+    std::vector<uint8_t> out;
+
+    if (len != 64) {
+      MERROR("Tried to convert a hex string that is " << short_long << " than the required 4096-character length.");
+      std::fill(out.begin(), out.begin()+4096, 0);
+      return out;
+    }
+
+    for(size_t i = 0; i < len; i += 2) {
+      std::istringstream strm(input.substr(i, 2));
+      uint8_t x;
+      strm >> std::hex >> x;
+      out.push_back(x);
+    }
+    return out;
+  }

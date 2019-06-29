@@ -68,10 +68,8 @@
 #include "cryptonote_core/blockchain.h"
 #include "crypto/crypto.h"
 #include "crypto/hash-ops.h"
-#include "cryptonote_basic/cryptonote_format_utils.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "komodo_rpcblockchain.h"
-#include "common/hex_str.h"
 #include "bitcoin/bitcoin.h"
 #include "rpc/core_rpc_server.h"
 #include <limits.h>

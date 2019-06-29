@@ -36,8 +36,9 @@ using namespace epee;
 #include <atomic>
 #include <boost/algorithm/string.hpp>
 #include <iostream>
-#include <sstream> 
+#include <sstream>
 #include <stdio.h>
+#include "common/hex_str.h"
 #include "wipeable_string.h"
 #include "string_tools.h"
 #include "serialization/string.h"
@@ -434,6 +435,18 @@ namespace cryptonote
     tx_extra.resize(tx_extra.size() + 1 + sizeof(crypto::public_key));
     tx_extra[tx_extra.size() - 1 - sizeof(crypto::public_key)] = TX_EXTRA_TAG_PUBKEY;
     *reinterpret_cast<crypto::public_key*>(&tx_extra[tx_extra.size() - sizeof(crypto::public_key)]) = tx_pub_key;
+    return true;
+  }
+  //---------------------------------------------------------------
+  bool add_ntz_txn_to_extra(std::vector<uint8_t>& tx_extra, std::string& ntzstr)
+  {
+    tx_extra.resize(tx_extra.size() + 1 + sizeof(TX_EXTRA_NTZ_MAX_COUNT));
+    tx_extra[tx_extra.size() - 1 - sizeof(TX_EXTRA_NTZ_MAX_COUNT)] = TX_EXTRA_NTZ_TXN_TAG;
+    std::vector<uint8_t> ntz_data = hex_to_bytes4096(ntzstr);
+    for (const auto& character : ntz_data)
+    {
+      tx_extra.push_back(character);
+    }
     return true;
   }
   //---------------------------------------------------------------
