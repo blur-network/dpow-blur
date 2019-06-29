@@ -223,7 +223,7 @@ namespace cryptonote
 
   struct tx_extra_ntz_txn
   {
-    std::string data;
+    std::vector<uint8_t> data;
 
    BEGIN_SERIALIZE()
      FIELD(data)
