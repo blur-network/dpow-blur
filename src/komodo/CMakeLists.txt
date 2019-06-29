@@ -2,12 +2,14 @@ set(notary_sources
   komodo_validation.cpp
   notary_server.cpp)
 
-set(notary_headers
-  komodo_validation.h
-  komodo_rpcblockchain.h)
+set(notary_headers)
 
 set(notary_private_headers
-  notary_server.h)
+  komodo_validation.h
+  komodo_rpcblockchain.h
+  notary_server.h
+  notary_server_error_codes.h
+  notary_server_commands_defs.h)
 
 monero_private_headers(notary_server
   ${notary_private_headers})
