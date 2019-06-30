@@ -56,9 +56,9 @@ int32_t komodo_MoMdata(int32_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,in
         return(np->MoMdepth);
     }
     *notarized_htp = *MoMoMoffsetp = *MoMoMdepthp = *kmdstartip = *kmdendip = 0;
-    memset(MoMp,0,sizeof(*MoMp));
-    memset(MoMoMp,0,sizeof(*MoMoMp));
-    memset(kmdtxidp,0,sizeof(*kmdtxidp));
+    std::fill(MoMp->begin(),MoMp->begin()+32,0);
+    std::fill(MoMoMp->begin(),MoMoMp->begin()+32,0);
+    std::fill(kmdtxidp->begin(),kmdtxidp->begin()+32,0);
     return(0);
 }
 

@@ -406,9 +406,9 @@ void komodo_clearstate()
 {
     portable_mutex_lock(&komodo_mutex);
     memset(&NOTARIZED_HEIGHT,0,sizeof(NOTARIZED_HEIGHT));
-    memset(&NOTARIZED_HASH,0,sizeof(NOTARIZED_HASH));
-    memset(&NOTARIZED_DESTTXID,0,sizeof(NOTARIZED_DESTTXID));
-    memset(&NOTARIZED_MOM,0,sizeof(NOTARIZED_MOM));
+    std::fill(NOTARIZED_HASH.begin(),NOTARIZED_HASH.begin()+32,0);
+    std::fill(NOTARIZED_DESTTXID.begin(),NOTARIZED_DESTTXID.begin()+32,0);
+    std::fill(NOTARIZED_MOM.begin(),NOTARIZED_MOM.begin()+32,0);
     memset(&NOTARIZED_MOMDEPTH,0,sizeof(NOTARIZED_MOMDEPTH));
     memset(&last_NPOINTSi,0,sizeof(last_NPOINTSi));
     portable_mutex_unlock(&komodo_mutex);
@@ -482,8 +482,8 @@ int32_t komodo_core::komodo_notarizeddata(uint64_t nHeight,uint256 *notarized_ha
         *notarized_desttxidp = np->notarized_desttxid;
         return(np->notarized_height);
     }
-    memset(notarized_hashp,0,sizeof(*notarized_hashp));
-    memset(notarized_desttxidp,0,sizeof(*notarized_desttxidp));
+    std::fill(notarized_hashp->begin(),notarized_hashp->begin()+32,0);
+    std::fill(notarized_desttxidp->begin(),notarized_desttxidp->begin()+32,0);
     return(0);
 }
 
@@ -554,7 +554,10 @@ void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_he
     portable_mutex_lock(&komodo_mutex);
     NPOINTS = (struct notarized_checkpoint *)realloc(NPOINTS,(NUM_NPOINTS+1) * sizeof(*NPOINTS));
     np = &NPOINTS[NUM_NPOINTS++];
-    memset(np,0,sizeof(*np));
+    std::fill(np->notarized_hash.begin(),np->notarized_hash.begin()+32,0);
+    std::fill(np->notarized_desttxid.begin(),np->notarized_desttxid.begin()+32,0);
+    std::fill(np->MoM.begin(),np->MoM.begin()+32,0);
+
     np->nHeight = nHeight;
     NOTARIZED_HEIGHT = np->notarized_height = notarized_height;
     NOTARIZED_HASH = np->notarized_hash = notarized_hash;
@@ -577,8 +580,8 @@ void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_he
 int32_t komodo_core::komodo_checkpoint(int32_t *notarized_heightp, int32_t nHeight, crypto::hash hash)
 {
 
-    int32_t notarized_height; uint256 zero,notarized_hash,notarized_desttxid; uint64_t notary; cryptonote::block *pindex;
-    memset(&zero,0,sizeof(zero));
+    int32_t notarized_height; std::vector<uint8_t> zero;uint256 notarized_hash,notarized_desttxid; uint64_t notary; cryptonote::block *pindex;
+    std::fill(zero.begin(),zero.begin()+32,0);
     //komodo_notarized_update(0,0,zero,zero,zero,0);
     uint64_t activeheight = m_core.get_blockchain_storage().get_db().height()-1;
     bool active = komodo_chainactive(activeheight, *pindex);
