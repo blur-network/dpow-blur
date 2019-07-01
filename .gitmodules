@@ -4,3 +4,4 @@
 [submodule "libhydrogen"]
 	path = external/libhydrogen
 	url = https://github.com/blur-network/libhydrogen.git
+	branch = master
