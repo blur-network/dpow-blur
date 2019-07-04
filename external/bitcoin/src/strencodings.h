@@ -15,8 +15,8 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string>
 #include <vector>
-#include <string.h>
 
 #define ARRAYLEN(array)     (sizeof(array)/sizeof((array)[0]))
 

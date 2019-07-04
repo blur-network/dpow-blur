@@ -32,7 +32,7 @@ cmake_minimum_required(VERSION 2.8.7)
 
 project(bitcoin LANGUAGES C CXX)
 
-SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fexceptions -std=c++11")
 
 add_library(bitcoin
   ${PROJECT_NAME}.cpp)
