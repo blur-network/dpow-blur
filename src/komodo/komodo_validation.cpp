@@ -236,20 +236,20 @@ bool komodo_core::komodo_chainactive(uint64_t &height, cryptonote::block &tipind
     {
         if ( height <= m_core.get_blockchain_storage().get_db().height()-1)
             return true;
-        else fprintf(stderr,"komodo_chainactive height %lu > active.%lu\n",height,tipheight);
+        else fprintf(stderr,"komodo_chainactive height %llu > active.%llu\n",height,tipheight);
     }
-    fprintf(stderr,"komodo_chainactive null chainActive.Tip() height %lu\n",height);
+    fprintf(stderr,"komodo_chainactive null chainActive.Tip() height %llu\n",height);
     return false;
 }
 
 int32_t komodo_core::komodo_heightstamp(uint64_t height)
 {
     uint64_t top_block_height = m_core.get_blockchain_storage().get_db().height()-1;
-    cryptonote::block *b;
+    cryptonote::block *b = nullptr;
     bool activechain = komodo_chainactive(height, *b);
     if (activechain && (top_block_height > 0))
         return(b->timestamp);
-    else fprintf(stderr,"komodo_heightstamp null ptr for block.%d\n",height);
+    else fprintf(stderr,"komodo_heightstamp null ptr for block.%llu\n",height);
     return(0);
 }
 
@@ -381,7 +381,7 @@ int32_t komodo_core::komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uin
             }
             memcpy(pubkeys,elected_pubkeys0,n0 * 33);
             if ( ASSETCHAINS_SYMBOL[0] != 0 )
-              fprintf(stderr,"%s height.%lu t.%u elected.%d notaries\n",ASSETCHAINS_SYMBOL,height,timestamp,n0);
+              fprintf(stderr,"%s height.%llu t.%llu elected.%d notaries\n",ASSETCHAINS_SYMBOL,height,timestamp,n0);
             return(n0);
         }
         else //if ( (timestamp != 0 && timestamp <= KOMODO_NOTARIES_TIMESTAMP2) || height <= KOMODO_NOTARIES_HEIGHT2 )
@@ -392,7 +392,7 @@ int32_t komodo_core::komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uin
                 for (i=0; i<n1; i++)
                     decode_hex(elected_pubkeys1[i],33,(char *)Notaries_elected1[i][1]);
                 if ( 0 && ASSETCHAINS_SYMBOL[0] != 0 )
-                    fprintf(stderr,"%s height.%lu t.%u elected.%d notaries2\n",ASSETCHAINS_SYMBOL,height,timestamp,n1);
+                    fprintf(stderr,"%s height.%llu t.%llu elected.%d notaries2\n",ASSETCHAINS_SYMBOL,height,timestamp,n1);
                 did1 = 1;
             }
             memcpy(pubkeys,elected_pubkeys1,n1 * 33);
@@ -421,7 +421,7 @@ void komodo_core::komodo_disconnect(uint64_t height,cryptonote::block block)
     {
 //        uint64_t block_height = m_core.get_blockchain_storage().get_db().get_block_id_by_height(block);
         uint64_t block_height = height;
-        fprintf(stderr,"komodo_disconnect unexpected reorg at height = %lu vs NOTARIZED_HEIGHT = %lu\n",block_height,NOTARIZED_HEIGHT);
+        fprintf(stderr,"komodo_disconnect unexpected reorg at height = %llu vs NOTARIZED_HEIGHT = %d\n",block_height,NOTARIZED_HEIGHT);
         komodo_clearstate(); // bruteforce shortcut. on any reorg, no active notarization until next one is seen
     }
 }
@@ -450,7 +450,7 @@ int32_t komodo_core::komodo_notarizeddata(uint64_t nHeight,uint256 *notarized_ha
                 {
                     if ( NPOINTS[i].nHeight >= nHeight )
                     {
-                        printf("flag.1 i.%d np->ht %d [%d].ht %d >= nHeight.%d, last.%d num.%d\n",i,np->nHeight,i,NPOINTS[i].nHeight,nHeight,last_NPOINTSi,NUM_NPOINTS);
+                        printf("flag.1 i.%d np->ht %d [%d].ht %d >= nHeight.%llu, last.%d num.%d\n",i,np->nHeight,i,NPOINTS[i].nHeight,nHeight,last_NPOINTSi,NUM_NPOINTS);
                         flag = 1;
                         break;
                     }
@@ -477,7 +477,7 @@ int32_t komodo_core::komodo_notarizeddata(uint64_t nHeight,uint256 *notarized_ha
     if ( np != 0 )
     {
         if ( np->nHeight >= nHeight || (i < NUM_NPOINTS && np[1].nHeight < nHeight) )
-            fprintf(stderr,"warning: flag.%d i.%d np->ht %d [1].ht %d >= nHeight.%d\n",flag,i,np->nHeight,np[1].nHeight,nHeight);
+            fprintf(stderr,"warning: flag.%d i.%d np->ht %d [1].ht %d >= nHeight.%llu\n",flag,i,np->nHeight,np[1].nHeight,nHeight);
         *notarized_hashp = np->notarized_hash;
         *notarized_desttxidp = np->notarized_desttxid;
         return(np->notarized_height);
@@ -489,7 +489,7 @@ int32_t komodo_core::komodo_notarizeddata(uint64_t nHeight,uint256 *notarized_ha
 
 void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 notarized_hash,uint256 notarized_desttxid,uint256 MoM,int32_t MoMdepth)
 {
-    static int didinit; static uint256 zero; static FILE *fp; cryptonote::block *pindex; struct notarized_checkpoint *np,N; long fpos;
+    static int didinit; static uint256 zero; static FILE *fp; cryptonote::block *pindex = nullptr; struct notarized_checkpoint *np,N; long fpos;
     if ( didinit == 0 )
     {
         char fname[512]; uint64_t latestht = 0;
@@ -535,7 +535,7 @@ void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_he
         return;
     if ( notarized_height >= nHeight )
     {
-        fprintf(stderr,"komodo_notarized_update REJECT notarized_height %lu > %lu nHeight\n",notarized_height,nHeight);
+        fprintf(stderr,"komodo_notarized_update REJECT notarized_height %llu > %llu nHeight\n",notarized_height,nHeight);
         return;
     }
     
@@ -547,10 +547,10 @@ void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_he
     {
 //        crypto::hash index_hash = m_core.get_blockchain_storage().get_db().get_block_hash(pindex);
         uint64_t index_height = cryptonote::get_block_height(*pindex);
-        fprintf(stderr,"komodo_notarized_update reject nHeight.%lu notarized_height.%lu:%lu\n",nHeight,notarized_height, index_height);
+        fprintf(stderr,"komodo_notarized_update reject nHeight.%llu notarized_height.%llu:%llu\n",nHeight,notarized_height, index_height);
         return;
     }
-    fprintf(stderr,"komodo_notarized_update nHeight.%lu notarized_height.%lu prev.%lu\n",nHeight,notarized_height,NPOINTS!=0?NPOINTS[NUM_NPOINTS-1].notarized_height:-1);
+    fprintf(stderr,"komodo_notarized_update nHeight.%llu notarized_height.%llu prev.%d\n",nHeight,notarized_height,NPOINTS!=0?NPOINTS[NUM_NPOINTS-1].notarized_height:-1);
     portable_mutex_lock(&komodo_mutex);
     NPOINTS = (struct notarized_checkpoint *)realloc(NPOINTS,(NUM_NPOINTS+1) * sizeof(*NPOINTS));
     np = &NPOINTS[NUM_NPOINTS++];
@@ -580,7 +580,7 @@ void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_he
 int32_t komodo_core::komodo_checkpoint(int32_t *notarized_heightp, int32_t nHeight, crypto::hash hash)
 {
 
-    int32_t notarized_height; std::vector<uint8_t> zero;uint256 notarized_hash,notarized_desttxid; uint64_t notary; cryptonote::block *pindex;
+    int32_t notarized_height; std::vector<uint8_t> zero;uint256 notarized_hash,notarized_desttxid; uint64_t notary; cryptonote::block *pindex = nullptr;
     std::fill(zero.begin(),zero.begin()+32,0);
     //komodo_notarized_update(0,0,zero,zero,zero,0);
     uint64_t activeheight = m_core.get_blockchain_storage().get_db().height()-1;
@@ -593,22 +593,22 @@ int32_t komodo_core::komodo_checkpoint(int32_t *notarized_heightp, int32_t nHeig
     *notarized_heightp = notarized_height;
     if ( notarized_height >= 0 && notarized_height <= activeheight && (notary= m_core.get_blockchain_storage().get_db().get_block_height(hash) != 0 ))
     {
-        printf("activeheight.%lu -> (%lu %s)\n",activeheight,notarized_height,s_notarized_hash);
+        printf("activeheight.%llu -> (%d %s)\n",activeheight,notarized_height,s_notarized_hash.c_str());
         if ( notary == notarized_height ) // if notarized_hash not in chain, reorg
         {
             if ( activeheight < notarized_height )
             {
-                fprintf(stderr,"activeheight.%lu < NOTARIZED_HEIGHT.%lu\n",activeheight,notarized_height);
+                fprintf(stderr,"activeheight.%llu < NOTARIZED_HEIGHT.%d\n",activeheight,notarized_height);
                 return(-1);
             }
             else if ( activeheight == notarized_height && memcmp(&hash,&notarized_hash,sizeof(hash)) != 0 )
             {
-                fprintf(stderr,"nHeight.%lu == NOTARIZED_HEIGHT.%lu, diff hash\n",activeheight,notarized_height);
+                fprintf(stderr,"nHeight.%llu == NOTARIZED_HEIGHT.%d, diff hash\n",activeheight,notarized_height);
                 return(-1);
             }
-        } else fprintf(stderr,"unexpected error notary_hash %s ht.%d at ht.%d\n",s_notarized_hash,notarized_height,notary);
+        } else fprintf(stderr,"unexpected error notary_hash %s ht.%d at ht.%llu\n",s_notarized_hash.c_str(),notarized_height,notary);
     } else if ( notarized_height > 0 )
-        fprintf(stderr,"%s couldnt find notarized.(%s %d) ht.%d\n",ASSETCHAINS_SYMBOL,s_notarized_hash,notarized_height,pindex);
+        fprintf(stderr,"%s couldnt find notarized.(%s %d) ht.%d\n",ASSETCHAINS_SYMBOL,s_notarized_hash.c_str(),notarized_height,pindex);
     return(0);
 }
 /*
@@ -691,7 +691,7 @@ void komodo_core::komodo_connectblock(uint64_t& height,cryptonote::block& b)
     else
     {
         if ( nHeight != hwmheight )
-            printf("dpow: %s hwmheight.%lu vs pindex->nHeight.%lu t.%lu reorg.%lu\n",ASSETCHAINS_SYMBOL,hwmheight,nHeight,b.timestamp,hwmheight - nHeight);
+            printf("dpow: %s hwmheight.%llu vs pindex->nHeight.%llu t.%llu reorg.%llu\n",ASSETCHAINS_SYMBOL,hwmheight,nHeight,b.timestamp,hwmheight - nHeight);
     }
 /*
     if ( height != 0 )
