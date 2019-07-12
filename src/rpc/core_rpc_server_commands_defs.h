@@ -1115,7 +1115,7 @@ namespace cryptonote
         KV_SERIALIZE(bootstrap_daemon_address)
         KV_SERIALIZE(height_without_bootstrap)
         KV_SERIALIZE(was_bootstrap_ever_used)
-	      KV_SERIALIZE(version)
+	KV_SERIALIZE(version)
       END_KV_SERIALIZE_MAP()
     };
   };
@@ -1335,10 +1335,8 @@ namespace cryptonote
   {
     struct request
     {
-      std::string pow_hash;
 
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(pow_hash);
       END_KV_SERIALIZE_MAP()
     };
 
@@ -1362,11 +1360,9 @@ namespace cryptonote
     struct request
     {
       std::string hash;
-      std::string pow_hash;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(hash)
-        KV_SERIALIZE(pow_hash);
       END_KV_SERIALIZE_MAP()
     };
 
@@ -1390,11 +1386,9 @@ namespace cryptonote
     struct request
     {
       uint64_t height;
-      std::string pow_hash;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(height)
-        KV_SERIALIZE(pow_hash);
       END_KV_SERIALIZE_MAP()
     };
 
@@ -1419,12 +1413,10 @@ namespace cryptonote
     {
       std::string hash;
       uint64_t height;
-      std::string pow_hash;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(hash)
         KV_SERIALIZE(height)
-        KV_SERIALIZE(pow_hash);
       END_KV_SERIALIZE_MAP()
     };
 
@@ -1801,12 +1793,10 @@ namespace cryptonote
     {
       uint64_t start_height;
       uint64_t end_height;
-      std::string pow_hash;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(start_height)
         KV_SERIALIZE(end_height)
-        KV_SERIALIZE(pow_hash);
       END_KV_SERIALIZE_MAP()
     };
 
@@ -1945,42 +1935,6 @@ namespace cryptonote
     {
       std::string status;
 
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(status)
-      END_KV_SERIALIZE_MAP()
-    };
-  };
-    
-  struct COMMAND_RPC_START_SAVE_GRAPH
-  {
-	struct request
-    {
-      BEGIN_KV_SERIALIZE_MAP()
-      END_KV_SERIALIZE_MAP()
-    };
-    
-    struct response
-    {
-	  std::string status;
-	  
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(status)
-      END_KV_SERIALIZE_MAP()
-    };
-  };
-  
-  struct COMMAND_RPC_STOP_SAVE_GRAPH
-  {
-	struct request
-    {
-      BEGIN_KV_SERIALIZE_MAP()
-      END_KV_SERIALIZE_MAP()
-    };
-    
-    struct response
-    {
-	  std::string status;
-	  
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(status)
       END_KV_SERIALIZE_MAP()
@@ -2273,41 +2227,6 @@ namespace cryptonote
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(status)
         KV_SERIALIZE(chains)
-      END_KV_SERIALIZE_MAP()
-    };
-  };
-
-  struct COMMAND_RPC_UPDATE
-  {
-    struct request
-    {
-      std::string command;
-      std::string path;
-
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(command);
-        KV_SERIALIZE(path);
-      END_KV_SERIALIZE_MAP()
-    };
-
-    struct response
-    {
-      std::string status;
-      bool update;
-      std::string version;
-      std::string user_uri;
-      std::string auto_uri;
-      std::string hash;
-      std::string path;
-
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(status)
-        KV_SERIALIZE(update)
-        KV_SERIALIZE(version)
-        KV_SERIALIZE(user_uri)
-        KV_SERIALIZE(auto_uri)
-        KV_SERIALIZE(hash)
-        KV_SERIALIZE(path)
       END_KV_SERIALIZE_MAP()
     };
   };

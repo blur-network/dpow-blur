@@ -70,6 +70,8 @@ using namespace epee;
  #include <stdlib.h>
 #endif
 
+namespace cryptonote {
+
 namespace komodo {
 
   komodo_core::komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p) : m_core(cr), m_p2p(p2p) {};
@@ -236,9 +238,9 @@ bool komodo_core::komodo_chainactive(uint64_t &height, cryptonote::block &tipind
     {
         if ( height <= m_core.get_blockchain_storage().get_db().height()-1)
             return true;
-        else fprintf(stderr,"komodo_chainactive height %llu > active.%llu\n",height,tipheight);
+        else fprintf(stderr,"komodo_chainactive height %lu > active.%llu\n",height,tipheight);
     }
-    fprintf(stderr,"komodo_chainactive null chainActive.Tip() height %llu\n",height);
+    fprintf(stderr,"komodo_chainactive null chainActive.Tip() height %lu\n",height);
     return false;
 }
 
@@ -249,7 +251,7 @@ int32_t komodo_core::komodo_heightstamp(uint64_t height)
     bool activechain = komodo_chainactive(height, *b);
     if (activechain && (top_block_height > 0))
         return(b->timestamp);
-    else fprintf(stderr,"komodo_heightstamp null ptr for block.%llu\n",height);
+    else fprintf(stderr,"komodo_heightstamp null ptr for block.%lu\n",height);
     return(0);
 }
 
@@ -381,7 +383,7 @@ int32_t komodo_core::komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uin
             }
             memcpy(pubkeys,elected_pubkeys0,n0 * 33);
             if ( ASSETCHAINS_SYMBOL[0] != 0 )
-              fprintf(stderr,"%s height.%llu t.%llu elected.%d notaries\n",ASSETCHAINS_SYMBOL,height,timestamp,n0);
+              fprintf(stderr,"%s height.%lu t.%lu elected.%d notaries\n",ASSETCHAINS_SYMBOL,height,timestamp,n0);
             return(n0);
         }
         else //if ( (timestamp != 0 && timestamp <= KOMODO_NOTARIES_TIMESTAMP2) || height <= KOMODO_NOTARIES_HEIGHT2 )
@@ -392,7 +394,7 @@ int32_t komodo_core::komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uin
                 for (i=0; i<n1; i++)
                     decode_hex(elected_pubkeys1[i],33,(char *)Notaries_elected1[i][1]);
                 if ( 0 && ASSETCHAINS_SYMBOL[0] != 0 )
-                    fprintf(stderr,"%s height.%llu t.%llu elected.%d notaries2\n",ASSETCHAINS_SYMBOL,height,timestamp,n1);
+                    fprintf(stderr,"%s height.%lu t.%lu elected.%d notaries2\n",ASSETCHAINS_SYMBOL,height,timestamp,n1);
                 did1 = 1;
             }
             memcpy(pubkeys,elected_pubkeys1,n1 * 33);
@@ -752,3 +754,5 @@ void komodo_core::komodo_connectblock(uint64_t& height,cryptonote::block& b)
 */
   }
 } // namespace komodo
+
+} // namespace cryptonote

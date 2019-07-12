@@ -105,6 +105,8 @@ typedef union _bits256 bits256;
 struct sha256_vstate { uint64_t length; uint32_t state[8],curlen; uint8_t buf[64]; };
 struct rmd160_vstate { uint64_t length; uint8_t buf[64]; uint32_t curlen, state[5]; };
 
+namespace cryptonote {
+
 namespace komodo {
 
 class komodo_core
@@ -679,3 +681,5 @@ uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth)
 
 
 } //namespace komodo
+
+}  //namespace cryptonote

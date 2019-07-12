@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2010, Blur Network
+// Copyright (c) 2019-2020, Blur Network
 //
 // All rights reserved.
 //
@@ -35,6 +35,7 @@ using namespace epee;
 #include <vector>
 #include <sstream>
 #include <iomanip>
+
 #include "scoped_message_writer.h"
 
   std::string bytes256_to_hex(std::vector<uint8_t> &input)

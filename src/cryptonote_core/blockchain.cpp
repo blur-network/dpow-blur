@@ -58,7 +58,7 @@
 #include "blocks/blocks.h"
 #endif
 #if defined(KOMODO_NOTARIZATIONS)
-#include "komodo_validation011.h"
+#include "komodo_validation.h"
 #endif
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "blockchain"

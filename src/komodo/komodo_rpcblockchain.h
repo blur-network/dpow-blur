@@ -15,7 +15,7 @@
 
 #ifndef komodo_rpcblockchain_h
 #define komodo_rpcblockchain_h
-
+namespace cryptonote {
 namespace komodo {
 
 struct notarized_checkpoint
@@ -104,6 +104,6 @@ int32_t komodo_prevMoMheight()
 }
 
 } // namespace komodo
-
+} // namespace cryptonote
 #endif /* komodo_rpcblockchain_h */
 
