@@ -1867,11 +1867,11 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_merkle_root(const COMMAND_RPC_GET_MERKLE_ROOT::request& req, COMMAND_RPC_GET_MERKLE_ROOT::response& res, epee::json_rpc::error& error_resp)
   {
-      bool req_filled = req.txs[0].length() > 0;
+      bool req_filled = req.txs[0].empty();
 
       if (!req_filled) {
         error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-        error_resp.message = "Error: No transactions given for root computation";
+        error_resp.message = "Error: No transaction(s) given for root computation";
         return false;
       }
 
