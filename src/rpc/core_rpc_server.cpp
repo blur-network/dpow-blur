@@ -1865,6 +1865,35 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_merkle_root(const COMMAND_RPC_GET_MERKLE_ROOT::request& req, COMMAND_RPC_GET_MERKLE_ROOT::response& res, epee::json_rpc::error& error_resp)
+  {
+      bool req_filled = req.txs[0].length() > 0;
+
+      if (!req_filled) {
+        error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+        error_resp.message = "Error: No transactions given for root computation";
+        return false;
+      }
+
+     std::vector<cryptonote::blobdata> txs;
+     std::vector<crypto::hash> tx_hashes;
+     cryptonote::blobdata tmp_hash;
+     crypto::hash tree_hash = crypto::null_hash;
+
+     for (const auto& hash : req.txs) {
+       tmp_hash = epee::string_tools::parse_hexstr_to_binbuff(hash,tmp_hash);
+       tx_hashes.push_back(*reinterpret_cast<const crypto::hash*>(tmp_hash.data())); }
+
+     const std::vector<crypto::hash> const_txs = tx_hashes;
+     tree_hash = get_tx_tree_hash(const_txs);
+
+     std::string tree_hash_s = epee::string_tools::pod_to_hex(tree_hash);
+     res.tree_hash = tree_hash_s;
+     res.status = "OK";
+     return true;
+}
+
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_ntz_data(const COMMAND_RPC_GET_NTZ_DATA::request& req, COMMAND_RPC_GET_NTZ_DATA::response& res, epee::json_rpc::error& error_resp)
   {
       const char* ASSETCHAINS_SYMBOL[5] = { "BLUR" };

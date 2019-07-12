@@ -164,6 +164,7 @@ namespace cryptonote
         MAP_JON_RPC_WE_IF("calc_MoM",              on_calc_MoM,                   COMMAND_RPC_CALC_MOM, !m_restricted)
         MAP_JON_RPC_WE_IF("height_MoM",            on_height_MoM,                 COMMAND_RPC_HEIGHT_MOM, !m_restricted)
         MAP_JON_RPC_WE_IF("notarization_data",            on_get_ntz_data,                 COMMAND_RPC_GET_NTZ_DATA, !m_restricted)
+        MAP_JON_RPC_WE_IF("merkle_root",            on_get_merkle_root,                 COMMAND_RPC_GET_MERKLE_ROOT, !m_restricted)
       END_JSON_RPC_MAP()
     END_URI_MAP2()
 
@@ -227,6 +228,7 @@ namespace cryptonote
     bool on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error& error);
     bool on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error);
     bool on_get_ntz_data(const COMMAND_RPC_GET_NTZ_DATA::request& req, COMMAND_RPC_GET_NTZ_DATA::response& res, epee::json_rpc::error& error);
+    bool on_get_merkle_root(const COMMAND_RPC_GET_MERKLE_ROOT::request& req, COMMAND_RPC_GET_MERKLE_ROOT::response& res, epee::json_rpc::error& error);
     //-----------------------
 
 private:
