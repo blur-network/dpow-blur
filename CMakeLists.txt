@@ -820,7 +820,7 @@ if(MINGW)
   set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wa,-mbig-obj")
   set(EXTRA_LIBRARIES mswsock;ws2_32;iphlpapi;crypt32;bcrypt)
   if(DEPENDS)
-    set(ICU_LIBRARIES sicuio sicuin sicuuc sicudt sicutu iconv)
+    set(ICU_LIBRARIES icuio icui18n icuuc icudata icutu iconv)
   else()
     set(ICU_LIBRARIES icuio icuin icuuc icudt icutu iconv)
   endif()
@@ -883,7 +883,6 @@ endif()
 
 # when ON - will install libwallet_merged into "lib"
 option(BUILD_GUI_DEPS "Build GUI dependencies." OFF)
-
 
 CHECK_C_COMPILER_FLAG(-std=c11 HAVE_C11)
 
