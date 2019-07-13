@@ -1028,10 +1028,12 @@ namespace cryptonote
   {
     struct request
     {
-      std::vector<std::string> txs;
+      std::vector<std::string> tx_hashes;
+      std::string block_hash;
 
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(txs)
+        KV_SERIALIZE(tx_hashes)
+        KV_SERIALIZE(block_hash)
       END_KV_SERIALIZE_MAP()
     };
 

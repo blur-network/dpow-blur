@@ -1867,25 +1867,59 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_merkle_root(const COMMAND_RPC_GET_MERKLE_ROOT::request& req, COMMAND_RPC_GET_MERKLE_ROOT::response& res, epee::json_rpc::error& error_resp)
   {
-      bool req_filled = req.txs.size() > 0;
+      bool tx_filled = req.tx_hashes.size() > 0;
+      bool blk_filled = req.block_hash.size() > 0;
+      bool both_filled = tx_filled && blk_filled;
 
-      if (!req_filled) {
+      if (!tx_filled && !blk_filled) {
         error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-        error_resp.message = "Error: No transaction(s) given for root computation";
+        error_resp.message = "Error: No transaction(s) or block hash given for root computation";
+        return false;
+      } else if (both_filled) {
+        error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+        error_resp.message = "Error: Too many parameters.  Please use only one of tx_hashes or block_hash.";
         return false;
       }
 
-     std::vector<cryptonote::blobdata> txs;
      std::vector<crypto::hash> tx_hashes;
      cryptonote::blobdata tmp_hash;
      crypto::hash tree_hash = crypto::null_hash;
+     cryptonote::block b;
 
-     for (const auto& hash : req.txs) {
-       tmp_hash = epee::string_tools::parse_hexstr_to_binbuff(hash,tmp_hash);
-       tx_hashes.push_back(*reinterpret_cast<const crypto::hash*>(tmp_hash.data())); }
+     if (tx_filled)
+     {
+       for (const auto& hash : req.tx_hashes)
+       {
+         if (!epee::string_tools::parse_hexstr_to_binbuff(hash,tmp_hash))
+         {
+           error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+           error_resp.message = "Error: Cannot parse tx_hash from hexstr";
+           return false;
+         }
+         tx_hashes.push_back(*reinterpret_cast<const crypto::hash*>(tmp_hash.data()));
+       }
+       const std::vector<crypto::hash> const_txs = tx_hashes;
+       tree_hash = get_tx_tree_hash(const_txs);
+     }
 
-     const std::vector<crypto::hash> const_txs = tx_hashes;
-     tree_hash = get_tx_tree_hash(const_txs);
+     if (blk_filled)
+     {
+       if(!epee::string_tools::parse_hexstr_to_binbuff(req.block_hash,tmp_hash))
+       {
+         error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+         error_resp.message = "Error: Cannot parse blk_hash from hexstr";
+         return false;
+       }
+
+       const crypto::hash* b_hash = reinterpret_cast<const crypto::hash*>(tmp_hash.data());
+       if (!m_core.get_block_by_hash(*b_hash, b))
+       {
+         error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
+         error_resp.message = "Error: Cannot parse blk_hash from hexstr";
+         return false;
+       }
+       tree_hash = get_tx_tree_hash(b);
+     }
 
      std::string tree_hash_s = epee::string_tools::pod_to_hex(tree_hash);
      res.tree_hash = tree_hash_s;
