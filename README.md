@@ -26,3 +26,27 @@ Output:
     "prevMoMheight": 0
   }
 ```
+To retrieve the merkle root of a given block, by block hash or by vector of transaction hashes (`b.miner_tx` + `b.tx_hashes`):
+
+By block hash:
+```
+$ curl -X POST http://localhost:52542/json_rpc -d '{"method":"get_merkle_root","params":{"block_hash":"fcef71dbd8138c1bb738df9848307bd766af11e763c9125014a023db706877d"}}'
+{
+  "id": 0,
+  "jsonrpc": "2.0",
+  "result": {
+    "status": "OK",
+    "tree_hash": "8f85f91445345bfdc47633fb8f81002781994ace103706568f97249e5f5efee1"
+  }
+}
+```
+By transaction hashes:
+```
+$ curl -X POST http://localhost:52542/json_rpc -d '{"method":"get_merkle_root","params":{"tx_hashes":["6ca1743cb1db1f4f34b132919b7941f766146b4dbf36fd6db88ff9563b7710b","abdbab0a70288fc8106de68715db988e901cf51f77696011c6479822a9236b8b"]}}'
+{
+  "id": 0,
+  "jsonrpc": "2.0",
+  "result": {
+    "status": "OK",
+    "tree_hash": "8f85f91445345bfdc47633fb8f81002781994ace103706568f97249e5f5efee1"
+```
