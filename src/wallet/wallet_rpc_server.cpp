@@ -1584,7 +1584,7 @@ namespace tools
 
     try
     {
-      m_wallet->check_tx_key(txid, tx_key, additional_tx_keys, info.address, res.received, res.in_pool, res.confirmations);
+      m_wallet->check_tx_key(txid, tx_key, additional_tx_keys, info.address, res.received, res.in_pool, res.confirmations, res.rawconfirmations);
     }
     catch (const std::exception &e)
     {
@@ -1653,7 +1653,8 @@ namespace tools
       uint64_t received;
       bool in_pool;
       uint64_t confirmations;
-      res.good = m_wallet->check_tx_proof(txid, info.address, info.is_subaddress, req.message, req.signature, res.received, res.in_pool, res.confirmations);
+      uint64_t rawconfirmations;
+      res.good = m_wallet->check_tx_proof(txid, info.address, info.is_subaddress, req.message, req.signature, res.received, res.in_pool, res.confirmations, res.rawconfirmations);
     }
     catch (const std::exception &e)
     {

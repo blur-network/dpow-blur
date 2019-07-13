@@ -996,11 +996,14 @@ namespace wallet_rpc
       uint64_t received;
       bool in_pool;
       uint64_t confirmations;
+      uint64_t rawconfirmations;
+
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(received)
         KV_SERIALIZE(in_pool)
         KV_SERIALIZE(confirmations)
+        KV_SERIALIZE(rawconfirmations)
       END_KV_SERIALIZE_MAP()
     };
   };
@@ -1053,12 +1056,14 @@ namespace wallet_rpc
       uint64_t received;
       bool in_pool;
       uint64_t confirmations;
+      uint64_t rawconfirmations;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(good)
         KV_SERIALIZE(received)
         KV_SERIALIZE(in_pool)
         KV_SERIALIZE(confirmations)
+        KV_SERIALIZE(rawconfirmations)
       END_KV_SERIALIZE_MAP()
     };
   };

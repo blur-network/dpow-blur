@@ -7791,7 +7791,7 @@ bool wallet2::check_spend_proof(const crypto::hash &txid, const std::string &mes
 }
 //----------------------------------------------------------------------------------------------------
 
-void wallet2::check_tx_key(const crypto::hash &txid, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, const cryptonote::account_public_address &address, uint64_t &received, bool &in_pool, uint64_t &confirmations)
+void wallet2::check_tx_key(const crypto::hash &txid, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, const cryptonote::account_public_address &address, uint64_t &received, bool &in_pool, uint64_t &confirmations, uint64_t &rawconfirmations)
 {
   crypto::key_derivation derivation;
   THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(address.m_view_public_key, tx_key, derivation), error::wallet_internal_error,
@@ -7803,10 +7803,10 @@ void wallet2::check_tx_key(const crypto::hash &txid, const crypto::secret_key &t
     THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(address.m_view_public_key, additional_tx_keys[i], additional_derivations[i]), error::wallet_internal_error,
       "Failed to generate key derivation from supplied parameters");
 
-  check_tx_key_helper(txid, derivation, additional_derivations, address, received, in_pool, confirmations);
+  check_tx_key_helper(txid, derivation, additional_derivations, address, received, in_pool, confirmations, rawconfirmations);
 }
 
-void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_derivation &derivation, const std::vector<crypto::key_derivation> &additional_derivations, const cryptonote::account_public_address &address, uint64_t &received, bool &in_pool, uint64_t &confirmations)
+void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_derivation &derivation, const std::vector<crypto::key_derivation> &additional_derivations, const cryptonote::account_public_address &address, uint64_t &received, bool &in_pool, uint64_t &confirmations, uint64_t &rawconfirmations)
 {
   COMMAND_RPC_GET_TRANSACTIONS::request req;
   COMMAND_RPC_GET_TRANSACTIONS::response res;
@@ -7884,14 +7884,32 @@ void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_de
   }
 
   in_pool = res.txs.front().in_pool;
-  confirmations = (uint64_t)-1;
+  rawconfirmations = (uint64_t)-1;
   if (!in_pool)
   {
     std::string err;
     uint64_t bc_height = get_daemon_blockchain_height(err);
-    if (err.empty())
-      confirmations = bc_height - (res.txs.front().block_height + 1);
+    if (err.empty()) {
+      rawconfirmations = bc_height - (res.txs.front().block_height + 1);
+      confirmations = rawconfirmations;
+    }
   }
+#ifdef KOMODO_NOTARIZATIONS
+  COMMAND_RPC_GET_NTZ_DATA::response res_ntz;
+  if (res_ntz.notarized < (res.txs.front().block_height + 1))
+  {
+    confirmations = 0;
+    if (rawconfirmations > 0)
+    {
+      confirmations = 1;
+      // bool dpowconf_ntz = (res_ntz.notarized_hash == block_hash) TODO: not sufficient enough of a check
+      if (res_ntz.notarized >= (res.txs.front().block_height + 1) // && dpowconf_ntz
+      {
+        confirmations = rawconfirmations;
+      }
+    }
+  }
+#endif
 }
 
 std::string wallet2::get_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message)
@@ -8015,7 +8033,8 @@ std::string wallet2::get_tx_proof(const crypto::hash &txid, const cryptonote::ac
   uint64_t received;
   bool in_pool;
   uint64_t confirmations;
-  check_tx_key_helper(txid, derivation, additional_derivations, address, received, in_pool, confirmations);
+  uint64_t rawconfirmations;
+  check_tx_key_helper(txid, derivation, additional_derivations, address, received, in_pool, confirmations, rawconfirmations);
   THROW_WALLET_EXCEPTION_IF(!received, error::wallet_internal_error, tr("No funds received in this tx."));
 
   // concatenate all signature strings
@@ -8026,7 +8045,7 @@ std::string wallet2::get_tx_proof(const crypto::hash &txid, const cryptonote::ac
   return sig_str;
 }
 
-bool wallet2::check_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message, const std::string &sig_str, uint64_t &received, bool &in_pool, uint64_t &confirmations)
+bool wallet2::check_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message, const std::string &sig_str, uint64_t &received, bool &in_pool, uint64_t &confirmations, uint64_t &rawconfirmations)
 {
   const bool is_out = sig_str.substr(0, 3) == "Out";
   const std::string header = is_out ? "OutProofV1" : "InProofV1";
@@ -8136,7 +8155,7 @@ bool wallet2::check_tx_proof(const crypto::hash &txid, const cryptonote::account
       if (good_signature[i])
         THROW_WALLET_EXCEPTION_IF(!crypto::generate_key_derivation(shared_secret[i], rct::rct2sk(rct::I), additional_derivations[i - 1]), error::wallet_internal_error, "Failed to generate key derivation");
 
-    check_tx_key_helper(txid, derivation, additional_derivations, address, received, in_pool, confirmations);
+    check_tx_key_helper(txid, derivation, additional_derivations, address, received, in_pool, confirmations, rawconfirmations);
     return true;
   }
   return false;
