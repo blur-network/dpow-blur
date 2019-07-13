@@ -1915,7 +1915,7 @@ namespace cryptonote
        if (!m_core.get_block_by_hash(*b_hash, b))
        {
          error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-         error_resp.message = "Error: Cannot parse blk_hash from hexstr";
+         error_resp.message = "Error: Block not found for provided hash";
          return false;
        }
        tree_hash = get_tx_tree_hash(b);
