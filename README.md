@@ -6,7 +6,7 @@ There are files in here from many different projects, including but not limited 
 
 **To retrieve the current blockchain data, and notarization data (not yet populated):**
 
-`curl -X POST http://localhost:52542/json_rpc -d '{"method":"notarization_data"}'`
+`curl -X POST http://localhost:52542/json_rpc -d '{"method":"get_notarization_data"}'`
 
 Output:
 ```
