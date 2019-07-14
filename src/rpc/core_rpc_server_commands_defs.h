@@ -1001,6 +1001,7 @@ namespace cryptonote
       uint64_t current_chain_height;
       std::string current_chain_hash;
       std::string current_chain_pow;
+      uint64_t notarized_height;
       std::string notarized_hash;
       std::string notarized_txid;
       int32_t notarized;
@@ -1014,9 +1015,10 @@ namespace cryptonote
         KV_SERIALIZE(current_chain_height)
         KV_SERIALIZE(current_chain_hash)
         KV_SERIALIZE(current_chain_pow)
+        KV_SERIALIZE(notarized_height)
         KV_SERIALIZE(notarized_hash)
         KV_SERIALIZE(notarized_txid)
-        KV_SERIALIZE(notarized)
+/*        KV_SERIALIZE(notarized)*/
         KV_SERIALIZE(prevMoMheight)
         KV_SERIALIZE(notarized_MoMdepth)
         KV_SERIALIZE(notarized_MoM)

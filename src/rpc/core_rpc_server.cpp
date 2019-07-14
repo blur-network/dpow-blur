@@ -1966,7 +1966,7 @@ namespace cryptonote
       res.notarized_hash = n_hash;
     /*res.notarized_pow = n_pow;*/
       res.notarized_txid = n_txid;
-      res.notarized = komodo::NOTARIZED_HEIGHT;
+      res.notarized_height = komodo::NOTARIZED_HEIGHT;
       res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
       res.notarized_MoM = n_MoM;
