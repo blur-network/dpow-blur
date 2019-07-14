@@ -28,18 +28,22 @@
 // 
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+#define context "accounts"
+#define hydro_kdf_KEYBYTES 32
 #include <fstream>
 
 #include "include_base_utils.h"
 #include "account.h"
 #include "warnings.h"
 #include "crypto/crypto.h"
+#include "string_tools.h"
 extern "C"
 {
 #include "crypto/keccak.h"
 }
 #include "cryptonote_basic_impl.h"
 #include "cryptonote_format_utils.h"
+#include "libhydrogen/hydrogen.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "account"
@@ -76,6 +80,31 @@ DISABLE_VS_WARNINGS(4244 4345)
   {
     m_keys.m_spend_secret_key = crypto::secret_key();
     m_keys.m_multisig_keys.clear();
+  }
+  //-----------------------------------------------------------------
+  crypto::secret_key account_base::uchar_array_to_key(uint8_t array[hydro_kdf_KEYBYTES])
+  {
+    std::ostringstream convert;
+    for (int a = 0; a < hydro_kdf_KEYBYTES; a++) {
+    convert << array[a];
+    }
+    std::string secret = convert.str();
+    crypto::secret_key ret;
+    bool r = epee::string_tools::hex_to_pod(secret, ret);
+    if(!r)
+      return crypto::null_skey;
+    return ret;
+  } 
+  //-----------------------------------------------------------------
+  crypto::secret_key account_base::generate_secret()
+  {
+    if (hydro_init() != 0)
+      abort();
+
+    uint8_t secret_key[hydro_kdf_KEYBYTES];
+    hydro_kdf_keygen(secret_key);
+    crypto::secret_key ret = uchar_array_to_key(secret_key);
+    return ret;
   }
   //-----------------------------------------------------------------
   crypto::secret_key account_base::generate(const crypto::secret_key& recovery_key, bool recover, bool two_random)
@@ -127,7 +156,15 @@ DISABLE_VS_WARNINGS(4244 4345)
     if (m_creation_timestamp == (uint64_t)-1) // failure
       m_creation_timestamp = 0; // lowest value
   }
-
+  //-----------------------------------------------------------------
+  cryptonote::account_public_address account_base::create_from_btc(const crypto::secret_key& btc_pubkey, const crypto::secret_key& spendkey)
+  {
+    crypto::secret_key first = generate_keys(m_keys.m_account_address.m_view_public_key, m_keys.m_view_secret_key, btc_pubkey, true);
+    crypto::secret_key second = generate_keys(m_keys.m_account_address.m_spend_public_key, m_keys.m_spend_secret_key, spendkey, true);
+    cryptonote::account_public_address address;
+    create_from_keys(address, first, second);
+    return address;
+  }
   //-----------------------------------------------------------------
   void account_base::create_from_device(const std::string &device_name)
   {
