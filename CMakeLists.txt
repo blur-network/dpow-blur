@@ -422,6 +422,9 @@ link_directories(${EASYLOGGING_LIBRARY_DIRS})
 include_directories(${BITCOIN_INCLUDE})
 link_directories(${BITCOIN_LIBRARY})
 
+include_directories(${HYDROGEN_INCLUDE})
+include_directories(${HYDROGEN_LIBRARY_DIR})
+
 # Final setup for liblmdb
 include_directories(${LMDB_INCLUDE})
 
