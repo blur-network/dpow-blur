@@ -494,6 +494,7 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, password, std::string, String, false, std::string());
 
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, btc_pubkey, std::string, String, false, std::string());
+
     crypto::secret_key btc_pubkey_secret;
     if (field_btc_pubkey_found)
     {
@@ -503,23 +504,21 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
         THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse view key secret key"));
       }
       btc_pubkey_secret = *reinterpret_cast<const crypto::secret_key*>(btc_pubkey_data.data());
-      crypto::public_key view_pkey;
+      crypto::public_key view_pkey = null_pkey;
       if (!crypto::secret_key_to_public_key(btc_pubkey_secret, view_pkey)) {
         THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify view key secret key"));
       }
-    }
-    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, spendkey, std::string, String, false, std::string());
-    std::unique_ptr<account_base> account;
-    account_base* m_account = account.release();
-    crypto::secret_key spendkey = m_account->generate_secret();
+
+      std::unique_ptr<account_base> account;
+      account_base* m_account = nullptr;
+      m_account = account.release();
+      crypto::secret_key spendkey = m_account->generate_secret();
  
 //    spendkey = *reinterpret_cast<const crypto::secret_key*>(spendkey_data.data());
-    crypto::public_key p_skey;
+      crypto::public_key p_skey = null_pkey;
       if (!crypto::secret_key_to_public_key(spendkey, p_skey)) {
         THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify spend key secret key"));
       }
-
-    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, address, std::string, String, false, std::string());
 
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, create_address_file, int, Int, false, false);
     bool create_address_file = field_create_address_file;
@@ -531,8 +530,7 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
 
     try
     {
-        account_base* account_base;
-        cryptonote::account_public_address address =  account_base->create_from_btc(btc_pubkey_secret, spendkey);
+        cryptonote::account_public_address address =  m_account->create_from_btc(btc_pubkey_secret, spendkey);
         if (!crypto::secret_key_to_public_key(btc_pubkey_secret, address.m_view_public_key)) {
           THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify view key secret key"));
         } else {
@@ -543,6 +541,7 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
     {
       THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, std::string(tools::wallet2::tr("failed to generate new wallet: ")) + e.what());
     }
+  }
     return true;
   };
 
