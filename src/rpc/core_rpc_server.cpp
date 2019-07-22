@@ -1975,7 +1975,7 @@ namespace cryptonote
      return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error&  error_resp)
+/*  bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error&  error_resp)
   {
     uint64_t height;
     int32_t MoMdepth;
@@ -2008,7 +2008,7 @@ namespace cryptonote
     res.notarized_MoM = str_MoM;
     res.status = CORE_RPC_STATUS_OK;
     return true;
-  }
+  }*/
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error_resp)
   {

@@ -649,7 +649,7 @@ uint8_t NOTARY_PUBKEY33[33];
 uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
 portable_mutex_t komodo_mutex;
 
-uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth)
+/*uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth)
 {
     static uint256 zero;
     bits256 *MoM, *tree;
@@ -678,7 +678,7 @@ uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth)
 //    iguana_merkle(blocks[i],MoMdepth);
     return(*(uint256*)MoM);
 }
-
+*/
 
 } //namespace komodo
 

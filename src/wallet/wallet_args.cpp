@@ -73,6 +73,10 @@ namespace wallet_args
   {
     return {"generate-from-json", wallet_args::tr("Generate wallet from JSON format file"), ""};
   }
+  command_line::arg_descriptor<std::string> arg_generate_from_btc_pubkey()
+  {
+    return {"generate-from-btc-pubkey", wallet_args::tr("Generate wallet from BTC pubkey"), ""};
+  }
   command_line::arg_descriptor<std::string> arg_wallet_file()
   {
     return {"wallet-file", wallet_args::tr("Use wallet <arg>"), ""};

@@ -2256,6 +2256,7 @@ namespace cryptonote
     };
   };
 
+/*
   struct COMMAND_RPC_CALC_MOM
   {
     struct request
@@ -2286,7 +2287,7 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
   };
-
+*/
   struct COMMAND_RPC_HEIGHT_MOM
   {
     struct request

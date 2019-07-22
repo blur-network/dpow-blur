@@ -35,6 +35,7 @@
 namespace wallet_args
 {
   command_line::arg_descriptor<std::string> arg_generate_from_json();
+  command_line::arg_descriptor<std::string> arg_generate_from_btc_pubkey();
   command_line::arg_descriptor<std::string> arg_wallet_file();
 
   const char* tr(const char* str);

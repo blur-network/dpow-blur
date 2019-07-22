@@ -165,8 +165,6 @@ namespace tools
       }
     }
     
-    // TODO: Add bitcoin Pubkey logic here
-    
     if (command_line::has_arg(*m_vm, arg_notary_wallet_dir))
     {
       m_notary_wallet_dir = command_line::get_arg(*m_vm, arg_notary_wallet_dir);
@@ -2454,6 +2452,7 @@ int main(int argc, char** argv)
 namespace po = boost::program_options;
 
   const auto arg_notary_wallet_file = wallet_args::arg_wallet_file();
+  const auto arg_from_btc_pubkey = wallet_args::arg_generate_from_btc_pubkey();
   const auto arg_from_json = wallet_args::arg_generate_from_json();
 
   po::options_description desc_params(wallet_args::tr("Wallet options"));
@@ -2463,7 +2462,7 @@ namespace po = boost::program_options;
   command_line::add_arg(desc_params, arg_disable_rpc_login);
   command_line::add_arg(desc_params, arg_trusted_daemon);
   cryptonote::rpc_args::init_options(desc_params);
-//  command_line::add_arg(desc_params, arg_btc_pubkey);
+  command_line::add_arg(desc_params, arg_from_btc_pubkey);
   command_line::add_arg(desc_params, arg_notary_wallet_file);
   command_line::add_arg(desc_params, arg_from_json);
   command_line::add_arg(desc_params, arg_notary_wallet_dir);
@@ -2471,7 +2470,7 @@ namespace po = boost::program_options;
 
   const auto vm = wallet_args::main(
     argc, argv,
-    "blur-notary-server-rpc [--wallet-file=<file>|--generate-from-json=<file>|--wallet-dir=<directory>] [--rpc-bind-port=<port>]",
+    "blur-notary-server-rpc [--wallet-file=<file>|--generate-from-btc-pubkey=<pubkey>|--generate-from-json=<file>|--wallet-dir=<directory>] [--rpc-bind-port=<port>]",
     tools::notary_server::tr("This is the DPoW RPC notarization wallet. It needs to connect to a BLUR daemon to work correctly. If you are not intending to create notarization transactions, use the BLUR RPC wallet instead."),
     desc_params,
     po::positional_options_description(),
@@ -2496,6 +2495,7 @@ namespace po = boost::program_options;
     }
 
     const auto notary_wallet_file = command_line::get_arg(*vm, arg_notary_wallet_file);
+    const auto from_btc_pubkey = command_line::get_arg(*vm, arg_from_btc_pubkey);
     const auto from_json = command_line::get_arg(*vm, arg_from_json);
     const auto notary_wallet_dir = command_line::get_arg(*vm, arg_notary_wallet_dir);
     const auto prompt_for_password = command_line::get_arg(*vm, arg_prompt_for_password);
@@ -2503,7 +2503,7 @@ namespace po = boost::program_options;
 
     if(!notary_wallet_file.empty() && !from_json.empty())
     {
-      LOG_ERROR(tools::notary_server::tr("Can't specify more than one of --wallet-file and --generate-from-json"));
+      LOG_ERROR(tools::notary_server::tr("Can't specify more than one of --wallet-file and  --generate-from-json"));
       return 1;
     }
 
@@ -2513,9 +2513,15 @@ namespace po = boost::program_options;
       goto just_dir;
     }
 
-    if (notary_wallet_file.empty() && from_json.empty())
+    if (!from_json.empty() && !from_btc_pubkey.empty())
     {
-      LOG_ERROR(tools::notary_server::tr("Must specify --wallet-file or --generate-from-json or --wallet-dir"));
+      LOG_ERROR(tools::notary_server::tr("Cannot specify --generate-from-json and --generate-from-btc-pubkey simulataneously"));
+      return 1;
+    }
+
+    if (notary_wallet_file.empty() && from_json.empty() && from_btc_pubkey.empty())
+    {
+      LOG_ERROR(tools::notary_server::tr("Must specify --wallet-file or --generate-from-json --generate-from-btc-pubkey or --wallet-dir"));
       return 1;
     }
 
@@ -2524,7 +2530,7 @@ namespace po = boost::program_options;
     {
       wal = tools::wallet2::make_from_file(*vm, notary_wallet_file, password_prompt).first;
     }
-    else
+    else if (!from_json.empty())
     {
       try
       {
@@ -2536,6 +2542,20 @@ namespace po = boost::program_options;
         return 1;
       }
     }
+    else if (!from_btc_pubkey.empty())
+    {
+      try
+      {
+       wal = tools::wallet2::make_from_btc_pubkey(*vm, from_btc_pubkey, password_prompt);
+      }
+      catch (const std::exception &e)
+      {
+        MERROR("Error creating wallet: " << e.what());
+        return 1;
+      }
+    }
+
+
     if (!wal)
     {
       return 1;

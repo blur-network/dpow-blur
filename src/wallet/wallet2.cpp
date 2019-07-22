@@ -461,6 +461,98 @@ std::unique_ptr<tools::wallet2> generate_from_json(const std::string& json_file,
   return nullptr;
 }
 
+std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_pubkey, const boost::program_options::variables_map& vm, const options& opts, const std::function<boost::optional<tools::password_container>(const char *, bool)> &password_prompter)
+{
+  const bool testnet = command_line::get_arg(vm, opts.testnet);
+  const bool stagenet = command_line::get_arg(vm, opts.stagenet);
+  const network_type nettype = testnet ? TESTNET : stagenet ? STAGENET : MAINNET;
+
+  std::unique_ptr<tools::wallet2> wallet;
+  const auto do_generate = [&]() -> bool {
+    std::string buf;
+    if (!epee::file_io_utils::load_file_to_string(btc_pubkey, buf)) {
+      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, std::string(tools::wallet2::tr("Failed to load file ")) + btc_pubkey);
+      return false;
+    }
+
+    rapidjson::Document json;
+    if (json.Parse(buf.c_str()).HasParseError()) {
+      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("Failed to parse JSON"));
+      return false;
+    }
+
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, version, unsigned, Uint, true, 0);
+    const int current_version = 1;
+    THROW_WALLET_EXCEPTION_IF(field_version > current_version, tools::error::wallet_internal_error,
+      ((boost::format(tools::wallet2::tr("Version %u too new, we can only grok up to %u")) % field_version % current_version)).str());
+
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, filename, std::string, String, true, std::string());
+
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, scan_from_height, uint64_t, Uint64, false, 0);
+    const bool recover = field_scan_from_height_found;
+
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, password, std::string, String, false, std::string());
+
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, btc_pubkey, std::string, String, false, std::string());
+    crypto::secret_key btc_pubkey_secret;
+    if (field_btc_pubkey_found)
+    {
+      cryptonote::blobdata btc_pubkey_data;
+      if(!epee::string_tools::parse_hexstr_to_binbuff(field_btc_pubkey, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
+      {
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse view key secret key"));
+      }
+      btc_pubkey_secret = *reinterpret_cast<const crypto::secret_key*>(btc_pubkey_data.data());
+      crypto::public_key view_pkey;
+      if (!crypto::secret_key_to_public_key(btc_pubkey_secret, view_pkey)) {
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify view key secret key"));
+      }
+    }
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, spendkey, std::string, String, false, std::string());
+    std::unique_ptr<account_base> account;
+    account_base* m_account = account.release();
+    crypto::secret_key spendkey = m_account->generate_secret();
+ 
+//    spendkey = *reinterpret_cast<const crypto::secret_key*>(spendkey_data.data());
+    crypto::public_key p_skey;
+      if (!crypto::secret_key_to_public_key(spendkey, p_skey)) {
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify spend key secret key"));
+      }
+
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, address, std::string, String, false, std::string());
+
+    GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, create_address_file, int, Int, false, false);
+    bool create_address_file = field_create_address_file;
+
+
+    wallet.reset(make_basic(vm, opts, password_prompter).release());
+    wallet->set_refresh_from_block_height(field_scan_from_height);
+    wallet->explicit_refresh_from_block_height(field_scan_from_height_found);
+
+    try
+    {
+        account_base* account_base;
+        cryptonote::account_public_address address =  account_base->create_from_btc(btc_pubkey_secret, spendkey);
+        if (!crypto::secret_key_to_public_key(btc_pubkey_secret, address.m_view_public_key)) {
+          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify view key secret key"));
+        } else {
+          wallet->generate(field_filename, field_password, address, spendkey, btc_pubkey_secret, create_address_file);
+        }
+    }
+    catch (const std::exception& e)
+    {
+      THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, std::string(tools::wallet2::tr("failed to generate new wallet: ")) + e.what());
+    }
+    return true;
+  };
+
+  if (do_generate())
+  {
+    return wallet;
+  }
+  return nullptr;
+}
+
 static void throw_on_rpc_response_error(const boost::optional<std::string> &status, const char *method)
 {
   // no error
@@ -707,6 +799,12 @@ std::unique_ptr<wallet2> wallet2::make_from_json(const boost::program_options::v
 {
   const options opts{};
   return generate_from_json(json_file, vm, opts, password_prompter);
+}
+
+std::unique_ptr<wallet2> wallet2::make_from_btc_pubkey(const boost::program_options::variables_map& vm, const std::string& btc_pubkey,  const std::function<boost::optional<tools::password_container>(const char *, bool)> &password_prompter)
+{
+  const options opts{};
+  return generate_from_btc_pubkey(btc_pubkey, vm, opts, password_prompter);
 }
 
 std::pair<std::unique_ptr<wallet2>, password_container> wallet2::make_from_file(
