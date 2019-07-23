@@ -68,6 +68,7 @@ using namespace epee;
 #include "common/base58.h"
 #include "ringct/rctSigs.h"
 #include "ringdb.h"
+#include "libhydrogen/hydrogen.h"
 
 extern "C"
 {
@@ -503,22 +504,23 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
       {
         THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse view key secret key"));
       }
-      btc_pubkey_secret = *reinterpret_cast<const crypto::secret_key*>(btc_pubkey_data.data());
       crypto::public_key view_pkey = null_pkey;
-      if (!crypto::secret_key_to_public_key(btc_pubkey_secret, view_pkey)) {
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify view key secret key"));
-      }
+      btc_pubkey_secret = *reinterpret_cast<const crypto::secret_key*>(btc_pubkey_data.data());
+      LOG_PRINT_L0("Cast btc pubkey to secret key: " << epee::string_tools::pod_to_hex(btc_pubkey_secret));
+      
 
-      std::unique_ptr<account_base> account;
-      account_base* m_account = nullptr;
-      m_account = account.release();
+      std::unique_ptr<cryptonote::account_base> account(new account_base()); 
+      cryptonote::account_base* m_account = account.release();
+
+      if (hydro_init() < 0) {
+        MERROR("Libhydrogen not initialized!");
+      }        
       crypto::secret_key spendkey = m_account->generate_secret();
- 
-//    spendkey = *reinterpret_cast<const crypto::secret_key*>(spendkey_data.data());
+      LOG_PRINT_L0("Generated secret key with libhydro: " << epee::string_tools::pod_to_hex(spendkey));
+
+
       crypto::public_key p_skey = null_pkey;
-      if (!crypto::secret_key_to_public_key(spendkey, p_skey)) {
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify spend key secret key"));
-      }
+      crypto::public_key p_vkey = null_pkey;
 
     GET_FIELD_FROM_JSON_RETURN_ON_ERROR(json, create_address_file, int, Int, false, false);
     bool create_address_file = field_create_address_file;
@@ -531,11 +533,10 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
     try
     {
         cryptonote::account_public_address address =  m_account->create_from_btc(btc_pubkey_secret, spendkey);
-        if (!crypto::secret_key_to_public_key(btc_pubkey_secret, address.m_view_public_key)) {
-          THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to verify view key secret key"));
-        } else {
-          wallet->generate(field_filename, field_password, address, spendkey, btc_pubkey_secret, create_address_file);
-        }
+        std::string addr_string = cryptonote::get_account_address_as_str(nettype, 0, address);
+        LOG_PRINT_L0("Generated account with address: " << addr_string );        
+
+        wallet->generate(field_filename, field_password, address, spendkey, btc_pubkey_secret, true);
     }
     catch (const std::exception& e)
     {
