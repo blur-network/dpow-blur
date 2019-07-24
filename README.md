@@ -2,6 +2,43 @@
 
 There are files in here from many different projects, including but not limited to XMR, BTC, BLUR, and KMD. Please retain proper licensing if you reuse any files, and be aware that this repo is under heavy development... So files will not yet be in their proper homes.
 
+# Creating a Notarization Wallet for Notarization Tx's on BLUR
+
+**To create a wallet on BLUR's network, for notary nodes already owning a secp256k1 private key:**
+
+
+Compile binaries from source, then create a json-formatted wallet configuration file formatted as follows: 
+(named `btc.json` in our example)
+
+
+```
+{
+        "version": 1,
+        "filename": "muh_wallet",
+        "scan_from_height": 0,
+        "btc_pubkey":"24e31f93eff0cc30eaf0b2389fbc591085c0e122c4d11862c1729d090106c842"
+}
+```
+
+
+Substitute the hexidecimal representation of your node's public key into the field titled `btc_pubkey`.
+
+
+Then, launch the `blur-notary-server-rpc` with the following options (change the name of the json file if you named yours something other than `btc.json`): 
+
+
+```
+./blur-notary-server-rpc --generate-from-btc-pubkey btc.json --rpc-bind-port 11111 --prompt-for-password
+```
+
+
+You should see the following:
+
+
+![nnwallet](https://i.imgur.com/I9cRpQp.png)
+
+
+Double check that the values in red match each other! If they do not, then the wallet was generated incorrectly, or data was corrupted between generation, and a check on the values afterward. 
 # RPC Calls for KMD-BLUR Data
 
 **To retrieve the current blockchain data, and notarization data (not yet populated):**
