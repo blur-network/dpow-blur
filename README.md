@@ -5,7 +5,7 @@ There are files in here from many different projects, including but not limited 
 # Creating a Notarization Wallet for Notarization Tx's on BLUR
 
 **To create a wallet on BLUR's network, for notary nodes already owning a secp256k1 private key:**
-*Note: Password prompt is not yet working*
+
 
 Compile binaries from source, then create a json-formatted wallet configuration file formatted as follows: 
 (named `btc.json` in our example)
@@ -16,7 +16,8 @@ Compile binaries from source, then create a json-formatted wallet configuration 
         "version": 1,
         "filename": "muh_wallet",
         "scan_from_height": 0,
-        "btc_pubkey":"24e31f93eff0cc30eaf0b2389fbc591085c0e122c4d11862c1729d090106c842"
+        "btc_pubkey":"24e31f93eff0cc30eaf0b2389fbc591085c0e122c4d11862c1729d090106c842",
+        "password":"password"
 }
 ```
 
@@ -28,7 +29,7 @@ Then, launch the `blur-notary-server-rpc` with the following options (change the
 
 
 ```
-./blur-notary-server-rpc --generate-from-btc-pubkey btc.json --rpc-bind-port 11111 --prompt-for-password
+./blur-notary-server-rpc --generate-from-btc-pubkey btc.json --rpc-bind-port 11111
 ```
 
 
