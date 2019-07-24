@@ -82,28 +82,15 @@ DISABLE_VS_WARNINGS(4244 4345)
     m_keys.m_multisig_keys.clear();
   }
   //-----------------------------------------------------------------
-  crypto::secret_key account_base::uchar_array_to_key(uint8_t array[hydro_kdf_KEYBYTES])
+  crypto::secret_key account_base::generate_secret() const
   {
-    std::ostringstream convert;
-    for (int a = 0; a < hydro_kdf_KEYBYTES; a++) {
-    convert << array[a];
+    if (hydro_init() < 0)
+    {
+      MWARNING("Libhydrogen not initialized! Do not use the generated secret!");
     }
-    std::string secret = convert.str();
-    crypto::secret_key ret;
-    bool r = epee::string_tools::hex_to_pod(secret, ret);
-    if(!r)
-      return crypto::null_skey;
-    return ret;
-  } 
-  //-----------------------------------------------------------------
-  crypto::secret_key account_base::generate_secret()
-  {
-    if (hydro_init() != 0)
-      abort();
-
-    uint8_t secret_key[hydro_kdf_KEYBYTES];
-    hydro_kdf_keygen(secret_key);
-    crypto::secret_key ret = uchar_array_to_key(secret_key);
+    uint8_t buf[32];
+    hydro_random_buf(buf, sizeof buf);
+    const crypto::secret_key ret =  *reinterpret_cast<const crypto::secret_key*>(buf);
     return ret;
   }
   //-----------------------------------------------------------------
@@ -157,13 +144,19 @@ DISABLE_VS_WARNINGS(4244 4345)
       m_creation_timestamp = 0; // lowest value
   }
   //-----------------------------------------------------------------
-  cryptonote::account_public_address account_base::create_from_btc(const crypto::secret_key& btc_pubkey, const crypto::secret_key& spendkey)
+  bool account_base::create_from_btc(const crypto::secret_key& btc_pubkey, const crypto::secret_key& spendkey, crypto::public_key& viewkey_pub, crypto::public_key& spendkey_pub, cryptonote::account_public_address& address)
   {
-    crypto::secret_key first = generate_keys(m_keys.m_account_address.m_view_public_key, m_keys.m_view_secret_key, btc_pubkey, true);
-    crypto::secret_key second = generate_keys(m_keys.m_account_address.m_spend_public_key, m_keys.m_spend_secret_key, spendkey, true);
-    cryptonote::account_public_address address;
-    create_from_keys(address, first, second);
-    return address;
+    m_keys.m_spend_secret_key = spendkey;
+    m_keys.m_view_secret_key = btc_pubkey;
+    bool r = crypto::secret_key_to_public_key(m_keys.m_view_secret_key, viewkey_pub);
+    if (!r) { MERROR("Pubkey could not be derived from view privkey"); return false; }
+    else { m_keys.m_account_address.m_view_public_key = viewkey_pub; };
+    bool rtwo = crypto::secret_key_to_public_key(m_keys.m_spend_secret_key, spendkey_pub);
+    if (!rtwo) { MERROR("Pubkey could not be derived from spend privkey"); return false; }
+    else { m_keys.m_account_address.m_spend_public_key = spendkey_pub; }
+    create_from_keys(m_keys.m_account_address, m_keys.m_view_secret_key, m_keys.m_spend_secret_key);
+    address = m_keys.m_account_address;
+    return true;
   }
   //-----------------------------------------------------------------
   void account_base::create_from_device(const std::string &device_name)
