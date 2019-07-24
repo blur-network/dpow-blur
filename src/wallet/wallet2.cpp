@@ -517,7 +517,7 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
       if (hydro_init() < 0) {
         MERROR("Libhydrogen not initialized!");
       }
-      const crypto::secret_key recovkey = m_account->generate_secret();
+      crypto::secret_key recovkey = m_account->generate_secret();
       LOG_PRINT_L0("Generated seed key with libhydro: " << epee::string_tools::pod_to_hex(recovkey));
 
       crypto::public_key spendkey_pub;
@@ -543,6 +543,11 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
         THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to generate address from privkeys"));
       }
       wallet->generate(field_filename, field_password, address, spendkey_sec, viewkey_sec, true);
+      hydro_memzero(&viewkey_sec, sizeof(viewkey_sec));
+      hydro_memzero(&spendkey_sec, sizeof(spendkey_sec));
+      hydro_memzero(&recovkey, sizeof(recovkey));
+      hydro_memzero(&rngspend, sizeof(rngspend));
+      hydro_memzero(&rngview, sizeof(rngview));
     }
     return true;
   };
