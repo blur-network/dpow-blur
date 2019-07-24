@@ -5,7 +5,7 @@ There are files in here from many different projects, including but not limited 
 # Creating a Notarization Wallet for Notarization Tx's on BLUR
 
 **To create a wallet on BLUR's network, for notary nodes already owning a secp256k1 private key:**
-
+*Note: Password prompt is not yet working*
 
 Compile binaries from source, then create a json-formatted wallet configuration file formatted as follows: 
 (named `btc.json` in our example)
