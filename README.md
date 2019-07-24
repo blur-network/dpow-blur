@@ -40,6 +40,15 @@ You should see the following:
 
 
 Double check that the values in red match each other! If they do not, then the wallet was generated incorrectly, or data was corrupted between generation, and a check on the values afterward. 
+
+After your wallet is generated, you can reopen this existing file with the following startup flags:
+
+```
+./blur-notary-server-rpc --wallet-file muh_wallet --rpc-bind-port 11111 --prompt-for-password
+```
+
+The RPC interface will prompt you for the wallet password.  Enter the password you entered into `btc.json` on creation.
+
 # RPC Calls for KMD-BLUR Data
 
 **To retrieve the current blockchain data, and notarization data (not yet populated):**
