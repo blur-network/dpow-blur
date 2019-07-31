@@ -52,6 +52,7 @@
 #include "p2p/net_node.h"
 #include "crypto/hash-ops.h"
 #include "p2p/net_node.h"
+#include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "komodo_rpcblockchain.h"
 #include "bitcoin/bitcoin.h"
@@ -59,8 +60,6 @@
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
-
-using namespace epee;
 
 #ifdef _MSC_VER
 #include <malloc.h>

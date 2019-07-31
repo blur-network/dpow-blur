@@ -46,9 +46,9 @@ using namespace epee;
 
 namespace komodo {
 
-      int32_t komodo_prevMoMheight();
-      extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID,NOTARIZED_MOM;
-      extern int32_t NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH; 
+//      int32_t komodo_prevMoMheight();
+      extern uint256 NOTARIZED_HASH,NOTARIZED_DESTTXID;//NOTARIZED_MOM;
+      extern int32_t NOTARIZED_HEIGHT;//NOTARIZED_MOMDEPTH;
 
 }
 
@@ -162,7 +162,7 @@ namespace cryptonote
         MAP_JON_RPC_WE("get_txpool_backlog",     on_get_txpool_backlog,         COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG)
         MAP_JON_RPC_WE("get_output_distribution", on_get_output_distribution,   COMMAND_RPC_GET_OUTPUT_DISTRIBUTION)
 //        MAP_JON_RPC_WE_IF("calc_MoM",              on_calc_MoM,                   COMMAND_RPC_CALC_MOM, !m_restricted)
-        MAP_JON_RPC_WE_IF("height_MoM",            on_height_MoM,                 COMMAND_RPC_HEIGHT_MOM, !m_restricted)
+//        MAP_JON_RPC_WE_IF("height_MoM",            on_height_MoM,                 COMMAND_RPC_HEIGHT_MOM, !m_restricted)
         MAP_JON_RPC_WE_IF("get_notarization_data", on_get_ntz_data,               COMMAND_RPC_GET_NTZ_DATA, !m_restricted)
         MAP_JON_RPC_WE_IF("get_merkle_root",       on_get_merkle_root,            COMMAND_RPC_GET_MERKLE_ROOT, !m_restricted)
       END_JSON_RPC_MAP()
@@ -226,7 +226,7 @@ namespace cryptonote
     bool on_get_txpool_backlog(const COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG::request& req, COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG::response& res, epee::json_rpc::error& error_resp);
     bool on_get_output_distribution(const COMMAND_RPC_GET_OUTPUT_DISTRIBUTION::request& req, COMMAND_RPC_GET_OUTPUT_DISTRIBUTION::response& res, epee::json_rpc::error& error_resp);
 //    bool on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error& error);
-    bool on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error);
+//    bool on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error);
     bool on_get_ntz_data(const COMMAND_RPC_GET_NTZ_DATA::request& req, COMMAND_RPC_GET_NTZ_DATA::response& res, epee::json_rpc::error& error);
     bool on_get_merkle_root(const COMMAND_RPC_GET_MERKLE_ROOT::request& req, COMMAND_RPC_GET_MERKLE_ROOT::response& res, epee::json_rpc::error& error);
     //-----------------------

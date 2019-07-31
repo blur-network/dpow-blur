@@ -1948,8 +1948,8 @@ namespace cryptonote
       std::string n_hash = bytes256_to_hex(v_hash);
       std::vector<uint8_t> v_txid(komodo::NOTARIZED_DESTTXID.begin(), komodo::NOTARIZED_DESTTXID.begin()+32);
       std::string n_txid = bytes256_to_hex(v_txid);
-      std::vector<uint8_t> v_MoM(komodo::NOTARIZED_MOM.begin(), komodo::NOTARIZED_MOM.begin()+32);
-      std::string n_MoM = bytes256_to_hex(v_MoM);
+/*      std::vector<uint8_t> v_MoM(komodo::NOTARIZED_MOM.begin(), komodo::NOTARIZED_MOM.begin()+32);
+      std::string n_MoM = bytes256_to_hex(v_MoM);*/
       cryptonote::block blk = m_core.get_blockchain_storage().get_db().get_top_block();
       crypto::hash c_hash = m_core.get_blockchain_storage().get_db().top_block_hash();
       crypto::hash c_pow = cryptonote::get_block_longhash(blk, height);
@@ -1967,9 +1967,9 @@ namespace cryptonote
     /*res.notarized_pow = n_pow;*/
       res.notarized_txid = n_txid;
       res.notarized_height = komodo::NOTARIZED_HEIGHT;
-      res.prevMoMheight = komodo::komodo_prevMoMheight();
+/*      res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
-      res.notarized_MoM = n_MoM;
+      res.notarized_MoM = n_MoM;*/
 
      res.status = "OK";
      return true;
@@ -2008,7 +2008,7 @@ namespace cryptonote
     res.notarized_MoM = str_MoM;
     res.status = CORE_RPC_STATUS_OK;
     return true;
-  }*/
+  }
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error_resp)
   {
@@ -2074,7 +2074,7 @@ namespace cryptonote
 
     res.status = CORE_RPC_STATUS_OK;
     return true;
-  }
+  }*/
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_flush_txpool(const COMMAND_RPC_FLUSH_TRANSACTION_POOL::request& req, COMMAND_RPC_FLUSH_TRANSACTION_POOL::response& res, epee::json_rpc::error& error_resp)
   {
