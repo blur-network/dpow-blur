@@ -4,3 +4,6 @@
 [submodule "libhydrogen"]
 	path = external/libhydrogen
 	url = https://github.com/blur-network/libhydrogen.git
+[submodule "libbtc"]
+	path = external/libbtc
+	url = https://github.com/who-biz/libbtc.git

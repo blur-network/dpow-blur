@@ -190,9 +190,11 @@ if(NOT MANUAL_SUBMODULES)
         message(FATAL_ERROR "Submodule '${relative_path}' is not up-to-date. Please update with\ngit submodule update --init \nor run cmake with -DMANUAL_SUBMODULES=1")
       endif()
     endfunction ()
-    
+
     message(STATUS "Checking submodules")
     check_submodule(external/rapidjson)
+    check_submodule(external/libhydrogen)
+    check_submodule(external/libbtc)
   endif()
 endif()
 
@@ -414,6 +416,22 @@ ExternalProject_Add(generate_translations_header
   INSTALL_COMMAND cmake -E echo "")
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/translations")
 add_subdirectory(external)
+
+#include(ExternalProject)
+#ExternalProject_Add(btc_depends
+#  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/depends
+#  CONFIGURE_COMMAND
+#  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/depends
+#  BUILD_COMMAND make
+#  BUILD_IN_SOURCE 1)
+
+include(ExternalProject)
+ExternalProject_Add(libbtc
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure --prefix=${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc --enable-static=yes --enable-shared=no --with-pic=yes --with-gnu-ld=yes
+  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
+  BUILD_COMMAND automake
+  BUILD_IN_SOURCE 1)
 
 # Final setup for easylogging++
 include_directories(${EASYLOGGING_INCLUDE})
