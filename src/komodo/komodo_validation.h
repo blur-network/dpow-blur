@@ -70,12 +70,14 @@
 #include "crypto/hash-ops.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "komodo_rpcblockchain.h"
+#include "p2p/net_node.h"
+#include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "bitcoin/bitcoin.h"
-#include "rpc/core_rpc_server.h"
 #include <limits.h>
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include "libbtc/include/btc/wallet.h"
 
 #ifdef _MSC_VER
 #include <malloc.h>
@@ -104,6 +106,8 @@ typedef union _bits256 bits256;
 
 struct sha256_vstate { uint64_t length; uint32_t state[8],curlen; uint8_t buf[64]; };
 struct rmd160_vstate { uint64_t length; uint8_t buf[64]; uint32_t curlen, state[5]; };
+
+void ImportAddress(btc_wallet* const pwallet, const char* p2pkh_address, const std::string& strLabel, const char* pubkey_hex);
 
 namespace cryptonote {
 
@@ -145,7 +149,7 @@ class komodo_core
     void komodo_importpubkeys();
   void komodo_clearstate();
   int32_t komodo_importaddress(std::string addr);
-  uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth);
+//  uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth);
 
 
 // following is ported from libtom

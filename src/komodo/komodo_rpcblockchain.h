@@ -16,6 +16,9 @@
 #ifndef komodo_rpcblockchain_h
 #define komodo_rpcblockchain_h
 
+#pragma once
+
+#include "libbtc/include/btc/btc.h" 
 
 namespace cryptonote {
 namespace komodo {
@@ -35,7 +38,7 @@ struct notarized_checkpoint *komodo_npptr(uint64_t height)
     for (i=NUM_NPOINTS-1; i>=0; i--)
     {
         np = &NPOINTS[i];
-        if ( np->MoMdepth > 0 && height > np->notarized_height-np->MoMdepth && height <= np->notarized_height )
+        if ( np->MoMdepth > 0 &&  height > np->notarized_height-np->MoMdepth && height <= np->notarized_height )
             return(np);
     }
     return(0);
@@ -48,6 +51,9 @@ int32_t komodo_MoMdata(int32_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,in
     if ( (np= komodo_npptr(height)) != 0 )
     {
         *notarized_htp = np->notarized_height;
+//        memcpy(*MoMp,np->MoM,32);
+//        memcpy(*kmdtxidp,np->notarized_desttxid,32);
+//        memcpy(*MoMoMp,np->MoMoM,32);
         *MoMp = np->MoM;
         *kmdtxidp = np->notarized_desttxid;
         *MoMoMp = np->MoMoM;

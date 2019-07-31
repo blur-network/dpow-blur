@@ -47,7 +47,6 @@
 #include "komodo_validation.h"
 #include "cryptonote_core/blockchain.h"
 #include "common/hex_str.h"
-#include "rpc/core_rpc_server.h"
 #include "crypto/crypto.h"
 #include "p2p/net_node.h"
 #include "crypto/hash-ops.h"
@@ -55,7 +54,9 @@
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "komodo_rpcblockchain.h"
+#include "notary_server.h"
 #include "bitcoin/bitcoin.h"
+#include "libbtc/include/btc/tool.h"
 #include <limits.h>
 #include <assert.h>
 #include <stddef.h>
@@ -68,6 +69,16 @@
 #else
  #include <stdlib.h>
 #endif
+
+void ImportAddress(btc_wallet* pwallet, char* p2pkh_address, const std::string& strLabel, const char* pubkey_hex)
+{
+  char filepath;
+  int error = 0;
+  btc_bool created = false;
+  btc_wallet_load(pwallet, &filepath, &error, &created);
+  extern const btc_chainparams btc_chainparams_main;
+  addresses_from_pubkey(&btc_chainparams_main, pubkey_hex, p2pkh_address, nullptr, nullptr);
+}
 
 namespace cryptonote {
 
@@ -88,12 +99,12 @@ namespace komodo {
 
 //int32_t KOMODO_TXINDEX = 1;
 
-/*void ImportAddress(CWallet* const pwallet, const CBitcoinAddress& address, const std::string& strLabel);
 
+/*
 int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsize, uint256 txid,int32_t n)
 {
-    static uint256 zero; int32_t i,m; uint8_t *ptr; CTransaction tx; uint256 hashBlock;
-    CTransactionRef txref=0;
+    static uint256 zero; int32_t i,m; uint8_t *ptr; btc_tx tx; uint256 hashBlock;
+    btc_tx txref=0;
     LOCK(cs_main);
     if ( KOMODO_TXINDEX != 0 )
     {

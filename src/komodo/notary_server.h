@@ -61,6 +61,7 @@ namespace tools
     bool run();
     void stop();
     void set_wallet(wallet2 *cr);
+
   private:
   
       CHAIN_HTTP_TO_MAP2(connection_context);
@@ -198,7 +199,7 @@ namespace tools
 
       template<typename Ts, typename Tu>
       bool fill_response(std::vector<tools::wallet2::pending_tx> &ptx_vector,
-                bool get_tx_key, Ts& tx_key, Tu &amount, Tu &fee, std::string &multisig_txset, bool do_not_relay,
+          bool get_tx_key, Ts& tx_key, Tu &amount, Tu &fee, std::string &multisig_txset, bool do_not_relay,
           Ts &tx_hash, bool get_tx_hex, Ts &tx_blob, bool get_tx_metadata, Ts &tx_metadata, epee::json_rpc::error &er);
 
       wallet2 *m_wallet;

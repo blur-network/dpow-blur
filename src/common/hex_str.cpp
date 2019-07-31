@@ -26,9 +26,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "span.h"
-
-using namespace epee;
+#include "../contrib/epee/include/span.h"
 
 #include <iostream>
 #include <string>
@@ -82,7 +80,7 @@ using namespace epee;
     return out;
   }
   //----------------------------------------------------------------
-  std::string span_to_hex(span<const uint8_t> &input)
+  std::string span_to_hex(epee::span<const uint8_t> &input)
   {
     static const char characters[] = "0123456789abcdef";
     std::string ret(input.size() * 2, 0);

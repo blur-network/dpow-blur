@@ -400,14 +400,14 @@ namespace notary_rpc
         KV_SERIALIZE(account_index)
         KV_SERIALIZE(subaddr_indices)
         KV_SERIALIZE(priority)
-        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
-        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
+//       KV_SERIALIZE_OPT(mixin, (uint64_t)0)
+//        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
         KV_SERIALIZE(unlock_time)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(get_tx_key)
-        KV_SERIALIZE_OPT(do_not_relay, false)
-        KV_SERIALIZE_OPT(get_tx_hex, false)
-        KV_SERIALIZE_OPT(get_tx_metadata, false)
+//        KV_SERIALIZE_OPT(do_not_relay, false)
+//        KV_SERIALIZE_OPT(get_tx_hex, false)
+//        KV_SERIALIZE_OPT(get_tx_metadata, false)
       END_KV_SERIALIZE_MAP()
     };
 
@@ -457,14 +457,14 @@ namespace notary_rpc
         KV_SERIALIZE(account_index)
         KV_SERIALIZE(subaddr_indices)
         KV_SERIALIZE(priority)
-        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
-        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
+//        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
+//        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
         KV_SERIALIZE(unlock_time)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(get_tx_keys)
-        KV_SERIALIZE_OPT(do_not_relay, false)
-        KV_SERIALIZE_OPT(get_tx_hex, false)
-        KV_SERIALIZE_OPT(get_tx_metadata, false)
+//        KV_SERIALIZE_OPT(do_not_relay, false)
+//        KV_SERIALIZE_OPT(get_tx_hex, false)
+//        KV_SERIALIZE_OPT(get_tx_metadata, false)
       END_KV_SERIALIZE_MAP()
     };
 
@@ -522,15 +522,15 @@ namespace notary_rpc
         KV_SERIALIZE(account_index)
         KV_SERIALIZE(subaddr_indices)
         KV_SERIALIZE(priority)
-        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
-        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
+//        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
+//        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
         KV_SERIALIZE(unlock_time)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(get_tx_keys)
         KV_SERIALIZE(below_amount)
-        KV_SERIALIZE_OPT(do_not_relay, false)
-        KV_SERIALIZE_OPT(get_tx_hex, false)
-        KV_SERIALIZE_OPT(get_tx_metadata, false)
+//        KV_SERIALIZE_OPT(do_not_relay, false)
+//        KV_SERIALIZE_OPT(get_tx_hex, false)
+//        KV_SERIALIZE_OPT(get_tx_metadata, false)
       END_KV_SERIALIZE_MAP()
     };
 
@@ -584,15 +584,15 @@ namespace notary_rpc
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(address)
         KV_SERIALIZE(priority)
-        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
-        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
+//        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
+//        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
         KV_SERIALIZE(unlock_time)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(get_tx_key)
         KV_SERIALIZE(key_image)
-        KV_SERIALIZE_OPT(do_not_relay, false)
-        KV_SERIALIZE_OPT(get_tx_hex, false)
-        KV_SERIALIZE_OPT(get_tx_metadata, false)
+//        KV_SERIALIZE_OPT(do_not_relay, false)
+//        KV_SERIALIZE_OPT(get_tx_hex, false)
+//        KV_SERIALIZE_OPT(get_tx_metadata, false)
       END_KV_SERIALIZE_MAP()
     };
 
@@ -1229,7 +1229,7 @@ namespace notary_rpc
         KV_SERIALIZE(pool);
         KV_SERIALIZE(filter_by_height);
         KV_SERIALIZE(min_height);
-        KV_SERIALIZE_OPT(max_height, (uint64_t)CRYPTONOTE_MAX_BLOCK_NUMBER);
+//        KV_SERIALIZE_OPT(max_height, (uint64_t)CRYPTONOTE_MAX_BLOCK_NUMBER);
         KV_SERIALIZE(account_index);
         KV_SERIALIZE(subaddr_indices);
       END_KV_SERIALIZE_MAP()
@@ -1262,7 +1262,7 @@ namespace notary_rpc
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(txid);
-        KV_SERIALIZE_OPT(account_index, (uint32_t)0)
+//        KV_SERIALIZE_OPT(account_index, (uint32_t)0)
       END_KV_SERIALIZE_MAP()
     };
 
@@ -1623,6 +1623,181 @@ namespace notary_rpc
     struct response
     {
       BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_IS_MULTISIG
+  {
+    struct request
+    {
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      bool multisig;
+      bool ready;
+      uint32_t threshold;
+      uint32_t total;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(multisig)
+        KV_SERIALIZE(ready)
+        KV_SERIALIZE(threshold)
+        KV_SERIALIZE(total)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_PREPARE_MULTISIG
+  {
+    struct request
+    {
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string multisig_info;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(multisig_info)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_MAKE_MULTISIG
+  {
+    struct request
+    {
+      std::vector<std::string> multisig_info;
+      uint32_t threshold;
+      std::string password;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(multisig_info)
+        KV_SERIALIZE(threshold)
+        KV_SERIALIZE(password)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string address;
+      std::string multisig_info;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(address)
+        KV_SERIALIZE(multisig_info)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_EXPORT_MULTISIG
+  {
+    struct request
+    {
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string info;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(info)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_IMPORT_MULTISIG
+  {
+    struct request
+    {
+      std::vector<std::string> info;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(info)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      uint64_t n_outputs;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(n_outputs)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_FINALIZE_MULTISIG
+  {
+    struct request
+    {
+      std::string password;
+      std::vector<std::string> multisig_info;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(password)
+        KV_SERIALIZE(multisig_info)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string address;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(address)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_SIGN_MULTISIG
+  {
+    struct request
+    {
+      std::string tx_data_hex;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(tx_data_hex)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string tx_data_hex;
+      std::list<std::string> tx_hash_list;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(tx_data_hex)
+        KV_SERIALIZE(tx_hash_list)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_SUBMIT_MULTISIG
+  {
+    struct request
+    {
+      std::string tx_data_hex;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(tx_data_hex)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::list<std::string> tx_hash_list;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(tx_hash_list)
       END_KV_SERIALIZE_MAP()
     };
   };

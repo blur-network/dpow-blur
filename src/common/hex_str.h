@@ -26,7 +26,9 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include "../contrib/epee/include/span.h"
+
   std::string bytes256_to_hex(std::vector<uint8_t> &input);
   std::vector<uint8_t> hex_to_bytes256(const std::string &input);
-  std::string span_to_hex(span<const uint8_t> &input);
+  std::string span_to_hex(epee::span<const uint8_t> &input);
   std::vector<uint8_t> hex_to_bytes4096(const std::string &input);
