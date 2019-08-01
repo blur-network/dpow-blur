@@ -107,7 +107,7 @@ typedef union _bits256 bits256;
 struct sha256_vstate { uint64_t length; uint32_t state[8],curlen; uint8_t buf[64]; };
 struct rmd160_vstate { uint64_t length; uint8_t buf[64]; uint32_t curlen, state[5]; };
 
-void ImportAddress(btc_wallet* const pwallet, const char* p2pkh_address, const std::string& strLabel, const char* pubkey_hex);
+extern void ImportAddress(btc_wallet* const pwallet, const char* p2pkh_address, const std::string& strLabel, const char* pubkey_hex);
 
 namespace cryptonote {
 

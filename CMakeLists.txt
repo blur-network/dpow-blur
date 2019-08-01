@@ -430,26 +430,24 @@ add_subdirectory(external)
 ExternalProject_Add(libbtc
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
   CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static
-  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/build/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no
   BUILD_COMMAND make
   INSTALL_COMMAND make install
   BUILD_IN_SOURCE 1
 )
 
-set(BTC_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/lib/libbtc.a)
-
 include(ExternalProject)
 ExternalProject_Add(secp256k1
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1
   CMAKE_ARGS -DSECP256K1_PATH=${SECP256K1_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static
-  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/lib/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no
   BUILD_COMMAND make
   INSTALL_COMMAND make install
   BUILD_IN_SOURCE 1
 )
 
 set(SECP256K1_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/lib/libsecp256k1.a)
-
+set(BTC_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/lib/libbtc.a)
 
 # Final setup for easylogging++
 include_directories(${EASYLOGGING_INCLUDE})

@@ -18,6 +18,8 @@ monero_add_executable(notary_server
   ${notary_headers}
   ${notary_private_headers})
 
+LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/lib)
+
 target_link_libraries(notary_server
   PRIVATE
     wallet
@@ -27,6 +29,10 @@ target_link_libraries(notary_server
     cncrypto
     common
     version
+    ${BTC_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${OPENSSL_LIBRARY}
+    ${EVENT_LIBRARY}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
