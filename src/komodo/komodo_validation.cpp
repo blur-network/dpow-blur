@@ -88,10 +88,10 @@ namespace komodo {
   //------------------------------------------------------------------
   bool komodo_core::check_core_ready()
   {
-/*    if(!m_p2p.get_payload_object().is_synchronized())
+    if(!m_p2p.get_payload_object().is_synchronized())
     {
       return false;
-    }*/
+    }
     return true;
   }
   #define CHECK_CORE_READY() do { if(!check_core_ready()){res.status =  CORE_RPC_STATUS_BUSY;return true;} } while(0)
