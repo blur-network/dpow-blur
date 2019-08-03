@@ -80,25 +80,7 @@ void ImportAddress(btc_wallet* pwallet, char* p2pkh_address, const std::string& 
   addresses_from_pubkey(&btc_chainparams_main, pubkey_hex, p2pkh_address, nullptr, nullptr);
 }
 
-namespace cryptonote {
-
-namespace komodo {
-
-  komodo_core::komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p) : m_core(cr), m_p2p(p2p) {};
-  //------------------------------------------------------------------
-  bool komodo_core::check_core_ready()
-  {
-    if(!m_p2p.get_payload_object().is_synchronized())
-    {
-      return false;
-    }
-    return true;
-  }
-  #define CHECK_CORE_READY() do { if(!check_core_ready()){res.status =  CORE_RPC_STATUS_BUSY;return true;} } while(0)
-  //------------------------------------------------------------------
-
 //int32_t KOMODO_TXINDEX = 1;
-
 
 /*
 int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsize, uint256 txid,int32_t n)
@@ -154,7 +136,7 @@ int32_t komodo_importaddress(const char* addr)
         LOCK2(cs_main, pwallet->cs_wallet);
         if ( address.IsValid() != 0 )
         {
-            isminetype mine = IsMine(*pwallet, address.Get());      
+            isminetype mine = IsMine(*pwallet, address.Get());
             if ( (mine & ISMINE_SPENDABLE) != 0 || (mine & ISMINE_WATCH_ONLY) != 0 )
             {
                 //printf("komodo_importaddress %s already there\n",EncodeDestination(address).c_str());
@@ -172,6 +154,25 @@ int32_t komodo_importaddress(const char* addr)
     return(-1);
 }
 */
+
+
+namespace cryptonote {
+
+namespace komodo {
+
+  komodo_core::komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p) : m_core(cr), m_p2p(p2p) {};
+  //------------------------------------------------------------------
+  bool komodo_core::check_core_ready()
+  {
+    if(!m_p2p.get_payload_object().is_synchronized())
+    {
+      return false;
+    }
+    return true;
+  }
+  #define CHECK_CORE_READY() do { if(!check_core_ready()){res.status =  CORE_RPC_STATUS_BUSY;return true;} } while(0)
+  //------------------------------------------------------------------
+
 
 
 int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp)
