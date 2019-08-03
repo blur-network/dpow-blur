@@ -73,6 +73,7 @@ namespace
 
 namespace cryptonote
 {
+
   //-----------------------------------------------------------------------------------
   void core_rpc_server::init_options(boost::program_options::options_description& desc)
   {

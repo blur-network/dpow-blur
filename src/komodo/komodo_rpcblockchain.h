@@ -18,7 +18,7 @@
 
 #pragma once
 
-#include "libbtc/include/btc/btc.h" 
+#include "libbtc/include/btc/btc.h"
 
 namespace cryptonote {
 namespace komodo {
@@ -30,6 +30,7 @@ struct notarized_checkpoint
 } *NPOINTS;
 
 int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS;
+uint256 NOTARIZED_HASH, NOTARIZED_MOM, NOTARIZED_DESTTXID;
 
 
 struct notarized_checkpoint *komodo_npptr(uint64_t height)

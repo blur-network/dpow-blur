@@ -108,6 +108,7 @@ target_link_libraries(rpc
     cryptonote_core
     cryptonote_protocol
     epee
+    komodo
     ${Boost_REGEX_LIBRARY}
     ${Boost_THREAD_LIBRARY}
   PRIVATE

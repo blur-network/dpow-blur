@@ -32,6 +32,7 @@
 
 #include <algorithm>
 #include <cstdio>
+#include <memory>
 #include <boost/filesystem.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 
@@ -52,13 +53,11 @@
 #include "warnings.h"
 #include "crypto/hash.h"
 #include "cryptonote_core.h"
+#include "komodo/komodo_validation.h"
 #include "ringct/rctSigs.h"
 #include "common/perf_timer.h"
 #if defined(PER_BLOCK_CHECKPOINT)
 #include "blocks/blocks.h"
-#endif
-#if defined(KOMODO_NOTARIZATIONS)
-#include "komodo_validation.h"
 #endif
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "blockchain"
@@ -416,12 +415,6 @@ bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline
     load_compiled_in_block_hashes();
 #endif
 
-#if defined(KOMODO_NOTARIZATIONS)
-  int32_t komodo_init();
-  komodo_init();
-  MINFO("Komodo initialized.  Blocks will be checked against notarized checkpoints!");
-#endif
-
   MINFO("Blockchain initialized. last block: " << m_db->height() - 1 << ", " << epee::misc_utils::get_time_interval_string(timestamp_diff) << " time ago, current difficulty: " << get_difficulty_for_next_block());
   m_db->block_txn_stop();
 
@@ -476,13 +469,16 @@ bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline
   return true;
 }
 //------------------------------------------------------------------
-bool Blockchain::init(BlockchainDB* db, HardFork*& hf, const network_type nettype, bool offline)
+bool Blockchain::init(BlockchainDB* db, komodo::komodo_core* k_core, HardFork*& hf, const network_type nettype, bool offline)
 {
   if (hf != nullptr)
     m_hardfork = hf;
+  m_komodo_core = k_core;
   bool res = init(db, nettype, offline, NULL);
   if (hf == nullptr)
     hf = m_hardfork;
+  if (k_core == nullptr)
+    k_core = m_komodo_core;
   return res;
 }
 //------------------------------------------------------------------

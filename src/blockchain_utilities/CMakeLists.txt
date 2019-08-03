@@ -151,6 +151,7 @@ target_link_libraries(blockchain_blackball
     wallet
     cryptonote_core
     blockchain_db
+    komodo
     p2p
     version
     epee

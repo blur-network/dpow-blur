@@ -54,7 +54,8 @@
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "komodo_rpcblockchain.h"
-#include "notary_server.h"
+#include "komodo_notaries.h"
+#include "notary_server/notary_server.h"
 #include "bitcoin/bitcoin.h"
 #include "libbtc/include/btc/tool.h"
 #include <limits.h>
@@ -79,6 +80,7 @@ void ImportAddress(btc_wallet* pwallet, char* p2pkh_address, const std::string& 
   extern const btc_chainparams btc_chainparams_main;
   addresses_from_pubkey(&btc_chainparams_main, pubkey_hex, p2pkh_address, nullptr, nullptr);
 }
+
 
 //int32_t KOMODO_TXINDEX = 1;
 
@@ -159,6 +161,138 @@ int32_t komodo_importaddress(const char* addr)
 namespace cryptonote {
 
 namespace komodo {
+
+std::string NOTARY_PUBKEY;
+uint8_t NOTARY_PUBKEY33[33];
+portable_mutex_t komodo_mutex;
+
+void vcalc_sha256(char deprecated[(256 >> 3) * 2 + 1],uint8_t hash[256 >> 3],uint8_t *src,int32_t len)
+{
+    struct sha256_vstate md;
+    sha256_vinit(&md);
+    sha256_vprocess(&md,src,len);
+    sha256_vdone(&md,hash);
+}
+
+bits256 bits256_doublesha256(char *deprecated,uint8_t *data,int32_t datalen)
+{
+    bits256 hash,hash2; int32_t i;
+    vcalc_sha256(0,hash.bytes,data,datalen);
+    vcalc_sha256(0,hash2.bytes,hash.bytes,sizeof(hash));
+    for (i=0; i<(int32_t)sizeof(hash); i++)
+        hash.bytes[i] = hash2.bytes[sizeof(hash) - 1 - i];
+    return(hash);
+}
+
+int32_t bitweight(uint64_t x)
+{
+    int i,wt = 0;
+    for (i=0; i<64; i++)
+        if ( (1LL << i) & x )
+            wt++;
+    return(wt);
+}
+
+int32_t _unhex(char c)
+{
+    if ( c >= '0' && c <= '9' )
+        return(c - '0');
+    else if ( c >= 'a' && c <= 'f' )
+        return(c - 'a' + 10);
+    else if ( c >= 'A' && c <= 'F' )
+        return(c - 'A' + 10);
+    return(-1);
+}
+
+int32_t is_hexstr(char *str,int32_t n)
+{
+    int32_t i;
+    if ( str == 0 || str[0] == 0 )
+        return(0);
+    for (i=0; str[i]!=0; i++)
+    {
+        if ( n > 0 && i >= n )
+            break;
+        if ( _unhex(str[i]) < 0 )
+            break;
+    }
+    if ( n == 0 )
+        return(i);
+    return(i == n);
+}
+
+int32_t unhex(char c)
+{
+    int32_t hex;
+    if ( (hex= _unhex(c)) < 0 )
+    {
+        //printf("unhex: illegal hexchar.(%c)\n",c);
+    }
+    return(hex);
+}
+
+unsigned char _decode_hex(char *hex) { return((unhex(hex[0])<<4) | unhex(hex[1])); }
+
+int32_t decode_hex(uint8_t *bytes,int32_t n,char *hex)
+{
+    int32_t adjust,i = 0;
+    //printf("decode.(%s)\n",hex);
+    if ( is_hexstr(hex,n) <= 0 )
+    {
+        memset(bytes,0,n);
+        return(n);
+    }
+    if ( hex[n-1] == '\n' || hex[n-1] == '\r' )
+        hex[--n] = 0;
+    if ( n == 0 || (hex[n*2+1] == 0 && hex[n*2] != 0) )
+    {
+        if ( n > 0 )
+        {
+            bytes[0] = unhex(hex[0]);
+            printf("decode_hex n.%d hex[0] (%c) -> %d hex.(%s) [n*2+1: %d] [n*2: %d %c] len.%ld\n",n,hex[0],bytes[0],hex,hex[n*2+1],hex[n*2],hex[n*2],(long)strlen(hex));
+        }
+        bytes++;
+        hex++;
+        adjust = 1;
+    } else adjust = 0;
+    if ( n > 0 )
+    {
+        for (i=0; i<n; i++)
+            bytes[i] = _decode_hex(&hex[i*2]);
+    }
+    //bytes[i] = 0;
+    return(n + adjust);
+}
+
+char hexbyte(int32_t c)
+{
+    c &= 0xf;
+    if ( c < 10 )
+        return('0'+c);
+    else if ( c < 16 )
+        return('a'+c-10);
+    else return(0);
+}
+
+int32_t init_hexbytes_noT(char *hexbytes,unsigned char *message,long len)
+{
+    int32_t i;
+    if ( len <= 0 )
+    {
+        hexbytes[0] = 0;
+        return(1);
+    }
+    for (i=0; i<len; i++)
+    {
+        hexbytes[i*2] = hexbyte((message[i]>>4) & 0xf);
+        hexbytes[i*2 + 1] = hexbyte(message[i] & 0xf);
+        //printf("i.%d (%02x) [%c%c]\n",i,message[i],hexbytes[i*2],hexbytes[i*2+1]);
+    }
+    hexbytes[len*2] = 0;
+    //printf("len.%ld\n",len*2+1);
+    return((int32_t)len*2+1);
+}
+
 
   komodo_core::komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p) : m_core(cr), m_p2p(p2p) {};
   //------------------------------------------------------------------

@@ -56,9 +56,10 @@ monero_add_library(cryptonote_core
 target_link_libraries(cryptonote_core
   PUBLIC
     version
+    blockchain_db
     common
     cncrypto
-    blockchain_db
+    komodo
     multisig
     ringct
     device
@@ -71,3 +72,4 @@ target_link_libraries(cryptonote_core
   PRIVATE
     ${Blocks}
     ${EXTRA_LIBRARIES})
+

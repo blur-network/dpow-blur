@@ -39,6 +39,7 @@
 #include <boost/multi_index/member.hpp>
 #include <atomic>
 #include <functional>
+#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 
@@ -59,6 +60,9 @@
 
 namespace cryptonote
 {
+  namespace komodo {
+    class komodo_core;
+  }
   class tx_memory_pool;
   struct test_options;
 
@@ -73,12 +77,17 @@ namespace cryptonote
     db_nosync //!< Leave syncing up to the backing db (safest, but slowest because of disk I/O)
   };
 
+
+using namespace komodo;
+
   /************************************************************************/
   /*                                                                      */
   /************************************************************************/
   class Blockchain
   {
   public:
+    friend class komodo_core;
+
     /**
      * @brief Now-defunct (TODO: remove) struct from in-memory blockchain
      */
@@ -131,7 +140,7 @@ namespace cryptonote
      *
      * @return true on success, false if any initialization steps fail
      */
-    bool init(BlockchainDB* db, HardFork*& hf, const network_type nettype = MAINNET, bool offline = false);
+    bool init(BlockchainDB* db, komodo::komodo_core* k_core, HardFork*& hf, const network_type nettype = MAINNET, bool offline = false);
 
     /**
      * @brief Uninitializes the blockchain state
@@ -894,6 +903,18 @@ namespace cryptonote
       return *m_db;
     }
 
+
+    komodo_core& get_k_core()
+    {
+      return *m_komodo_core;
+    }
+
+    const komodo_core& get_k_core() const
+    {
+      return *m_komodo_core;
+    }
+
+
     /**
      * @brief get a number of outputs of a specific amount
      *
@@ -1014,6 +1035,8 @@ namespace cryptonote
     checkpoints m_checkpoints;
 
     HardFork *m_hardfork;
+
+    komodo::komodo_core* m_komodo_core;
 
     network_type m_nettype;
     bool m_offline;

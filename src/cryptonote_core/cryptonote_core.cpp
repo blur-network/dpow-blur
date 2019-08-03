@@ -51,6 +51,7 @@ using namespace epee;
 #include "checkpoints/checkpoints.h"
 #include "ringct/rctTypes.h"
 #include "blockchain_db/blockchain_db.h"
+#include "komodo/komodo_validation.h"
 #include "ringct/rctSigs.h"
 #include "version.h"
 

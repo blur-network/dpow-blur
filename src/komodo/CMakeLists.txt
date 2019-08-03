@@ -1,26 +1,21 @@
-set(notary_sources
-  komodo_validation.cpp
-  notary_server.cpp)
+set(komodo_sources
+  komodo_validation.cpp)
 
-set(notary_headers)
+set(komodo_headers)
 
-set(notary_private_headers
+set(komodo_private_headers
   komodo_validation.h
   komodo_rpcblockchain.h
-  notary_server.h
-  notary_server_error_codes.h
-  notary_server_commands_defs.h)
+  komodo_notaries.h)
 
-monero_private_headers(notary_server
-  ${notary_private_headers})
-monero_add_executable(notary_server
-  ${notary_sources}
-  ${notary_headers}
-  ${notary_private_headers})
+monero_private_headers(komodo
+  ${komodo_private_headers})
+monero_add_library(komodo
+  ${komodo_sources}
+  ${komodo_headers}
+  ${komodo_private_headers})
 
-LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/lib)
-
-target_link_libraries(notary_server
+target_link_libraries(komodo
   PRIVATE
     wallet
     epee
@@ -39,9 +34,3 @@ target_link_libraries(notary_server
     ${Boost_THREAD_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     ${EXTRA_LIBRARIES})
-set_property(TARGET notary_server
-  PROPERTY
-    OUTPUT_NAME "blur-notary-server-rpc")
-install(TARGETS notary_server DESTINATION bin)
-
-
