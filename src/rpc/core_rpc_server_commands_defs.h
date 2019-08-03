@@ -1019,9 +1019,9 @@ namespace cryptonote
         KV_SERIALIZE(notarized_hash)
         KV_SERIALIZE(notarized_txid)
 /*        KV_SERIALIZE(notarized)*/
-        KV_SERIALIZE(prevMoMheight)
+/*        KV_SERIALIZE(prevMoMheight)
         KV_SERIALIZE(notarized_MoMdepth)
-        KV_SERIALIZE(notarized_MoM)
+        KV_SERIALIZE(notarized_MoM)*/
       END_KV_SERIALIZE_MAP()
     };
   };
