@@ -78,16 +78,12 @@ namespace cryptonote
   };
 
 
-using namespace komodo;
-
   /************************************************************************/
   /*                                                                      */
   /************************************************************************/
   class Blockchain
   {
   public:
-    friend class komodo_core;
-
     /**
      * @brief Now-defunct (TODO: remove) struct from in-memory blockchain
      */
@@ -904,12 +900,12 @@ using namespace komodo;
     }
 
 
-    komodo_core& get_k_core()
+    komodo::komodo_core& get_k_core()
     {
       return *m_komodo_core;
     }
 
-    const komodo_core& get_k_core() const
+    const komodo::komodo_core& get_k_core() const
     {
       return *m_komodo_core;
     }

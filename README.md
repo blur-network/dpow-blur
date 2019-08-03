@@ -7,7 +7,7 @@ There are files in here from many different projects, including but not limited 
 **To create a wallet on BLUR's network, for notary nodes already owning a secp256k1 private key:**
 
 
-Compile binaries from source, then create a json-formatted wallet configuration file formatted as follows: 
+Compile binaries from source, then create a json-formatted wallet configuration file as follows: 
 (named `btc.json` in our example)
 
 
@@ -62,15 +62,12 @@ Output:
   "jsonrpc": "2.0",
   "result": {
     "assetchains_symbol": "BLUR",
-    "current_chain_hash": "77ec04e3dfea902e3f222f6d85b9d63077051bf29b6a5b9f3aabc16141ca08d1",
-    "current_chain_height": 513064,
-    "current_chain_pow": "231f28c80737845b358217ff1d095de492f600aacd2b2367d8957be471000000",
-    "notarized": 0,
-    "notarized_MoM": "0000000000000000000000000000000000000000000000000000000000000000",
-    "notarized_MoMdepth": 0,
+    "current_chain_hash": "0d6b7b0de6106877972fdafb806932cdd4c30dd007fc9510dfdec4db8b5ca69c",
+    "current_chain_height": 155736,
+    "current_chain_pow": "73ab840dcb63e247df9d98988a195b2ba17def30daa835073a8377be65010000",
     "notarized_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-    "notarized_txid": "0000000000000000000000000000000000000000000000000000000000000000",
-    "prevMoMheight": 0
+    "notarized_height": 0,
+    "notarized_txid": "0000000000000000000000000000000000000000000000000000000000000000"
   }
 ```
 To retrieve the merkle root of a given block, by block hash or by vector of transaction hashes (`b.miner_tx` + `b.tx_hashes`):
