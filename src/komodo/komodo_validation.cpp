@@ -55,7 +55,7 @@
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "komodo_rpcblockchain.h"
 #include "komodo_notaries.h"
-#include "notary_server/notary_server.h"
+#include "komodo_notary_server/notary_server.h"
 #include "bitcoin/bitcoin.h"
 #include "libbtc/include/btc/tool.h"
 #include <limits.h>
