@@ -116,7 +116,7 @@ int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsi
     }
     else
     {
-        CWallet * const pwallet = vpwallets[0];
+        btc_wallet * const pwallet = vpwallets[0];
         if ( pwallet != 0 )
         {
             auto it = pwallet->mapWallet.find(txid);
@@ -145,7 +145,7 @@ int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsi
 }
 
 
-int32_t komodo_importaddress(std::string addr)
+int32_t komodo_importaddress(const char* addr)
 {
     CBitcoinAddress address(addr);
     CWallet * const pwallet = vpwallets[0];
@@ -300,53 +300,11 @@ int32_t komodo_init()
     decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
     return(0);
 }
-/*
-size_t tree_hash_count(size_t count)
-{
-  assert( count >= 3 ); // cases for 0,1,2 are handled elsewhere
-  assert( count <= 0x10000000 ); // sanity limit to 2^28, MSB=1 will cause an inf loop
-
-  size_t pow = 2;
-  while(pow < count) pow <<= 1;
-  return pow >> 1;
-}
-
-void merkle(const char (*hashes)[crypto::HASH_SIZE], size_t count, char *root_hash)
-{
-  assert(count > 0);
-  if (count == 1) {
-    memcpy(root_hash, hashes, crypto::HASH_SIZE);
-  } else if (count == 2) {
-    crypto::cn_fast_hash(hashes, 2 * crypto::HASH_SIZE, root_hash);
-  } else {
-    size_t i, j;
-
-    size_t cnt = tree_hash_count(count);
-
-    char (*ints)[crypto::HASH_SIZE];
-    size_t ints_size = count * sizeof(crypto::HASH_SIZE);
-    ints = alloca(ints_size);   memset( ints , 0 , ints_size);  // allocate, and zero out as extra protection for using uninitialized mem
-
-    memcpy(ints, hashes, (2 * cnt - count) * crypto::HASH_SIZE);
-
-    for (i = 2 * cnt - count, j = 2 * cnt - count; j < cnt; i += 2, ++j) {
-      crypto::cn_fast_hash(hashes[i], 64, ints[j]);
-    }
-    assert(i == count);
-
-    while (cnt > 2) {
-      cnt >>= 1;
-      for (i = 0, j = 0; j < cnt; i += 2, ++j) {
-        crypto::cn_fast_hash(ints[i], 64, ints[j]);
-      }
-    }
-
-    crypto::cn_fast_hash(ints[0], 64, root_hash);
-  }
-  */
 
  bits256 iguana_merkle(bits256 *root_hash, int txn_count)
- {
+ {  // this function is incomplete and has been modified from the original
+    // consult komodo_validation011.h for unmodified version
+
   int i,n=0,prev; uint8_t serialized[sizeof(crypto::hash) * 2];
    // crypto::hash tree_hash = cryptonote::get_tx_tree_hash(b.tx_hashes);
     bits256 *tree = nullptr;
@@ -550,7 +508,7 @@ void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_he
         fprintf(stderr,"komodo_notarized_update REJECT notarized_height %llu > %llu nHeight\n",notarized_height,nHeight);
         return;
     }
-    
+
     bool active = komodo_chainactive(notarized_height, *pindex);
 //    crypto::hash db_hash = m_core.get_block_hash_from_height(m_core.height());
 //    uint256 hash;
@@ -623,6 +581,7 @@ int32_t komodo_core::komodo_checkpoint(int32_t *notarized_heightp, int32_t nHeig
         fprintf(stderr,"%s couldnt find notarized.(%s %d) ht.%d\n",ASSETCHAINS_SYMBOL,s_notarized_hash.c_str(),notarized_height,pindex);
     return(0);
 }
+
 /*
 void komodo_voutupdate(int32_t txi,int32_t vout,uint8_t *scriptbuf,int32_t scriptlen,int32_t height,int32_t *specialtxp,int32_t *notarizedheightp,uint64_t value,int32_t notarized,uint64_t signedmask)
 {
@@ -681,6 +640,8 @@ void komodo_voutupdate(int32_t txi,int32_t vout,uint8_t *scriptbuf,int32_t scrip
     }
 }
 */
+
+
 void komodo_core::komodo_connectblock(uint64_t& height,cryptonote::block& b)
 {
     static uint64_t hwmheight;

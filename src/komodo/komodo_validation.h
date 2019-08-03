@@ -121,7 +121,6 @@ class komodo_core
   int32_t komodo_chainactive_timestamp();
   bool komodo_chainactive(uint64_t &height, cryptonote::block &b);
   int32_t komodo_heightstamp(uint64_t height);
-//  size_t tree_hash_count(size_t count);
   void komodo_disconnect(uint64_t height,cryptonote::block block);
   int32_t komodo_notarized_height(uint64_t *prevMoMheightp, uint256 *hashp,uint256 *txidp);
   int32_t komodo_notarizeddata(uint64_t nHeight,uint256 *notarized_hashp,uint256 *notarized_desttxidp);
@@ -580,7 +579,10 @@ const char *Notaries_elected0[][2] =
     { "xxspot2_XX", "03d85b221ea72ebcd25373e7961f4983d12add66a92f899deaf07bab1d8b6f5573" }
 };
 
-const char *Notaries_elected1[][4] =
+const char *Notaries_elected1[][4] =  /* we will need to add a BLUR address to each notary's info here,
+                                      /  as BTC pubkey will be reused already for viewkey generation.
+                                      /  alternatively, a public spendkey could be hardcoded instead.
+                                      */
 {
     {"0dev1_jl777"       , "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828" , "RNJmgYaFF5DbnrNUX6pMYz9rcnDKC2tuAc"},
     {"0dev2_kolo"        , "030f34af4b908fb8eb2099accb56b8d157d49f6cfb691baa80fdd34f385efed961" , "RLj9h7zfnx4X9hvquR3sEwzHvcvF61W2Rc"},
