@@ -147,9 +147,13 @@ class komodo_core
   int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp);
   int32_t iguana_rwbignum(int32_t rwflag,uint8_t *serialized,int32_t len,uint8_t *endianedp);
   bits256 iguana_merkle(bits256 *root_hash, int txn_count);
-    void komodo_importpubkeys();
+  void komodo_importpubkeys();
   void komodo_clearstate();
+  int32_t komodo_init();
   int32_t komodo_importaddress(std::string addr);
+
+  int32_t komodo_MoMdata(int32_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,int32_t height,uint256 *MoMoMp, int32_t *MoMoMoffsetp, 
+    int32_t *MoMoMdepthp, int32_t *kmdstartip, int32_t *kmdendip);
 //  uint256 komodo_calcMoM(uint64_t height,int32_t MoMdepth);
 
 
@@ -229,13 +233,13 @@ static inline int32_t sha256_vcompress(struct sha256_vstate * md,uint8_t *buf)
         LOAD32H(W[i],buf + (4*i));
     for (i=16; i<64; i++) // fill W[16..63]
         W[i] = Gamma1(W[i - 2]) + W[i - 7] + Gamma0(W[i - 15]) + W[i - 16];
-    
+
 #define RND(a,b,c,d,e,f,g,h,i,ki)                    \
 t0 = h + Sigma1(e) + Ch(e, f, g) + ki + W[i];   \
 t1 = Sigma0(a) + Maj(a, b, c);                  \
 d += t0;                                        \
 h  = t0 + t1;
-    
+
     RND(S[0],S[1],S[2],S[3],S[4],S[5],S[6],S[7],0,0x428a2f98);
     RND(S[7],S[0],S[1],S[2],S[3],S[4],S[5],S[6],1,0x71374491);
     RND(S[6],S[7],S[0],S[1],S[2],S[3],S[4],S[5],2,0xb5c0fbcf);
@@ -386,22 +390,14 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
 // end libtom
 
 void vcalc_sha256(char deprecated[(256 >> 3) * 2 + 1],uint8_t hash[256 >> 3],uint8_t *src,int32_t len);
-
 bits256 bits256_doublesha256(char *deprecated,uint8_t *data,int32_t datalen);
-
 int32_t bitweight(uint64_t x);
-
 int32_t _unhex(char c);
 int32_t is_hexstr(char *str,int32_t n);
-
 int32_t unhex(char c);
-
 unsigned char _decode_hex(char *hex);
-
 int32_t decode_hex(uint8_t *bytes,int32_t n,char *hex);
-
 char hexbyte(int32_t c);
-
 int32_t init_hexbytes_noT(char *hexbytes,unsigned char *message,long len);
 
 
@@ -422,16 +418,16 @@ int32_t init_hexbytes_noT(char *hexbytes,unsigned char *message,long len);
     {
 
        cryptonote::block block;
-//        if (komodo_core::komodo_chainactive(height - i, &block) == 0) {
-//            free(tree);
+        if (komodo_core::komodo_chainactive(height - i, &block) == 0) {
+            free(tree);
             return(zero);
-//        }
-//          std::string merkle_str = epee::string_tools::pod_to_hex(cryptonote::get_tx_tree_hash(blocks[i].tx_hashes));
-//          std::vector<uint8_t> merkle = hex_to_bytes256(merkle_str);
-//          merkles.push_back(merkle);
+        }
+          std::string merkle_str = epee::string_tools::pod_to_hex(cryptonote::get_tx_tree_hash(blocks[i].tx_hashes));
+          std::vector<uint8_t> merkle = hex_to_bytes256(merkle_str);
+          merkles.push_back(merkle);
     }
     memset(MoM, 0, crypto::HASH_SIZE);
-//    iguana_merkle(blocks[i],MoMdepth);
+    iguana_merkle(blocks[i],MoMdepth);
     return(*(uint256*)MoM);
 }
 */

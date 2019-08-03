@@ -5,7 +5,6 @@ set(komodo_headers)
 
 set(komodo_private_headers
   komodo_validation.h
-  komodo_rpcblockchain.h
   komodo_notaries.h)
 
 monero_private_headers(komodo

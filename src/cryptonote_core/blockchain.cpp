@@ -315,7 +315,7 @@ uint64_t Blockchain::get_current_blockchain_height() const
 //------------------------------------------------------------------
 //FIXME: possibly move this into the constructor, to avoid accidentally
 //       dereferencing a null BlockchainDB pointer
-bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline, const cryptonote::test_options *test_options)
+bool Blockchain::init(BlockchainDB* db, komodo::komodo_core* k_core, const network_type nettype, bool offline, const cryptonote::test_options *test_options)
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_tx_pool);
@@ -334,6 +334,8 @@ bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline
   }
 
   m_db = db;
+
+  m_komodo_core = k_core;
 
   m_nettype = test_options != NULL ? FAKECHAIN : nettype;
   m_offline = offline;
@@ -415,6 +417,8 @@ bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline
     load_compiled_in_block_hashes();
 #endif
 
+  m_komodo_core->komodo_init();
+
   MINFO("Blockchain initialized. last block: " << m_db->height() - 1 << ", " << epee::misc_utils::get_time_interval_string(timestamp_diff) << " time ago, current difficulty: " << get_difficulty_for_next_block());
   m_db->block_txn_stop();
 
@@ -469,16 +473,14 @@ bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline
   return true;
 }
 //------------------------------------------------------------------
-bool Blockchain::init(BlockchainDB* db, komodo::komodo_core* k_core, HardFork*& hf, const network_type nettype, bool offline)
+bool Blockchain::init(BlockchainDB* db, std::unique_ptr<komodo::komodo_core>& k_core, HardFork*& hf, const network_type nettype, bool offline)
 {
   if (hf != nullptr)
     m_hardfork = hf;
-  m_komodo_core = k_core;
-  bool res = init(db, nettype, offline, NULL);
+  m_komodo_core = k_core.release();
+  bool res = init(db, m_komodo_core, nettype, offline, NULL);
   if (hf == nullptr)
     hf = m_hardfork;
-  if (k_core == nullptr)
-    k_core = m_komodo_core;
   return res;
 }
 //------------------------------------------------------------------

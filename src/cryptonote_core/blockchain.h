@@ -124,7 +124,7 @@ namespace cryptonote
      *
      * @return true on success, false if any initialization steps fail
      */
-    bool init(BlockchainDB* db, const network_type nettype = MAINNET, bool offline = false, const cryptonote::test_options *test_options = NULL);
+    bool init(BlockchainDB* db, komodo::komodo_core* k_core, const network_type nettype = MAINNET, bool offline = false, const cryptonote::test_options *test_options = NULL);
 
     /**
      * @brief Initialize the Blockchain state
@@ -136,7 +136,7 @@ namespace cryptonote
      *
      * @return true on success, false if any initialization steps fail
      */
-    bool init(BlockchainDB* db, komodo::komodo_core* k_core, HardFork*& hf, const network_type nettype = MAINNET, bool offline = false);
+    bool init(BlockchainDB* db, std::unique_ptr<komodo::komodo_core>& k_core, HardFork*& hf, const network_type nettype = MAINNET, bool offline = false);
 
     /**
      * @brief Uninitializes the blockchain state
@@ -899,7 +899,7 @@ namespace cryptonote
       return *m_db;
     }
 
-
+/*
     komodo::komodo_core& get_k_core()
     {
       return *m_komodo_core;
@@ -909,7 +909,7 @@ namespace cryptonote
     {
       return *m_komodo_core;
     }
-
+*/
 
     /**
      * @brief get a number of outputs of a specific amount

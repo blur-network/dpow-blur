@@ -50,7 +50,6 @@ using namespace epee;
 #include "core_rpc_server_error_codes.h"
 #include "p2p/net_node.h"
 #include "version.h"
-#include "komodo/komodo_rpcblockchain.h"
 #include "komodo/komodo_validation.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
@@ -73,6 +72,11 @@ namespace
 
 namespace cryptonote
 {
+
+  namespace komodo {
+    extern int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS;
+    extern uint256 NOTARIZED_HASH, NOTARIZED_MOM, NOTARIZED_DESTTXID;
+  }
 
   //-----------------------------------------------------------------------------------
   void core_rpc_server::init_options(boost::program_options::options_description& desc)
