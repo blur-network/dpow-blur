@@ -907,8 +907,10 @@ endif()
 
 find_library(EVENT_LIBRARY event)
 
+
 if(EVENT_LIBRARY)
   set(EVENT_LIBRARY "${EVENT_LIBRARY}")
+  message(STATUS "Found EVENT_LIBRARY located at ${EVENT_LIBRARY}")
 endif()
 
 if(NOT BTC_LIBRARY)
