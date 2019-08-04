@@ -1944,16 +1944,18 @@ namespace cryptonote
         return false;
       }
 
-/*
-      notarized_checkpoint *np = 0;
-      komodo_checkpoint(&notarized_height, height, hash)
-*/
+
       std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
       std::string n_hash = bytes256_to_hex(v_hash);
       std::vector<uint8_t> v_txid(komodo::NOTARIZED_DESTTXID.begin(), komodo::NOTARIZED_DESTTXID.begin()+32);
       std::string n_txid = bytes256_to_hex(v_txid);
 /*      std::vector<uint8_t> v_MoM(komodo::NOTARIZED_MOM.begin(), komodo::NOTARIZED_MOM.begin()+32);
       std::string n_MoM = bytes256_to_hex(v_MoM);*/
+
+      crypto::hash hash = crypto::null_hash;
+      komodo::komodo_core k_core = m_core.get_blockchain_storage().get_k_core();
+      k_core.komodo_checkpoint(&komodo::NOTARIZED_HEIGHT, height, hash);
+
       cryptonote::block blk = m_core.get_blockchain_storage().get_db().get_top_block();
       crypto::hash c_hash = m_core.get_blockchain_storage().get_db().top_block_hash();
       crypto::hash c_pow = cryptonote::get_block_longhash(blk, height);

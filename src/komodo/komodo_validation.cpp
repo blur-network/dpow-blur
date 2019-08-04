@@ -131,9 +131,9 @@ int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsi
 int32_t komodo_importaddress(char* addr)
 {
     std::vector<btc_wallet*> vpwallets;
-    vector* addr_out;
+    vector* addr_out = nullptr;
     int i = 0;
-    btc_wallet* pwallet;
+    btc_wallet* pwallet; // this needs initialized properly... 
     btc_wallet_get_addresses(pwallet, addr_out);
     ssize_t found = vector_find(addr_out, addr);
     if (found != 0)
@@ -720,7 +720,7 @@ void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_he
     portable_mutex_unlock(&komodo_mutex);
 }
 
-int32_t komodo_core::komodo_checkpoint(int32_t *notarized_heightp, int32_t nHeight, crypto::hash hash)
+int32_t komodo_core::komodo_checkpoint(int32_t *notarized_heightp, uint64_t nHeight, crypto::hash& hash)
 {
 
     int32_t notarized_height; std::vector<uint8_t> zero;uint256 notarized_hash,notarized_desttxid; uint64_t notary; cryptonote::block *pindex = nullptr;

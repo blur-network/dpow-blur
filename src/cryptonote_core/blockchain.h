@@ -899,7 +899,7 @@ namespace cryptonote
       return *m_db;
     }
 
-/*
+
     komodo::komodo_core& get_k_core()
     {
       return *m_komodo_core;
@@ -909,7 +909,7 @@ namespace cryptonote
     {
       return *m_komodo_core;
     }
-*/
+
 
     /**
      * @brief get a number of outputs of a specific amount
