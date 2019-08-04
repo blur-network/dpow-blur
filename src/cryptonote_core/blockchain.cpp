@@ -336,6 +336,12 @@ bool Blockchain::init(BlockchainDB* db, komodo::komodo_core* k_core, const netwo
   m_db = db;
 
   m_komodo_core = k_core;
+  if (m_komodo_core->komodo_init() == 0) {
+    MCLOG_CYAN(el::Level::Info, "global", "Komodo core initialized.  DPoW protection active, in event of hash attack.");
+  }
+  else {
+    MWARNING("Komodo core failed to initialize! DPoW protection is not active!");
+  }
 
   m_nettype = test_options != NULL ? FAKECHAIN : nettype;
   m_offline = offline;
