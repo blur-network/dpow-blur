@@ -177,8 +177,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  komodo::komodo_core* k_core;
-  r = core_storage->init(db, k_core, opt_testnet ? cryptonote::TESTNET : opt_stagenet ? cryptonote::STAGENET : cryptonote::MAINNET);
+  r = core_storage->init(db, nullptr, opt_testnet ? cryptonote::TESTNET : opt_stagenet ? cryptonote::STAGENET : cryptonote::MAINNET);
 
   CHECK_AND_ASSERT_MES(r, 1, "Failed to initialize source blockchain storage");
   LOG_PRINT_L0("Source blockchain storage initialized OK");

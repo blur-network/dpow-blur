@@ -191,9 +191,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  komodo::komodo_core* k_core;
 
-  r = core_storage->init(db, k_core, net_type);
+  r = core_storage->init(db, nullptr, net_type);
 
   CHECK_AND_ASSERT_MES(r, 1, "Failed to initialize source blockchain storage");
   LOG_PRINT_L0("Source blockchain storage initialized OK");
