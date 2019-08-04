@@ -81,12 +81,12 @@ void ImportAddress(btc_wallet* pwallet, char* p2pkh_address, const std::string& 
 }
 
 
-//int32_t KOMODO_TXINDEX = 1;
+int32_t KOMODO_TXINDEX = 1;
 
 /*
-int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsize, uint256 txid,int32_t n)
+int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsize, btc_uint256 txid,int32_t n)
 {
-    static uint256 zero; int32_t i,m; uint8_t *ptr; btc_tx tx; uint256 hashBlock;
+    static btc_uint256 zero; int32_t i,m; uint8_t *ptr; btc_tx tx; btc_uint256 hashBlock;
     btc_tx txref=0;
     LOCK(cs_main);
     if ( KOMODO_TXINDEX != 0 )
@@ -126,35 +126,32 @@ int32_t gettxout_scriptPubKey(int32_t height,uint8_t *scriptPubKey,int32_t maxsi
 
     return(-1);
 }
+*/
 
-
-int32_t komodo_importaddress(const char* addr)
+int32_t komodo_importaddress(char* addr)
 {
-    CBitcoinAddress address(addr);
-    CWallet * const pwallet = vpwallets[0];
-    if ( pwallet != 0 )
+    std::vector<btc_wallet*> vpwallets;
+    vector* addr_out;
+    int i = 0;
+    btc_wallet* pwallet;
+    btc_wallet_get_addresses(pwallet, addr_out);
+    ssize_t found = vector_find(addr_out, addr);
+    if (found != 0)
     {
-        LOCK2(cs_main, pwallet->cs_wallet);
-        if ( address.IsValid() != 0 )
-        {
-            isminetype mine = IsMine(*pwallet, address.Get());
-            if ( (mine & ISMINE_SPENDABLE) != 0 || (mine & ISMINE_WATCH_ONLY) != 0 )
-            {
-                //printf("komodo_importaddress %s already there\n",EncodeDestination(address).c_str());
-                return(0);
-            }
-            else
-            {
-                printf("komodo_importaddress %s\n",addr.c_str());
-                ImportAddress(pwallet, address, addr);
-                return(1);
-            }
-        }
-        printf("%s -> komodo_importaddress failed valid.%d\n",addr.c_str(),address.IsValid());
+      printf("komodo_importaddress %s already there\n", addr);
+      return(0);
     }
+    else
+    {
+      printf("komodo_importaddress %s\n",addr);
+      ImportAddress(pwallet, addr, NULL, NULL);
+      return (1);
+    }
+
+    MERROR("komodo_importaddress failed" << addr);
     return(-1);
 }
-*/
+
 
 
 namespace cryptonote {
