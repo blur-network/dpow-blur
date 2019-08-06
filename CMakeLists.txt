@@ -203,6 +203,9 @@ set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
 
 # set this to 0 if per-block checkpoint needs to be disabled
 set(PER_BLOCK_CHECKPOINT 1)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set(BACKWARD_HAS_DWARF 1)
+endif()
 
 if(PER_BLOCK_CHECKPOINT)
   add_definitions("-DPER_BLOCK_CHECKPOINT")
@@ -907,10 +910,23 @@ endif()
 
 find_library(EVENT_LIBRARY event)
 
-
 if(EVENT_LIBRARY)
   set(EVENT_LIBRARY "${EVENT_LIBRARY}")
   message(STATUS "Found EVENT_LIBRARY located at ${EVENT_LIBRARY}")
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  find_library(DWARF_LIBRARY dwarf)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  if(DWARF_LIBRARY)
+    set(DWARF_LIBRARY "${DWARF_LIBRARY}")
+    message(STATUS "Found DWARF_LIBRARY located at ${DWARF_LIBRARY}")
+  endif()
+  if(NOT DWARF_LIBRARY)
+    message(FATAL_ERROR "Could not find required libdwarf.")
+  endif()
 endif()
 
 if(NOT BTC_LIBRARY)
@@ -924,7 +940,6 @@ endif()
 if(NOT SECP256K1_LIBRARY)
   message(FATAL_ERROR "Could not find required secp256k1 library.")
 endif()
-
 
 find_library(SODIUM_LIBRARY sodium)
 
