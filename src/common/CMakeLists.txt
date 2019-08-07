@@ -29,7 +29,6 @@
 include_directories(SYSTEM ${OPENSSL_INCLUDE_DIR})
 
 set(common_sources
-  backward.cpp
   base58.cpp
   command_line.cpp
   error.cpp
@@ -46,7 +45,6 @@ set(common_headers)
 
 set(common_private_headers
   apply_permutation.h
-  backward.hpp
   base58.h
   boost_serialization_helper.h
   command_line.h

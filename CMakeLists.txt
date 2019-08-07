@@ -203,9 +203,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
 
 # set this to 0 if per-block checkpoint needs to be disabled
 set(PER_BLOCK_CHECKPOINT 1)
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  set(BACKWARD_HAS_DWARF 1)
-endif()
 
 if(PER_BLOCK_CHECKPOINT)
   add_definitions("-DPER_BLOCK_CHECKPOINT")
@@ -216,6 +213,8 @@ endif()
 
 list(INSERT CMAKE_MODULE_PATH 0
   "${CMAKE_SOURCE_DIR}/cmake")
+
+find_package(Backward)
 
 if (NOT DEFINED ENV{DEVELOPER_LOCAL_TOOLS})
   message(STATUS "Could not find DEVELOPER_LOCAL_TOOLS in env (not required)")
@@ -272,7 +271,7 @@ endif()
 # elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
 #   set(BSDI TRUE)
 
-include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/libbtc/include external/libbtc/src/logdb/include external/libbtc/src/secp256k1/include)
+include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/libbtc/include external/libbtc/src/logdb/include external/libbtc/src/secp256k1/include external/backward)
 
 if(APPLE)
   include_directories(SYSTEM /usr/include/malloc)
@@ -360,13 +359,18 @@ if (APPLE)
   set(LIBUNWIND_LIBRARIES "")
 elseif (DEPENDS AND NOT LINUX)
   set(LIBUNWIND_LIBRARIES "")
-elseif(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND NOT MINGW)
-  set(LIBUNWIND_LIBRARIES "")
 elseif (ARM AND STATIC)
   set(LIBUNWIND_LIBRARIES "")
 else()
-  find_package(Libunwind)
-    set(LIBUNWIND_LIBRARIES "")
+  find_library(UNWIND_LIBRARY unwind)
+  if(UNWIND_LIBRARY)
+    set(UNWIND_LIBRARY ${UNWIND_LIBRARY})
+    message(STATUS "Found UNWIND_LIBRARY located at: ${UNWIND_LIBRARY}.")
+  else()
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+      message(FATAL_ERROR "Could not find required unwind library, when building debug type. Please recompile for release build, or install libunwind.")
+    endif()
+  endif()
 endif()
 
 if (UNIX AND NOT APPLE)
@@ -420,7 +424,6 @@ ExternalProject_Add(generate_translations_header
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/translations")
 add_subdirectory(external)
 
-
 #include(ExternalProject)
 #ExternalProject_Add(btc_depends
 #  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/depends
@@ -443,19 +446,6 @@ ExternalProject_Add(secp256k1
 set(SECP256K1_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/libbtc/lib/libsecp256k1.a)
 
 
-include(ExternalProject)
-ExternalProject_Add(libbtc
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
-  CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static
-  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no
-  BUILD_COMMAND make
-  INSTALL_COMMAND make install
-  BUILD_IN_SOURCE 1
-)
-
-
-set(BTC_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/libbtc/lib/libbtc.a)
-
 # Final setup for easylogging++
 include_directories(${EASYLOGGING_INCLUDE})
 link_directories(${EASYLOGGING_LIBRARY_DIRS})
@@ -465,6 +455,9 @@ link_directories(${BITCOIN_LIBRARY})
 
 include_directories(${HYDROGEN_INCLUDE})
 include_directories(${HYDROGEN_LIBRARY_DIR})
+
+include_directories(${BACKWARD_INCLUDE})
+include_directories(${BACKWARD_LIBRARY_DIR})
 
 # Final setup for liblmdb
 include_directories(${LMDB_INCLUDE})
@@ -917,17 +910,38 @@ endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   find_library(DWARF_LIBRARY dwarf)
-endif()
-
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   if(DWARF_LIBRARY)
     set(DWARF_LIBRARY "${DWARF_LIBRARY}")
     message(STATUS "Found DWARF_LIBRARY located at ${DWARF_LIBRARY}")
+    include_directories(DWARF_INCLUDE_DIR /usr/include/libdwarf)
   endif()
   if(NOT DWARF_LIBRARY)
     message(FATAL_ERROR "Could not find required libdwarf.")
   endif()
+
+#  find_library(BFD_LIBRARY bfd)
+#  if(BFD_LIBRARY)
+#    set(BFD_LIBRARY "${BFD_LIBRARY}")
+#    message(STATUS "Found BFD_LIBRARY located at ${BFD_LIBRARY}")
+#    include_directories(BFD_INCLUDE_DIR /usr/include)
+#  endif()
+#  if(NOT BFD_LIBRARY)
+#    message(FATAL_ERROR "Could not find required libbfd from binutils package.")
+#  endif()
 endif()
+
+include(ExternalProject)
+ExternalProject_Add(libbtc
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
+  CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no
+  BUILD_COMMAND make
+  INSTALL_COMMAND make install
+  BUILD_IN_SOURCE 1
+)
+
+
+set(BTC_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/libbtc/lib/libbtc.a)
 
 if(NOT BTC_LIBRARY)
   message(FATAL_ERROR "Could not find required libbtc.")
