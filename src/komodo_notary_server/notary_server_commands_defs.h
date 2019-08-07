@@ -400,14 +400,14 @@ namespace notary_rpc
         KV_SERIALIZE(account_index)
         KV_SERIALIZE(subaddr_indices)
         KV_SERIALIZE(priority)
-//       KV_SERIALIZE_OPT(mixin, (uint64_t)0)
-//        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
+        KV_SERIALIZE(mixin)
+        KV_SERIALIZE(ring_size)
         KV_SERIALIZE(unlock_time)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(get_tx_key)
-//        KV_SERIALIZE_OPT(do_not_relay, false)
-//        KV_SERIALIZE_OPT(get_tx_hex, false)
-//        KV_SERIALIZE_OPT(get_tx_metadata, false)
+        KV_SERIALIZE(do_not_relay)
+        KV_SERIALIZE(get_tx_hex)
+        KV_SERIALIZE(get_tx_metadata)
       END_KV_SERIALIZE_MAP()
     };
 
@@ -452,20 +452,21 @@ namespace notary_rpc
       bool get_tx_hex;
       bool get_tx_metadata;
 
+
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(destinations)
         KV_SERIALIZE(account_index)
         KV_SERIALIZE(subaddr_indices)
         KV_SERIALIZE(priority)
-//        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
-//        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
-        KV_SERIALIZE(unlock_time)
+/*        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
+        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
+*/        KV_SERIALIZE(unlock_time)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(get_tx_keys)
-//        KV_SERIALIZE_OPT(do_not_relay, false)
-//        KV_SERIALIZE_OPT(get_tx_hex, false)
-//        KV_SERIALIZE_OPT(get_tx_metadata, false)
-      END_KV_SERIALIZE_MAP()
+/*        KV_SERIALIZE_OPT(do_not_relay, false)
+        KV_SERIALIZE_OPT(get_tx_hex, false)
+        KV_SERIALIZE_OPT(get_tx_metadata, false)
+*/      END_KV_SERIALIZE_MAP()
     };
 
     struct key_list
@@ -498,6 +499,70 @@ namespace notary_rpc
       END_KV_SERIALIZE_MAP()
     };
   };
+
+  struct COMMAND_RPC_NTZ_TRANSFER
+  {
+    struct request
+    {
+      uint32_t account_index;
+      std::set<uint32_t> subaddr_indices;
+      uint32_t priority;
+//      uint64_t mixin;
+//      uint64_t ring_size;
+      uint64_t unlock_time;
+      std::string payment_id;
+      bool get_tx_keys;
+      bool do_not_relay;
+      bool get_tx_hex;
+      bool get_tx_metadata;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(account_index)
+        KV_SERIALIZE(subaddr_indices)
+        KV_SERIALIZE(priority)
+//        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
+//        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
+        KV_SERIALIZE(unlock_time)
+        KV_SERIALIZE(payment_id)
+        KV_SERIALIZE(get_tx_keys)
+        KV_SERIALIZE(do_not_relay)
+        KV_SERIALIZE(get_tx_hex)
+        KV_SERIALIZE(get_tx_metadata)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct key_vector
+    {
+      std::vector<std::string> keys;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(keys)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::vector<std::string> tx_hash_vector;
+      std::vector<std::string> tx_key_vector;
+      std::vector<uint64_t> amount_vector;
+      std::vector<uint64_t> fee_vector;
+      std::vector<std::string> tx_blob_vector;
+      std::vector<std::string> tx_metadata_vector;
+      std::string multisig_txset;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(tx_hash_vector)
+        KV_SERIALIZE(tx_key_vector)
+        KV_SERIALIZE(amount_vector)
+        KV_SERIALIZE(fee_vector)
+        KV_SERIALIZE(tx_blob_vector)
+        KV_SERIALIZE(tx_metadata_vector)
+        KV_SERIALIZE(multisig_txset)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+
 
   struct COMMAND_RPC_SWEEP_ALL
   {

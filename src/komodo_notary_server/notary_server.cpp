@@ -44,6 +44,7 @@ using namespace epee;
 #include "cryptonote_config.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_basic/account.h"
+#include "komodo/komodo_notaries.h"
 #include "multisig/multisig.h"
 #include "notary_server_commands_defs.h"
 #include "misc_language.h"
@@ -658,7 +659,85 @@ namespace tools
     }
     return true;
   }
-  //------------------------------------------------------------------------------------------------------------------------------
+/*  //------------------------------------------------------------------------------------------------------------------------------
+  bool notary_server::validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, epee::json_rpc::error& er)
+  {
+    crypto::hash8 integrated_payment_id = crypto::null_hash8;
+    std::string ntz_txn_extra_data;
+    for (auto it = destinations.begin(); it != destinations.end(); it++)
+    {
+      cryptonote::address_parse_info info;
+      cryptonote::tx_destination_entry de;
+      er.message = "";
+      if(!get_account_address_from_str(info, m_wallet->nettype(), it->address))
+      {
+        er.code = NOTARY_RPC_ERROR_CODE_WRONG_ADDRESS;
+        if (er.message.empty())
+          er.message = std::string("NOTARY_RPC_ERROR_CODE_WRONG_ADDRESS: ") + it->address;
+        return false;
+      }
+
+      de.addr = info.address;
+      de.is_subaddress = info.is_subaddress;
+      de.amount = it->amount;
+      dsts.push_back(de);
+
+      if (info.has_payment_id)
+      {
+        if (!payment_id.empty() || integrated_payment_id != crypto::null_hash8)
+        {
+          er.code = NOTARY_RPC_ERROR_CODE_WRONG_PAYMENT_ID;
+          er.message = "A single payment id is allowed per transaction";
+          return false;
+        }
+        integrated_payment_id = info.payment_id;
+        cryptonote::set_encrypted_payment_id_to_tx_extra_nonce(extra_nonce, integrated_payment_id);
+
+        if (!cryptonote::add_extra_nonce_to_tx_extra(extra, extra_nonce)) {
+          er.code = NOTARY_RPC_ERROR_CODE_WRONG_PAYMENT_ID;
+          er.message = "Something went wrong with integrated payment_id.";
+          return false;
+        }
+      }
+    }
+
+    if (at_least_one_destination && dsts.empty())
+    {
+      er.code = NOTARY_RPC_ERROR_CODE_ZERO_DESTINATION;
+      er.message = "No destinations for this transfer";
+      return false;
+    }
+
+    if (!payment_id.empty())
+    {
+
+      const std::string& payment_id_str = payment_id;
+
+      crypto::hash long_payment_id;
+      crypto::hash8 short_payment_id;
+
+      if (wallet2::parse_long_payment_id(payment_id_str, long_payment_id)) {
+        cryptonote::set_payment_id_to_tx_extra_nonce(extra_nonce, long_payment_id);
+      }
+      else if (wallet2::parse_short_payment_id(payment_id_str, short_payment_id)) {
+        cryptonote::set_encrypted_payment_id_to_tx_extra_nonce(extra_nonce, short_payment_id);
+      }
+      else {
+        er.code = NOTARY_RPC_ERROR_CODE_WRONG_PAYMENT_ID;
+        er.message = "Payment id has invalid format: \"" + payment_id_str + "\", expected 16 or 64 character string";
+        return false;
+      }
+
+      if (!cryptonote::add_extra_nonce_to_tx_extra(extra, extra_nonce)) {
+        er.code = NOTARY_RPC_ERROR_CODE_WRONG_PAYMENT_ID;
+        er.message = "Something went wrong with payment_id. Please check its format: \"" + payment_id_str + "\", expected 64-character string";
+        return false;
+      }
+
+    }
+    return true;
+  }
+*/  //------------------------------------------------------------------------------------------------------------------------------
   static std::string ptx_to_string(const tools::wallet2::pending_tx &ptx)
   {
     std::ostringstream oss;
@@ -898,6 +977,94 @@ namespace tools
 
       return fill_response(ptx_vector, req.get_tx_keys, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, req.do_not_relay,
           res.tx_hash_list, req.get_tx_hex, res.tx_blob_list, req.get_tx_metadata, res.tx_metadata_list, er);
+    }
+    catch (const std::exception& e)
+    {
+      handle_rpc_exception(std::current_exception(), er, NOTARY_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);
+      return false;
+    }
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool notary_server::on_ntz_transfer(const notary_rpc::COMMAND_RPC_NTZ_TRANSFER::request& req, notary_rpc::COMMAND_RPC_NTZ_TRANSFER::response& res, epee::json_rpc::error& er)
+  {
+
+    std::vector<cryptonote::tx_destination_entry> dsts;
+    std::vector<uint8_t> extra;
+
+    if (!m_wallet) return not_open(er);
+    if (m_wallet->restricted())
+    {
+      er.code = NOTARY_RPC_ERROR_CODE_DENIED;
+      er.message = "Command unavailable in restricted mode.";
+      return false;
+    }
+
+    const char* notaries_copy[4][64];
+    std::copy(&Notaries_elected1[0][0], &Notaries_elected1[0][0]+4*64,&notaries_copy[0][0]);
+
+    std::vector<notary_rpc::transfer_destination> not_validated_dsts;
+
+    for (int i = 0; i <= 64; i++)
+    {
+      char viewkey_seed[32] = { 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f' };
+      // copy btc_pubkeys for use in deriving the viewkeys ourselves
+      memcpy(&viewkey_seed, &notaries_copy[2][i], sizeof(notaries_copy[2][i]));
+      std::string viewkey_seed_str = viewkey_seed;
+      cryptonote::blobdata btc_pubkey_data;
+
+      if(!epee::string_tools::parse_hexstr_to_binbuff(viewkey_seed_str, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
+      {
+       	THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse btc_pubkey_data"));
+      }
+
+      const crypto::secret_key btc_pubkey_secret = *reinterpret_cast<const crypto::secret_key*>(btc_pubkey_data.data());
+      crypto::public_key view_pubkey;
+      crypto::secret_key view_seckey;
+      crypto::secret_key rngview = crypto::generate_keys(view_pubkey, view_seckey, btc_pubkey_secret, true);
+
+      char spendkey_pub[32] = { 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f' };
+      // copy hardcoded spendkey_pub
+      memcpy(&spendkey_pub, &notaries_copy[4][i], sizeof(notaries_copy[4][i]));
+      std::string spendkey_pub_str = spendkey_pub;
+      cryptonote::blobdata spendkey_pub_data;
+
+      if(!epee::string_tools::parse_hexstr_to_binbuff(spendkey_pub_str, spendkey_pub_data) || spendkey_pub_data.size() != sizeof(crypto::public_key))
+      {
+       	THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse hardcoded spend public key"));
+      }
+      const crypto::public_key spend_pubkey = *reinterpret_cast<const crypto::public_key*>(spendkey_pub_data.data());
+
+      cryptonote::account_public_address address;
+      address.m_view_public_key = view_pubkey;
+      address.m_spend_public_key = spend_pubkey;
+
+      std::string address_str = get_account_address_as_str(m_wallet->nettype(), false, address);
+
+      uint64_t amount = 20000; // arbitrary, but meaningful: 2 * 10^(-8) BLUR for compatibility with BTC-flavored atomicity
+      notary_rpc::transfer_destination dest = AUTO_VAL_INIT(dest);
+      dest.address = address_str;
+      dest.amount = amount;
+      not_validated_dsts.push_back(dest);
+    }
+
+/*    // validate the transfer requested and populate dsts & extra; RPC_TRANSFER::request and RPC_TRANSFER_SPLIT::request are identical types.
+    if (!validate_transfer(not_validated_dsts, req.payment_id, dsts, extra, true, er))
+    {
+      return false;
+    }
+*/
+    try
+    {
+      uint64_t mixin = m_wallet->adjust_mixin(4);
+
+      uint32_t priority = m_wallet->adjust_priority(req.priority);
+      LOG_PRINT_L2("on_transfer_split calling create_transactions_2");
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_2(dsts, mixin, 10, priority, extra, req.account_index, req.subaddr_indices, m_trusted_daemon);
+      LOG_PRINT_L2("on_transfer_split called create_transactions_2");
+
+//      return fill_response(ptx_vector, req.get_tx_keys, res.tx_key_vector, res.amount_vector, res.fee_vector, res.multisig_txset, req.do_not_relay,
+//          res.tx_hash_vector, req.get_tx_hex, res.tx_blob_vector, req.get_tx_metadata, res.tx_metadata_vector, er);
     }
     catch (const std::exception& e)
     {

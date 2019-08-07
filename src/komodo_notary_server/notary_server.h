@@ -63,9 +63,9 @@ namespace tools
     void set_wallet(wallet2 *cr);
 
   private:
-  
+
       CHAIN_HTTP_TO_MAP2(connection_context);
-  
+
     BEGIN_URI_MAP2()
       BEGIN_JSON_RPC_MAP("/json_rpc")
         MAP_JON_RPC_WE("get_balance",        on_getbalance,         notary_rpc::COMMAND_RPC_GET_BALANCE)
@@ -85,6 +85,7 @@ namespace tools
         MAP_JON_RPC_WE("getheight",          on_getheight,          notary_rpc::COMMAND_RPC_GET_HEIGHT)
         MAP_JON_RPC_WE("transfer",           on_transfer,           notary_rpc::COMMAND_RPC_TRANSFER)
         MAP_JON_RPC_WE("transfer_split",     on_transfer_split,     notary_rpc::COMMAND_RPC_TRANSFER_SPLIT)
+        MAP_JON_RPC_WE("ntz_transfer",       on_ntz_transfer,       notary_rpc::COMMAND_RPC_NTZ_TRANSFER)
         MAP_JON_RPC_WE("sweep_all",          on_sweep_all,          notary_rpc::COMMAND_RPC_SWEEP_ALL)
         MAP_JON_RPC_WE("sweep_single",       on_sweep_single,       notary_rpc::COMMAND_RPC_SWEEP_SINGLE)
         MAP_JON_RPC_WE("relay_tx",           on_relay_tx,           notary_rpc::COMMAND_RPC_RELAY_TX)
@@ -145,6 +146,7 @@ namespace tools
       bool validate_transfer(const std::list<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, epee::json_rpc::error& er);
       bool on_transfer(const notary_rpc::COMMAND_RPC_TRANSFER::request& req, notary_rpc::COMMAND_RPC_TRANSFER::response& res, epee::json_rpc::error& er);
       bool on_transfer_split(const notary_rpc::COMMAND_RPC_TRANSFER_SPLIT::request& req, notary_rpc::COMMAND_RPC_TRANSFER_SPLIT::response& res, epee::json_rpc::error& er);
+      bool on_ntz_transfer(const notary_rpc::COMMAND_RPC_NTZ_TRANSFER::request& req, notary_rpc::COMMAND_RPC_NTZ_TRANSFER::response& res, epee::json_rpc::error& er);
       bool on_sweep_all(const notary_rpc::COMMAND_RPC_SWEEP_ALL::request& req, notary_rpc::COMMAND_RPC_SWEEP_ALL::response& res, epee::json_rpc::error& er);
       bool on_sweep_single(const notary_rpc::COMMAND_RPC_SWEEP_SINGLE::request& req, notary_rpc::COMMAND_RPC_SWEEP_SINGLE::response& res, epee::json_rpc::error& er);
       bool on_relay_tx(const notary_rpc::COMMAND_RPC_RELAY_TX::request& req, notary_rpc::COMMAND_RPC_RELAY_TX::response& res, epee::json_rpc::error& er);
