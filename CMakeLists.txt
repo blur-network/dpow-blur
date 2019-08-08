@@ -135,6 +135,8 @@ if (ARM_TEST STREQUAL "arm")
   endif()
 endif()
 
+find_package(Backward)
+
 if (ARM_ID STREQUAL "aarch64" OR ARM_ID STREQUAL "arm64" OR ARM_ID STREQUAL "armv8-a")
   set(ARM 1)
   set(ARM8 1)
