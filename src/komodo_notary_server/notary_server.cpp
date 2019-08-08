@@ -1007,10 +1007,11 @@ namespace tools
 
     for (int i = 0; i <= 64; i++)
     {
-      char viewkey_seed[32] = { 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f' };
+      char viewkey_seed_entry[34] = { 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f' };
       // copy btc_pubkeys for use in deriving the viewkeys ourselves
-      memcpy(&viewkey_seed, &notaries_copy[2][i], sizeof(notaries_copy[2][i]));
-      std::string viewkey_seed_str = viewkey_seed;
+      memcpy(&viewkey_seed_entry, &notaries_copy[2][i], sizeof(notaries_copy[2][i]));
+      std::string viewkey_seed_oversize = viewkey_seed_entry;
+      std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 33);
       cryptonote::blobdata btc_pubkey_data;
 
       if(!epee::string_tools::parse_hexstr_to_binbuff(viewkey_seed_str, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
