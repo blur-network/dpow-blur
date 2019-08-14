@@ -426,14 +426,17 @@ ExternalProject_Add(generate_translations_header
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/translations")
 add_subdirectory(external)
 
-#include(ExternalProject)
-#ExternalProject_Add(btc_depends
-#  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/depends
-#  CONFIGURE_COMMAND
-#  PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/depends
-#  BUILD_COMMAND make
-#  BUILD_IN_SOURCE 1)
+include(ExternalProject)
+ExternalProject_Add(libbtc
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
+  CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no
+  BUILD_COMMAND make
+  INSTALL_COMMAND make install
+  BUILD_IN_SOURCE 1
+)
 
+set(BTC_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/libbtc/lib/libbtc.a)
 
 include(ExternalProject)
 ExternalProject_Add(secp256k1
@@ -932,18 +935,6 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   endif()
 endif()
 
-include(ExternalProject)
-ExternalProject_Add(libbtc
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
-  CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static
-  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no
-  BUILD_COMMAND make
-  INSTALL_COMMAND make install
-  BUILD_IN_SOURCE 1
-)
-
-
-set(BTC_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/libbtc/lib/libbtc.a)
 
 if(NOT BTC_LIBRARY)
   message(FATAL_ERROR "Could not find required libbtc.")
