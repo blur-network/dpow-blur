@@ -690,10 +690,10 @@ namespace tools
 
       if (info.has_payment_id)
       {
-        if (!integrated_payment_id.empty())
+        if (!payment_id.empty() && payment_id.length() == 8)
         {
           er.code = NOTARY_RPC_ERROR_CODE_WRONG_ADDRESS;
-          er.message  = "Integrated addresses/payment_ids not allowed in notarization txs: " + integrated_payment_id;
+          er.message  = "Integrated addresses & short payment IDs not allowed in notarization txs";
           return false;
         }
       }
@@ -712,6 +712,8 @@ namespace tools
       er.message = "Notarization transactions should have exactly 64 destinations";
       return false;
     }
+
+    std::string extra_nonce;
 
     if (!payment_id.empty())
     {
@@ -1064,9 +1066,9 @@ namespace tools
       // 12 mixins for ring size of 13 (threshold for valid ntz_txn)
 
       uint32_t priority = m_wallet->adjust_priority(req.priority);
-      LOG_PRINT_L2("on_ntz_transfer calling create_transactions_ntz");
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_ntz(dsts, mixin, 10, priority, extra, req.account_index, req.subaddr_indices, m_trusted_daemon);
-      LOG_PRINT_L2("on_ntz_transfer called create_transactions_ntz");
+      LOG_PRINT_L2("on_ntz_transfer calling create_ntz_transactions");
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, 10, priority, extra, req.account_index, req.subaddr_indices, m_trusted_daemon);
+      LOG_PRINT_L2("on_ntz_transfer called create_ntz_transactions");
 
       return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, true,
           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);

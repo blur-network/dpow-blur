@@ -531,9 +531,9 @@ namespace notary_rpc
       END_KV_SERIALIZE_MAP()
     };
 
-    struct key_vector
+    struct key_list
     {
-      std::vector<std::string> keys;
+      std::list<std::string> keys;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(keys)
@@ -542,21 +542,21 @@ namespace notary_rpc
 
     struct response
     {
-      std::vector<std::string> tx_hash_vector;
-      std::vector<std::string> tx_key_vector;
-      std::vector<uint64_t> amount_vector;
-      std::vector<uint64_t> fee_vector;
-      std::vector<std::string> tx_blob_vector;
-      std::vector<std::string> tx_metadata_vector;
+      std::list<std::string> tx_hash_list;
+      std::list<std::string> tx_key_list;
+      std::list<uint64_t> amount_list;
+      std::list<uint64_t> fee_list;
+      std::list<std::string> tx_blob_list;
+      std::list<std::string> tx_metadata_list;
       std::string multisig_txset;
 
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(tx_hash_vector)
-        KV_SERIALIZE(tx_key_vector)
-        KV_SERIALIZE(amount_vector)
-        KV_SERIALIZE(fee_vector)
-        KV_SERIALIZE(tx_blob_vector)
-        KV_SERIALIZE(tx_metadata_vector)
+        KV_SERIALIZE(tx_hash_list)
+        KV_SERIALIZE(tx_key_list)
+        KV_SERIALIZE(amount_list)
+        KV_SERIALIZE(fee_list)
+        KV_SERIALIZE(tx_blob_list)
+        KV_SERIALIZE(tx_metadata_list)
         KV_SERIALIZE(multisig_txset)
       END_KV_SERIALIZE_MAP()
     };
