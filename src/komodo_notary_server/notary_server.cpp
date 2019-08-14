@@ -659,10 +659,9 @@ namespace tools
     }
     return true;
   }
-/*  //------------------------------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, epee::json_rpc::error& er)
   {
-    crypto::hash8 integrated_payment_id = crypto::null_hash8;
     std::string ntz_txn_extra_data;
     for (auto it = destinations.begin(); it != destinations.end(); it++)
     {
@@ -679,23 +678,22 @@ namespace tools
 
       de.addr = info.address;
       de.is_subaddress = info.is_subaddress;
+      if (de.is_subaddress)
+      {
+        er.code = NOTARY_RPC_ERROR_CODE_WRONG_ADDRESS;
+        if (er.message.empty())
+          er.message = std::string("Subaddresses destinations not allowed in notarization txs: ") + it->address;
+        return false;
+      }
       de.amount = it->amount;
       dsts.push_back(de);
 
       if (info.has_payment_id)
       {
-        if (!payment_id.empty() || integrated_payment_id != crypto::null_hash8)
+        if (!integrated_payment_id.empty())
         {
-          er.code = NOTARY_RPC_ERROR_CODE_WRONG_PAYMENT_ID;
-          er.message = "A single payment id is allowed per transaction";
-          return false;
-        }
-        integrated_payment_id = info.payment_id;
-        cryptonote::set_encrypted_payment_id_to_tx_extra_nonce(extra_nonce, integrated_payment_id);
-
-        if (!cryptonote::add_extra_nonce_to_tx_extra(extra, extra_nonce)) {
-          er.code = NOTARY_RPC_ERROR_CODE_WRONG_PAYMENT_ID;
-          er.message = "Something went wrong with integrated payment_id.";
+          er.code = NOTARY_RPC_ERROR_CODE_WRONG_ADDRESS;
+          er.message  = "Integrated addresses/payment_ids not allowed in notarization txs: " + integrated_payment_id;
           return false;
         }
       }
@@ -708,19 +706,22 @@ namespace tools
       return false;
     }
 
+    if(dsts.size() != 64)
+    {
+      er.code = NOTARY_RPC_ERROR_CODE_INVALID_VOUT_COUNT;
+      er.message = "Notarization transactions should have exactly 64 destinations";
+      return false;
+    }
+
     if (!payment_id.empty())
     {
 
       const std::string& payment_id_str = payment_id;
 
       crypto::hash long_payment_id;
-      crypto::hash8 short_payment_id;
 
       if (wallet2::parse_long_payment_id(payment_id_str, long_payment_id)) {
         cryptonote::set_payment_id_to_tx_extra_nonce(extra_nonce, long_payment_id);
-      }
-      else if (wallet2::parse_short_payment_id(payment_id_str, short_payment_id)) {
-        cryptonote::set_encrypted_payment_id_to_tx_extra_nonce(extra_nonce, short_payment_id);
       }
       else {
         er.code = NOTARY_RPC_ERROR_CODE_WRONG_PAYMENT_ID;
@@ -737,7 +738,7 @@ namespace tools
     }
     return true;
   }
-*/  //------------------------------------------------------------------------------------------------------------------------------
+  //------------------------------------------------------------------------------------------------------------------------------
   static std::string ptx_to_string(const tools::wallet2::pending_tx &ptx)
   {
     std::ostringstream oss;
@@ -1042,30 +1043,33 @@ namespace tools
 
       std::string address_str = get_account_address_as_str(m_wallet->nettype(), false, address);
 
-      uint64_t amount = 20000; // arbitrary, but meaningful: 2 * 10^(-8) BLUR for compatibility with BTC-flavored atomicity
+      uint64_t amount = 20000; 
+      // arbitrary, but meaningful: 2 * 10^(-8) BLUR
+      // for compatibility with BTC-flavored atomicity
       notary_rpc::transfer_destination dest = AUTO_VAL_INIT(dest);
       dest.address = address_str;
       dest.amount = amount;
       not_validated_dsts.push_back(dest);
     }
 
-/*    // validate the transfer requested and populate dsts & extra; RPC_TRANSFER::request and RPC_TRANSFER_SPLIT::request are identical types.
-    if (!validate_transfer(not_validated_dsts, req.payment_id, dsts, extra, true, er))
+    // validate the transfer requested and populate dsts & extra; RPC_TRANSFER::request and RPC_TRANSFER_SPLIT::request are identical types.
+    if (!validate_ntz_transfer(not_validated_dsts, req.payment_id, dsts, extra, true, er))
     {
       return false;
     }
-*/
+
     try
     {
-      uint64_t mixin = m_wallet->adjust_mixin(4);
+      uint64_t mixin = m_wallet->adjust_mixin(12);
+      // 12 mixins for ring size of 13 (threshold for valid ntz_txn)
 
       uint32_t priority = m_wallet->adjust_priority(req.priority);
-      LOG_PRINT_L2("on_transfer_split calling create_transactions_2");
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_2(dsts, mixin, 10, priority, extra, req.account_index, req.subaddr_indices, m_trusted_daemon);
-      LOG_PRINT_L2("on_transfer_split called create_transactions_2");
+      LOG_PRINT_L2("on_ntz_transfer calling create_transactions_ntz");
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_transactions_ntz(dsts, mixin, 10, priority, extra, req.account_index, req.subaddr_indices, m_trusted_daemon);
+      LOG_PRINT_L2("on_ntz_transfer called create_transactions_ntz");
 
-//      return fill_response(ptx_vector, req.get_tx_keys, res.tx_key_vector, res.amount_vector, res.fee_vector, res.multisig_txset, req.do_not_relay,
-//          res.tx_hash_vector, req.get_tx_hex, res.tx_blob_vector, req.get_tx_metadata, res.tx_metadata_vector, er);
+      return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, true,
+          res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
     }
     catch (const std::exception& e)
     {

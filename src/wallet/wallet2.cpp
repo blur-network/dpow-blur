@@ -6736,7 +6736,7 @@ static uint32_t get_count_above(const std::vector<wallet2::transfer_details> &tr
   return count;
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon)
+std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
@@ -6747,7 +6747,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_dust_indices_per_subaddr;
   uint64_t needed_money;
   uint64_t accumulated_fee, accumulated_outputs, accumulated_change;
-  struct TX {
+  struct tx_struct {
     std::vector<size_t> selected_transfers;
     std::vector<cryptonote::tx_destination_entry> dsts;
     cryptonote::transaction tx;
@@ -6778,7 +6778,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
       }
     }
   };
-  std::vector<TX> txes;
+  std::vector<tx_struct> txes;
   bool adding_fee; // true if new outputs go towards fee, rather than destinations
   uint64_t needed_fee, available_for_fee = 0;
   uint64_t upper_transaction_size_limit = get_upper_transaction_size_limit();
@@ -6898,7 +6898,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
     unused_transfers_indices_per_subaddr.push_back({});
 
   // start with an empty tx
-  txes.push_back(TX());
+  txes.push_back(tx_struct());
   accumulated_fee = 0;
   accumulated_outputs = 0;
   accumulated_change = 0;
@@ -6959,7 +6959,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
   
   hwdev.set_mode(hw::device::TRANSACTION_CREATE_FAKE);
   while ((!dsts.empty() && dsts[0].amount > 0) || adding_fee || !preferred_inputs.empty() || should_pick_a_second_output(use_rct, txes.back().selected_transfers.size(), *unused_transfers_indices, *unused_dust_indices)) {
-    TX &tx = txes.back();
+    tx_struct &tx = txes.back();
 
     LOG_PRINT_L2("Start of loop with " << unused_transfers_indices->size() << " " << unused_dust_indices->size());
     LOG_PRINT_L2("unused_transfers_indices: " << strjoin(*unused_transfers_indices, " "));
@@ -7153,7 +7153,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryp
         if (!dsts.empty())
         {
           LOG_PRINT_L2("We have more to pay, starting another tx");
-          txes.push_back(TX());
+          txes.push_back(tx_struct());
           original_output_index = 0;
         }
       }
@@ -7187,9 +7187,9 @@ skip_tx:
     " total fee, " << print_money(accumulated_change) << " total change");
 
   hwdev.set_mode(hw::device::TRANSACTION_CREATE_REAL);
-  for (std::vector<TX>::iterator i = txes.begin(); i != txes.end(); ++i)
+  for (std::vector<tx_struct>::iterator i = txes.begin(); i != txes.end(); ++i)
   {
-    TX &tx = *i;
+    tx_struct &tx = *i;
     cryptonote::transaction test_tx;
     pending_tx test_ptx;
     if (use_rct) {
@@ -7223,9 +7223,513 @@ skip_tx:
   }
 
   std::vector<wallet2::pending_tx> ptx_vector;
-  for (std::vector<TX>::iterator i = txes.begin(); i != txes.end(); ++i)
+  for (std::vector<tx_struct>::iterator i = txes.begin(); i != txes.end(); ++i)
   {
-    TX &tx = *i;
+    tx_struct &tx = *i;
+    uint64_t tx_money = 0;
+    for (size_t idx: tx.selected_transfers)
+      tx_money += m_transfers[idx].amount();
+    LOG_PRINT_L1("  Transaction " << (1+std::distance(txes.begin(), i)) << "/" << txes.size() <<
+      ": " << get_size_string(tx.bytes) << ", sending " << print_money(tx_money) << " in " << tx.selected_transfers.size() <<
+      " outputs to " << tx.dsts.size() << " destination(s), including " <<
+      print_money(tx.ptx.fee) << " fee, " << print_money(tx.ptx.change_dts.amount) << " change");
+    ptx_vector.push_back(tx.ptx);
+  }
+
+  // if we made it this far, we're OK to actually send the transactions
+  return ptx_vector;
+}
+
+std::vector<wallet2::pending_tx> wallet2::create_transactions_2(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon)
+{
+  //ensure device is let in NONE mode in any case
+  hw::device &hwdev = m_account.get_device();
+  boost::unique_lock<hw::device> hwdev_lock (hwdev);
+  hw::reset_mode rst(hwdev);  
+
+  std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_transfers_indices_per_subaddr;
+  std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_dust_indices_per_subaddr;
+  uint64_t needed_money;
+  uint64_t accumulated_fee, accumulated_outputs, accumulated_change;
+  struct tx_struct {
+    std::vector<size_t> selected_transfers;
+    std::vector<cryptonote::tx_destination_entry> dsts;
+    cryptonote::transaction tx;
+    pending_tx ptx;
+    size_t bytes;
+    std::vector<std::vector<tools::wallet2::get_outs_entry>> outs;
+
+    void add(const account_public_address &addr, bool is_subaddress, uint64_t amount, unsigned int original_output_index, bool merge_destinations) {
+      if (merge_destinations)
+      {
+        std::vector<cryptonote::tx_destination_entry>::iterator i;
+        i = std::find_if(dsts.begin(), dsts.end(), [&](const cryptonote::tx_destination_entry &d) { return !memcmp (&d.addr, &addr, sizeof(addr)); });
+        if (i == dsts.end())
+        {
+          dsts.push_back(tx_destination_entry(0,addr,is_subaddress));
+          i = dsts.end() - 1;
+        }
+        i->amount += amount;
+      }
+      else
+      {
+        THROW_WALLET_EXCEPTION_IF(original_output_index > dsts.size(), error::wallet_internal_error,
+            std::string("original_output_index too large: ") + std::to_string(original_output_index) + " > " + std::to_string(dsts.size()));
+        if (original_output_index == dsts.size())
+          dsts.push_back(tx_destination_entry(0,addr,is_subaddress));
+        THROW_WALLET_EXCEPTION_IF(memcmp(&dsts[original_output_index].addr, &addr, sizeof(addr)), error::wallet_internal_error, "Mismatched destination address");
+        dsts[original_output_index].amount += amount;
+      }
+    }
+  };
+  std::vector<tx_struct> txes;
+  bool adding_fee; // true if new outputs go towards fee, rather than destinations
+  uint64_t needed_fee, available_for_fee = 0;
+  uint64_t upper_transaction_size_limit = get_upper_transaction_size_limit();
+  const bool use_rct = true;
+  const bool bulletproof = use_fork_rules(get_bulletproof_fork(), 0);
+
+  const uint64_t fee_per_kb  = get_per_kb_fee();
+  const uint64_t fee_multiplier = get_fee_multiplier(priority, get_fee_algorithm());
+
+  // throw if attempting a transaction with no destinations
+  THROW_WALLET_EXCEPTION_IF(dsts.empty(), error::zero_destination);
+
+  // calculate total amount being sent to all destinations
+  // throw if total amount overflows uint64_t
+  needed_money = 0;
+  for(auto& dt: dsts)
+  {
+    THROW_WALLET_EXCEPTION_IF(0 == dt.amount, error::zero_destination);
+    needed_money += dt.amount;
+    LOG_PRINT_L2("transfer: adding " << print_money(dt.amount) << ", for a total of " << print_money (needed_money));
+    THROW_WALLET_EXCEPTION_IF(needed_money < dt.amount, error::tx_sum_overflow, dsts, 0, m_nettype);
+  }
+
+  // throw if attempting a transaction with no money
+  THROW_WALLET_EXCEPTION_IF(needed_money == 0, error::zero_destination);
+
+  std::map<uint32_t, uint64_t> unlocked_balance_per_subaddr = unlocked_balance_per_subaddress(subaddr_account);
+  std::map<uint32_t, uint64_t> balance_per_subaddr = balance_per_subaddress(subaddr_account);
+
+  if (subaddr_indices.empty()) // "index=<N1>[,<N2>,...]" wasn't specified -> use all the indices with non-zero unlocked balance
+  {
+    for (const auto& i : balance_per_subaddr)
+      subaddr_indices.insert(i.first);
+  }
+
+  // early out if we know we can't make it anyway
+  // we could also check for being within FEE_PER_KB, but if the fee calculation
+  // ever changes, this might be missed, so let this go through
+  uint64_t balance_subtotal = 0;
+  uint64_t unlocked_balance_subtotal = 0;
+  for (uint32_t index_minor : subaddr_indices)
+  {
+    balance_subtotal += balance_per_subaddr[index_minor];
+    unlocked_balance_subtotal += unlocked_balance_per_subaddr[index_minor];
+  }
+  THROW_WALLET_EXCEPTION_IF(needed_money > balance_subtotal, error::not_enough_money,
+    balance_subtotal, needed_money, 0);
+  // first check overall balance is enough, then unlocked one, so we throw distinct exceptions
+  THROW_WALLET_EXCEPTION_IF(needed_money > unlocked_balance_subtotal, error::not_enough_unlocked_money,
+      unlocked_balance_subtotal, needed_money, 0);
+
+  for (uint32_t i : subaddr_indices)
+    LOG_PRINT_L2("Candidate subaddress index for spending: " << i);
+
+  // gather all dust and non-dust outputs belonging to specified subaddresses
+  size_t num_nondust_outputs = 0;
+  size_t num_dust_outputs = 0;
+  for (size_t i = 0; i < m_transfers.size(); ++i)
+  {
+    const transfer_details& td = m_transfers[i];
+    if (!td.m_spent && !td.m_key_image_partial && (use_rct ? true : !td.is_rct()) && is_transfer_unlocked(td) && td.m_subaddr_index.major == subaddr_account && subaddr_indices.count(td.m_subaddr_index.minor) == 1)
+    {
+      const uint32_t index_minor = td.m_subaddr_index.minor;
+      auto find_predicate = [&index_minor](const std::pair<uint32_t, std::vector<size_t>>& x) { return x.first == index_minor; };
+      if ((td.is_rct()) || is_valid_decomposed_amount(td.amount()))
+      {
+        auto found = std::find_if(unused_transfers_indices_per_subaddr.begin(), unused_transfers_indices_per_subaddr.end(), find_predicate);
+        if (found == unused_transfers_indices_per_subaddr.end())
+        {
+          unused_transfers_indices_per_subaddr.push_back({index_minor, {i}});
+        }
+        else
+        {
+          found->second.push_back(i);
+        }
+        ++num_nondust_outputs;
+      }
+      else
+      {
+        auto found = std::find_if(unused_dust_indices_per_subaddr.begin(), unused_dust_indices_per_subaddr.end(), find_predicate);
+        if (found == unused_dust_indices_per_subaddr.end())
+        {
+          unused_dust_indices_per_subaddr.push_back({index_minor, {i}});
+        }
+        else
+        {
+          found->second.push_back(i);
+        }
+        ++num_dust_outputs;
+      }
+    }
+  }
+
+  // shuffle & sort output indices
+  {
+    std::random_device rd;
+    std::mt19937 g(rd());
+    std::shuffle(unused_transfers_indices_per_subaddr.begin(), unused_transfers_indices_per_subaddr.end(), g);
+    std::shuffle(unused_dust_indices_per_subaddr.begin(), unused_dust_indices_per_subaddr.end(), g);
+    auto sort_predicate = [&unlocked_balance_per_subaddr] (const std::pair<uint32_t, std::vector<size_t>>& x, const std::pair<uint32_t, std::vector<size_t>>& y)
+    {
+      return unlocked_balance_per_subaddr[x.first] > unlocked_balance_per_subaddr[y.first];
+    };
+    std::sort(unused_transfers_indices_per_subaddr.begin(), unused_transfers_indices_per_subaddr.end(), sort_predicate);
+    std::sort(unused_dust_indices_per_subaddr.begin(), unused_dust_indices_per_subaddr.end(), sort_predicate);
+  }
+
+  LOG_PRINT_L2("Starting with " << num_nondust_outputs << " non-dust outputs and " << num_dust_outputs << " dust outputs");
+
+  if (unused_dust_indices_per_subaddr.empty() && unused_transfers_indices_per_subaddr.empty())
+    return std::vector<wallet2::pending_tx>();
+
+  // if empty, put dummy entry so that the front can be referenced later in the loop
+  if (unused_dust_indices_per_subaddr.empty())
+    unused_dust_indices_per_subaddr.push_back({});
+  if (unused_transfers_indices_per_subaddr.empty())
+    unused_transfers_indices_per_subaddr.push_back({});
+
+  // start with an empty tx
+  txes.push_back(tx_struct());
+  accumulated_fee = 0;
+  accumulated_outputs = 0;
+  accumulated_change = 0;
+  adding_fee = false;
+  needed_fee = 0;
+  std::vector<std::vector<tools::wallet2::get_outs_entry>> outs;
+
+  // for rct, since we don't see the amounts, we will try to make all transactions
+  // look the same, with 1 or 2 inputs, and 2 outputs. One input is preferable, as
+  // this prevents linking to another by provenance analysis, but two is ok if we
+  // try to pick outputs not from the same block. We will get two outputs, one for
+  // the destination, and one for change.
+  LOG_PRINT_L2("checking preferred");
+  std::vector<size_t> preferred_inputs;
+  uint64_t rct_outs_needed = 2 * (fake_outs_count + 1);
+  rct_outs_needed += 100; // some fudge factor since we don't know how many are locked
+  if (use_rct)
+  {
+    // this is used to build a tx that's 1 or 2 inputs, and 2 outputs, which
+    // will get us a known fee.
+    uint64_t estimated_fee = calculate_fee(fee_per_kb, estimate_rct_tx_size(2, fake_outs_count, 2, extra.size(), bulletproof), fee_multiplier);
+    preferred_inputs = pick_preferred_rct_inputs(needed_money + estimated_fee, subaddr_account, subaddr_indices);
+    if (!preferred_inputs.empty())
+    {
+      std::string s;
+      for (auto i: preferred_inputs) s += boost::lexical_cast<std::string>(i) + " (" + print_money(m_transfers[i].amount()) + ") ";
+      LOG_PRINT_L1("Found preferred rct inputs for rct tx: " << s);
+
+      // bring the list of available outputs stored by the same subaddress index to the front of the list
+      uint32_t index_minor = m_transfers[preferred_inputs[0]].m_subaddr_index.minor;
+      for (size_t i = 1; i < unused_transfers_indices_per_subaddr.size(); ++i)
+      {
+        if (unused_transfers_indices_per_subaddr[i].first == index_minor)
+        {
+          std::swap(unused_transfers_indices_per_subaddr[0], unused_transfers_indices_per_subaddr[i]);
+          break;
+        }
+      }
+      for (size_t i = 1; i < unused_dust_indices_per_subaddr.size(); ++i)
+      {
+        if (unused_dust_indices_per_subaddr[i].first == index_minor)
+        {
+          std::swap(unused_dust_indices_per_subaddr[0], unused_dust_indices_per_subaddr[i]);
+          break;
+        }
+      }
+    }
+  }
+  LOG_PRINT_L2("done checking preferred");
+
+  // while:
+  // - we have something to send
+  // - or we need to gather more fee
+  // - or we have just one input in that tx, which is rct (to try and make all/most rct txes 2/2)
+  unsigned int original_output_index = 0;
+  std::vector<size_t>* unused_transfers_indices = &unused_transfers_indices_per_subaddr[0].second;
+  std::vector<size_t>* unused_dust_indices      = &unused_dust_indices_per_subaddr[0].second;
+  
+  hwdev.set_mode(hw::device::TRANSACTION_CREATE_FAKE);
+  while ((!dsts.empty() && dsts[0].amount > 0) || adding_fee || !preferred_inputs.empty() || should_pick_a_second_output(use_rct, txes.back().selected_transfers.size(), *unused_transfers_indices, *unused_dust_indices)) {
+    tx_struct &tx = txes.back();
+
+    LOG_PRINT_L2("Start of loop with " << unused_transfers_indices->size() << " " << unused_dust_indices->size());
+    LOG_PRINT_L2("unused_transfers_indices: " << strjoin(*unused_transfers_indices, " "));
+    LOG_PRINT_L2("unused_dust_indices: " << strjoin(*unused_dust_indices, " "));
+    LOG_PRINT_L2("dsts size " << dsts.size() << ", first " << (dsts.empty() ? "-" : cryptonote::print_money(dsts[0].amount)));
+    LOG_PRINT_L2("adding_fee " << adding_fee << ", use_rct " << use_rct);
+
+    // if we need to spend money and don't have any left, we fail
+    if (unused_dust_indices->empty() && unused_transfers_indices->empty()) {
+      LOG_PRINT_L2("No more outputs to choose from");
+      THROW_WALLET_EXCEPTION_IF(1, error::tx_not_possible, unlocked_balance(subaddr_account), needed_money, accumulated_fee + needed_fee);
+    }
+
+    // get a random unspent output and use it to pay part (or all) of the current destination (and maybe next one, etc)
+    // This could be more clever, but maybe at the cost of making probabilistic inferences easier
+    size_t idx;
+    if (!preferred_inputs.empty()) {
+      idx = pop_back(preferred_inputs);
+      pop_if_present(*unused_transfers_indices, idx);
+      pop_if_present(*unused_dust_indices, idx);
+    } else if ((dsts.empty() || dsts[0].amount == 0) && !adding_fee) {
+      // the "make rct txes 2/2" case - we pick a small value output to "clean up" the wallet too
+      std::vector<size_t> indices = get_only_rct(*unused_dust_indices, *unused_transfers_indices);
+      idx = pop_best_value(indices, tx.selected_transfers, true);
+
+      // we might not want to add it if it's a large output and we don't have many left
+      if (m_transfers[idx].amount() >= m_min_output_value) {
+        if (get_count_above(m_transfers, *unused_transfers_indices, m_min_output_value) < m_min_output_count) {
+          LOG_PRINT_L2("Second output was not strictly needed, and we're running out of outputs above " << print_money(m_min_output_value) << ", not adding");
+          break;
+        }
+      }
+
+      // since we're trying to add a second output which is not strictly needed,
+      // we only add it if it's unrelated enough to the first one
+      float relatedness = get_output_relatedness(m_transfers[idx], m_transfers[tx.selected_transfers.front()]);
+      if (relatedness > SECOND_OUTPUT_RELATEDNESS_THRESHOLD)
+      {
+        LOG_PRINT_L2("Second output was not strictly needed, and relatedness " << relatedness << ", not adding");
+        break;
+      }
+      pop_if_present(*unused_transfers_indices, idx);
+      pop_if_present(*unused_dust_indices, idx);
+    } else
+      idx = pop_best_value(unused_transfers_indices->empty() ? *unused_dust_indices : *unused_transfers_indices, tx.selected_transfers);
+
+    const transfer_details &td = m_transfers[idx];
+    LOG_PRINT_L2("Picking output " << idx << ", amount " << print_money(td.amount()) << ", ki " << td.m_key_image);
+
+    // add this output to the list to spend
+    tx.selected_transfers.push_back(idx);
+    uint64_t available_amount = td.amount();
+    accumulated_outputs += available_amount;
+
+    // clear any fake outs we'd already gathered, since we'll need a new set
+    outs.clear();
+
+    if (adding_fee)
+    {
+      LOG_PRINT_L2("We need more fee, adding it to fee");
+      available_for_fee += available_amount;
+    }
+    else
+    {
+      while (!dsts.empty() && dsts[0].amount <= available_amount && estimate_tx_size(use_rct, tx.selected_transfers.size(), fake_outs_count, tx.dsts.size(), extra.size(), bulletproof) < TX_SIZE_TARGET(upper_transaction_size_limit))
+      {
+        // we can fully pay that destination
+        LOG_PRINT_L2("We can fully pay " << get_account_address_as_str(m_nettype, dsts[0].is_subaddress, dsts[0].addr) <<
+          " for " << print_money(dsts[0].amount));
+        tx.add(dsts[0].addr, dsts[0].is_subaddress, dsts[0].amount, original_output_index, m_merge_destinations);
+        available_amount -= dsts[0].amount;
+        dsts[0].amount = 0;
+        pop_index(dsts, 0);
+        ++original_output_index;
+      }
+
+      if (available_amount > 0 && !dsts.empty() && estimate_tx_size(use_rct, tx.selected_transfers.size(), fake_outs_count, tx.dsts.size(), extra.size(), bulletproof) < TX_SIZE_TARGET(upper_transaction_size_limit)) {
+        // we can partially fill that destination
+        LOG_PRINT_L2("We can partially pay " << get_account_address_as_str(m_nettype, dsts[0].is_subaddress, dsts[0].addr) <<
+          " for " << print_money(available_amount) << "/" << print_money(dsts[0].amount));
+        tx.add(dsts[0].addr, dsts[0].is_subaddress, available_amount, original_output_index, m_merge_destinations);
+        dsts[0].amount -= available_amount;
+        available_amount = 0;
+      }
+    }
+
+    // here, check if we need to sent tx and start a new one
+    LOG_PRINT_L2("Considering whether to create a tx now, " << tx.selected_transfers.size() << " inputs, tx limit "
+      << upper_transaction_size_limit);
+    bool try_tx = false;
+    // if we have preferred picks, but haven't yet used all of them, continue
+    if (preferred_inputs.empty())
+    {
+      if (adding_fee)
+      {
+        /* might not actually be enough if adding this output bumps size to next kB, but we need to try */
+        try_tx = available_for_fee >= needed_fee;
+      }
+      else
+      {
+        const size_t estimated_rct_tx_size = estimate_tx_size(use_rct, tx.selected_transfers.size(), fake_outs_count, tx.dsts.size(), extra.size(), bulletproof);
+        try_tx = dsts.empty() || (estimated_rct_tx_size >= TX_SIZE_TARGET(upper_transaction_size_limit));
+      }
+    }
+
+    if (try_tx) {
+      cryptonote::transaction test_tx;
+      pending_tx test_ptx;
+
+      const size_t estimated_tx_size = estimate_tx_size(use_rct, tx.selected_transfers.size(), fake_outs_count, tx.dsts.size(), extra.size(), bulletproof);
+      needed_fee = calculate_fee(fee_per_kb, estimated_tx_size, fee_multiplier);
+
+      uint64_t inputs = 0, outputs = needed_fee;
+      for (size_t idx: tx.selected_transfers) inputs += m_transfers[idx].amount();
+      for (const auto &o: tx.dsts) outputs += o.amount;
+
+      if (inputs < outputs)
+      {
+        LOG_PRINT_L2("We don't have enough for the basic fee, switching to adding_fee");
+        adding_fee = true;
+        goto skip_tx;
+      }
+
+      LOG_PRINT_L2("Trying to create a tx now, with " << tx.dsts.size() << " outputs and " <<
+        tx.selected_transfers.size() << " inputs");
+      if (use_rct)
+        transfer_selected_rct(tx.dsts, tx.selected_transfers, fake_outs_count, outs, unlock_time, needed_fee, extra,
+          test_tx, test_ptx, bulletproof);
+      else
+        transfer_selected(tx.dsts, tx.selected_transfers, fake_outs_count, outs, unlock_time, needed_fee, extra,
+          detail::digit_split_strategy, tx_dust_policy(::config::DEFAULT_DUST_THRESHOLD), test_tx, test_ptx);
+      auto txBlob = t_serializable_object_to_blob(test_ptx.tx);
+      needed_fee = calculate_fee(fee_per_kb, txBlob, fee_multiplier);
+      available_for_fee = test_ptx.fee + test_ptx.change_dts.amount + (!test_ptx.dust_added_to_fee ? test_ptx.dust : 0);
+      LOG_PRINT_L2("Made a " << get_size_string(txBlob) << " tx, with " << print_money(available_for_fee) << " available for fee (" <<
+        print_money(needed_fee) << " needed)");
+
+      if (needed_fee > available_for_fee && !dsts.empty() && dsts[0].amount > 0)
+      {
+        // we don't have enough for the fee, but we've only partially paid the current address,
+        // so we can take the fee from the paid amount, since we'll have to make another tx anyway
+        std::vector<cryptonote::tx_destination_entry>::iterator i;
+        i = std::find_if(tx.dsts.begin(), tx.dsts.end(),
+          [&](const cryptonote::tx_destination_entry &d) { return !memcmp (&d.addr, &dsts[0].addr, sizeof(dsts[0].addr)); });
+        THROW_WALLET_EXCEPTION_IF(i == tx.dsts.end(), error::wallet_internal_error, "paid address not found in outputs");
+        if (i->amount > needed_fee)
+        {
+          uint64_t new_paid_amount = i->amount /*+ test_ptx.fee*/ - needed_fee;
+          LOG_PRINT_L2("Adjusting amount paid to " << get_account_address_as_str(m_nettype, i->is_subaddress, i->addr) << " from " <<
+            print_money(i->amount) << " to " << print_money(new_paid_amount) << " to accommodate " <<
+            print_money(needed_fee) << " fee");
+          dsts[0].amount += i->amount - new_paid_amount;
+          i->amount = new_paid_amount;
+          test_ptx.fee = needed_fee;
+          available_for_fee = needed_fee;
+        }
+      }
+
+      if (needed_fee > available_for_fee)
+      {
+        LOG_PRINT_L2("We could not make a tx, switching to fee accumulation");
+
+        adding_fee = true;
+      }
+      else
+      {
+        LOG_PRINT_L2("We made a tx, adjusting fee and saving it, we need " << print_money(needed_fee) << " and we have " << print_money(test_ptx.fee));
+        while (needed_fee > test_ptx.fee) {
+          if (use_rct)
+            transfer_selected_rct(tx.dsts, tx.selected_transfers, fake_outs_count, outs, unlock_time, needed_fee, extra,
+              test_tx, test_ptx, bulletproof);
+          else
+            transfer_selected(tx.dsts, tx.selected_transfers, fake_outs_count, outs, unlock_time, needed_fee, extra,
+              detail::digit_split_strategy, tx_dust_policy(::config::DEFAULT_DUST_THRESHOLD), test_tx, test_ptx);
+          txBlob = t_serializable_object_to_blob(test_ptx.tx);
+          needed_fee = calculate_fee(fee_per_kb, txBlob, fee_multiplier);
+          LOG_PRINT_L2("Made an attempt at a  final " << get_size_string(txBlob) << " tx, with " << print_money(test_ptx.fee) <<
+            " fee  and " << print_money(test_ptx.change_dts.amount) << " change");
+        }
+
+        LOG_PRINT_L2("Made a final " << get_size_string(txBlob) << " tx, with " << print_money(test_ptx.fee) <<
+          " fee  and " << print_money(test_ptx.change_dts.amount) << " change");
+
+        tx.tx = test_tx;
+        tx.ptx = test_ptx;
+        tx.bytes = txBlob.size();
+        tx.outs = outs;
+        accumulated_fee += test_ptx.fee;
+        accumulated_change += test_ptx.change_dts.amount;
+        adding_fee = false;
+        if (!dsts.empty())
+        {
+          LOG_PRINT_L2("We have more to pay, starting another tx");
+          txes.push_back(tx_struct());
+          original_output_index = 0;
+        }
+      }
+    }
+
+skip_tx:
+    // if unused_*_indices is empty while unused_*_indices_per_subaddr has multiple elements, and if we still have something to pay, 
+    // pop front of unused_*_indices_per_subaddr and have unused_*_indices point to the front of unused_*_indices_per_subaddr
+    if ((!dsts.empty() && dsts[0].amount > 0) || adding_fee)
+    {
+      if (unused_transfers_indices->empty() && unused_transfers_indices_per_subaddr.size() > 1)
+      {
+        unused_transfers_indices_per_subaddr.erase(unused_transfers_indices_per_subaddr.begin());
+        unused_transfers_indices = &unused_transfers_indices_per_subaddr[0].second;
+      }
+      if (unused_dust_indices->empty() && unused_dust_indices_per_subaddr.size() > 1)
+      {
+        unused_dust_indices_per_subaddr.erase(unused_dust_indices_per_subaddr.begin());
+        unused_dust_indices = &unused_dust_indices_per_subaddr[0].second;
+      }
+    }
+  }
+
+  if (adding_fee)
+  {
+    LOG_PRINT_L1("We ran out of outputs while trying to gather final fee");
+    THROW_WALLET_EXCEPTION_IF(1, error::tx_not_possible, unlocked_balance(subaddr_account), needed_money, accumulated_fee + needed_fee);
+  }
+
+  LOG_PRINT_L1("Done creating " << txes.size() << " transactions, " << print_money(accumulated_fee) <<
+    " total fee, " << print_money(accumulated_change) << " total change");
+
+  hwdev.set_mode(hw::device::TRANSACTION_CREATE_REAL);
+  for (std::vector<tx_struct>::iterator i = txes.begin(); i != txes.end(); ++i)
+  {
+    tx_struct &tx = *i;
+    cryptonote::transaction test_tx;
+    pending_tx test_ptx;
+    if (use_rct) {
+      transfer_selected_rct(tx.dsts,                    /* NOMOD std::vector<cryptonote::tx_destination_entry> dsts,*/
+                            tx.selected_transfers,      /* const std::list<size_t> selected_transfers */
+                            fake_outs_count,            /* CONST size_t fake_outputs_count, */
+                            tx.outs,                    /* MOD   std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs, */
+                            unlock_time,                /* CONST uint64_t unlock_time,  */
+                            needed_fee,                 /* CONST uint64_t fee, */
+                            extra,                      /* const std::vector<uint8_t>& extra, */
+                            test_tx,                    /* OUT   cryptonote::transaction& tx, */
+                            test_ptx,                   /* OUT   cryptonote::transaction& tx, */
+                            bulletproof);
+    } else {
+      transfer_selected(tx.dsts,
+                        tx.selected_transfers,
+                        fake_outs_count,
+                        tx.outs,
+                        unlock_time,
+                        needed_fee,
+                        extra,
+                        detail::digit_split_strategy,
+                        tx_dust_policy(::config::DEFAULT_DUST_THRESHOLD),
+                        test_tx,
+                        test_ptx);
+    }
+    auto txBlob = t_serializable_object_to_blob(test_ptx.tx);
+    tx.tx = test_tx;
+    tx.ptx = test_ptx;
+    tx.bytes = txBlob.size();
+  }
+
+  std::vector<wallet2::pending_tx> ptx_vector;
+  for (std::vector<tx_struct>::iterator i = txes.begin(); i != txes.end(); ++i)
+  {
+    tx_struct &tx = *i;
     uint64_t tx_money = 0;
     for (size_t idx: tx.selected_transfers)
       tx_money += m_transfers[idx].amount();
@@ -7323,7 +7827,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
   hw::reset_mode rst(hwdev);  
 
   uint64_t accumulated_fee, accumulated_outputs, accumulated_change;
-  struct TX {
+  struct tx_struct {
     std::vector<size_t> selected_transfers;
     std::vector<cryptonote::tx_destination_entry> dsts;
     cryptonote::transaction tx;
@@ -7331,7 +7835,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
     size_t bytes;
     std::vector<std::vector<get_outs_entry>> outs;
   };
-  std::vector<TX> txes;
+  std::vector<tx_struct> txes;
   uint64_t needed_fee, available_for_fee = 0;
   uint64_t upper_transaction_size_limit = get_upper_transaction_size_limit();
   std::vector<std::vector<get_outs_entry>> outs;
@@ -7347,7 +7851,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
     return std::vector<wallet2::pending_tx>();
 
   // start with an empty tx
-  txes.push_back(TX());
+  txes.push_back(tx_struct());
   accumulated_fee = 0;
   accumulated_outputs = 0;
   accumulated_change = 0;
@@ -7356,7 +7860,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
   // while we have something to send
   hwdev.set_mode(hw::device::TRANSACTION_CREATE_FAKE);
   while (!unused_dust_indices.empty() || !unused_transfers_indices.empty()) {
-    TX &tx = txes.back();
+    tx_struct &tx = txes.back();
 
     // get a random unspent output and use it to pay next chunk. We try to alternate
     // dust and non dust to ensure we never get with only dust, from which we might
@@ -7432,7 +7936,7 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
       if (!unused_transfers_indices.empty() || !unused_dust_indices.empty())
       {
         LOG_PRINT_L2("We have more to pay, starting another tx");
-        txes.push_back(TX());
+        txes.push_back(tx_struct());
       }
     }
   }
@@ -7441,9 +7945,9 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
     " total fee, " << print_money(accumulated_change) << " total change");
  
   hwdev.set_mode(hw::device::TRANSACTION_CREATE_REAL);
-  for (std::vector<TX>::iterator i = txes.begin(); i != txes.end(); ++i)
+  for (std::vector<tx_struct>::iterator i = txes.begin(); i != txes.end(); ++i)
   {
-    TX &tx = *i;
+    tx_struct &tx = *i;
     cryptonote::transaction test_tx;
     pending_tx test_ptx;
     if (use_rct) {
@@ -7460,9 +7964,9 @@ std::vector<wallet2::pending_tx> wallet2::create_transactions_from(const crypton
   }
 
   std::vector<wallet2::pending_tx> ptx_vector;
-  for (std::vector<TX>::iterator i = txes.begin(); i != txes.end(); ++i)
+  for (std::vector<tx_struct>::iterator i = txes.begin(); i != txes.end(); ++i)
   {
-    TX &tx = *i;
+    tx_struct &tx = *i;
     uint64_t tx_money = 0;
     for (size_t idx: tx.selected_transfers)
       tx_money += m_transfers[idx].amount();
