@@ -147,7 +147,7 @@ class komodo_core
   struct notarized_checkpoint *komodo_npptr(uint64_t height);
   int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp);
   int32_t iguana_rwbignum(int32_t rwflag,uint8_t *serialized,int32_t len,uint8_t *endianedp);
-  bits256 iguana_merkle(bits256 *root_hash, int txn_count);
+  bits256 iguana_merkle(bits256 *root_hash, int& txn_count);
   void komodo_importpubkeys();
   void komodo_clearstate();
   int32_t komodo_init();

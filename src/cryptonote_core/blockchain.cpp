@@ -3279,15 +3279,17 @@ leave:
   {
       proof_of_work = get_block_longhash(bl, m_db->height());
 
-      uint8_t txn_count = bl.tx_hashes.size() + 1;
+      int txn_count = 1;
       std::vector<crypto::hash> txhashes;
+      std::vector<crypto::hash> merkle_vec;
       txhashes.push_back(proof_of_work);
-      if (txn_count > 1) {
+      merkle_vec.push_back(get_tx_tree_hash(txhashes));
         for (const auto& hash : bl.tx_hashes)
         {
           txhashes.push_back(hash);
+          merkle_vec.push_back(hash);
+          ++txn_count;
         }
-      }
       const crypto::hash merkle_hash = get_tx_tree_hash(txhashes);
       cryptonote::blobdata binbuff;
       std::string merkle_str = epee::string_tools::pod_to_hex(merkle_hash);
@@ -3296,17 +3298,19 @@ leave:
         MERROR("Could not parse merkle_hash to binbuff!");
       epee::span<const uint8_t> span_bytes = epee::as_byte_span(merkle_hash);
       MWARNING("Merkle str: " << merkle_str);
-      MWARNING("merkle binbuff: " << binbuff);
+//      MWARNING("merkle binbuff: " << binbuff);
       uint8_t i = 0;
-      bits256 proof_bits;
-      proof_bits.txid = 0;
+      bits256 merkle_bits;
+      merkle_bits.txid = 0;
       for (const auto& byte : span_bytes)
       {
-        memcpy(&proof_bits.bytes[i++], &byte, sizeof(byte));
+        memcpy(&merkle_bits.bytes[i++], &byte, sizeof(byte));
       }
-
-    bits256 merkle = komodo::iguana_merkle(&proof_bits, txn_count);
-    MWARNING("bitcoinified merkle-ator txid: " << std::to_string(merkle.txid));
+    MWARNING("pre-merkle bits:       " << std::to_string(merkle_bits.txid));
+    bits256 merkle;
+    merkle.txid = 0;
+    merkle = komodo::iguana_merkle(&merkle_bits, txn_count);
+    MWARNING("bitcoinified merkle-ator txid: " << std::to_string(merkle_bits.txid));
 
 
     // validate proof_of_work versus difficulty target

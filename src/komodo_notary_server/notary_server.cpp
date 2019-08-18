@@ -1003,8 +1003,15 @@ namespace tools
       return false;
     }
 
-    const char* notaries_copy[4][64];
-    std::copy(&Notaries_elected1[0][0], &Notaries_elected1[0][0]+4*64,&notaries_copy[0][0]);
+    std::vector<std::pair<std::string,std::string>> notaries_keys;
+
+    for (int i =0; i < 64; i++) {
+      std::pair<std::string,std::string> seed_and_pubkey_pair;
+      seed_and_pubkey_pair = std::make_pair(Notaries_elected1[1][i], Notaries_elected1[3][0]);
+      // change above so that Notaries_elected[3][0] copies each row (i.e. [3][i])
+      // once we have the array actually populated
+      notaries_keys.push_back(seed_and_pubkey_pair);
+    }
 
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
 
@@ -1012,7 +1019,7 @@ namespace tools
     {
       char viewkey_seed_entry[34] = { 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f' };
       // copy btc_pubkeys for use in deriving the viewkeys ourselves
-      memcpy(&viewkey_seed_entry, &notaries_copy[2][i], sizeof(notaries_copy[2][i]));
+      memcpy(&viewkey_seed_entry, &notaries_keys[i].first, sizeof(notaries_keys[i].first));
       std::string viewkey_seed_oversize = viewkey_seed_entry;
       std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 33);
       cryptonote::blobdata btc_pubkey_data;
@@ -1029,7 +1036,7 @@ namespace tools
 
       char spendkey_pub[32] = { 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f' };
       // copy hardcoded spendkey_pub
-      memcpy(&spendkey_pub, &notaries_copy[4][i], sizeof(notaries_copy[4][i]));
+      memcpy(&spendkey_pub, &notaries_keys[i].second, sizeof(notaries_keys[i].second));
       std::string spendkey_pub_str = spendkey_pub;
       cryptonote::blobdata spendkey_pub_data;
 
@@ -1045,7 +1052,7 @@ namespace tools
 
       std::string address_str = get_account_address_as_str(m_wallet->nettype(), false, address);
 
-      uint64_t amount = 20000; 
+      uint64_t amount = 20000;
       // arbitrary, but meaningful: 2 * 10^(-8) BLUR
       // for compatibility with BTC-flavored atomicity
       notary_rpc::transfer_destination dest = AUTO_VAL_INIT(dest);

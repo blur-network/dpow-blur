@@ -836,6 +836,10 @@ namespace cryptonote
   template<class t_core>
   int t_cryptonote_protocol_handler<t_core>::handle_request_ntz_sig(int command, NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& context)
   {
+    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (" << std::to_string(arg.sigs_count) << " signature count, " << arg.destinations.size() << " destinations, " << arg.tx_key_list.size() << " keys");
+    if(context.m_state != cryptonote_connection_context::state_normal)
+      return 1;
+
    return 1;
   }
   //------------------------------------------------------------------------------------------------------------------------

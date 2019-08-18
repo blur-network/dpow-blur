@@ -131,7 +131,7 @@ int32_t komodo_importaddress(char* addr)
     std::vector<btc_wallet*> vpwallets;
     vector* addr_out = nullptr;
     int i = 0;
-    btc_wallet* pwallet; // this needs initialized properly... 
+    btc_wallet* pwallet; // this needs initialized properly...
     btc_wallet_get_addresses(pwallet, addr_out);
     ssize_t found = vector_find(addr_out, addr);
     if (found != 0)
@@ -476,15 +476,15 @@ namespace komodo {
     return(-1);
   }
   //------------------------------------------------------------------
-  bits256 iguana_merkle(bits256 *tree,int32_t txn_count)
+  bits256 iguana_merkle(bits256 *tree, int& txn_count)
   {
-    int32_t i,n=0,prev; uint8_t serialized[sizeof(bits256) * 2];
+    int i,n=0,prev; uint8_t serialized[sizeof(bits256) * 2];
     if ( txn_count == 1 )
     {
       iguana_rwbignum(1,serialized,sizeof(*tree),tree[0].bytes);
-      iguana_rwbignum(1,&serialized[sizeof(*tree)],sizeof(*tree),tree[0].bytes);
+//      iguana_rwbignum(1,&serialized[sizeof(*tree)],sizeof(*tree),tree[1].bytes);
       tree[0] = bits256_doublesha256(0, serialized, sizeof(serialized));
-      MWARNING("Tree[0] bits256_doublesha:        " << std::to_string(tree->txid));
+      MWARNING("Tree[0] bits256_doublesha:     " << std::to_string(tree->txid));
       return(tree[0]);
     }
     prev = 0;
@@ -502,7 +502,7 @@ namespace komodo {
         prev = n;
         txn_count >>= 1;
     }
-    MWARNING("Tree[n] bits256_doublesha:        " << std::to_string(tree->txid));
+    MWARNING("Tree[n] bits256_doublesha:     " << std::to_string(tree->txid));
     return(tree[n]);
   }
   //------------------------------------------------------------------
@@ -819,8 +819,8 @@ namespace komodo {
         KOMODO_NEEDPUBKEYS = 0;
     }
     memset(&zero,0,sizeof(zero));
-  //    komodo_notarized_update(0,0,zero,zero,zero,0);
-  /*    numnotaries = komodo_notaries(pubkeys, nHeight, b.timestamp);*/
+/*    komodo_notarized_update(0,0,zero,zero,zero,0);
+    numnotaries = komodo_notaries(pubkeys, nHeight, b.timestamp);
 
     if ( nHeight > hwmheight )
         hwmheight = nHeight;
@@ -829,12 +829,12 @@ namespace komodo {
         if ( nHeight != hwmheight )
           printf("dpow: %s hwmheight.%lu vs pindex->nHeight.%lu t.%lu reorg.%lu\n",ASSETCHAINS_SYMBOL,hwmheight,nHeight,b.timestamp,hwmheight - nHeight);
     }
-  /*
+  
     if ( height != 0 )
     {
         height = nHeight;
         std::vector<cryptonote::transaction> txs = b.tx_hashes;
-        size_t txn_counter;
+        size_t txn_counter = 1;
         for (const auto& tx : txs) {
         ++txn_counter;
         }
@@ -842,7 +842,7 @@ namespace komodo {
         //fprintf(stderr, "txn_count=%d\n", txn_count);
         for (i=0; i<txn_count; i++)
         {
-          //txhash = block.vtx[i]->GetHash();
+          txhash = block.vtx[i]->GetHash();
           numvouts = b.vtx[i].vout.size();
           specialtx = notarizedheight = notarized = 0;
           signedmask = 0;
