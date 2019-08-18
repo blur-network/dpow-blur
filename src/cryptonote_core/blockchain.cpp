@@ -1480,10 +1480,9 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
 
   int32_t notarized_height = komodo::NOTARIZED_HEIGHT;
   uint64_t nHeight = bei.height;
-  komodo::komodo_core k_core = get_k_core();
   crypto::hash hash = m_db->get_block_hash_from_height(nHeight);
 
-  if ( k_core.komodo_checkpoint(&notarized_height, nHeight, hash) < 0 )
+  if ( m_komodo_core->komodo_checkpoint(&notarized_height, nHeight, hash) < 0 )
   {
     if ( bei.height != 0 && m_db->get_block_hash_from_height(m_db->height()-1) == hash )
     {
