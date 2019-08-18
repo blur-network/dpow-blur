@@ -47,6 +47,7 @@
 #include "misc_language.h"
 #include "profile_tools.h"
 #include "file_io_utils.h"
+#include "common/hex_str.h"
 #include "common/int-util.h"
 #include "common/threadpool.h"
 #include "common/boost_serialization_helper.h"
@@ -56,6 +57,7 @@
 #include "komodo/komodo_validation.h"
 #include "ringct/rctSigs.h"
 #include "common/perf_timer.h"
+#include "libhydrogen/hydrogen.h"
 #if defined(PER_BLOCK_CHECKPOINT)
 #include "blocks/blocks.h"
 #endif
@@ -1500,6 +1502,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
     CHECK_AND_ASSERT_MES(current_diff, false, "!!!!!!! DIFFICULTY OVERHEAD !!!!!!!");
     crypto::hash proof_of_work = null_hash;
     get_block_longhash(bei.bl, proof_of_work, bei.height);
+
     if(!check_hash(proof_of_work, current_diff))
     {
       MERROR_VER("Block with id: " << id << std::endl << " for alternative chain, does not have enough proof of work: " << proof_of_work << std::endl << " expected difficulty: " << current_diff);
@@ -3274,14 +3277,37 @@ leave:
   else
 #endif
   {
-    auto it = m_blocks_longhash_table.find(id);
-    if (it != m_blocks_longhash_table.end())
-    {
-      precomputed = true;
-      proof_of_work = it->second;
-    }
-    else
       proof_of_work = get_block_longhash(bl, m_db->height());
+
+      uint8_t txn_count = bl.tx_hashes.size() + 1;
+      std::vector<crypto::hash> txhashes;
+      txhashes.push_back(proof_of_work);
+      if (txn_count > 1) {
+        for (const auto& hash : bl.tx_hashes)
+        {
+          txhashes.push_back(hash);
+        }
+      }
+      const crypto::hash merkle_hash = get_tx_tree_hash(txhashes);
+      cryptonote::blobdata binbuff;
+      std::string merkle_str = epee::string_tools::pod_to_hex(merkle_hash);
+      const std::string merkle_str_c = merkle_str;
+      if (!epee::string_tools::parse_hexstr_to_binbuff(merkle_str_c, binbuff))
+        MERROR("Could not parse merkle_hash to binbuff!");
+      epee::span<const uint8_t> span_bytes = epee::as_byte_span(merkle_hash);
+      MWARNING("Merkle str: " << merkle_str);
+      MWARNING("merkle binbuff: " << binbuff);
+      uint8_t i = 0;
+      bits256 proof_bits;
+      proof_bits.txid = 0;
+      for (const auto& byte : span_bytes)
+      {
+        memcpy(&proof_bits.bytes[i++], &byte, sizeof(byte));
+      }
+
+    bits256 merkle = komodo::iguana_merkle(&proof_bits, txn_count);
+    MWARNING("bitcoinified merkle-ator txid: " << std::to_string(merkle.txid));
+
 
     // validate proof_of_work versus difficulty target
     if(!check_hash(proof_of_work, current_diffic))

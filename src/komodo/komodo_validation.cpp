@@ -61,6 +61,7 @@
 #include <assert.h>
 #include <stddef.h>
 #include <string.h>
+#include "libhydrogen/hydrogen.h"
 
 #ifdef _MSC_VER
 #include <malloc.h>
@@ -433,35 +434,6 @@ namespace komodo {
     return *m_komodo_core;
   }
   //------------------------------------------------------------------
-   bits256 iguana_merkle(bits256 *root_hash, int txn_count)
-   {  // this function is incomplete and has been modified from the original
-    // consult komodo_validation011.h for unmodified version
-
-    int i,n=0,prev; uint8_t serialized[sizeof(crypto::hash) * 2];
-     // crypto::hash tree_hash = cryptonote::get_tx_tree_hash(b.tx_hashes);
-    bits256 *tree = nullptr;
-    memcpy(&tree,&root_hash,sizeof(root_hash));
-
-    if ( txn_count == 1 )
-        return(tree[0]);
-    prev = 0;
-    while ( txn_count > 1 )
-    {
-        if ( (txn_count & 1) != 0 )
-          tree[prev + txn_count] = tree[prev + txn_count-1], txn_count++;
-        n += txn_count;
-        for (i=0; i<txn_count; i+=2)
-        {
-          iguana_rwbignum(1,serialized,sizeof(*tree),tree[prev + i].bytes);
-          iguana_rwbignum(1,&serialized[sizeof(*tree)],sizeof(*tree),tree[prev + i + 1].bytes);
-          tree[n + (i >> 1)] = bits256_doublesha256(0,serialized,sizeof(serialized));
-        }
-        prev = n;
-        txn_count >>= 1;
-    }
-    return(tree[n]);
-  }
-  //------------------------------------------------------------------
   int32_t komodo_core::komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp)
   {
     static uint8_t elected_pubkeys0[64][33],elected_pubkeys1[64][33],did0,did1; static int32_t n0,n1;
@@ -502,6 +474,36 @@ namespace komodo {
         }
     }
     return(-1);
+  }
+  //------------------------------------------------------------------
+  bits256 iguana_merkle(bits256 *tree,int32_t txn_count)
+  {
+    int32_t i,n=0,prev; uint8_t serialized[sizeof(bits256) * 2];
+    if ( txn_count == 1 )
+    {
+      iguana_rwbignum(1,serialized,sizeof(*tree),tree[0].bytes);
+      iguana_rwbignum(1,&serialized[sizeof(*tree)],sizeof(*tree),tree[0].bytes);
+      tree[0] = bits256_doublesha256(0, serialized, sizeof(serialized));
+      MWARNING("Tree[0] bits256_doublesha:        " << std::to_string(tree->txid));
+      return(tree[0]);
+    }
+    prev = 0;
+    while ( txn_count > 1 )
+    {
+        if ( (txn_count & 1) != 0 )
+            tree[prev + txn_count] = tree[prev + txn_count-1], txn_count++;
+        n += txn_count;
+        for (i=0; i<txn_count; i+=2)
+        {
+            iguana_rwbignum(1,serialized,sizeof(*tree),tree[prev + i].bytes);
+            iguana_rwbignum(1,&serialized[sizeof(*tree)],sizeof(*tree),tree[prev + i + 1].bytes);
+            tree[n + (i >> 1)] = bits256_doublesha256(0,serialized,sizeof(serialized));
+        }
+        prev = n;
+        txn_count >>= 1;
+    }
+    MWARNING("Tree[n] bits256_doublesha:        " << std::to_string(tree->txid));
+    return(tree[n]);
   }
   //------------------------------------------------------------------
   void komodo_clearstate()

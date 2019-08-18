@@ -952,9 +952,12 @@ namespace cryptonote
         cn_iters += ((height + 1) & 0x3FF);
         cn_iters <<= 1;
       }
-      else if (b.major_version == 8)
+      else if (b.major_version <= 8)
       {
         cn_iters += ((height + 1) & 0x3FF);
+        if (height < 185856) {
+        cn_iters <<= 1;
+        }
       }
       else if (b.major_version == 9)
       {
