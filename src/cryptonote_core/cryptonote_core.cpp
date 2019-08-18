@@ -1011,6 +1011,20 @@ namespace cryptonote
     m_mempool.set_relayed(txs);
   }
   //-----------------------------------------------------------------------------------------------
+  void core::on_notarization_relayed(const cryptonote::blobdata& tx_blob)
+  {
+    std::list<std::pair<crypto::hash, cryptonote::blobdata>> txs;
+    cryptonote::transaction tx;
+    crypto::hash tx_hash, tx_prefix_hash;
+    if (!parse_and_validate_tx_from_blob(tx_blob, tx, tx_hash, tx_prefix_hash))
+    {  // need to add ntz-specific parse_and_validate function
+      LOG_ERROR("Failed to parse relayed transaction");
+      return;
+    }
+    txs.push_back(std::make_pair(tx_hash, std::move(tx_blob)));
+    m_mempool.set_relayed(txs);
+  }
+  //-----------------------------------------------------------------------------------------------
   bool core::get_block_template(block& b, const account_public_address& adr, difficulty_type& diffic, uint64_t& height, uint64_t& expected_reward, const blobdata& ex_nonce)
   {
     return m_blockchain_storage.create_block_template(b, adr, diffic, height, expected_reward, ex_nonce);

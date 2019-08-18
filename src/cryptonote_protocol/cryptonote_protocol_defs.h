@@ -258,7 +258,7 @@ namespace cryptonote
         KV_SERIALIZE(current_blockchain_height)
       END_KV_SERIALIZE_MAP()
     };
-  };  
+  };
 
   /************************************************************************/
   /*                                                                      */
@@ -270,15 +270,63 @@ namespace cryptonote
     struct request
     {
       crypto::hash block_hash;
-      uint64_t current_blockchain_height;      
+      uint64_t current_blockchain_height;
       std::vector<uint64_t> missing_tx_indices;
-      
+
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE_VAL_POD_AS_BLOB(block_hash)
         KV_SERIALIZE(current_blockchain_height)
         KV_SERIALIZE_CONTAINER_POD_AS_BLOB(missing_tx_indices)
       END_KV_SERIALIZE_MAP()
     };
-  }; 
-    
+  };
+
+  /************************************************************************/
+  /*                                                                      */
+  /************************************************************************/
+  struct NOTIFY_REQUEST_NTZ_SIG
+  {
+    const static int ID = BC_COMMANDS_POOL_BASE + 10;
+
+    struct transfer_destination
+    {
+      uint64_t amount;
+      std::string address;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(amount)
+        KV_SERIALIZE(address)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct request
+    {
+      int sigs_count;
+      std::list<transfer_destination> destinations;
+      std::list<std::string> tx_key_list;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(sigs_count)
+        KV_SERIALIZE(destinations)
+        KV_SERIALIZE(tx_key_list)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+  /************************************************************************/
+  /*                                                                      */
+  /************************************************************************/
+  struct NOTIFY_NEW_NOTARIZATION
+  {
+    const static int ID = BC_COMMANDS_POOL_BASE + 11;
+
+    struct request
+    {
+      cryptonote::blobdata tx;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(tx)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+
 }

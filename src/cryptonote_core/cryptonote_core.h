@@ -208,6 +208,11 @@ namespace cryptonote
       */
      virtual void on_transaction_relayed(const cryptonote::blobdata& tx);
 
+     /**
+      * @brief called when a transaction is relayed
+      */
+     virtual void on_notarization_relayed(const cryptonote::blobdata& tx);
+
 
      /**
       * @brief gets the miner instance

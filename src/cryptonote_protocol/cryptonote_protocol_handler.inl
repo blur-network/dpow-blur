@@ -799,6 +799,47 @@ namespace cryptonote
   }
   //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>
+  int t_cryptonote_protocol_handler<t_core>::handle_notify_new_notarization(int command, NOTIFY_NEW_NOTARIZATION::request& arg, cryptonote_connection_context& context)
+  {
+    MLOG_P2P_MESSAGE("Received NOTIFY_NEW_NOTARIZATION (" << arg.tx.size() << " notarization tx)");
+    if(context.m_state != cryptonote_connection_context::state_normal)
+      return 1;
+
+    // while syncing, core will lock for a long time, so we ignore
+    // those txes as they aren't really needed anyway, and avoid a
+    // long block before replying
+    if(!is_synchronized())
+    {
+      LOG_DEBUG_CC(context, "Received new tx while syncing, ignored");
+      return 1;
+    }
+
+    cryptonote::tx_verification_context tvc = AUTO_VAL_INIT(tvc);
+    m_core.handle_incoming_tx(arg.tx, tvc, false, true, false);
+    if(tvc.m_verifivation_failed)
+    {
+      LOG_PRINT_CCONTEXT_L1("Notarization_tx verification failed, dropping connection");
+      drop_connection(context, false, false);
+      return 1;
+    }
+
+    std::list<cryptonote::blobdata> tx_blobs;
+    NOTIFY_NEW_TRANSACTIONS::request ag;
+    tx_blobs.push_back(arg.tx);
+    ag.txs = tx_blobs;
+
+    relay_transactions(ag, context);
+
+    return 1;
+  }
+  //------------------------------------------------------------------------------------------------------------------------
+  template<class t_core>
+  int t_cryptonote_protocol_handler<t_core>::handle_request_ntz_sig(int command, NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& context)
+  {
+   return 1;
+  }
+  //------------------------------------------------------------------------------------------------------------------------
+  template<class t_core>
   int t_cryptonote_protocol_handler<t_core>::handle_request_get_objects(int command, NOTIFY_REQUEST_GET_OBJECTS::request& arg, cryptonote_connection_context& context)
   {
     MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_GET_OBJECTS (" << arg.blocks.size() << " blocks, " << arg.txs.size() << " txes)");
