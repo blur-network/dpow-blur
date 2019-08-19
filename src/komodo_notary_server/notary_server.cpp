@@ -1020,8 +1020,8 @@ namespace tools
     for (int n = 0; n < 64; n++)
     {
       std::string viewkey_seed_oversize = notaries_keys[n].first;
-      MERROR("viewkey_seed_entry: " << viewkey_seed_oversize);
-      std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 33);
+      std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 65);
+      MWARNING("viewkey_seed_str: " << viewkey_seed_str);
       cryptonote::blobdata btc_pubkey_data;
 
       if(!epee::string_tools::parse_hexstr_to_binbuff(viewkey_seed_str, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
