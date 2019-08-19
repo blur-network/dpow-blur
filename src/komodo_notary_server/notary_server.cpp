@@ -1009,8 +1009,8 @@ namespace tools
     for (int i =0; i < 64; i++) {
       std::pair<const char*,const char*> seed_and_pubkey_pair;
       seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[0][3]);
-      // change above so that Notaries_elected[3][0] copies each row (i.e. [3][i])
-      // once we have the array actually populated
+      // TODO: change above so that Notaries_elected[0][3] copies each
+      // row (i.e. [i][3]) once we have the table actually populated
       MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[0][3]);
       notaries_keys.push_back(seed_and_pubkey_pair);
     }
@@ -1058,14 +1058,22 @@ namespace tools
       not_validated_dsts.push_back(dest);
     }
 
+    bool need_payment_id = req.sig_count < 1;
 
     uint8_t buf[32];
-    hydro_random_buf(buf, sizeof buf);
+    std::string payment_id;
 
-    std::string payment_id = epee::string_tools::pod_to_hex(buf);
-    if (payment_id.empty())
-    {
-      MERROR("Unable to create random payment_id by parsing binbuff to hexstr!");
+    if (need_payment_id) {
+      hydro_random_buf(buf, sizeof buf);
+      payment_id = epee::string_tools::pod_to_hex(buf);
+      if (payment_id.empty()) {
+        MERROR("Unable to create random payment_id by parsing binbuff to hexstr!");
+      }
+    } else {
+      payment_id = req.payment_id;
+      if (payment_id.empty()) {
+        MERROR("Unable to find payment ID!");
+      }
     }
 
     // validate the transfer requested and populate dsts & extra; RPC_TRANSFER::request and RPC_TRANSFER_SPLIT::request are identical types.
@@ -1080,11 +1088,14 @@ namespace tools
       // 12 mixins for ring size of 13 (threshold for valid ntz_txn)
 
       uint32_t priority = m_wallet->adjust_priority(2);
+      uint64_t unlock_time = m_wallet->get_blockchain_current_height() + 10;
       LOG_PRINT_L2("on_ntz_transfer calling create_ntz_transactions");
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, 10, priority, extra, 0, {0,0}, m_trusted_daemon);
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
       LOG_PRINT_L2("on_ntz_transfer called create_ntz_transactions");
 
-      return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
+     bool ready_to_send = req.sig_count >= 13;
+
+      return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
     }
     catch (const std::exception& e)
