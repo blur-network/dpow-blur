@@ -504,30 +504,10 @@ namespace notary_rpc
   {
     struct request
     {
-      uint32_t account_index;
-      std::set<uint32_t> subaddr_indices;
-      uint32_t priority;
-//      uint64_t mixin;
-//      uint64_t ring_size;
-      uint64_t unlock_time;
-      std::string payment_id;
-      bool get_tx_keys;
-      bool do_not_relay;
-      bool get_tx_hex;
-      bool get_tx_metadata;
+      int sig_count;
 
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(account_index)
-        KV_SERIALIZE(subaddr_indices)
-        KV_SERIALIZE(priority)
-//        KV_SERIALIZE_OPT(mixin, (uint64_t)0)
-//        KV_SERIALIZE_OPT(ring_size, (uint64_t)0)
-        KV_SERIALIZE(unlock_time)
-        KV_SERIALIZE(payment_id)
-        KV_SERIALIZE(get_tx_keys)
-        KV_SERIALIZE(do_not_relay)
-        KV_SERIALIZE(get_tx_hex)
-        KV_SERIALIZE(get_tx_metadata)
+        KV_SERIALIZE(sig_count)
       END_KV_SERIALIZE_MAP()
     };
 

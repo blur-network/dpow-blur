@@ -54,6 +54,7 @@ using namespace epee;
 #include "mnemonics/electrum-words.h"
 #include "rpc/rpc_args.h"
 #include "rpc/core_rpc_server_commands_defs.h"
+#include "libhydrogen/hydrogen.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "notary_server.rpc"
@@ -1006,21 +1007,20 @@ namespace tools
     std::vector<std::pair<std::string,std::string>> notaries_keys;
 
     for (int i =0; i < 64; i++) {
-      std::pair<std::string,std::string> seed_and_pubkey_pair;
-      seed_and_pubkey_pair = std::make_pair(Notaries_elected1[1][i], Notaries_elected1[3][0]);
+      std::pair<const char*,const char*> seed_and_pubkey_pair;
+      seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[0][3]);
       // change above so that Notaries_elected[3][0] copies each row (i.e. [3][i])
       // once we have the array actually populated
+      MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[0][3]);
       notaries_keys.push_back(seed_and_pubkey_pair);
     }
 
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
 
-    for (int i = 0; i <= 64; i++)
+    for (int n = 0; n < 64; n++)
     {
-      char viewkey_seed_entry[34] = { 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f' };
-      // copy btc_pubkeys for use in deriving the viewkeys ourselves
-      memcpy(&viewkey_seed_entry, &notaries_keys[i].first, sizeof(notaries_keys[i].first));
-      std::string viewkey_seed_oversize = viewkey_seed_entry;
+      std::string viewkey_seed_oversize = notaries_keys[n].first;
+      MERROR("viewkey_seed_entry: " << viewkey_seed_oversize);
       std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 33);
       cryptonote::blobdata btc_pubkey_data;
 
@@ -1034,10 +1034,7 @@ namespace tools
       crypto::secret_key view_seckey;
       crypto::secret_key rngview = crypto::generate_keys(view_pubkey, view_seckey, btc_pubkey_secret, true);
 
-      char spendkey_pub[32] = { 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f', 'f' };
-      // copy hardcoded spendkey_pub
-      memcpy(&spendkey_pub, &notaries_keys[i].second, sizeof(notaries_keys[i].second));
-      std::string spendkey_pub_str = spendkey_pub;
+      std::string spendkey_pub_str = notaries_keys[n].second;
       cryptonote::blobdata spendkey_pub_data;
 
       if(!epee::string_tools::parse_hexstr_to_binbuff(spendkey_pub_str, spendkey_pub_data) || spendkey_pub_data.size() != sizeof(crypto::public_key))
@@ -1061,8 +1058,18 @@ namespace tools
       not_validated_dsts.push_back(dest);
     }
 
+
+    uint8_t buf[32];
+    hydro_random_buf(buf, sizeof buf);
+
+    std::string payment_id = epee::string_tools::pod_to_hex(buf);
+    if (payment_id.empty())
+    {
+      MERROR("Unable to create random payment_id by parsing binbuff to hexstr!");
+    }
+
     // validate the transfer requested and populate dsts & extra; RPC_TRANSFER::request and RPC_TRANSFER_SPLIT::request are identical types.
-    if (!validate_ntz_transfer(not_validated_dsts, req.payment_id, dsts, extra, true, er))
+    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, er))
     {
       return false;
     }
@@ -1072,12 +1079,12 @@ namespace tools
       uint64_t mixin = m_wallet->adjust_mixin(12);
       // 12 mixins for ring size of 13 (threshold for valid ntz_txn)
 
-      uint32_t priority = m_wallet->adjust_priority(req.priority);
+      uint32_t priority = m_wallet->adjust_priority(2);
       LOG_PRINT_L2("on_ntz_transfer calling create_ntz_transactions");
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, 10, priority, extra, req.account_index, req.subaddr_indices, m_trusted_daemon);
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, 10, priority, extra, 0, {0,0}, m_trusted_daemon);
       LOG_PRINT_L2("on_ntz_transfer called create_ntz_transactions");
 
-      return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, true,
+      return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
     }
     catch (const std::exception& e)

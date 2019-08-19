@@ -13,7 +13,10 @@ monero_private_headers(komodo_notary_server
 monero_add_executable(komodo_notary_server
   ${komodo_notary_server_sources}
   ${komodo_notary_server_headers}
-  ${komodo_notary_server_private_headers})
+  ${komodo_notary_server_private_headers}
+  ${BACKWARD_ENABLE})
+
+add_backward(komodo_notary_server)
 
 target_link_libraries(komodo_notary_server
   PRIVATE
@@ -33,7 +36,9 @@ target_link_libraries(komodo_notary_server
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${EXTRA_LIBRARIES})
+    ${EXTRA_LIBRARIES}
+  PUBLIC
+    Backward::Backward)
 
 set_property(TARGET komodo_notary_server
   PROPERTY
