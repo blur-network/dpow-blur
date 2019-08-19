@@ -1,5 +1,6 @@
 set(komodo_sources
-  komodo_validation.cpp)
+  komodo_validation.cpp
+  core_instanciations.cpp)
 
 set(komodo_headers)
 

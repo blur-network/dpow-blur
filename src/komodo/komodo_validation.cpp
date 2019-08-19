@@ -715,9 +715,8 @@ namespace komodo {
   {
 
     int32_t notarized_height; std::vector<uint8_t> zero;uint256 notarized_hash,notarized_desttxid; uint64_t notary; cryptonote::block *pindex = nullptr;
-    std::fill(zero.begin(),zero.begin()+32,0);
     //komodo_notarized_update(0,0,zero,zero,zero,0);
-    uint64_t activeheight = m_core.get_blockchain_storage().get_db().height()-1;
+    uint64_t activeheight = m_core.get_blockchain_storage().get_db().height();
     bool active = komodo_chainactive(activeheight, *pindex);
     std::vector<uint8_t> v_nhash(notarized_hash.begin(), notarized_hash.begin()+32);
     std::string s_notarized_hash = bytes256_to_hex(v_nhash);
