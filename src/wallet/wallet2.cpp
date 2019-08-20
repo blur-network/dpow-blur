@@ -4727,10 +4727,10 @@ void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_cou
     req.payment_id = payment_id;
     COMMAND_RPC_REQUEST_NTZ_SIG::response daemon_send_resp;
     m_daemon_rpc_mutex.lock();
-    bool r = epee::net_utils::invoke_http_json("request_ntz_sig", req, daemon_send_resp, m_http_client, rpc_timeout);
+    bool r = epee::net_utils::invoke_http_json("/requestntzsig", req, daemon_send_resp, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
-    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig");
-    THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "request_ntz_sig");
+    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "requestntzsig");
+    THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "requestntzsig");
     for (const auto& ptx : ptxs)
     {
       THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status != CORE_RPC_STATUS_OK, error::tx_rejected, ptx.tx, daemon_send_resp.status, daemon_send_resp.reason);
