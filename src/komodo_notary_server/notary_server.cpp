@@ -725,6 +725,7 @@ namespace tools
 
       if (wallet2::parse_long_payment_id(payment_id_str, long_payment_id)) {
         cryptonote::set_payment_id_to_tx_extra_nonce(extra_nonce, long_payment_id);
+        LOG_PRINT_L1("Payment id " << epee::string_tools::pod_to_hex(long_payment_id) << "added to extra nonce");
       }
       else {
         er.code = NOTARY_RPC_ERROR_CODE_WRONG_PAYMENT_ID;
@@ -1057,10 +1058,10 @@ namespace tools
 
     bool need_payment_id = req.sig_count < 1;
 
-    uint8_t buf[32];
     std::string payment_id;
 
     if (need_payment_id) {
+      uint8_t buf[32];
       hydro_random_buf(buf, sizeof buf);
       payment_id = epee::string_tools::pod_to_hex(buf);
       if (payment_id.empty()) {
@@ -1087,19 +1088,23 @@ namespace tools
       uint32_t priority = m_wallet->adjust_priority(2);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height() + 10;
       LOG_PRINT_L2("on_ntz_transfer calling create_ntz_transactions");
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
-      LOG_PRINT_L2("on_ntz_transfer called create_ntz_transactions");
 
-       bool ready_to_send = req.sig_count >= 13;
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
+      LOG_PRINT_L2("on_ntz_transfer with sig_count 0: called create_ntz_transactions");
+
+      bool ready_to_send = req.sig_count >= 12;
 
       return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
 
+      const int new_count = req.sig_count + 1;
+
       if (ready_to_send) {
         m_wallet->commit_tx(ptx_vector);
+        LOG_PRINT_L2("commit_tx sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
       } else {
-        const int new_count = req.sig_count + 1;
         m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id);
+        LOG_PRINT_L2("request_ntz_sig sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
       }
     }
     catch (const std::exception& e)
@@ -1107,7 +1112,6 @@ namespace tools
       handle_rpc_exception(std::current_exception(), er, NOTARY_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);
       return false;
     }
-      return true;
   }
 //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::on_sweep_single(const notary_rpc::COMMAND_RPC_SWEEP_SINGLE::request& req, notary_rpc::COMMAND_RPC_SWEEP_SINGLE::response& res, epee::json_rpc::error& er)
