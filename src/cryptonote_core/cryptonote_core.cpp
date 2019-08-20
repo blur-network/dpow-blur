@@ -746,6 +746,91 @@ namespace cryptonote
     return r;
   }
   //-----------------------------------------------------------------------------------------------
+  bool core::handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<tx_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay)
+  {
+    TRY_ENTRY();
+    CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
+
+    struct result { bool res; cryptonote::transaction tx; crypto::hash hash; crypto::hash prefix_hash; bool in_txpool; bool in_blockchain; };
+    std::vector<result> results(tx_blobs.size());
+
+    tvc.resize(tx_blobs.size());
+    tools::threadpool::waiter waiter;
+    std::list<blobdata>::const_iterator it = tx_blobs.begin();
+    for (size_t i = 0; i < tx_blobs.size(); i++, ++it) {
+      m_threadpool.submit(&waiter, [&, i, it] {
+        try
+        {
+          results[i].res = handle_incoming_tx_pre(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay);
+        }
+        catch (const std::exception &e)
+        {
+          MERROR_VER("Exception in handle_incoming_tx_pre: " << e.what());
+          results[i].res = false;
+        }
+      });
+    }
+    waiter.wait();
+    it = tx_blobs.begin();
+    std::vector<bool> already_have(tx_blobs.size(), false);
+    for (size_t i = 0; i < tx_blobs.size(); i++, ++it) {
+      if (!results[i].res)
+        continue;
+      if(m_mempool.have_tx(results[i].hash))
+      {
+        LOG_PRINT_L2("tx " << results[i].hash << "already have transaction in tx_pool");
+        already_have[i] = true;
+      }
+      else if(m_blockchain_storage.have_tx(results[i].hash))
+      {
+        LOG_PRINT_L2("tx " << results[i].hash << " already have transaction in blockchain");
+        already_have[i] = true;
+      }
+      else
+      {
+        m_threadpool.submit(&waiter, [&, i, it] {
+          try
+          {
+            results[i].res = handle_incoming_tx_post(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay);
+          }
+          catch (const std::exception &e)
+          {
+            MERROR_VER("Exception in handle_incoming_tx_post: " << e.what());
+            results[i].res = false;
+          }
+        });
+      }
+    }
+    waiter.wait();
+
+    bool ok = true;
+    it = tx_blobs.begin();
+    for (size_t i = 0; i < tx_blobs.size(); i++, ++it) {
+
+      if (!results[i].res) {
+        ok = false;
+        continue; }
+
+      if (keeped_by_block) {
+        get_blockchain_storage().on_new_tx_from_block(results[i].tx); }
+
+      if (already_have[i]) {
+        continue; }
+
+      ok &= add_new_tx(results[i].tx, results[i].hash, results[i].prefix_hash, it->size(), tvc[i], keeped_by_block, relayed, do_not_relay);
+      if(tvc[i].m_verifivation_failed)
+      {MERROR_VER("Transaction verification failed: " << results[i].hash);}
+      else if(tvc[i].m_verifivation_impossible)
+      {MERROR_VER("Transaction verification impossible: " << results[i].hash);}
+
+      if(tvc[i].m_added_to_pool)
+        MDEBUG("tx added: " << results[i].hash);
+    }
+    return ok;
+
+    CATCH_ENTRY_L0("core::handle_incoming_txs()", false);
+  }
+  //-----------------------------------------------------------------------------------------------
   bool core::get_stat_info(core_stat_info& st_inf) const
   {
     st_inf.mining_speed = m_miner.get_speed();

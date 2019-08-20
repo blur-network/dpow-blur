@@ -799,9 +799,9 @@ namespace cryptonote
   }
   //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>
-  int t_cryptonote_protocol_handler<t_core>::handle_notify_new_notarization(int command, NOTIFY_NEW_NOTARIZATION::request& arg, cryptonote_connection_context& context)
+  int t_cryptonote_protocol_handler<t_core>::handle_notify_new_notarization(int command, NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& context)
   {
-    MLOG_P2P_MESSAGE("Received NOTIFY_NEW_NOTARIZATION (" << arg.tx.size() << " notarization tx)");
+    MLOG_P2P_MESSAGE("Received NOTIFY_NEW_NOTARIZATION (" << arg.txs.size() << " notarization tx)");
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;
 
@@ -814,18 +814,21 @@ namespace cryptonote
       return 1;
     }
 
-    cryptonote::tx_verification_context tvc = AUTO_VAL_INIT(tvc);
-    m_core.handle_incoming_tx(arg.tx, tvc, false, true, false);
-    if(tvc.m_verifivation_failed)
-    {
-      LOG_PRINT_CCONTEXT_L1("Notarization_tx verification failed, dropping connection");
-      drop_connection(context, false, false);
-      return 1;
-    }
-
     std::list<cryptonote::blobdata> tx_blobs;
     NOTIFY_NEW_TRANSACTIONS::request ag;
-    tx_blobs.push_back(arg.tx);
+    for (const auto& tx : arg.txs)
+    {
+      cryptonote::tx_verification_context tvc = AUTO_VAL_INIT(tvc);
+      m_core.handle_incoming_tx(tx, tvc, false, true, false);
+      if(tvc.m_verifivation_failed)
+      {
+        LOG_PRINT_CCONTEXT_L1("Notarization_tx verification failed, dropping connection");
+        drop_connection(context, false, false);
+        return 1;
+      }
+
+      tx_blobs.push_back(tx);
+    }
     ag.txs = tx_blobs;
 
     relay_transactions(ag, context);
@@ -836,9 +839,34 @@ namespace cryptonote
   template<class t_core>
   int t_cryptonote_protocol_handler<t_core>::handle_request_ntz_sig(int command, NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& context)
   {
-    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (" << std::to_string(arg.sigs_count) << " signature count, " << arg.destinations.size() << " destinations, " << arg.tx_key_list.size() << " keys");
+    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sigs_count) << ", tx blob count: " << arg.tx_blobs.size() << ", payment id: " << arg.payment_id);
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;
+    // while syncing, core will lock for a long time, so we ignore
+    // those txes as they aren't really needed anyway, and avoid a
+    // long block before replying
+    if(!is_synchronized())
+    {
+      LOG_DEBUG_CC(context, "Received new tx while syncing, ignored");
+      return 1;
+    }
+
+    cryptonote::tx_verification_context tvc = AUTO_VAL_INIT(tvc);
+    std::list<cryptonote::blobdata> tx_blobs;
+    NOTIFY_REQUEST_NTZ_SIG::request ag;
+    for (const auto& tx : arg.tx_blobs)
+    {
+      m_core.handle_incoming_tx(tx, tvc, false, true, false);
+      if(tvc.m_verifivation_failed)
+      {
+        LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
+        drop_connection(context, false, false);
+        return 1;
+      }
+      tx_blobs.push_back(tx);
+    }
+    ag.tx_blobs = tx_blobs;
+    relay_request_ntz_sig(ag, context);
 
    return 1;
   }
@@ -862,8 +890,6 @@ namespace cryptonote
     return 1;
   }
   //------------------------------------------------------------------------------------------------------------------------
-
-
   template<class t_core>
   double t_cryptonote_protocol_handler<t_core>::get_avg_block_size()
   {
@@ -1740,6 +1766,22 @@ skip:
     return relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(arg, exclude_context);
   }
   //------------------------------------------------------------------------------------------------------------------------
+  template<class t_core>
+  bool t_cryptonote_protocol_handler<t_core>::relay_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context)
+  {
+    // no check for success, so tell core they're relayed unconditionally
+    if (arg.sigs_count >= 13) {
+      NOTIFY_NEW_TRANSACTIONS::request r;
+      for(const auto& tx : arg.tx_blobs)
+      {
+        m_core.on_transaction_relayed(tx);
+        r.txs.push_back(tx);
+      }
+      return relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(r, exclude_context);
+    }
+    return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(arg, exclude_context);
+  }
+//------------------------------------------------------------------------------------------------------------------------
   template<class t_core>
   void t_cryptonote_protocol_handler<t_core>::drop_connection(cryptonote_connection_context &context, bool add_fail, bool flush_all_spans)
   {

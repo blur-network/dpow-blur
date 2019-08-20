@@ -4711,6 +4711,59 @@ void wallet2::commit_tx(std::vector<pending_tx>& ptx_vector)
   }
 }
 //----------------------------------------------------------------------------------------------------
+void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_count, const std::string& payment_id)
+{
+  using namespace cryptonote;
+    // Normal submit
+    COMMAND_RPC_REQUEST_NTZ_SIG::request req;
+    req.sigs_count = sigs_count;
+    std::vector <blobdata> tx_blobs;
+    for (const auto& each : ptxs) {
+      blobdata blob = tx_to_blob(each.tx);
+      tx_blobs.push_back(blob);
+    }
+    req.tx_blobs = tx_blobs;
+    req.payment_id = payment_id;
+    COMMAND_RPC_REQUEST_NTZ_SIG::response daemon_send_resp;
+    m_daemon_rpc_mutex.lock();
+    bool r = epee::net_utils::invoke_http_json("/requestntzsig", req, daemon_send_resp, m_http_client, rpc_timeout);
+    m_daemon_rpc_mutex.unlock();
+    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "requestntzsig");
+    THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "requestntzsig");
+    for (const auto& ptx : ptxs)
+    {
+      THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status != CORE_RPC_STATUS_OK, error::tx_rejected, ptx.tx, daemon_send_resp.status, daemon_send_resp.reason);
+      // sanity checks
+      for (size_t idx: ptx.selected_transfers)
+      {
+        THROW_WALLET_EXCEPTION_IF(idx >= m_transfers.size(), error::wallet_internal_error,
+           "Bad output index in selected transfers: " + boost::lexical_cast<std::string>(idx));
+      }
+      crypto::hash txid;
+
+      txid = get_transaction_hash(ptx.tx);
+      crypto::hash payment_id_hash = crypto::null_hash;
+      std::vector<cryptonote::tx_destination_entry> dests;
+      uint64_t amount_in = 0;
+      if (store_tx_info())
+      {
+        payment_id_hash = get_payment_id(ptx);
+        dests = ptx.dests;
+        for(size_t idx: ptx.selected_transfers)
+          amount_in += m_transfers[idx].amount();
+        m_tx_keys.insert(std::make_pair(txid, ptx.tx_key));
+      }
+
+      LOG_PRINT_L2("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
+      //fee includes dust if dust policy specified it.
+      LOG_PRINT_L1("Signatures added and ntz_sig requested. <" << txid << ">" << ENDL
+            << "Signatures count: " << std::to_string(sigs_count) << "Commission: " << print_money(ptx.fee) << ENDL
+            << "Balance: " << print_money(balance(ptx.construction_data.subaddr_account)) << ENDL
+            << "Unlocked: " << print_money(unlocked_balance(ptx.construction_data.subaddr_account)) << ENDL
+            << "Please, wait for for further ntz_sigs.");
+    }
+}
+//----------------------------------------------------------------------------------------------------
 bool wallet2::save_tx(const std::vector<pending_tx>& ptx_vector, const std::string &filename) const
 {
   LOG_PRINT_L0("saving " << ptx_vector.size() << " transactions");

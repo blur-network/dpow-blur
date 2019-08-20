@@ -174,6 +174,9 @@ namespace cryptonote
       */
      bool check_incoming_block_size(const blobdata& block_blob) const;
 
+     bool handle_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, NOTIFY_RESPONSE_GET_OBJECTS::request& rsp, cryptonote_connection_context& context);
+
+     bool handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<tx_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay);
      /**
       * @brief get the cryptonote protocol instance
       *

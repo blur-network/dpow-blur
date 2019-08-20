@@ -288,26 +288,16 @@ namespace cryptonote
   {
     const static int ID = BC_COMMANDS_POOL_BASE + 10;
 
-    struct transfer_destination
-    {
-      uint64_t amount;
-      std::string address;
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(amount)
-        KV_SERIALIZE(address)
-      END_KV_SERIALIZE_MAP()
-    };
-
     struct request
     {
       int sigs_count;
-      std::list<transfer_destination> destinations;
-      std::list<std::string> tx_key_list;
+      std::list<blobdata> tx_blobs;
+      std::string payment_id;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sigs_count)
-        KV_SERIALIZE(destinations)
-        KV_SERIALIZE(tx_key_list)
+        KV_SERIALIZE(tx_blobs)
+        KV_SERIALIZE(payment_id)
       END_KV_SERIALIZE_MAP()
     };
   };
@@ -320,13 +310,12 @@ namespace cryptonote
 
     struct request
     {
-      cryptonote::blobdata tx;
+      std::list<blobdata> txs;
 
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(tx)
+        KV_SERIALIZE(txs)
       END_KV_SERIALIZE_MAP()
     };
   };
-
 
 }

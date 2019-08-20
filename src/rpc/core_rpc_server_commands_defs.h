@@ -963,6 +963,53 @@ namespace cryptonote
     };
   };
   //-----------------------------------------------
+  struct COMMAND_RPC_REQUEST_NTZ_SIG
+  {
+    struct request
+    {
+      int sigs_count;
+      std::vector<blobdata> tx_blobs;
+      std::string payment_id;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(sigs_count)
+        KV_SERIALIZE(tx_blobs)
+        KV_SERIALIZE(payment_id)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string status;
+      std::string reason;
+      bool not_relayed;
+      bool low_mixin;
+      bool double_spend;
+      bool invalid_input;
+      bool invalid_output;
+      bool too_big;
+      bool overspend;
+      bool fee_too_low;
+      bool not_rct;
+      bool untrusted;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+        KV_SERIALIZE(reason)
+        KV_SERIALIZE(not_relayed)
+        KV_SERIALIZE(low_mixin)
+        KV_SERIALIZE(double_spend)
+        KV_SERIALIZE(invalid_input)
+        KV_SERIALIZE(invalid_output)
+        KV_SERIALIZE(too_big)
+        KV_SERIALIZE(overspend)
+        KV_SERIALIZE(fee_too_low)
+        KV_SERIALIZE(not_rct)
+        KV_SERIALIZE(untrusted)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+  //-----------------------------------------------
   struct COMMAND_RPC_START_MINING
   {
     struct request

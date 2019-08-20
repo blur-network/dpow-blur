@@ -991,6 +991,89 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_request_ntz_sig(const COMMAND_RPC_REQUEST_NTZ_SIG::request& req, COMMAND_RPC_REQUEST_NTZ_SIG::response& res)
+  {
+    PERF_TIMER(on_request_ntz_sig);
+    bool ok;
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_REQUEST_NTZ_SIG>(invoke_http_mode::JON, "/requesntzsig", req, res, ok))
+      return ok;
+
+    CHECK_CORE_READY();
+
+    std::list<blobdata> verified_tx_blobs;
+    cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+    tx_verification_context tvc = AUTO_VAL_INIT(tvc);
+
+    for (const auto& each : req.tx_blobs)
+    {
+      std::string tx_blob;
+      if(!string_tools::parse_hexstr_to_binbuff(each, tx_blob))
+      {
+        LOG_PRINT_L0("[on_request_ntz_sig]: Failed to parse tx from hexbuff: " << each);
+        res.status = "Failed";
+        return false;
+      }
+
+      if(!m_core.handle_incoming_tx(tx_blob, tvc, false, false, true) || tvc.m_verifivation_failed)
+      {
+        res.status = "Failed";
+        res.reason = "";
+        if ((res.low_mixin = tvc.m_low_mixin))
+          add_reason(res.reason, "ring size too small");
+        if ((res.double_spend = tvc.m_double_spend))
+          add_reason(res.reason, "double spend");
+        if ((res.invalid_input = tvc.m_invalid_input))
+          add_reason(res.reason, "invalid input");
+        if ((res.invalid_output = tvc.m_invalid_output))
+          add_reason(res.reason, "invalid output");
+        if ((res.too_big = tvc.m_too_big))
+          add_reason(res.reason, "too big");
+        if ((res.overspend = tvc.m_overspend))
+          add_reason(res.reason, "overspend");
+        if ((res.fee_too_low = tvc.m_fee_too_low))
+          add_reason(res.reason, "fee too low");
+        if ((res.not_rct = tvc.m_not_rct))
+          add_reason(res.reason, "tx is not ringct");
+        const std::string punctuation = res.reason.empty() ? "" : ": ";
+        if (tvc.m_verifivation_failed)
+        {
+          LOG_PRINT_L0("[on_request_ntz_sig]: tx verification failed" << punctuation << res.reason);
+        }
+        else
+        {
+          LOG_PRINT_L0("[on_request_ntz_sig]: Failed to process tx" << punctuation << res.reason);
+        }
+        return false;
+      }
+
+    verified_tx_blobs.push_back(each);
+    }
+
+    if (req.sigs_count < 13 && req.sigs_count > 0)
+    {
+      NOTIFY_REQUEST_NTZ_SIG::request r;
+      r.tx_blobs = verified_tx_blobs;
+      r.sigs_count = req.sigs_count;
+      r.payment_id = req.payment_id;
+      m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
+        //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
+      res.status = CORE_RPC_STATUS_OK;
+    }
+    else if(req.sigs_count >= 13)
+    {
+      NOTIFY_NEW_TRANSACTIONS::request r;
+      r.txs = verified_tx_blobs;
+      m_core.get_protocol()->relay_transactions(r, fake_context);
+      res.status = CORE_RPC_STATUS_OK;
+    }
+    else
+    {
+      res.status = "Failed.";
+      return false;
+    }
+  return true;
+  }
+//------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_start_mining(const COMMAND_RPC_START_MINING::request& req, COMMAND_RPC_START_MINING::response& res)
   {
     PERF_TIMER(on_start_mining);
