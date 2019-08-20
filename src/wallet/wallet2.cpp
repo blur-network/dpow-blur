@@ -4717,10 +4717,11 @@ void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_cou
     // Normal submit
     COMMAND_RPC_REQUEST_NTZ_SIG::request req;
     req.sigs_count = sigs_count;
-    std::vector <blobdata> tx_blobs;
+    std::list<std::string> tx_blobs;
     for (const auto& each : ptxs) {
       blobdata blob = tx_to_blob(each.tx);
       tx_blobs.push_back(blob);
+      MWARNING("trying to relay request ntz sig with tx blob: " << blob << ", sigs_count: " << std::to_string(sigs_count) << ", and payment id: " << payment_id);
     }
     req.tx_blobs = tx_blobs;
     req.payment_id = payment_id;
@@ -4745,18 +4746,22 @@ void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_cou
       crypto::hash payment_id_hash = crypto::null_hash;
       std::vector<cryptonote::tx_destination_entry> dests;
       uint64_t amount_in = 0;
-      if (store_tx_info())
-      {
-        payment_id_hash = get_payment_id(ptx);
-        dests = ptx.dests;
-        for(size_t idx: ptx.selected_transfers)
-          amount_in += m_transfers[idx].amount();
-        m_tx_keys.insert(std::make_pair(txid, ptx.tx_key));
-      }
 
-      LOG_PRINT_L1("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
+      payment_id_hash = get_payment_id(ptx);
+      dests = ptx.dests;
+      for(size_t idx: ptx.selected_transfers)
+        amount_in += m_transfers[idx].amount();
+      m_tx_keys.insert(std::make_pair(txid, ptx.tx_key));
+
+      add_unconfirmed_tx(ptx.tx, amount_in, dests, payment_id_hash, ptx.change_dts.amount, ptx.construction_data.subaddr_account, ptx.construction_data.subaddr_indices);
+
+      m_tx_keys.insert(std::make_pair(txid, ptx.tx_key));
+      m_additional_tx_keys.insert(std::make_pair(txid, ptx.additional_tx_keys));
+
+
+      MWARNING("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
       //fee includes dust if dust policy specified it.
-      LOG_PRINT_L1("Signatures added and ntz_sig requested. <" << txid << ">" << ENDL
+      MWARNING("Signatures added and ntz_sig requested. <" << txid << ">" << ENDL
             << "Signatures count: " << std::to_string(sigs_count) << "Commission: " << print_money(ptx.fee) << ENDL
             << "Balance: " << print_money(balance(ptx.construction_data.subaddr_account)) << ENDL
             << "Unlocked: " << print_money(unlocked_balance(ptx.construction_data.subaddr_account)) << ENDL

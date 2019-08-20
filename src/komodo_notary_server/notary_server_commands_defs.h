@@ -37,6 +37,8 @@
 #include "cryptonote_basic/subaddress_index.h"
 #include "crypto/hash.h"
 #include "notary_server_error_codes.h"
+#include "serialization/keyvalue_serialization.h"
+#include "wallet/wallet2.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "notary_server.rpc"
@@ -505,10 +507,12 @@ namespace notary_rpc
     struct request
     {
       int sig_count;
+      std::list<std::string> tx_blobs;
       std::string payment_id;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)
+        KV_SERIALIZE(tx_blobs)
         KV_SERIALIZE(payment_id)
       END_KV_SERIALIZE_MAP()
     };

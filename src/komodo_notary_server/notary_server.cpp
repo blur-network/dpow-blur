@@ -1092,12 +1092,12 @@ namespace tools
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
       LOG_PRINT_L2("on_ntz_transfer with sig_count 0: called create_ntz_transactions");
 
-      bool ready_to_send = req.sig_count >= 12;
+      const int new_count = req.sig_count + 1;
+
+      bool ready_to_send = new_count >= 12;
 
       return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
-          res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
-
-      const int new_count = req.sig_count + 1;
+          res.tx_hash_list, true, res.tx_blob_list, false, res.tx_metadata_list, er);
 
       if (ready_to_send) {
         m_wallet->commit_tx(ptx_vector);

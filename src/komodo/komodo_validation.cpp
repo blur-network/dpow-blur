@@ -481,7 +481,7 @@ namespace komodo {
     int i,n=0,prev; uint8_t serialized[sizeof(bits256) * 2];
     if ( txn_count == 1 )
     {
-      iguana_rwbignum(1,serialized,sizeof(*tree),tree[0].bytes);
+//      iguana_rwbignum(1,serialized,sizeof(*tree),tree[0].bytes);
 //      iguana_rwbignum(1,&serialized[sizeof(*tree)],sizeof(*tree),tree[1].bytes);
       tree[0] = bits256_doublesha256(0, serialized, sizeof(serialized));
       MWARNING("Tree[0] bits256_doublesha:     " << std::to_string(tree->txid));

@@ -1056,7 +1056,11 @@ namespace cryptonote
       r.sigs_count = req.sigs_count;
       r.payment_id = req.payment_id;
       m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
+      for (const auto& each : r.tx_blobs)
+      {
+        MWARNING("request ntz sig sent with tx blob(s): " << each << ", sigs count: " << std::to_string(r.sigs_count) << ", and payment id: " << req.payment_id);
         //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
+      }
       res.status = CORE_RPC_STATUS_OK;
     }
     else if(req.sigs_count >= 13)

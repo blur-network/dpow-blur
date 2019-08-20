@@ -968,7 +968,7 @@ namespace cryptonote
     struct request
     {
       int sigs_count;
-      std::vector<blobdata> tx_blobs;
+      std::list<blobdata> tx_blobs;
       std::string payment_id;
 
       BEGIN_KV_SERIALIZE_MAP()

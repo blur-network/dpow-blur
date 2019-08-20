@@ -868,7 +868,7 @@ namespace cryptonote
   {
     if (t.is_hash_valid())
     {
-      CHECK_AND_ASSERT_THROW_MES(!calculate_transaction_hash(t, res, blob_size) || t.hash == res, "tx hash cash integrity failure");
+//      CHECK_AND_ASSERT_THROW_MES(!calculate_transaction_hash(t, res, blob_size) || t.hash == res, "tx hash cash integrity failure");
       res = t.hash;
       if (blob_size)
       {
@@ -920,7 +920,7 @@ namespace cryptonote
   {
     if (b.is_hash_valid())
     {
-      CHECK_AND_ASSERT_THROW_MES(!calculate_block_hash(b, res) || b.hash == res, "block hash cash integrity failure");
+//      CHECK_AND_ASSERT_THROW_MES(!calculate_block_hash(b, res) || b.hash == res, "block hash cash integrity failure");
       res = b.hash;
       ++block_hashes_cached_count;
       return true;
@@ -954,10 +954,7 @@ namespace cryptonote
       }
       else if (b.major_version <= 8)
       {
-        cn_iters += ((height + 1) & 0x3FF);
-        if (height < 185856) {
         cn_iters <<= 1;
-        }
       }
       else if (b.major_version == 9)
       {
@@ -970,7 +967,7 @@ namespace cryptonote
         std::string subhash = hash_alpha.substr(0,6);
         unsigned int id_num = std::stoul(subhash, nullptr, 16);
 
-        LOG_PRINT_L2("\nPRNG from previous block ID : " << id_num);
+//        LOG_PRINT_L2("\nPRNG from previous block ID : " << id_num);
 
         if (id_num < 1) { // guard against small probability of zero case
           id_num = 1; }   // in previous hash's first 6 characters
@@ -985,7 +982,7 @@ namespace cryptonote
         else if (!two) {
           cn_iters += (((stamp % id_num) + height) & 0x7FFF);  }
 
-        LOG_PRINT_L2("\nIterations : "<< cn_iters);
+//        LOG_PRINT_L2("\nIterations : "<< cn_iters);
 
        }
     crypto::cn_slow_hash(bd.data(), bd.size(), res, cn_variant, cn_iters);

@@ -77,7 +77,7 @@ const char *Notaries_elected1[][4] =  /* we will need to add a BLUR address to e
                                       /  alternatively, a public spendkey could be hardcoded instead.
                                       */
 {
-    {"0dev1_jl777"       , "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828" , "RNJmgYaFF5DbnrNUX6pMYz9rcnDKC2tuAc" , "b282cb25e906d06294bca9a9d9dbb464228d2a463d656ede21036fbe40479cf2"},
+    {"0dev1_jl777"       , "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828" , "RNJmgYaFF5DbnrNUX6pMYz9rcnDKC2tuAc" , "b64e7aa3efc49f7a4afeee075f61ec2e367114820f392e6970648f29c142f9ed"},
     {"0dev2_kolo"        , "030f34af4b908fb8eb2099accb56b8d157d49f6cfb691baa80fdd34f385efed961" , "RLj9h7zfnx4X9hvquR3sEwzHvcvF61W2Rc"},
     {"0dev3_kolo"        , "025af9d2b2a05338478159e9ac84543968fd18c45fd9307866b56f33898653b014" , "RTZi9uC1wEu3PD9eoL4R7KyeAse7uvdHuS"},
     {"0dev4_decker"      , "028eea44a09674dda00d88ffd199a09c9b75ba9782382cc8f1e97c0fd565fe5707" , "RDECKVXcWCgPpMrKqQmMX7PxzQVLCzcR5a"},
