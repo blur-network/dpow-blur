@@ -30,15 +30,15 @@ There are files in here from many different projects, including but not limited 
 
 Substitute the hexidecimal representation of your node's public key into the field titled `btc_pubkey`.
 
-**Step 2:** Launch `blurd` **with the following options:
+**Step 2:** Launch `blurd` with the following options:
 
 
 ```
-./blurd --testnet --offline`
+./blurd --testnet --offline
 ```
 
 
-**Step 3:** Launch `blur-notary-server-rpc` **with the following options:
+**Step 3:** Launch `blur-notary-server-rpc` with the following options:
 
 *Note: Change the name of the json file if you named yours something other than* `btc.json`
 
@@ -116,7 +116,7 @@ Since these fields are not yet populated, the CryptoNote pubkey from the first e
 To relay the created `tx_blob` from the previous command `ntz_transfer` issued to the wallet, perform the following:
 
 
-**Step 1:** Using your `tx_blob` from your terminal output (`STDOUT`), issue the following `curl` command on your daemon's port `21111` (not the wallet):
+**Step 1:** Using the `tx_blob` from terminal output (`STDOUT` printed in response to the previous `ntz_transfer` command), issue the following `curl` command to the daemon's port `21111` (not the wallet):
 
 
 ```
