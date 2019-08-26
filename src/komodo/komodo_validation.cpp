@@ -423,6 +423,7 @@ namespace komodo {
   //------------------------------------------------------------------
   int32_t komodo_core::komodo_init()
   {
+    
     decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
     return(0);
   }

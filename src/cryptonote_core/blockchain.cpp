@@ -567,8 +567,6 @@ bool Blockchain::deinit()
   m_hardfork = NULL;
   delete m_db;
   m_db = NULL;
-  delete m_komodo_core;
-  m_komodo_core = NULL;
   return true;
 }
 //------------------------------------------------------------------

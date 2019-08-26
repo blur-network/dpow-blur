@@ -2031,8 +2031,8 @@ namespace cryptonote
       std::string n_MoM = bytes256_to_hex(v_MoM);*/
 
       crypto::hash hash = crypto::null_hash;
-      komodo::komodo_core k_core = m_core.get_blockchain_storage().get_k_core();
-      k_core.komodo_checkpoint(&komodo::NOTARIZED_HEIGHT, height, hash);
+      std::unique_ptr<komodo::komodo_core> k_core;
+      int32_t checkpoint = k_core->komodo_checkpoint(&komodo::NOTARIZED_HEIGHT, height, hash);
 
       cryptonote::block blk = m_core.get_blockchain_storage().get_db().get_top_block();
       crypto::hash c_hash = m_core.get_blockchain_storage().get_db().top_block_hash();

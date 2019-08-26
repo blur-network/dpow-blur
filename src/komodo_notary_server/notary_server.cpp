@@ -1097,10 +1097,10 @@ namespace tools
 
       if (ready_to_send) {
         m_wallet->commit_tx(ptx_vector);
-        MWARNING("Ready to send: commit_tx sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
+        MWARNING("Signatures >= 13: [commit_tx] sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
       } else {
         m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id);
-        MWARNING("Not ready to send: request_ntz_sig sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
+        MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
       }
 
       return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,

@@ -119,7 +119,8 @@ namespace komodo {
 class komodo_core
 {
   public:
-    komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p);
+
+  komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p);
 
   int32_t komodo_chainactive_timestamp();
   bool komodo_chainactive(uint64_t &height, cryptonote::block &b);
@@ -133,9 +134,9 @@ class komodo_core
   void komodo_connectblock(uint64_t& height,cryptonote::block& b);
   int32_t komodo_init();
   int32_t komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp);
+  cryptonote::core& m_core;
 
   private:
-    cryptonote::core& m_core;
     nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& m_p2p;
     bool check_core_ready();
     bool check_core_busy();
