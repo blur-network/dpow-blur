@@ -1082,30 +1082,30 @@ namespace tools
 
     try
     {
-      uint64_t mixin = m_wallet->adjust_mixin(12);
-      // 12 mixins for ring size of 13 (threshold for valid ntz_txn)
+      uint64_t mixin = m_wallet->adjust_mixin(5);
 
-      uint32_t priority = m_wallet->adjust_priority(2);
+      uint32_t priority = m_wallet->adjust_priority(3);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height() + 10;
       MWARNING("on_ntz_transfer calling create_ntz_transactions");
 
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
-      MWARNING("on_ntz_transfer with sig_count 0: called create_ntz_transactions");
+      MWARNING("on_ntz_transfer with sig_count = " << std::to_string(req.sig_count) << ": called create_ntz_transactions");
 
       const int new_count = req.sig_count + 1;
 
       bool ready_to_send = new_count >= 13;
 
+      if (ready_to_send) {
+        m_wallet->commit_tx(ptx_vector);
+        MWARNING("Ready to send: commit_tx sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
+      } else {
+        m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id);
+        MWARNING("Not ready to send: request_ntz_sig sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
+      }
+
       return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
           res.tx_hash_list, true, res.tx_blob_list, false, res.tx_metadata_list, er);
 
-      if (ready_to_send) {
-        m_wallet->commit_tx(ptx_vector);
-        MWARNING("commit_tx sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
-      } else {
-        m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id);
-        MWARNING("request_ntz_sig sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
-      }
     }
     catch (const std::exception& e)
     {
