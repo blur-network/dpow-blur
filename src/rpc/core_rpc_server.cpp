@@ -1001,40 +1001,46 @@ namespace cryptonote
     CHECK_CORE_READY();
 
     std::list<std::string> verified_tx_blobs;
-    cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
-    tx_verification_context tvc = AUTO_VAL_INIT(tvc);
-
+    std::vector<std::string> unverified_blobs;
     for (const auto& each : req.tx_blobs)
     {
-      if(!m_core.handle_incoming_tx(each, tvc, false, false, true) || tvc.m_verifivation_failed)
+      unverified_blobs.push_back(each);
+    }
+    cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+    std::vector<tx_verification_context> tvc = AUTO_VAL_INIT(tvc);
+    const int sig_count = req.sigs_count;
+
+    if(!m_core.handle_incoming_ntz_sig(req.tx_blobs, tvc, false, false, true, sig_count))
+    {
+      for (uint32_t i = 0; i <= req.tx_blobs.size(); i++)
       {
         res.status = "Failed";
         res.reason = "";
-        if ((res.low_mixin = tvc.m_low_mixin))
+        if ((res.low_mixin = tvc[i].m_low_mixin))
           add_reason(res.reason, "ring size too small");
-        if ((res.double_spend = tvc.m_double_spend))
+        if ((res.double_spend = tvc[i].m_double_spend))
           add_reason(res.reason, "double spend");
-        if ((res.invalid_input = tvc.m_invalid_input))
+        if ((res.invalid_input = tvc[i].m_invalid_input))
           add_reason(res.reason, "invalid input");
-        if ((res.invalid_output = tvc.m_invalid_output))
+        if ((res.invalid_output = tvc[i].m_invalid_output))
           add_reason(res.reason, "invalid output");
-        if ((res.too_big = tvc.m_too_big))
+        if ((res.too_big = tvc[i].m_too_big))
           add_reason(res.reason, "too big");
-        if ((res.overspend = tvc.m_overspend))
+        if ((res.overspend = tvc[i].m_overspend))
           add_reason(res.reason, "overspend");
-        if ((res.fee_too_low = tvc.m_fee_too_low))
+        if ((res.fee_too_low = tvc[i].m_fee_too_low))
           add_reason(res.reason, "fee too low");
-        if ((res.not_rct = tvc.m_not_rct))
+        if ((res.not_rct = tvc[i].m_not_rct))
           add_reason(res.reason, "tx is not ringct");
         const std::string punctuation = res.reason.empty() ? "" : ": ";
-        if (tvc.m_verifivation_failed)
+        if (tvc[i].m_verifivation_failed)
         {
           LOG_PRINT_L0("[on_request_ntz_sig]: tx verification failed" << punctuation << res.reason);
           return false;
         }
         else
         {
-          verified_tx_blobs.push_back(each);
+          verified_tx_blobs.push_back(unverified_blobs[i]);
         }
       }
     }
