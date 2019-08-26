@@ -4757,10 +4757,6 @@ void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_cou
 
       add_unconfirmed_tx(ptx.tx, amount_in, dests, payment_id_hash, ptx.change_dts.amount, ptx.construction_data.subaddr_account, ptx.construction_data.subaddr_indices);
 
-      m_tx_keys.insert(std::make_pair(txid, ptx.tx_key));
-      m_additional_tx_keys.insert(std::make_pair(txid, ptx.additional_tx_keys));
-
-
       MWARNING("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
       //fee includes dust if dust policy specified it.
       MWARNING("Signatures added and ntz_sig requested. <" << txid << ">" << ENDL
