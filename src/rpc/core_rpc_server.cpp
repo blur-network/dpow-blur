@@ -1000,21 +1000,13 @@ namespace cryptonote
 
     CHECK_CORE_READY();
 
-    std::list<blobdata> verified_tx_blobs;
+    std::list<std::string> verified_tx_blobs;
     cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
     tx_verification_context tvc = AUTO_VAL_INIT(tvc);
 
     for (const auto& each : req.tx_blobs)
     {
-      std::string tx_blob;
-      if(!string_tools::parse_hexstr_to_binbuff(each, tx_blob))
-      {
-        LOG_PRINT_L0("[on_request_ntz_sig]: Failed to parse tx from hexbuff: " << each);
-        res.status = "Failed";
-        return false;
-      }
-
-      if(!m_core.handle_incoming_tx(tx_blob, tvc, false, false, true) || tvc.m_verifivation_failed)
+      if(!m_core.handle_incoming_tx(each, tvc, false, false, true) || tvc.m_verifivation_failed)
       {
         res.status = "Failed";
         res.reason = "";
@@ -1038,15 +1030,13 @@ namespace cryptonote
         if (tvc.m_verifivation_failed)
         {
           LOG_PRINT_L0("[on_request_ntz_sig]: tx verification failed" << punctuation << res.reason);
+          return false;
         }
         else
         {
-          LOG_PRINT_L0("[on_request_ntz_sig]: Failed to process tx" << punctuation << res.reason);
+          verified_tx_blobs.push_back(each);
         }
-        return false;
       }
-
-    verified_tx_blobs.push_back(each);
     }
 
     if (req.sigs_count < 13 && req.sigs_count > 0)
@@ -1062,20 +1052,21 @@ namespace cryptonote
         //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
       }
       res.status = CORE_RPC_STATUS_OK;
+      return true;
     }
-    else if(req.sigs_count >= 13)
+    else if (req.sigs_count >= 13)
     {
       NOTIFY_NEW_TRANSACTIONS::request r;
       r.txs = verified_tx_blobs;
       m_core.get_protocol()->relay_transactions(r, fake_context);
       res.status = CORE_RPC_STATUS_OK;
+      return true;
     }
     else
     {
       res.status = "Failed.";
       return false;
     }
-  return true;
   }
 //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_start_mining(const COMMAND_RPC_START_MINING::request& req, COMMAND_RPC_START_MINING::response& res)
