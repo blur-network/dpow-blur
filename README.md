@@ -3,11 +3,31 @@
 There are files in here from many different projects, including but not limited to XMR, BTC, BLUR, and KMD. Please retain proper licensing if you reuse any files, and be aware that this repo is under heavy development... So files will not yet be in their proper homes.
 
 # Contents:
+- <a href="https://github.com/blur-network/dpow-blur#deps">Dependencies</a>
 - <a href="https://github.com/blur-network/dpow-blur#create-wallet">Create a notary wallet</a>
 - <a href="https://github.com/blur-network/dpow-blur#start-wallet">Launching a notary wallet</a>
 - <a href="https://github.com/blur-network/dpow-blur#create-tx">Create a notarization tx</a>
 - <a href="https://github.com/blur-network/dpow-blur#relay-tx">Relaying a notarization tx</a>
 - <a href="https://github.com/blur-network/dpow-blur#rpc-calls">Other RPC calls</a>
+
+
+<h2 id="deps"> Dependencies </h2>
+
+Libhydrogen requires CMake 3.14+ to compile.  If your distribution does not include this in the package manager, you can download the latest release's source from here: <a href="https://github.com/Kitware/CMake/releases/download/v3.15.2/cmake-3.15.2.tar.gz">CMake 3.15.2 from Kitware's github</a>
+
+Once that is extracted from the archive, building and installing is as simple as `./configure && make && sudo make install`
+
+Ubuntu/Debian One-Liner:
+
+`sudo apt install build-essential cmake pkg-config libssl-dev libunwind-dev libevent-dev libsodium-dev binutils-dev libboost-all-dev`
+
+Arch Linux One-Liner: 
+
+`sudo pacman -S base-devel cmake boost openssl libsodium libunwind binutils-devel libevent`
+
+Fedora One-Liner: 
+
+`sudo dnf install cmake boost-devel openssl-devel sodium-devel libunwind-devel binutils-devel libevent-devel`
 
 <h2 id="create-wallet"> Creating a Notarization Wallet for Notarization Tx's on BLUR</h2>
 
@@ -34,7 +54,7 @@ Substitute the hexidecimal representation of your node's public key into the fie
 
 
 ```
-./blurd --testnet --offline
+./blurd --testnet
 ```
 
 
@@ -64,7 +84,7 @@ Your wallet should now be running.  Skip the `Starting the Notary Server Wallet`
 
 
 ```
-./blurd --testnet --offline
+./blurd --testnet
 ```
 
 
