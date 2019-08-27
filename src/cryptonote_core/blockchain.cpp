@@ -1480,7 +1480,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
   uint64_t nHeight = bei.height;
   crypto::hash hash = m_db->get_block_hash_from_height(nHeight);
 
-  if ( m_komodo_core->komodo_checkpoint(&notarized_height, nHeight, hash) < 0 )
+/*  if ( m_komodo_core->komodo_checkpoint(&notarized_height, nHeight, hash) < 0 )
   {
     if ( bei.height != 0 && m_db->get_block_hash_from_height(m_db->height()-1) == hash )
     {
@@ -1492,7 +1492,8 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       bvc.m_verifivation_failed = true;
       return false;
     }
-  } // else?
+  } */   // TODO: Removed until we can sort out the thread-related crash thats happening
+         // whenever mining is started with > 1 thread
 
     // Check the block's hash against the difficulty target for its alt chain
     difficulty_type current_diff = get_next_difficulty_for_alternative_chain(alt_chain, bei);
@@ -3275,7 +3276,7 @@ leave:
 #endif
   {
       proof_of_work = get_block_longhash(bl, m_db->height());
-
+/*
       int txn_count = 1;
       std::vector<crypto::hash> txhashes;
       std::vector<crypto::hash> merkle_vec;
@@ -3308,7 +3309,7 @@ leave:
     merkle.txid = 0;
     merkle = komodo::iguana_merkle(&merkle_bits, txn_count);
     MWARNING("bitcoinified merkle-ator txid: " << std::to_string(merkle_bits.txid));
-
+*/
 
     // validate proof_of_work versus difficulty target
     if(!check_hash(proof_of_work, current_diffic))
