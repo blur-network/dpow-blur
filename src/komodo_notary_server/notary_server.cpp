@@ -1017,7 +1017,7 @@ namespace tools
 
     for (const auto& pair : notaries_keys)
     {
-      MWARNING("Pair: " << epee::string_tools::pod_to_hex(pair.first) << " and " << epee::string_tools::pod_to_hex(pair.second));
+//      MWARNING("Pair: " << epee::string_tools::pod_to_hex(pair.first) << " and " << epee::string_tools::pod_to_hex(pair.second));
 
       const crypto::public_key view_pubkey = pair.first;
       const crypto::public_key spend_pubkey = pair.second;
