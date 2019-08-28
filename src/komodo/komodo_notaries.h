@@ -3,9 +3,8 @@
 
 #pragma once
 
-
-const char *Notaries_elected0[][2] =
-{
+  const char *Notaries_elected0[][2] =
+  {
     { "0_jl777_testA", "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828" },
     { "0_jl777_testB", "02ebfc784a4ba768aad88d44d1045d240d47b26e248cafaf1c5169a42d7a61d344" },
     { "0_kolo_testA", "0287aa4b73988ba26cf6565d815786caf0d2c4af704d7883d163ee89cd9977edec" },
@@ -70,14 +69,11 @@ const char *Notaries_elected0[][2] =
     { "xrobesx_NA", "03f0cc6d142d14a40937f12dbd99dbd9021328f45759e26f1877f2a838876709e1" },
     { "xxspot1_XX", "02ef445a392fcaf3ad4176a5da7f43580e8056594e003eba6559a713711a27f955" },
     { "xxspot2_XX", "03d85b221ea72ebcd25373e7961f4983d12add66a92f899deaf07bab1d8b6f5573" }
-};
+  };
 
-const char *Notaries_elected1[][4] =  /* we will need to add a BLUR address to each notary's info here,
-                                      /  as BTC pubkey will be reused already for viewkey generation.
-                                      /  alternatively, a public spendkey could be hardcoded instead.
-                                      */
-{
-    {"0dev1_jl777"       , "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828" , "RNJmgYaFF5DbnrNUX6pMYz9rcnDKC2tuAc" , "b64e7aa3efc49f7a4afeee075f61ec2e367114820f392e6970648f29c142f9ed"},
+  const char *Notaries_elected1[][4] =  /* need to add hardcoded BLUR spendkey pub */
+  {
+    {"0dev1_jl777"       , "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828" , "RNJmgYaFF5DbnrNUX6pMYz9rcnDKC2tuAc" , "8cf341ba0fdb3f8777c2195cbf2e38de2d85b912b33949bf3509bada4ad473cd"},
     {"0dev2_kolo"        , "030f34af4b908fb8eb2099accb56b8d157d49f6cfb691baa80fdd34f385efed961" , "RLj9h7zfnx4X9hvquR3sEwzHvcvF61W2Rc"},
     {"0dev3_kolo"        , "025af9d2b2a05338478159e9ac84543968fd18c45fd9307866b56f33898653b014" , "RTZi9uC1wEu3PD9eoL4R7KyeAse7uvdHuS"},
     {"0dev4_decker"      , "028eea44a09674dda00d88ffd199a09c9b75ba9782382cc8f1e97c0fd565fe5707" , "RDECKVXcWCgPpMrKqQmMX7PxzQVLCzcR5a"},
@@ -141,7 +137,6 @@ const char *Notaries_elected1[][4] =  /* we will need to add a BLUR address to e
     {"titomane_SH"       , "03573713c5b20c1e682a2e8c0f8437625b3530f278e705af9b6614de29277a435b" , "RAqoFL81YGFJ7hidAYUw2rzX8wjFKPCecP"},
     {"webworker01_NA"    , "03bb7d005e052779b1586f071834c5facbb83470094cff5112f0072b64989f97d7" , "RMbNsa4Nf3BAd16BQaAAmfzAgnuorUDrCr"},
     {"xrobesx_NA"        , "03f0cc6d142d14a40937f12dbd99dbd9021328f45759e26f1877f2a838876709e1" , "RLQoAcs1RaqW1xfN2NJwoZWW5twexPhuGB"},
-};
+  };
 
-
-#endif // KOMODO_NOTARIES_H
+#endif

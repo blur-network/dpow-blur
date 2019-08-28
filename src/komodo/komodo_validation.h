@@ -112,6 +112,8 @@ struct rmd160_vstate { uint64_t length; uint8_t buf[64]; uint32_t curlen, state[
 extern void ImportAddress(btc_wallet* const pwallet, const char* p2pkh_address, const std::string& strLabel, const char* pubkey_hex);
 extern int32_t komodo_importaddress(const char* addr);
 
+bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys);
+
 namespace cryptonote {
 
 namespace komodo {

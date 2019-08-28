@@ -150,6 +150,56 @@ int32_t komodo_importaddress(char* addr)
     return(-1);
 }
 
+  bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys)
+  {
+
+    std::vector<std::pair<std::string,std::string>> notaries_keys;
+
+    for (int i =0; i < 64; i++) {
+      std::pair<const char*,const char*> seed_and_pubkey_pair;
+      seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[0][3]);
+      // TODO: change above so that Notaries_elected[0][3] copies each
+      // row (i.e. [i][3]) once we have the table actually populated
+      MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[0][3]);
+      notaries_keys.push_back(seed_and_pubkey_pair);
+    }
+
+    for (int n = 0; n < 64; n++)
+    {
+      std::string viewkey_seed_oversize = notaries_keys[n].first;
+      std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 65);
+      MWARNING("viewkey_seed_str: " << viewkey_seed_str);
+      cryptonote::blobdata btc_pubkey_data;
+
+      if(!epee::string_tools::parse_hexstr_to_binbuff(viewkey_seed_str, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
+      {
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse btc_pubkey_data"));
+        return false;
+      }
+
+      const crypto::secret_key btc_pubkey_secret = *reinterpret_cast<const crypto::secret_key*>(btc_pubkey_data.data());
+      crypto::public_key view_pubkey;
+      crypto::secret_key view_seckey;
+      crypto::secret_key rngview = crypto::generate_keys(view_pubkey, view_seckey, btc_pubkey_secret, true);
+
+      std::string spendkey_pub_str = notaries_keys[n].second;
+      cryptonote::blobdata spendkey_pub_data;
+
+
+      if(!epee::string_tools::parse_hexstr_to_binbuff(spendkey_pub_str, spendkey_pub_data) || spendkey_pub_data.size() != sizeof(crypto::public_key))
+      {
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse hardcoded spend public key"));
+        return false;
+      }
+      const crypto::public_key public_spend_key = *reinterpret_cast<const crypto::public_key*>(spendkey_pub_data.data());
+      const crypto::public_key public_view_key = view_pubkey;
+      std::pair<const crypto::public_key, const crypto::public_key> pair = std::make_pair(public_view_key,public_spend_key);
+      notary_pubkeys.push_back(pair);
+    }
+    return true;
+  }
+
+
 
 
 namespace cryptonote {

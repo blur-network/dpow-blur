@@ -44,7 +44,7 @@ using namespace epee;
 #include "cryptonote_config.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_basic/account.h"
-#include "komodo/komodo_notaries.h"
+#include "komodo/komodo_validation.h"
 #include "multisig/multisig.h"
 #include "notary_server_commands_defs.h"
 #include "misc_language.h"
@@ -1002,45 +1002,25 @@ namespace tools
       return false;
     }
 
-    std::vector<std::pair<std::string,std::string>> notaries_keys;
+    std::vector<std::pair<crypto::public_key, crypto::public_key>> notaries_keys;
+    bool r = false;
+    r = get_notary_pubkeys(notaries_keys);
 
-    for (int i =0; i < 64; i++) {
-      std::pair<const char*,const char*> seed_and_pubkey_pair;
-      seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[0][3]);
-      // TODO: change above so that Notaries_elected[0][3] copies each
-      // row (i.e. [i][3]) once we have the table actually populated
-      MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[0][3]);
-      notaries_keys.push_back(seed_and_pubkey_pair);
+    if (!r)
+    {
+      er.code = NOTARY_RPC_ERROR_CODE_DENIED;
+      er.message = "Couldn't fetch notary pubkeys";
+      return false;
     }
 
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
 
-    for (int n = 0; n < 64; n++)
+    for (const auto& pair : notaries_keys)
     {
-      std::string viewkey_seed_oversize = notaries_keys[n].first;
-      std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 65);
-      MWARNING("viewkey_seed_str: " << viewkey_seed_str);
-      cryptonote::blobdata btc_pubkey_data;
+      MWARNING("Pair: " << epee::string_tools::pod_to_hex(pair.first) << " and " << epee::string_tools::pod_to_hex(pair.second));
 
-      if(!epee::string_tools::parse_hexstr_to_binbuff(viewkey_seed_str, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
-      {
-       	THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse btc_pubkey_data"));
-      }
-
-      const crypto::secret_key btc_pubkey_secret = *reinterpret_cast<const crypto::secret_key*>(btc_pubkey_data.data());
-      crypto::public_key view_pubkey;
-      crypto::secret_key view_seckey;
-      crypto::secret_key rngview = crypto::generate_keys(view_pubkey, view_seckey, btc_pubkey_secret, true);
-
-      std::string spendkey_pub_str = notaries_keys[n].second;
-      cryptonote::blobdata spendkey_pub_data;
-
-      if(!epee::string_tools::parse_hexstr_to_binbuff(spendkey_pub_str, spendkey_pub_data) || spendkey_pub_data.size() != sizeof(crypto::public_key))
-      {
-       	THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse hardcoded spend public key"));
-      }
-      const crypto::public_key spend_pubkey = *reinterpret_cast<const crypto::public_key*>(spendkey_pub_data.data());
-
+      const crypto::public_key view_pubkey = pair.first;
+      const crypto::public_key spend_pubkey = pair.second;
       cryptonote::account_public_address address;
       address.m_view_public_key = view_pubkey;
       address.m_spend_public_key = spend_pubkey;
@@ -1082,7 +1062,7 @@ namespace tools
 
     try
     {
-      uint64_t mixin = m_wallet->adjust_mixin(5);
+      uint64_t mixin = m_wallet->adjust_mixin(0);
 
       uint32_t priority = m_wallet->adjust_priority(3);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height() + 10;
