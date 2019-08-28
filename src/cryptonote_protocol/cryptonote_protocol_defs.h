@@ -290,12 +290,12 @@ namespace cryptonote
 
     struct request
     {
-      int sigs_count;
+      int sig_count;
       std::list<blobdata> tx_blobs;
       std::string payment_id;
 
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(sigs_count)
+        KV_SERIALIZE(sig_count)
         KV_SERIALIZE(tx_blobs)
         KV_SERIALIZE(payment_id)
       END_KV_SERIALIZE_MAP()
@@ -304,18 +304,21 @@ namespace cryptonote
   /************************************************************************/
   /*                                                                      */
   /************************************************************************/
-  struct NOTIFY_NEW_NOTARIZATION
+  struct NOTIFY_RESPONSE_NTZ_SIG
   {
     const static int ID = BC_COMMANDS_POOL_BASE + 11;
 
     struct request
     {
-      std::list<blobdata> txs;
+      int sig_count;
+      std::list<blobdata> tx_blobs;
+      std::string payment_id;
 
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(txs)
+        KV_SERIALIZE(sig_count)
+        KV_SERIALIZE(tx_blobs)
+        KV_SERIALIZE(payment_id)
       END_KV_SERIALIZE_MAP()
     };
   };
-
 }

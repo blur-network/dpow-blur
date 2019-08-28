@@ -839,7 +839,8 @@ namespace cryptonote
   template<class t_core>
   int t_cryptonote_protocol_handler<t_core>::handle_request_ntz_sig(int command, NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& context)
   {
-    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sigs_count) << ", tx blob count: " << arg.tx_blobs.size() << ", payment id: " << arg.payment_id);
+    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", tx blob count: " << arg.tx_blobs.size() << ", payment id: " << arg.payment_id);
+
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;
     // while syncing, core will lock for a long time, so we ignore
@@ -850,13 +851,13 @@ namespace cryptonote
       LOG_DEBUG_CC(context, "Received new tx while syncing, ignored");
       return 1;
     }
-
+    NOTIFY_REQUEST_NTZ_SIG::request ag;
     cryptonote::tx_verification_context tvc = AUTO_VAL_INIT(tvc);
     std::list<cryptonote::blobdata> tx_blobs;
-    NOTIFY_REQUEST_NTZ_SIG::request ag;
     for (const auto& tx : arg.tx_blobs)
     {
-      m_core.handle_incoming_tx(tx, tvc, false, true, false);
+      const int s_count = arg.sig_count;
+      m_core.handle_incoming_ntz_sig(tx, tvc, false, true, false, s_count);
       if(tvc.m_verifivation_failed)
       {
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
@@ -865,7 +866,10 @@ namespace cryptonote
       }
       tx_blobs.push_back(tx);
     }
+
     ag.tx_blobs = tx_blobs;
+    ag.sig_count = arg.sig_count;
+    ag.payment_id = arg.payment_id;
     relay_request_ntz_sig(ag, context);
 
    return 1;
@@ -1770,7 +1774,7 @@ skip:
   bool t_cryptonote_protocol_handler<t_core>::relay_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context)
   {
     // no check for success, so tell core they're relayed unconditionally
-    if (arg.sigs_count >= 13) {
+    if (arg.sig_count >= 13) {
       NOTIFY_NEW_TRANSACTIONS::request r;
       for(const auto& tx : arg.tx_blobs)
       {
@@ -1779,7 +1783,13 @@ skip:
       }
       return relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(r, exclude_context);
     }
-    return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(arg, exclude_context);
+    else if (arg.sig_count > 0 && arg.sig_count < 13) {
+      return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(arg, exclude_context);
+    }
+    else {
+      MERROR("Could not relay_request_ntz_sig!  Sig count must be within range of 0-13");
+      return false;
+    }
   }
 //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>

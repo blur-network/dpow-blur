@@ -651,7 +651,7 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig_post(const blobdata& tx_blob, tx_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay)
+  bool core::handle_incoming_ntz_sig_post(const blobdata& tx_blob, tx_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
   {
     // resolve outPk references in rct txes
     // outPk aren't the only thing that need resolving for a fully resolved tx,
@@ -841,7 +841,7 @@ namespace cryptonote
           m_threadpool.submit(&waiter, [&, i, it] {
             try
             {
-              results[i].res = handle_incoming_ntz_sig_post(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay);
+              results[i].res = handle_incoming_ntz_sig_post(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count);
             }
             catch (const std::exception &e)
             {
@@ -880,6 +880,16 @@ namespace cryptonote
     return ok;
 
     CATCH_ENTRY_L0("core::handle_incoming_ntz_sig()", false);
+  }
+  //-----------------------------------------------------------------------------------------------
+  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, tx_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
+  {
+    std::list<cryptonote::blobdata> tx_blobs;
+    tx_blobs.push_back(tx_blob);
+    std::vector<tx_verification_context> tvcv(1);
+    bool r = handle_incoming_ntz_sig(tx_blobs, tvcv, keeped_by_block, relayed, do_not_relay, sig_count);
+    tvc = tvcv[0];
+    return r;
   }
   //-----------------------------------------------------------------------------------------------
   bool core::get_stat_info(core_stat_info& st_inf) const

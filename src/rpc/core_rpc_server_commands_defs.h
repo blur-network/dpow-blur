@@ -967,12 +967,12 @@ namespace cryptonote
   {
     struct request
     {
-      int sigs_count;
+      int sig_count;
       std::list<blobdata> tx_blobs;
       std::string payment_id;
 
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(sigs_count)
+        KV_SERIALIZE(sig_count)
         KV_SERIALIZE(tx_blobs)
         KV_SERIALIZE(payment_id)
       END_KV_SERIALIZE_MAP()

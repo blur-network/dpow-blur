@@ -1008,7 +1008,7 @@ namespace cryptonote
     }
     cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
     std::vector<tx_verification_context> tvc = AUTO_VAL_INIT(tvc);
-    const int sig_count = req.sigs_count;
+    const int sig_count = req.sig_count;
 
     if(!m_core.handle_incoming_ntz_sig(req.tx_blobs, tvc, false, false, true, sig_count))
     {
@@ -1045,22 +1045,22 @@ namespace cryptonote
       }
     }
 
-    if (req.sigs_count < 13 && req.sigs_count > 0)
+    if (req.sig_count < 13 && req.sig_count > 0)
     {
       NOTIFY_REQUEST_NTZ_SIG::request r;
       r.tx_blobs = verified_tx_blobs;
-      r.sigs_count = req.sigs_count;
+      r.sig_count = req.sig_count;
       r.payment_id = req.payment_id;
       m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
       for (const auto& each : r.tx_blobs)
       {
-        MWARNING("request ntz sig sent with tx blob(s): " << each << ", sigs count: " << std::to_string(r.sigs_count) << ", and payment id: " << req.payment_id);
+        MWARNING("request ntz sig sent with tx blob(s): " << each << ", sigs count: " << std::to_string(r.sig_count) << ", and payment id: " << req.payment_id);
         //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
       }
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }
-    else if (req.sigs_count >= 13)
+    else if (req.sig_count >= 13)
     {
       NOTIFY_NEW_TRANSACTIONS::request r;
       r.txs = verified_tx_blobs;
