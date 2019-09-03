@@ -62,7 +62,11 @@ namespace cryptonote
 
   //-----------------------------------------------------------------------------------------------------------------------
   template<class t_core>
-    t_cryptonote_protocol_handler<t_core>::t_cryptonote_protocol_handler(t_core& rcore, nodetool::i_p2p_endpoint<connection_context>* p_net_layout, bool offline):m_core(rcore),
+    t_cryptonote_protocol_handler<t_core>::t_cryptonote_protocol_handler(
+       t_core& rcore,
+       nodetool::i_p2p_endpoint<connection_context>* p_net_layout,
+       bool offline):
+       m_core(rcore),
                                                                                                               m_p2p(p_net_layout),
                                                                                                               m_syncronized_connections_count(0),
                                                                                                               m_synchronized(offline),
@@ -162,7 +166,7 @@ namespace cryptonote
         << std::setw(10) << std::fixed << (connection_time == 0 ? 0.0 : cntxt.m_send_cnt / connection_time / 1024)
         << std::setw(13) << std::fixed << cntxt.m_current_speed_up / 1024
         << (local_ip ? "[LAN]" : "")
-        << std::left << (cntxt.m_remote_address.is_loopback() ? "[LOCALHOST]" : "") // 127.0.0.1
+        << std::left << (cntxt.m_remote_address.is_loopback() ? "[LOCALHOST]" : "")  /*127.0.0.1*/
         << ENDL;
 
       if (connection_time > 1)
@@ -852,7 +856,7 @@ namespace cryptonote
       return 1;
     }
     NOTIFY_REQUEST_NTZ_SIG::request ag;
-    cryptonote::tx_verification_context tvc = AUTO_VAL_INIT(tvc);
+    cryptonote::ntz_req_verification_context tvc;
     std::list<cryptonote::blobdata> tx_blobs;
     for (const auto& tx : arg.tx_blobs)
     {

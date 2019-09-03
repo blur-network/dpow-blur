@@ -176,9 +176,9 @@ namespace cryptonote
 
      bool handle_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, NOTIFY_RESPONSE_GET_OBJECTS::request& rsp, cryptonote_connection_context& context);
 
-     bool handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<tx_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count);
+     std::vector<bool> handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<ntz_req_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count);
 
-     bool handle_incoming_ntz_sig(const blobdata& tx_blob, tx_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count);
+     bool handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count);
 
      /**
       * @brief get the cryptonote protocol instance
@@ -784,6 +784,18 @@ namespace cryptonote
      bool add_new_tx(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, tx_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay);
 
      /**
+      * @copydoc add_new_tx(transaction&, tx_verification_context&, bool)
+      *
+      * @param tx_hash the transaction's hash
+      * @param tx_prefix_hash the transaction prefix' hash
+      * @param blob_size the size of the transaction
+      * @param relayed whether or not the transaction was relayed to us
+      * @param do_not_relay whether to prevent the transaction from being relayed
+      *
+      */
+     bool add_new_tx(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay);
+
+     /**
       * @brief add a new transaction to the transaction pool
       *
       * Adds a new transaction to the transaction pool.
@@ -799,6 +811,23 @@ namespace cryptonote
       * to the transaction pool
       */
      bool add_new_tx(transaction& tx, tx_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay);
+
+     /**
+      * @brief add a new transaction to the transaction pool
+      *
+      * Adds a new transaction to the transaction pool.
+      *
+      * @param tx the transaction to add
+      * @param tvc return-by-reference metadata about the transaction's verification process
+      * @param keeped_by_block whether or not the transaction has been in a block
+      * @param relayed whether or not the transaction was relayed to us
+      * @param do_not_relay whether to prevent the transaction from being relayed
+      *
+      * @return true if the transaction is already in the transaction pool,
+      * is already in a block on the Blockchain, or is successfully added
+      * to the transaction pool
+      */
+     bool add_new_tx(transaction& tx, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay);
 
      /**
       * @copydoc Blockchain::add_new_block
@@ -855,7 +884,8 @@ namespace cryptonote
 
      bool handle_incoming_tx_pre(const blobdata& tx_blob, tx_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay);
      bool handle_incoming_tx_post(const blobdata& tx_blob, tx_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay);
-     bool handle_incoming_ntz_sig_post(const blobdata& tx_blob, tx_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count);
+     bool handle_incoming_ntz_sig_post(const blobdata& tx_blob, ntz_req_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count);
+     bool handle_incoming_ntz_sig_pre(const blobdata& tx_blob, ntz_req_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count);
 
      /**
       * @copydoc miner::on_block_chain_update

@@ -225,14 +225,16 @@ namespace cryptonote
         }
         tvc.m_verifivation_impossible = true;
         tvc.m_added_to_pool = true;
-      }else
+      }
+      else
       {
         LOG_PRINT_L1("tx used wrong inputs, rejected");
         tvc.m_verifivation_failed = true;
         tvc.m_invalid_input = true;
         return false;
       }
-    }else
+    }
+    else
     {
       //update transactions container
       meta.blob_size = blob_size;
@@ -274,6 +276,134 @@ namespace cryptonote
     m_txpool_size += blob_size;
 
     MINFO("Transaction added to pool: txid " << id << " bytes: " << blob_size << " fee/byte: " << (fee / (double)blob_size));
+
+    prune(m_txpool_max_size);
+
+    return true;
+  }
+  //---------------------------------------------------------------------------------
+  bool tx_memory_pool::add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count )
+  {
+    // this should already be called with that lock, but let's make it explicit for clarity
+    CRITICAL_REGION_LOCAL(m_transactions_lock);
+
+    if (tx.version == 0)
+    {
+      // v0 never accepted
+      LOG_PRINT_L1("transaction version 0 is invalid");
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+
+    // we do not accept transactions that timed out before
+    if (m_timed_out_transactions.find(id) != m_timed_out_transactions.end())
+    {
+      // not clear if we should set that, since verifivation (sic) did not fail before, since
+      // the tx was accepted before timing out.
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+
+    if(!check_inputs_types_supported(tx))
+    {
+      tvc.m_verifivation_failed = true;
+      tvc.m_invalid_input = true;
+      return false;
+    }
+
+    // fee per kilobyte, size rounded up.
+    uint64_t fee = tx.rct_signatures.txnFee;
+
+    if (!m_blockchain.check_fee(blob_size, fee))
+    {
+      tvc.m_verifivation_failed = true;
+      tvc.m_fee_too_low = true;
+      return false;
+    }
+
+    size_t tx_size_limit = get_transaction_size_limit(version);
+    if (blob_size > tx_size_limit)
+    {
+      LOG_PRINT_L1("transaction is too big: " << blob_size << " bytes, maximum size: " << tx_size_limit);
+      tvc.m_verifivation_failed = true;
+      tvc.m_too_big = true;
+      return false;
+    }
+
+    if(have_tx_keyimges_as_spent(tx))
+    {
+      mark_double_spend(tx);
+      LOG_PRINT_L1("Transaction with id= "<< id << " used already spent key images");
+      tvc.m_verifivation_failed = true;
+      tvc.m_double_spend = true;
+      return false;
+    }
+
+/*    if (!m_blockchain.check_tx_outputs(tx, tvc))
+    {
+      LOG_PRINT_L1("Transaction with id= "<< id << " has at least one invalid output");
+      tvc.m_verifivation_failed = true;
+      tvc.m_invalid_output = true;
+      return false;
+    } */
+
+    // assume failure during verification steps until success is certain
+    tvc.m_verifivation_failed = true;
+
+    time_t receive_time = time(nullptr);
+
+    crypto::hash max_used_block_id = null_hash;
+    uint64_t max_used_block_height = 0;
+    cryptonote::txpool_tx_meta_t meta;
+/*    bool ch_inp_res = m_blockchain.check_tx_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
+    if(!ch_inp_res)
+    {
+        LOG_PRINT_L1("tx used wrong inputs, rejected");
+        tvc.m_verifivation_failed = true;
+        tvc.m_invalid_input = true;
+        return false;
+    }*/
+    if (tvc.m_sig_count == 13)
+    {
+      //update transactions container
+      meta.blob_size = blob_size;
+      meta.kept_by_block = kept_by_block;
+      meta.fee = fee;
+      meta.max_used_block_id = max_used_block_id;
+      meta.max_used_block_height = max_used_block_height;
+      meta.last_failed_height = 0;
+      meta.last_failed_id = null_hash;
+      meta.receive_time = receive_time;
+      meta.last_relayed_time = time(NULL);
+      meta.relayed = relayed;
+      meta.do_not_relay = do_not_relay;
+      meta.double_spend_seen = false;
+      memset(meta.padding, 0, sizeof(meta.padding));
+
+     
+        try
+        {
+          CRITICAL_REGION_LOCAL1(m_blockchain);
+          LockedTXN lock(m_blockchain);
+          m_blockchain.remove_txpool_tx(get_transaction_hash(tx));
+          m_blockchain.add_txpool_tx(tx, meta);
+          if (!insert_key_images(tx, kept_by_block))
+            return false;
+          m_txs_by_fee_and_receive_time.emplace(std::pair<double, std::time_t>(fee / (double)blob_size, receive_time), id);
+        }
+        catch (const std::exception &e)
+        {
+          MERROR("internal error: transaction already exists at inserting in ntz pool: " << e.what());
+          return false;
+        }
+        tvc.m_added_to_pool = true;
+        tvc.m_should_be_relayed = false;    
+      }
+
+    tvc.m_verifivation_failed = false;
+    m_txpool_size += blob_size;
+
+    MINFO("Notarization request added to pool: txid " << id << " bytes: " << blob_size << " fee/byte: " << (fee / (double)blob_size));
 
     prune(m_txpool_max_size);
 
@@ -580,6 +710,36 @@ namespace cryptonote
         MERROR("Failed to update txpool transaction metadata: " << e.what());
         // continue
       }
+    }
+  }
+  //---------------------------------------------------------------------------------
+  void tx_memory_pool::req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata> &tx, int const& sig_count)
+  {
+    CRITICAL_REGION_LOCAL(m_transactions_lock);
+    CRITICAL_REGION_LOCAL1(m_blockchain);
+    const time_t now = time(NULL);
+    LockedTXN lock(m_blockchain);
+    if (sig_count == 13)
+    {
+      try
+      {
+        txpool_tx_meta_t meta;
+        if (m_blockchain.get_txpool_tx_meta(tx.first, meta))
+        {
+          meta.relayed = true;
+          meta.last_relayed_time = now;
+          m_blockchain.update_txpool_tx(tx.first, meta);
+        }
+      }
+      catch (const std::exception &e)
+      {
+        MERROR("Failed to update ntzpool transaction metadata: " << e.what());
+        // continue
+      }
+    }
+    else if ((sig_count > 0) && (sig_count < 13))
+    {
+      // ignore
     }
   }
   //---------------------------------------------------------------------------------

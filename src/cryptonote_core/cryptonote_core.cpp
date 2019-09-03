@@ -651,7 +651,56 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig_post(const blobdata& tx_blob, tx_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
+  bool core::handle_incoming_ntz_sig_pre(const blobdata& tx_blob, ntz_req_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count)
+  {
+    tvc = boost::value_initialized<ntz_req_verification_context>();
+
+    if(tx_blob.size() > get_max_tx_size())
+    {
+      LOG_PRINT_L1("WRONG TRANSACTION BLOB, too big size " << tx_blob.size() << ", rejected");
+      tvc.m_verifivation_failed = true;
+      tvc.m_too_big = true;
+      return false;
+    }
+
+    tx_hash = crypto::null_hash;
+    tx_prefixt_hash = crypto::null_hash;
+
+    if(!parse_tx_from_blob(tx, tx_hash, tx_prefixt_hash, tx_blob))
+    {
+      LOG_PRINT_L1("WRONG TRANSACTION BLOB, Failed to parse, rejected");
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+    //std::cout << "!"<< tx.vin.size() << std::endl;
+
+    bad_semantics_txes_lock.lock();
+    for (int idx = 0; idx < 2; ++idx)
+    {
+      if (bad_semantics_txes[idx].find(tx_hash) != bad_semantics_txes[idx].end())
+      {
+        bad_semantics_txes_lock.unlock();
+        LOG_PRINT_L1("Transaction already seen with bad semantics, rejected");
+        tvc.m_verifivation_failed = true;
+        return false;
+      }
+    }
+    bad_semantics_txes_lock.unlock();
+
+    // TODO-TK: need to consider tx versioning standard.
+    const size_t max_tx_version = CURRENT_TRANSACTION_VERSION;
+    uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
+    if (tx.version == 0 || tx.version > max_tx_version)
+    {
+      // v2 is the latest one we know
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+
+    return true;
+  }
+  //-----------------------------------------------------------------------------------------------
+  bool core::handle_incoming_ntz_sig_post(const blobdata& tx_blob, ntz_req_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
   {
     // resolve outPk references in rct txes
     // outPk aren't the only thing that need resolving for a fully resolved tx,
@@ -795,9 +844,8 @@ namespace cryptonote
     return r;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<tx_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
+  std::vector<bool> core::handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<ntz_req_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
   {
-    TRY_ENTRY();
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
 
     struct result { bool res; cryptonote::transaction tx; crypto::hash hash; crypto::hash prefix_hash; bool in_txpool; bool in_blockchain; };
@@ -810,7 +858,7 @@ namespace cryptonote
       m_threadpool.submit(&waiter, [&, i, it] {
         try
         {
-          results[i].res = handle_incoming_tx_pre(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay);
+          results[i].res = handle_incoming_ntz_sig_pre(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, tvc[i].m_sig_count);
         }
         catch (const std::exception &e)
         {
@@ -841,7 +889,7 @@ namespace cryptonote
           m_threadpool.submit(&waiter, [&, i, it] {
             try
             {
-              results[i].res = handle_incoming_ntz_sig_post(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count);
+              results[i].res = handle_incoming_ntz_sig_post(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, tvc[i].m_sig_count);
             }
             catch (const std::exception &e)
             {
@@ -854,12 +902,13 @@ namespace cryptonote
     }
     waiter.wait();
 
-    bool ok = true;
+    std::vector<bool> oks;
     it = tx_blobs.begin();
     for (size_t i = 0; i < tx_blobs.size(); i++, ++it) {
-
+      bool ok = true;
       if (!results[i].res) {
         ok = false;
+        oks.push_back(ok);
         continue; }
 
       if (keeped_by_block) {
@@ -867,29 +916,33 @@ namespace cryptonote
 
       if (already_have[i]) {
         continue; }
-      if (sig_count >= 13) {
+
         ok &= add_new_tx(results[i].tx, results[i].hash, results[i].prefix_hash, it->size(), tvc[i], keeped_by_block, relayed, do_not_relay);
+        oks.push_back(ok);
         if(tvc[i].m_verifivation_failed)
         {MERROR_VER("Transaction verification failed: " << results[i].hash);}
         else if(tvc[i].m_verifivation_impossible)
         {MERROR_VER("Transaction verification impossible: " << results[i].hash);}
         if(tvc[i].m_added_to_pool)
           MDEBUG("tx added: " << results[i].hash);
-      }
     }
-    return ok;
-
-    CATCH_ENTRY_L0("core::handle_incoming_ntz_sig()", false);
+    return oks;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, tx_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
+  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
   {
     std::list<cryptonote::blobdata> tx_blobs;
     tx_blobs.push_back(tx_blob);
-    std::vector<tx_verification_context> tvcv(1);
-    bool r = handle_incoming_ntz_sig(tx_blobs, tvcv, keeped_by_block, relayed, do_not_relay, sig_count);
+    std::vector<ntz_req_verification_context> tvcv(1);
+    std::vector<bool> rs = handle_incoming_ntz_sig(tx_blobs, tvcv, keeped_by_block, relayed, do_not_relay, sig_count);
+    bool r = false;
+    for (const auto& each : rs)
+    {
+      if (each == false)
+        return false;
+    }
     tvc = tvcv[0];
-    return r;
+    return true;
   }
   //-----------------------------------------------------------------------------------------------
   bool core::get_stat_info(core_stat_info& st_inf) const
@@ -1122,6 +1175,57 @@ namespace cryptonote
 
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
     return m_mempool.add_tx(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version);
+  }
+  //-----------------------------------------------------------------------------------------------
+  bool core::add_new_tx(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay)
+  {
+    if(m_mempool.have_tx(tx_hash))
+    {
+      LOG_PRINT_L2("tx " << tx_hash << "already have transaction in tx_pool");
+      return true;
+    }
+
+    if(tvc.m_sig_count < 13)
+    {
+      LOG_PRINT_L2("tx " << tx_hash << "not ready to be sent yet, sig count: " << std::to_string(tvc.m_sig_count));
+      return false;
+    }
+
+    if (tvc.m_sig_count == 13)
+    {
+      tx_verification_context txvc = AUTO_VAL_INIT(txvc);
+      txvc.m_should_be_relayed = tvc.m_should_be_relayed;;
+      txvc.m_verifivation_failed = tvc.m_verifivation_failed;
+      txvc.m_verifivation_impossible = tvc.m_verifivation_impossible;
+      txvc.m_added_to_pool = tvc.m_added_to_pool;
+      txvc.m_low_mixin = tvc.m_low_mixin;
+      txvc.m_double_spend = tvc.m_double_spend;
+      txvc.m_invalid_input = tvc.m_invalid_input;
+      txvc.m_invalid_output = tvc.m_invalid_output;
+      txvc.m_too_big = tvc.m_too_big;
+      txvc.m_overspend = tvc.m_overspend;
+      txvc.m_fee_too_low = tvc.m_fee_too_low;
+      txvc.m_not_rct = tvc.m_not_rct;
+
+      if(m_blockchain_storage.have_tx(tx_hash))
+      {
+        LOG_PRINT_L2("tx " << tx_hash << " already have transaction in blockchain");
+        return true;
+      }
+    
+      uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
+      return m_mempool.add_tx(tx, tx_hash, blob_size, txvc, keeped_by_block, relayed, do_not_relay, version);
+    }
+
+    if(m_blockchain_storage.have_tx(tx_hash))
+    {
+      LOG_PRINT_L2("tx " << tx_hash << " already have transaction in blockchain");
+      return true;
+    }
+    
+    uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
+    return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, tvc.m_sig_count);
+
   }
   //-----------------------------------------------------------------------------------------------
   bool core::relay_txpool_transactions()

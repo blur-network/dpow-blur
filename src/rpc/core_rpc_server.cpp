@@ -1007,13 +1007,14 @@ namespace cryptonote
       unverified_blobs.push_back(each);
     }
     cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
-    std::vector<tx_verification_context> tvc = AUTO_VAL_INIT(tvc);
+    std::vector<ntz_req_verification_context> tvc = AUTO_VAL_INIT(tvc);
     const int sig_count = req.sig_count;
 
-    if(!m_core.handle_incoming_ntz_sig(req.tx_blobs, tvc, false, false, true, sig_count))
+    std::vector<bool> rs = m_core.handle_incoming_ntz_sig(req.tx_blobs, tvc, false, false, true, sig_count);
+    for (uint32_t i = 0; i <= req.tx_blobs.size(); i++)
     {
-      for (uint32_t i = 0; i <= req.tx_blobs.size(); i++)
-      {
+      if (rs[i] == false)
+      {    
         res.status = "Failed";
         res.reason = "";
         if ((res.low_mixin = tvc[i].m_low_mixin))

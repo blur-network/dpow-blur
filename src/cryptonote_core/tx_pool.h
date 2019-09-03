@@ -109,6 +109,8 @@ namespace cryptonote
      */
     bool add_tx(transaction &tx, const crypto::hash &id, size_t blob_size, tx_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version);
 
+    bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count );
+
     /**
      * @brief add a transaction to the transaction pool
      *
@@ -332,6 +334,14 @@ namespace cryptonote
      * @param txs the list of transactions (and their hashes)
      */
     void set_relayed(const std::list<std::pair<crypto::hash, cryptonote::blobdata>>& txs);
+
+    /**
+     * @brief tell the pool that a pending notarization txn was just updated with new signatures
+     *
+     * @param tx pair of hash, blob
+     * @param sig_count signature count for the tx
+     */
+    void req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata>& tx, int const& sig_count);
 
     /**
      * @brief get the total number of transactions in the pool
