@@ -157,9 +157,7 @@ int32_t komodo_importaddress(char* addr)
 
     for (int i =0; i < 64; i++) {
       std::pair<const char*,const char*> seed_and_pubkey_pair;
-      seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[0][3]);
-      // TODO: change above so that Notaries_elected[0][3] copies each
-      // row (i.e. [i][3]) once we have the table actually populated
+      seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[i][3]);
  //     MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[0][3]);
       notaries_keys.push_back(seed_and_pubkey_pair);
     }

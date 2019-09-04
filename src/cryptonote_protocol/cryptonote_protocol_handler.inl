@@ -856,7 +856,7 @@ namespace cryptonote
       return 1;
     }
     NOTIFY_REQUEST_NTZ_SIG::request ag;
-    cryptonote::ntz_req_verification_context tvc;
+    cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
     std::list<cryptonote::blobdata> tx_blobs;
     for (const auto& tx : arg.tx_blobs)
     {

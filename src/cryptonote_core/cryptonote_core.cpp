@@ -1212,7 +1212,7 @@ namespace cryptonote
         LOG_PRINT_L2("tx " << tx_hash << " already have transaction in blockchain");
         return true;
       }
-    
+
       uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
       return m_mempool.add_tx(tx, tx_hash, blob_size, txvc, keeped_by_block, relayed, do_not_relay, version);
     }
@@ -1222,7 +1222,7 @@ namespace cryptonote
       LOG_PRINT_L2("tx " << tx_hash << " already have transaction in blockchain");
       return true;
     }
-    
+
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
     return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, tvc.m_sig_count);
 

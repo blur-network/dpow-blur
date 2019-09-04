@@ -2495,6 +2495,52 @@ bool Blockchain::check_tx_outputs(const transaction& tx, tx_verification_context
   return true;
 }
 //------------------------------------------------------------------
+bool Blockchain::check_ntz_req_outputs(const transaction& tx, ntz_req_verification_context &tvc)
+{
+  LOG_PRINT_L3("Blockchain::" << __func__);
+  CRITICAL_REGION_LOCAL(m_blockchain_lock);
+
+  const uint8_t hf_version = m_hardfork->get_current_version();
+
+  // all outputs must have 0 amount (in if-true clauses for easier merges)
+  if (hf_version >= 1) {
+    if (tx.version >= 1) {
+      for (auto &o: tx.vout) {
+        if (o.amount != 0) {
+          tvc.m_invalid_output = true;
+          return false;
+        }
+      }
+    }
+  }
+
+  // forbid invalid pubkeys
+  if (hf_version >= 1) {
+    for (const auto &o: tx.vout) {
+      if (o.target.type() == typeid(txout_to_key)) {
+        const txout_to_key& out_to_key = boost::get<txout_to_key>(o.target);
+        if (!crypto::check_key(out_to_key.key)) {
+          tvc.m_invalid_output = true;
+          return false;
+        }
+      }
+    }
+  }
+
+  // from, allow bulletproofs
+  if (hf_version < 7) {
+    const bool bulletproof = tx.rct_signatures.type == rct::RCTTypeFullBulletproof || tx.rct_signatures.type == rct::RCTTypeSimpleBulletproof;
+    if (bulletproof || !tx.rct_signatures.p.bulletproofs.empty())
+    {
+      MERROR("Bulletproofs are not allowed before v7");
+      tvc.m_invalid_output = true;
+      return false;
+    }
+  }
+
+  return true;
+}
+//------------------------------------------------------------------
 bool Blockchain::have_tx_keyimges_as_spent(const transaction &tx) const
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
@@ -2582,6 +2628,264 @@ bool Blockchain::expand_transaction_2(transaction &tx, const crypto::hash &tx_pr
 //        to iterate the inputs as necessary (splitting the task
 //        using threads, etc.)
 bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, uint64_t* pmax_used_block_height)
+{
+  PERF_TIMER(check_tx_inputs);
+  LOG_PRINT_L3("Blockchain::" << __func__);
+  size_t sig_index = 0;
+  if(pmax_used_block_height)
+    *pmax_used_block_height = 0;
+
+  crypto::hash tx_prefix_hash = get_transaction_prefix_hash(tx);
+
+  const uint8_t hf_version = m_hardfork->get_current_version();
+
+  // from hard fork 2, we require mixin at least 2 unless one output cannot mix with 2 others
+  // if one output cannot mix with 2 others, we accept at most 1 output that can mix
+  if (hf_version >= 1)
+  {
+    for (const auto& txin : tx.vin)
+    {
+      if (boost::get<txin_to_key>(txin).key_offsets.size() != DEFAULT_RINGSIZE)
+      {
+        MERROR_VER("Tx " << get_transaction_hash(tx) << " must have ring size (" << DEFAULT_RINGSIZE << ")");
+        tvc.m_low_mixin = true;
+        return false;
+      }
+    }
+
+    // min/max tx version based on HF, and we accept v1 txes if having a non mixable
+    const size_t max_tx_version = 1;
+    if (tx.version > max_tx_version && hf_version >= 5)
+    {
+      MERROR_VER("transaction version " << (unsigned)tx.version << " is higher than max accepted version " << max_tx_version);
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+    const size_t min_tx_version = 1;
+    if (tx.version < min_tx_version && hf_version >= 5)
+    {
+      MERROR_VER("transaction version " << (unsigned)tx.version << " is lower than min accepted version " << min_tx_version);
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+  }
+
+  // from v5, sorted ins
+  if (hf_version >= 5) {
+    const crypto::key_image *last_key_image = NULL;
+    for (size_t n = 0; n < tx.vin.size(); ++n)
+    {
+      const txin_v &txin = tx.vin[n];
+      if (txin.type() == typeid(txin_to_key))
+      {
+        const txin_to_key& in_to_key = boost::get<txin_to_key>(txin);
+        if (last_key_image && memcmp(&in_to_key.k_image, last_key_image, sizeof(*last_key_image)) >= 0)
+        {
+          MERROR_VER("transaction has unsorted inputs");
+          tvc.m_verifivation_failed = true;
+          return false;
+        }
+        last_key_image = &in_to_key.k_image;
+      }
+    }
+  }
+  auto it = m_check_txin_table.find(tx_prefix_hash);
+  if(it == m_check_txin_table.end())
+  {
+    m_check_txin_table.emplace(tx_prefix_hash, std::unordered_map<crypto::key_image, bool>());
+    it = m_check_txin_table.find(tx_prefix_hash);
+    assert(it != m_check_txin_table.end());
+  }
+
+  std::vector<std::vector<rct::ctkey>> pubkeys(tx.vin.size());
+  std::vector < uint64_t > results;
+  results.resize(tx.vin.size(), 0);
+
+  tools::threadpool& tpool = tools::threadpool::getInstance();
+  tools::threadpool::waiter waiter;
+  int threads = tpool.get_max_concurrency();
+
+  for (const auto& txin : tx.vin)
+  {
+    // make sure output being spent is of type txin_to_key, rather than
+    // e.g. txin_gen, which is only used for miner transactions
+    CHECK_AND_ASSERT_MES(txin.type() == typeid(txin_to_key), false, "wrong type id in tx input at Blockchain::check_tx_inputs");
+    const txin_to_key& in_to_key = boost::get<txin_to_key>(txin);
+
+    // make sure tx output has key offset(s) (is signed to be used)
+    CHECK_AND_ASSERT_MES(in_to_key.key_offsets.size(), false, "empty in_to_key.key_offsets in transaction with id " << get_transaction_hash(tx));
+
+    if(have_tx_keyimg_as_spent(in_to_key.k_image))
+    {
+      MERROR_VER("Key image already spent in blockchain: " << epee::string_tools::pod_to_hex(in_to_key.k_image));
+      tvc.m_double_spend = true;
+      return false;
+    }
+
+    // make sure that output being spent matches up correctly with the
+    // signature spending it.
+    if (!check_tx_input(tx.version, in_to_key, tx_prefix_hash, std::vector<crypto::signature>(), tx.rct_signatures, pubkeys[sig_index], pmax_used_block_height))
+    {
+      it->second[in_to_key.k_image] = false;
+      MERROR_VER("Failed to check ring signature for tx " << get_transaction_hash(tx) << "  vin key with k_image: " << in_to_key.k_image << "  sig_index: " << sig_index);
+      if (pmax_used_block_height) // a default value of NULL is used when called from Blockchain::handle_block_to_main_chain()
+      {
+        MERROR_VER("  *pmax_used_block_height: " << *pmax_used_block_height);
+      }
+
+      return false;
+    }
+
+    sig_index++;
+  }
+
+  if (tx.version >= 1)
+  {
+    if (!expand_transaction_2(tx, tx_prefix_hash, pubkeys))
+    {
+      MERROR_VER("Failed to expand rct signatures!");
+      return false;
+    }
+
+    // from version 2, check ringct signatures
+    // obviously, the original and simple rct APIs use a mixRing that's indexes
+    // in opposite orders, because it'd be too simple otherwise...
+    const rct::rctSig &rv = tx.rct_signatures;
+    switch (rv.type)
+    {
+    case rct::RCTTypeNull: {
+      // we only accept no signatures for coinbase txes
+      MERROR_VER("Null rct signature on non-coinbase tx");
+      return false;
+    }
+    case rct::RCTTypeSimple:
+    case rct::RCTTypeSimpleBulletproof:
+    {
+      // check all this, either reconstructed (so should really pass), or not
+      {
+        if (pubkeys.size() != rv.mixRing.size())
+        {
+          MERROR_VER("Failed to check ringct signatures: mismatched pubkeys/mixRing size");
+          return false;
+        }
+        for (size_t i = 0; i < pubkeys.size(); ++i)
+        {
+          if (pubkeys[i].size() != rv.mixRing[i].size())
+          {
+            MERROR_VER("Failed to check ringct signatures: mismatched pubkeys/mixRing size");
+            return false;
+          }
+        }
+
+        for (size_t n = 0; n < pubkeys.size(); ++n)
+        {
+          for (size_t m = 0; m < pubkeys[n].size(); ++m)
+          {
+            if (pubkeys[n][m].dest != rct::rct2pk(rv.mixRing[n][m].dest))
+            {
+              MERROR_VER("Failed to check ringct signatures: mismatched pubkey at vin " << n << ", index " << m);
+              return false;
+            }
+            if (pubkeys[n][m].mask != rct::rct2pk(rv.mixRing[n][m].mask))
+            {
+              MERROR_VER("Failed to check ringct signatures: mismatched commitment at vin " << n << ", index " << m);
+              return false;
+            }
+          }
+        }
+      }
+
+      if (rv.p.MGs.size() != tx.vin.size())
+      {
+        MERROR_VER("Failed to check ringct signatures: mismatched MGs/vin sizes");
+        return false;
+      }
+      for (size_t n = 0; n < tx.vin.size(); ++n)
+      {
+        if (rv.p.MGs[n].II.empty() || memcmp(&boost::get<txin_to_key>(tx.vin[n]).k_image, &rv.p.MGs[n].II[0], 32))
+        {
+          MERROR_VER("Failed to check ringct signatures: mismatched key image");
+          return false;
+        }
+      }
+
+      if (!rct::verRctSimple(rv, false))
+      {
+        MERROR_VER("Failed to check ringct signatures!");
+        return false;
+      }
+      break;
+    }
+    case rct::RCTTypeFull:
+    case rct::RCTTypeFullBulletproof:
+    {
+      // check all this, either reconstructed (so should really pass), or not
+      {
+        bool size_matches = true;
+        for (size_t i = 0; i < pubkeys.size(); ++i)
+          size_matches &= pubkeys[i].size() == rv.mixRing.size();
+        for (size_t i = 0; i < rv.mixRing.size(); ++i)
+          size_matches &= pubkeys.size() == rv.mixRing[i].size();
+        if (!size_matches)
+        {
+          MERROR_VER("Failed to check ringct signatures: mismatched pubkeys/mixRing size");
+          return false;
+        }
+
+        for (size_t n = 0; n < pubkeys.size(); ++n)
+        {
+          for (size_t m = 0; m < pubkeys[n].size(); ++m)
+          {
+            if (pubkeys[n][m].dest != rct::rct2pk(rv.mixRing[m][n].dest))
+            {
+              MERROR_VER("Failed to check ringct signatures: mismatched pubkey at vin " << n << ", index " << m);
+              return false;
+            }
+            if (pubkeys[n][m].mask != rct::rct2pk(rv.mixRing[m][n].mask))
+            {
+              MERROR_VER("Failed to check ringct signatures: mismatched commitment at vin " << n << ", index " << m);
+              return false;
+            }
+          }
+        }
+      }
+
+      if (rv.p.MGs.size() != 1)
+      {
+        MERROR_VER("Failed to check ringct signatures: Bad MGs size");
+        return false;
+      }
+      if (rv.p.MGs.empty() || rv.p.MGs[0].II.size() != tx.vin.size())
+      {
+        MERROR_VER("Failed to check ringct signatures: mismatched II/vin sizes");
+        return false;
+      }
+      for (size_t n = 0; n < tx.vin.size(); ++n)
+      {
+        if (memcmp(&boost::get<txin_to_key>(tx.vin[n]).k_image, &rv.p.MGs[0].II[n], 32))
+        {
+          MERROR_VER("Failed to check ringct signatures: mismatched II/vin sizes");
+          return false;
+        }
+      }
+
+      if (!rct::verRct(rv, false))
+      {
+        MERROR_VER("Failed to check ringct signatures!");
+        return false;
+      }
+      break;
+    }
+    default:
+      MERROR_VER("Unsupported rct type: " << rv.type);
+      return false;
+    }
+  }
+  return true;
+}
+
+//------------------------------------------------------------------
+bool Blockchain::check_tx_inputs(transaction& tx, ntz_req_verification_context &tvc, uint64_t* pmax_used_block_height)
 {
   PERF_TIMER(check_tx_inputs);
   LOG_PRINT_L3("Blockchain::" << __func__);

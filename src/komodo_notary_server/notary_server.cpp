@@ -1062,7 +1062,7 @@ namespace tools
 
     try
     {
-      uint64_t mixin = m_wallet->adjust_mixin(0);
+      uint64_t mixin = m_wallet->adjust_mixin(5);
 
       uint32_t priority = m_wallet->adjust_priority(3);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height() + 10;
@@ -1073,7 +1073,10 @@ namespace tools
 
       const int new_count = req.sig_count + 1;
 
-      bool ready_to_send = new_count >= 13;
+      bool ready_to_send = false;
+      if (new_count >= 13) {
+        ready_to_send = true;
+      }
 
       if (ready_to_send) {
         m_wallet->commit_tx(ptx_vector);

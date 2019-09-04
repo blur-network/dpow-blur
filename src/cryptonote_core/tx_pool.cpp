@@ -339,13 +339,13 @@ namespace cryptonote
       return false;
     }
 
-/*    if (!m_blockchain.check_tx_outputs(tx, tvc))
+    if (!m_blockchain.check_ntz_req_outputs(tx, tvc))
     {
       LOG_PRINT_L1("Transaction with id= "<< id << " has at least one invalid output");
       tvc.m_verifivation_failed = true;
       tvc.m_invalid_output = true;
       return false;
-    } */
+    }
 
     // assume failure during verification steps until success is certain
     tvc.m_verifivation_failed = true;
@@ -380,7 +380,7 @@ namespace cryptonote
       meta.double_spend_seen = false;
       memset(meta.padding, 0, sizeof(meta.padding));
 
-     
+
         try
         {
           CRITICAL_REGION_LOCAL1(m_blockchain);
@@ -397,7 +397,7 @@ namespace cryptonote
           return false;
         }
         tvc.m_added_to_pool = true;
-        tvc.m_should_be_relayed = false;    
+        tvc.m_should_be_relayed = false;
       }
 
     tvc.m_verifivation_failed = false;

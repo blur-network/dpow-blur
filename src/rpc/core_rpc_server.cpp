@@ -1014,7 +1014,7 @@ namespace cryptonote
     for (uint32_t i = 0; i <= req.tx_blobs.size(); i++)
     {
       if (rs[i] == false)
-      {    
+      {
         res.status = "Failed";
         res.reason = "";
         if ((res.low_mixin = tvc[i].m_low_mixin))
@@ -1033,6 +1033,10 @@ namespace cryptonote
           add_reason(res.reason, "fee too low");
         if ((res.not_rct = tvc[i].m_not_rct))
           add_reason(res.reason, "tx is not ringct");
+        if ((res.sig_count != tvc[i].m_sig_count))
+          add_reason(res.reason, "signature count mismatch");
+        if ((tvc[i].m_sig_count > 13))
+          add_reason(res.reason, "too many signatures");
         const std::string punctuation = res.reason.empty() ? "" : ": ";
         if (tvc[i].m_verifivation_failed)
         {
@@ -1046,7 +1050,7 @@ namespace cryptonote
       }
     }
 
-    if (req.sig_count < 13 && req.sig_count > 0)
+    if ((req.sig_count < 13) && (req.sig_count > 0))
     {
       NOTIFY_REQUEST_NTZ_SIG::request r;
       r.tx_blobs = verified_tx_blobs;
