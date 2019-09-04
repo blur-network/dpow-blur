@@ -355,16 +355,16 @@ namespace cryptonote
     crypto::hash max_used_block_id = null_hash;
     uint64_t max_used_block_height = 0;
     cryptonote::txpool_tx_meta_t meta;
-/*    bool ch_inp_res = m_blockchain.check_tx_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
+    cryptonote::tx_verification_context txvc = AUTO_VAL_INIT(txvc);
+    bool ch_inp_res = m_blockchain.check_tx_inputs(tx, max_used_block_height, max_used_block_id, txvc, kept_by_block);
     if(!ch_inp_res)
     {
         LOG_PRINT_L1("tx used wrong inputs, rejected");
         tvc.m_verifivation_failed = true;
         tvc.m_invalid_input = true;
         return false;
-    }*/
-    if (tvc.m_sig_count == 13)
-    {
+    }
+
       //update transactions container
       meta.blob_size = blob_size;
       meta.kept_by_block = kept_by_block;
@@ -398,14 +398,11 @@ namespace cryptonote
         }
         tvc.m_added_to_pool = true;
         tvc.m_should_be_relayed = false;
-      }
 
     tvc.m_verifivation_failed = false;
     m_txpool_size += blob_size;
 
     MINFO("Notarization request added to pool: txid " << id << " bytes: " << blob_size << " fee/byte: " << (fee / (double)blob_size));
-
-    prune(m_txpool_max_size);
 
     return true;
   }

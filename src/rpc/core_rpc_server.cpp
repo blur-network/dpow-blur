@@ -1017,24 +1017,24 @@ namespace cryptonote
       {
         res.status = "Failed";
         res.reason = "";
-        if ((res.low_mixin = tvc[i].m_low_mixin))
+/*        if ((res.low_mixin = tvc[i].m_low_mixin))
           add_reason(res.reason, "ring size too small");
         if ((res.double_spend = tvc[i].m_double_spend))
-          add_reason(res.reason, "double spend");
+          add_reason(res.reason, "double spend");*/
         if ((res.invalid_input = tvc[i].m_invalid_input))
           add_reason(res.reason, "invalid input");
         if ((res.invalid_output = tvc[i].m_invalid_output))
           add_reason(res.reason, "invalid output");
-        if ((res.too_big = tvc[i].m_too_big))
-          add_reason(res.reason, "too big");
+/*        if ((res.too_big = tvc[i].m_too_big))
+          add_reason(res.reason, "too big");*/
         if ((res.overspend = tvc[i].m_overspend))
           add_reason(res.reason, "overspend");
         if ((res.fee_too_low = tvc[i].m_fee_too_low))
           add_reason(res.reason, "fee too low");
         if ((res.not_rct = tvc[i].m_not_rct))
           add_reason(res.reason, "tx is not ringct");
-        if ((res.sig_count != tvc[i].m_sig_count))
-          add_reason(res.reason, "signature count mismatch");
+/*        if ((res.sig_count != tvc[i].m_sig_count))
+          add_reason(res.reason, "signature count mismatch");*/
         if ((tvc[i].m_sig_count > 13))
           add_reason(res.reason, "too many signatures");
         const std::string punctuation = res.reason.empty() ? "" : ": ";

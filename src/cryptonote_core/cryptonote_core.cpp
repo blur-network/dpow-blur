@@ -653,6 +653,8 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------
   bool core::handle_incoming_ntz_sig_pre(const blobdata& tx_blob, ntz_req_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count)
   {
+    // TODO: this is a placeholder for verification
+
     tvc = boost::value_initialized<ntz_req_verification_context>();
 
     if(tx_blob.size() > get_max_tx_size())
@@ -702,6 +704,9 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------
   bool core::handle_incoming_ntz_sig_post(const blobdata& tx_blob, ntz_req_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
   {
+
+    // TODO: this is a placeholder for verification
+
     // resolve outPk references in rct txes
     // outPk aren't the only thing that need resolving for a fully resolved tx,
     // but outPk (1) are needed now to check range proof semantics, and
@@ -1188,12 +1193,12 @@ namespace cryptonote
     if(tvc.m_sig_count < 13)
     {
       LOG_PRINT_L2("tx " << tx_hash << "not ready to be sent yet, sig count: " << std::to_string(tvc.m_sig_count));
-      return false;
     }
+
+    tx_verification_context txvc = AUTO_VAL_INIT(txvc);
 
     if (tvc.m_sig_count == 13)
     {
-      tx_verification_context txvc = AUTO_VAL_INIT(txvc);
       txvc.m_should_be_relayed = tvc.m_should_be_relayed;;
       txvc.m_verifivation_failed = tvc.m_verifivation_failed;
       txvc.m_verifivation_impossible = tvc.m_verifivation_impossible;

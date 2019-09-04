@@ -4716,7 +4716,7 @@ void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_cou
 {
   using namespace cryptonote;
     // Normal submit
-    COMMAND_RPC_REQUEST_NTZ_SIG::request req;
+    COMMAND_RPC_REQUEST_NTZ_SIG::request req = AUTO_VAL_INIT(req);
     req.sig_count = sigs_count;
     std::list<std::string> tx_blobs;
     for (const auto& each : ptxs) {
@@ -4727,16 +4727,16 @@ void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_cou
     }
     req.tx_blobs = tx_blobs;
     req.payment_id = payment_id;
-    COMMAND_RPC_REQUEST_NTZ_SIG::response daemon_send_resp;
+    COMMAND_RPC_REQUEST_NTZ_SIG::response daemon_send_resp = AUTO_VAL_INIT(daemon_send_resp);
     m_daemon_rpc_mutex.lock();
 //    bool r = epee::net_utils::invoke_http_json_rpc("/json_rpc", "request_ntz_sig", req, daemon_send_resp, m_http_client);
     bool r = epee::net_utils::invoke_http_json("/requestntzsig", req, daemon_send_resp, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
-    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig failed with status: " + daemon_send_resp.status + " and reason: " + daemon_send_resp.reason);
+//    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig failed with status: " + daemon_send_resp.status + " and reason: " + daemon_send_resp.reason);
     THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "requestntzsig");
     for (const auto& ptx : ptxs)
     {
-      THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status != CORE_RPC_STATUS_OK, error::tx_rejected, ptx.tx, daemon_send_resp.status, daemon_send_resp.reason);
+//      THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status != CORE_RPC_STATUS_OK, error::tx_rejected, ptx.tx, daemon_send_resp.status, daemon_send_resp.reason);
       // sanity checks
       for (size_t idx: ptx.selected_transfers)
       {
