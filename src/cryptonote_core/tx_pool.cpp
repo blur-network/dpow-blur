@@ -354,7 +354,7 @@ namespace cryptonote
 
     crypto::hash max_used_block_id = null_hash;
     uint64_t max_used_block_height = 0;
-    cryptonote::txpool_tx_meta_t meta;
+    cryptonote::ntzpool_tx_meta_t meta;
     cryptonote::tx_verification_context txvc = AUTO_VAL_INIT(txvc);
     bool ch_inp_res = m_blockchain.check_tx_inputs(tx, max_used_block_height, max_used_block_id, txvc, kept_by_block);
     if(!ch_inp_res)
@@ -385,8 +385,8 @@ namespace cryptonote
         {
           CRITICAL_REGION_LOCAL1(m_blockchain);
           LockedTXN lock(m_blockchain);
-          m_blockchain.remove_txpool_tx(get_transaction_hash(tx));
-          m_blockchain.add_txpool_tx(tx, meta);
+          m_blockchain.remove_ntzpool_tx(get_transaction_hash(tx));
+          m_blockchain.add_ntzpool_tx(tx, meta);
           if (!insert_key_images(tx, kept_by_block))
             return false;
           m_txs_by_fee_and_receive_time.emplace(std::pair<double, std::time_t>(fee / (double)blob_size, receive_time), id);

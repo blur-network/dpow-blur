@@ -4514,11 +4514,6 @@ void Blockchain::remove_txpool_tx(const crypto::hash &txid)
   m_db->remove_txpool_tx(txid);
 }
 
-uint64_t Blockchain::get_txpool_tx_count(bool include_unrelayed_txes) const
-{
-  return m_db->get_txpool_tx_count(include_unrelayed_txes);
-}
-
 bool Blockchain::get_txpool_tx_meta(const crypto::hash& txid, txpool_tx_meta_t &meta) const
 {
   return m_db->get_txpool_tx_meta(txid, meta);
@@ -4537,6 +4532,46 @@ cryptonote::blobdata Blockchain::get_txpool_tx_blob(const crypto::hash& txid) co
 bool Blockchain::for_all_txpool_txes(std::function<bool(const crypto::hash&, const txpool_tx_meta_t&, const cryptonote::blobdata*)> f, bool include_blob, bool include_unrelayed_txes) const
 {
   return m_db->for_all_txpool_txes(f, include_blob, include_unrelayed_txes);
+}
+
+void Blockchain::add_ntzpool_tx(transaction &tx, const ntzpool_tx_meta_t &meta)
+{
+  m_db->add_ntzpool_tx(tx, meta);
+}
+
+void Blockchain::update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_meta_t &meta)
+{
+  m_db->update_ntzpool_tx(txid, meta);
+}
+
+void Blockchain::remove_ntzpool_tx(const crypto::hash &txid)
+{
+  m_db->remove_ntzpool_tx(txid);
+}
+
+bool Blockchain::get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_meta_t &meta) const
+{
+  return m_db->get_ntzpool_tx_meta(txid, meta);
+}
+
+bool Blockchain::get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd) const
+{
+  return m_db->get_ntzpool_tx_blob(txid, bd);
+}
+
+cryptonote::blobdata Blockchain::get_ntzpool_tx_blob(const crypto::hash& txid) const
+{
+  return m_db->get_ntzpool_tx_blob(txid);
+}
+
+bool Blockchain::for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, const cryptonote::blobdata*)> f, bool include_blob, bool include_unrelayed_txes) const
+{
+  return m_db->for_all_ntzpool_txes(f, include_blob, include_unrelayed_txes);
+}
+
+uint64_t Blockchain::get_txpool_tx_count(bool include_unrelayed_txes) const
+{
+  return m_db->get_txpool_tx_count(include_unrelayed_txes);
 }
 
 void Blockchain::set_user_options(uint64_t maxthreads, uint64_t blocks_per_sync, blockchain_db_sync_mode sync_mode, bool fast_sync)

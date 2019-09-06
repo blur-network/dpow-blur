@@ -58,6 +58,9 @@ typedef struct mdb_txn_cursors
   MDB_cursor *m_txc_txpool_meta;
   MDB_cursor *m_txc_txpool_blob;
 
+  MDB_cursor *m_txc_ntzpool_meta;
+  MDB_cursor *m_txc_ntzpool_blob;
+
   MDB_cursor *m_txc_hf_versions;
 } mdb_txn_cursors;
 
@@ -72,6 +75,8 @@ typedef struct mdb_txn_cursors
 #define m_cur_spent_keys	m_cursors->m_txc_spent_keys
 #define m_cur_txpool_meta	m_cursors->m_txc_txpool_meta
 #define m_cur_txpool_blob	m_cursors->m_txc_txpool_blob
+#define m_cur_ntzpool_meta	m_cursors->m_txc_ntzpool_meta
+#define m_cur_ntzpool_blob	m_cursors->m_txc_ntzpool_blob
 #define m_cur_hf_versions	m_cursors->m_txc_hf_versions
 
 typedef struct mdb_rflags
@@ -88,6 +93,8 @@ typedef struct mdb_rflags
   bool m_rf_spent_keys;
   bool m_rf_txpool_meta;
   bool m_rf_txpool_blob;
+  bool m_rf_ntzpool_meta;
+  bool m_rf_ntzpool_blob;
   bool m_rf_hf_versions;
 } mdb_rflags;
 
@@ -252,6 +259,16 @@ public:
   virtual cryptonote::blobdata get_txpool_tx_blob(const crypto::hash& txid) const;
   virtual bool for_all_txpool_txes(std::function<bool(const crypto::hash&, const txpool_tx_meta_t&, const cryptonote::blobdata*)> f, bool include_blob = false, bool include_unrelayed_txes = true) const;
 
+  virtual void add_ntzpool_tx(const transaction &tx, const ntzpool_tx_meta_t& meta);
+  virtual void update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_meta_t& meta);
+  virtual uint64_t get_ntzpool_tx_count(bool include_unrelayed_txes = true) const;
+  virtual bool ntzpool_has_tx(const crypto::hash &txid) const;
+  virtual void remove_ntzpool_tx(const crypto::hash& txid);
+  virtual bool get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_meta_t &meta) const;
+  virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd) const;
+  virtual cryptonote::blobdata get_ntzpool_tx_blob(const crypto::hash& txid) const;
+  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, const cryptonote::blobdata*)> f, bool include_blob = false, bool include_unrelayed_txes = true) const;
+
   virtual bool for_all_key_images(std::function<bool(const crypto::key_image&)>) const;
   virtual bool for_blocks_range(const uint64_t& h1, const uint64_t& h2, std::function<bool(uint64_t, const crypto::hash&, const cryptonote::block&)>) const;
   virtual bool for_all_transactions(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
@@ -390,6 +407,9 @@ private:
 
   MDB_dbi m_txpool_meta;
   MDB_dbi m_txpool_blob;
+
+  MDB_dbi m_ntzpool_meta;
+  MDB_dbi m_ntzpool_blob;
 
   MDB_dbi m_hf_starting_heights;
   MDB_dbi m_hf_versions;

@@ -151,6 +151,27 @@ struct txpool_tx_meta_t
 
   uint8_t padding[76]; // till 192 bytes
 };
+/**
+ * @brief a struct containing txpool per transaction metadata
+ */
+struct ntzpool_tx_meta_t
+{
+  crypto::hash max_used_block_id;
+  crypto::hash last_failed_id;
+  uint64_t blob_size;
+  uint64_t fee;
+  uint64_t max_used_block_height;
+  uint64_t last_failed_height;
+  uint64_t receive_time;
+  uint64_t last_relayed_time;
+  // 112 bytes
+  uint8_t kept_by_block;
+  uint8_t relayed;
+  uint8_t do_not_relay;
+  uint8_t double_spend_seen: 1;
+
+  uint8_t padding[76]; // till 192 bytes
+};
 
 #define DBF_SAFE       1
 #define DBF_FAST       2
@@ -1377,6 +1398,82 @@ public:
    * @return false if the function returns false for any transaction, otherwise true
    */
   virtual bool for_all_txpool_txes(std::function<bool(const crypto::hash&, const txpool_tx_meta_t&, const cryptonote::blobdata*)>, bool include_blob = false, bool include_unrelayed_txes = true) const = 0;
+
+  /**
+   * @brief add a ntzpool transaction
+   *
+   * @param details the details of the transaction to add
+   */
+  virtual void add_ntzpool_tx(const transaction &tx, const ntzpool_tx_meta_t& details) = 0;
+
+  /**
+   * @brief update a ntzpool transaction's metadata
+   *
+   * @param txid the txid of the transaction to update
+   * @param details the details of the transaction to update
+   */
+  virtual void update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_meta_t& details) = 0;
+
+  /**
+   * @brief get the number of transactions in the ntzpool
+   */
+  virtual uint64_t get_ntzpool_tx_count(bool include_unrelayed_txes = true) const = 0;
+
+  /**
+   * @brief check whether a txid is in the ntzpool
+   */
+  virtual bool ntzpool_has_tx(const crypto::hash &txid) const = 0;
+
+  /**
+   * @brief remove a ntzpool transaction
+   *
+   * @param txid the transaction id of the transation to remove
+   */
+  virtual void remove_ntzpool_tx(const crypto::hash& txid) = 0;
+
+  /**
+   * @brief get a ntzpool transaction's metadata
+   *
+   * @param txid the transaction id of the transation to lookup
+   * @param meta the metadata to return
+   *
+   * @return true if the tx meta was found, false otherwise
+   */
+  virtual bool get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_meta_t &meta) const = 0;
+
+  /**
+   * @brief get a ntzpool transaction's blob
+   *
+   * @param txid the transaction id of the transation to lookup
+   * @param bd the blob to return
+   *
+   * @return true if the txid was in the ntzpool, false otherwise
+   */
+  virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd) const = 0;
+
+  /**
+   * @brief get a ntzpool transaction's blob
+   *
+   * @param txid the transaction id of the transation to lookup
+   *
+   * @return the blob for that transaction
+   */
+  virtual cryptonote::blobdata get_ntzpool_tx_blob(const crypto::hash& txid) const = 0;
+
+  /**
+   * @brief runs a function over all ntzpool transactions
+   *
+   * The subclass should run the passed function for each ntzpool tx it has
+   * stored, passing the tx id and metadata as its parameters.
+   *
+   * If any call to the function returns false, the subclass should return
+   * false.  Otherwise, the subclass returns true.
+   *
+   * @param std::function fn the function to run
+   *
+   * @return false if the function returns false for any transaction, otherwise true
+   */
+  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, const cryptonote::blobdata*)>, bool include_blob = false, bool include_unrelayed_txes = true) const = 0;
 
   /**
    * @brief runs a function over all key images stored
