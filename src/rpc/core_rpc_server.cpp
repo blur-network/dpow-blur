@@ -2086,10 +2086,10 @@ namespace cryptonote
 /*      std::vector<uint8_t> v_MoM(komodo::NOTARIZED_MOM.begin(), komodo::NOTARIZED_MOM.begin()+32);
       std::string n_MoM = bytes256_to_hex(v_MoM);*/
 
-      crypto::hash hash = crypto::null_hash;
+/*      crypto::hash hash = crypto::null_hash;
       std::unique_ptr<komodo::komodo_core> k_core;
       int32_t checkpoint = k_core->komodo_checkpoint(&komodo::NOTARIZED_HEIGHT, height, hash);
-
+*/
       cryptonote::block blk = m_core.get_blockchain_storage().get_db().get_top_block();
       crypto::hash c_hash = m_core.get_blockchain_storage().get_db().top_block_hash();
       crypto::hash c_pow = cryptonote::get_block_longhash(blk, height);

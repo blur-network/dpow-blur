@@ -26,6 +26,9 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <memory>
+
+#include "komodo/komodo_validation.h"
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/algorithm/string.hpp>
 #include "common/command_line.h"
@@ -192,7 +195,20 @@ int main(int argc, char* argv[])
   }
 
 
-  r = core_storage->init(db, nullptr, net_type);
+  std::unique_ptr<komodo::komodo_core> k_core;
+  try
+  {
+    int32_t didinit = k_core->komodo_init(db);
+    if (didinit < 0)
+      return 1;
+  }
+  catch (const std::exception& e)
+  {
+    LOG_PRINT_L0("Error initializing komodo core" << e.what());
+    return 1;
+  }
+
+  r = core_storage->init(db, k_core, net_type);
 
   CHECK_AND_ASSERT_MES(r, 1, "Failed to initialize source blockchain storage");
   LOG_PRINT_L0("Source blockchain storage initialized OK");

@@ -45,13 +45,13 @@
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "komodo_validation.h"
-#include "cryptonote_core/blockchain.h"
 #include "common/hex_str.h"
 #include "crypto/crypto.h"
 #include "p2p/net_node.h"
 #include "crypto/hash-ops.h"
 #include "p2p/net_node.h"
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
+#include "cryptonote_core/cryptonote_core.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
 #include "komodo_notaries.h"
 #include "komodo_notary_server/notary_server.h"
@@ -403,11 +403,11 @@ namespace komodo {
   int32_t komodo_core::komodo_chainactive_timestamp()
   {
      cryptonote::block b;
-    if ( m_core.get_current_blockchain_height()-1 != 0 ) {
+    if ( m_core.get_current_blockchain_height() != 0 ) {
         cryptonote::block b = m_core.get_blockchain_storage().get_db().get_top_block();
         return(b.timestamp);
     }
-    else return(0);
+    return(0);
   }
   //------------------------------------------------------------------
   bool komodo_core::komodo_chainactive(uint64_t &height, cryptonote::block &tipindex)
@@ -469,9 +469,8 @@ namespace komodo {
         fprintf(stderr,"%d Notary pubkeys imported\n",dispflag);
   }
   //------------------------------------------------------------------
-  int32_t komodo_core::komodo_init()
+  int32_t komodo_core::komodo_init(BlockchainDB* db)
   {
-    
     decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
     return(0);
   }
@@ -936,10 +935,14 @@ namespace komodo {
   */
     }
 
-  int32_t komodo_init()
+  int32_t komodo_init(BlockchainDB* db)
   {
+    if (db == nullptr)
+    {
+      return (-1);
+    }
     komodo_core& k_core = get_k_core();
-    return k_core.komodo_init();
+    return k_core.komodo_init(db);
   }
   //------------------------------------------------------------------
   int32_t komodo_MoMdata(int32_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,int32_t height,uint256 *MoMoMp, int32_t *MoMoMoffsetp, int32_t *MoMoMdepthp, int32_t *kmdstartip, int32_t *kmdendip)

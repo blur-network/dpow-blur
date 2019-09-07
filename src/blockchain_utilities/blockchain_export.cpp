@@ -27,6 +27,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <memory>
 #include "bootstrap_file.h"
 #include "blocksdat_file.h"
 #include "common/command_line.h"
@@ -34,6 +35,7 @@
 #include "cryptonote_core/cryptonote_core.h"
 #include "blockchain_db/blockchain_db.h"
 #include "blockchain_db/db_types.h"
+#include "komodo/komodo_validation.h"
 #include "version.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
@@ -177,7 +179,20 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  r = core_storage->init(db, nullptr, opt_testnet ? cryptonote::TESTNET : opt_stagenet ? cryptonote::STAGENET : cryptonote::MAINNET);
+  std::unique_ptr<komodo::komodo_core> k_core;
+  try
+  {
+    int32_t didinit =  k_core->komodo_init(db);
+    if (didinit < 0)
+      return 1;
+  }
+  catch (const std::exception& e)
+  {
+    LOG_PRINT_L0("Error initializing komodo core" << e.what());
+    return 1;
+  }
+
+  r = core_storage->init(db, k_core, opt_testnet ? cryptonote::TESTNET : opt_stagenet ? cryptonote::STAGENET : cryptonote::MAINNET);
 
   CHECK_AND_ASSERT_MES(r, 1, "Failed to initialize source blockchain storage");
   LOG_PRINT_L0("Source blockchain storage initialized OK");

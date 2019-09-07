@@ -134,11 +134,10 @@ class komodo_core
   int32_t komodo_checkpoint(int32_t *notarized_heightp, uint64_t nHeight, crypto::hash& hash);
   void komodo_voutupdate(int32_t txi,int32_t vout,uint8_t *scriptbuf,int32_t scriptlen,int32_t height,int32_t *specialtxp,int32_t *notarizedheightp,uint64_t value,int32_t notarized,uint64_t signedmask);
   void komodo_connectblock(uint64_t& height,cryptonote::block& b);
-  int32_t komodo_init();
+  int32_t komodo_init(BlockchainDB* db);
   int32_t komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp);
-  cryptonote::core& m_core;
-
   private:
+    cryptonote::core& m_core;
     nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& m_p2p;
     bool check_core_ready();
     bool check_core_busy();
@@ -153,7 +152,7 @@ class komodo_core
   bits256 iguana_merkle(bits256 *root_hash, int& txn_count);
   void komodo_importpubkeys();
   void komodo_clearstate();
-  int32_t komodo_init();
+  int32_t komodo_init(BlockchainDB* db);
   int32_t komodo_importaddress(std::string addr);
 
   int32_t komodo_MoMdata(int32_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,int32_t height,uint256 *MoMoMp, int32_t *MoMoMoffsetp, 
