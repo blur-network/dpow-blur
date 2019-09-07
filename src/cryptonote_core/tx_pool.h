@@ -292,6 +292,19 @@ namespace cryptonote
     /**
      * @brief get information about all transactions and key images in the pool
      *
+     * see documentation on tx_info and spent_key_image_info for more details
+     *
+     * @param tx_infos return-by-reference the transactions' information
+     * @param key_image_infos return-by-reference the spent key images' information
+     * @param include_sensitive_data include unrelayed txes and fields that are sensitive to the node privacy
+     *
+     * @return true
+     */
+    bool get_pending_ntzpool_and_spent_keys_info(std::vector<ntz_tx_info>& tx_infos, std::vector<spent_key_image_info>& key_image_infos, bool include_sensitive_data = true) const;
+
+    /**
+     * @brief get information about all transactions and key images in the pool
+     *
      * see documentation on tx_in_pool and key_images_with_tx_hashes for more details
      *
      * @param tx_infos [out] the transactions' information

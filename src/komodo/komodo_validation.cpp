@@ -568,7 +568,12 @@ namespace komodo {
   //------------------------------------------------------------------
   void komodo_core::komodo_disconnect(uint64_t height,cryptonote::block block)
   {
-    if ( height <= NOTARIZED_HEIGHT )
+    uint64_t notarized_height = 0;
+    if (NOTARIZED_HEIGHT >= 0)
+    {
+      notarized_height = NOTARIZED_HEIGHT;
+    }
+    if ( height <= notarized_height )
     {
   //      uint64_t block_height = m_core.get_blockchain_storage().get_db().get_block_id_by_height(block);
         uint64_t block_height = height;
@@ -608,10 +613,15 @@ namespace komodo {
   struct notarized_checkpoint *komodo_npptr(uint64_t height)
   {
     int i; struct notarized_checkpoint *np = 0;
+    uint64_t notar_height = 0;
+    if (np->notarized_height >= 0)
+    {
+      notar_height = np->notarized_height;
+    }
     for (i=NUM_NPOINTS-1; i>=0; i--)
     {
         np = &NPOINTS[i];
-        if ( np->MoMdepth > 0 &&  height > np->notarized_height-np->MoMdepth && height <= np->notarized_height )
+        if ( /*np->MoMdepth > 0 &&  height > np->notarized_height-np->MoMdepth &&*/ height <= notar_height )
           return(np);
     }
     return(0);
@@ -620,17 +630,26 @@ namespace komodo {
   int32_t komodo_core::komodo_notarizeddata(uint64_t nHeight,uint256 *notarized_hashp,uint256 *notarized_desttxidp)
   {
     struct notarized_checkpoint *np = 0; int32_t i=0,flag = 0;
+    uint64_t notar_height = 0;
     if ( NUM_NPOINTS > 0 )
     {
         flag = 0;
         if ( last_NPOINTSi < NUM_NPOINTS && last_NPOINTSi > 0 )
         {
           np = &NPOINTS[last_NPOINTSi-1];
-          if ( np->nHeight < nHeight )
+         if (np->notarized_height >= 0)
+         {
+           notar_height = np->notarized_height;
+         }
+          if ( notar_height < nHeight )
           {
             for (i=last_NPOINTSi; i<NUM_NPOINTS; i++)
             {
-                if ( NPOINTS[i].nHeight >= nHeight )
+                if ( NPOINTS[i].nHeight >= 0 )
+                {
+                  notar_height = NPOINTS[i].nHeight;
+                }
+                if ( notar_height >= nHeight )
                 {
                   printf("flag.1 i.%d np->ht %d [%d].ht %d >= nHeight.%lu, last.%d num.%d\n",i,np->nHeight,i,NPOINTS[i].nHeight,nHeight,last_NPOINTSi,NUM_NPOINTS);
                   flag = 1;
@@ -646,7 +665,12 @@ namespace komodo {
           np = 0;
           for (i=0; i<NUM_NPOINTS; i++)
           {
-            if ( NPOINTS[i].nHeight >= nHeight )
+            uint64_t temp = 0;
+            if (NPOINTS[i].nHeight >= 0)
+            {
+              temp = NPOINTS[i].nHeight;
+            }
+            if ( temp >= nHeight )
             {
                 //printf("i.%d np->ht %d [%d].ht %d >= nHeight.%d\n",i,np->nHeight,i,NPOINTS[i].nHeight,nHeight);
                 break;
@@ -658,11 +682,20 @@ namespace komodo {
     }
     if ( np != 0 )
     {
-        if ( np->nHeight >= nHeight || (i < NUM_NPOINTS && np[1].nHeight < nHeight) )
-          fprintf(stderr,"warning: flag.%d i.%d np->ht %d [1].ht %d >= nHeight.%lu\n",flag,i,np->nHeight,np[1].nHeight,nHeight);
-        *notarized_hashp = np->notarized_hash;
-        *notarized_desttxidp = np->notarized_desttxid;
-        return(np->notarized_height);
+      uint64_t n1_height = 0;
+      if (np->nHeight >= 0)
+      {
+        notar_height = np->nHeight;
+      }
+      if (np[1].nHeight >= 0)
+      {
+        n1_height = np[1].nHeight;
+      }
+      if ( notar_height >= nHeight || (i < NUM_NPOINTS && n1_height < nHeight) )
+        fprintf(stderr,"warning: flag.%d i.%d np->ht %d [1].ht %d >= nHeight.%lu\n",flag,i,np->nHeight,np[1].nHeight,nHeight);
+      *notarized_hashp = np->notarized_hash;
+      *notarized_desttxidp = np->notarized_desttxid;
+      return(np->notarized_height);
     }
     std::fill(notarized_hashp->begin(),notarized_hashp->begin()+32,0);
     std::fill(notarized_desttxidp->begin(),notarized_desttxidp->begin()+32,0);
@@ -690,9 +723,14 @@ namespace komodo {
           fpos = 0;
           while ( fread(&N,1,sizeof(N),fp) == sizeof(N) )
           {
+            uint64_t n_height = 0;
+            if (N.notarized_height >= 0)
+            {
+              n_height = N.notarized_height;
+            }
             //pindex = komodo_chainactive(N.notarized_height);
             //if ( pindex != 0 && pindex->GetBlockHash() == N.notarized_hash && N.notarized_height > latestht )
-            if ( N.notarized_height > latestht )
+            if ( n_height > latestht )
             {
                 NPOINTS = (struct notarized_checkpoint *)realloc(NPOINTS,(NUM_NPOINTS+1) * sizeof(*NPOINTS));
                 np = &NPOINTS[NUM_NPOINTS++];
@@ -772,17 +810,22 @@ namespace komodo {
         return(-1);
     notarized_height = komodo_notarizeddata(m_core.get_blockchain_storage().get_db().height(),&notarized_hash,&notarized_desttxid);
     *notarized_heightp = notarized_height;
-    if ( notarized_height >= 0 && notarized_height <= activeheight && (notary= m_core.get_blockchain_storage().get_db().get_block_height(hash) != 0 ))
+    uint64_t temp_height = 0;
+    if (notarized_height >= 0)
+    {
+      temp_height = notarized_height;
+    }
+    if ( notarized_height >= 0 && temp_height <= activeheight && (notary= m_core.get_blockchain_storage().get_db().get_block_height(hash) != 0 ))
     {
         printf("activeheight.%lu -> (%d %s)\n",activeheight,notarized_height,s_notarized_hash.c_str());
-        if ( notary == notarized_height ) // if notarized_hash not in chain, reorg
+        if ( notary == temp_height ) // if notarized_hash not in chain, reorg
         {
-          if ( activeheight < notarized_height )
+          if ( activeheight < temp_height )
           {
             fprintf(stderr,"activeheight.%lu < NOTARIZED_HEIGHT.%d\n",activeheight,notarized_height);
             return(-1);
           }
-          else if ( activeheight == notarized_height && memcmp(&hash,&notarized_hash,sizeof(hash)) != 0 )
+          else if ( activeheight == temp_height && memcmp(&hash,&notarized_hash,sizeof(hash)) != 0 )
           {
             fprintf(stderr,"nHeight.%lu == NOTARIZED_HEIGHT.%d, diff hash\n",activeheight,notarized_height);
             return(-1);

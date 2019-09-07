@@ -833,12 +833,18 @@ bool t_rpc_command_executor::is_key_image_spent(const crypto::key_image &ki) {
 bool t_rpc_command_executor::print_transaction_pool_long() {
   cryptonote::COMMAND_RPC_GET_TRANSACTION_POOL::request req;
   cryptonote::COMMAND_RPC_GET_TRANSACTION_POOL::response res;
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::request nreq;
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::response nres;
 
   std::string fail_message = "Problem fetching transaction pool";
 
   if (m_is_rpc)
   {
     if (!m_rpc_client->rpc_request(req, res, "/get_transaction_pool", fail_message.c_str()))
+    {
+      return true;
+    }
+    if (!m_rpc_client->rpc_request(nreq, nres, "/get_pending_ntz_pool", fail_message.c_str()))
     {
       return true;
     }
@@ -850,19 +856,29 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
       tools::fail_msg_writer() << make_error(fail_message, res.status);
       return true;
     }
+    if (!m_rpc_server->on_get_pending_ntz_pool(nreq, nres, false) || nres.status != CORE_RPC_STATUS_OK)
+    {
+      tools::fail_msg_writer() << make_error(fail_message, nres.status);
+      return true;
+    }
   }
 
   if (res.transactions.empty() && res.spent_key_images.empty())
   {
-    tools::msg_writer() << "Pool is empty" << std::endl;
-  }
-  if (! res.transactions.empty())
-  {
-    const time_t now = time(NULL);
-    tools::msg_writer() << "Transactions: ";
-    for (auto & tx_info : res.transactions)
+    if (nres.transactions.empty() && nres.spent_key_images.empty())
     {
-      tools::msg_writer() << "id: " << tx_info.id_hash << std::endl
+      tools::msg_writer() << "Pool is empty" << std::endl;
+    }
+  }
+  if (!res.transactions.empty() || !nres.transactions.empty())
+  {
+    if (!res.transactions.empty())
+    {
+      const time_t now = time(NULL);
+      tools::msg_writer() << "Transactions: ";
+      for (auto & tx_info : res.transactions)
+      {
+        tools::msg_writer() << "id: " << tx_info.id_hash << std::endl
                           << tx_info.tx_json << std::endl
                           << "blob_size: " << tx_info.blob_size << std::endl
                           << "fee: " << cryptonote::print_money(tx_info.fee) << std::endl
@@ -876,37 +892,88 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
                           << "max_used_block_id: " << tx_info.max_used_block_id_hash << std::endl
                           << "last_failed_height: " << tx_info.last_failed_height << std::endl
                           << "last_failed_id: " << tx_info.last_failed_id_hash << std::endl;
+      }
     }
-    if (res.spent_key_images.empty())
+    if (!nres.transactions.empty())
     {
-      tools::msg_writer() << "WARNING: Inconsistent pool state - no spent key images";
+      const time_t now = time(NULL);
+      tools::msg_writer() << "Pending Notarization Transactions: ";
+      for (auto & ntz_tx_info : nres.transactions)
+      {
+        tools::msg_writer() << "id: " << ntz_tx_info.id_hash << std::endl
+                          << ntz_tx_info.tx_json << std::endl
+                          << "sig_count: " << ntz_tx_info.sig_count << std::endl
+                          << "blob_size: " << ntz_tx_info.blob_size << std::endl
+                          << "blob_size: " << ntz_tx_info.sig_count << std::endl
+                          << "fee: " << cryptonote::print_money(ntz_tx_info.fee) << std::endl
+                          << "fee/byte: " << cryptonote::print_money(ntz_tx_info.fee / (double)ntz_tx_info.blob_size) << std::endl
+                          << "receive_time: " << ntz_tx_info.receive_time << " (" << get_human_time_ago(ntz_tx_info.receive_time, now) << ")" << std::endl
+                          << "relayed: " << [&](const cryptonote::ntz_tx_info &ntz_tx_info)->std::string { if (!ntz_tx_info.relayed) return "no"; return boost::lexical_cast<std::string>(ntz_tx_info.last_relayed_time) + " (" + get_human_time_ago(ntz_tx_info.last_relayed_time, now) + ")"; } (ntz_tx_info) << std::endl
+                          << "do_not_relay: " << (ntz_tx_info.do_not_relay ? 'T' : 'F')  << std::endl
+                          << "kept_by_block: " << (ntz_tx_info.kept_by_block ? 'T' : 'F') << std::endl
+                          << "double_spend_seen: " << (ntz_tx_info.double_spend_seen ? 'T' : 'F')  << std::endl
+                          << "max_used_block_height: " << ntz_tx_info.max_used_block_height << std::endl
+                          << "max_used_block_id: " << ntz_tx_info.max_used_block_id_hash << std::endl
+                          << "last_failed_height: " << ntz_tx_info.last_failed_height << std::endl
+                          << "last_failed_id: " << ntz_tx_info.last_failed_id_hash << std::endl;
+      }
+      if (nres.spent_key_images.empty())
+      {
+        tools::msg_writer() << "WARNING: Inconsistent pool state - no spent key images";
+      }
     }
   }
-  if (! res.spent_key_images.empty())
+  if (!res.spent_key_images.empty() || !nres.spent_key_images.empty())
   {
-    tools::msg_writer() << ""; // one newline
+    tools::msg_writer() << "";
     tools::msg_writer() << "Spent key images: ";
-    for (const cryptonote::spent_key_image_info& kinfo : res.spent_key_images)
+    if (!res.spent_key_images.empty())
     {
-      tools::msg_writer() << "key image: " << kinfo.id_hash;
-      if (kinfo.txs_hashes.size() == 1)
+      for (const cryptonote::spent_key_image_info& kinfo : res.spent_key_images)
       {
-        tools::msg_writer() << "  tx: " << kinfo.txs_hashes[0];
-      }
-      else if (kinfo.txs_hashes.size() == 0)
-      {
-        tools::msg_writer() << "  WARNING: spent key image has no txs associated";
-      }
-      else
-      {
-        tools::msg_writer() << "  NOTE: key image for multiple txs: " << kinfo.txs_hashes.size();
-        for (const std::string& tx_id : kinfo.txs_hashes)
+        tools::msg_writer() << "key image: " << kinfo.id_hash;
+        if (kinfo.txs_hashes.size() == 1)
         {
-          tools::msg_writer() << "  tx: " << tx_id;
+          tools::msg_writer() << "  tx: " << kinfo.txs_hashes[0];
+        }
+        else if (kinfo.txs_hashes.size() == 0)
+        {
+          tools::msg_writer() << "  WARNING: spent key image has no txs associated";
+        }
+        else
+        {
+          tools::msg_writer() << "  NOTE: key image for multiple txs: " << kinfo.txs_hashes.size();
+          for (const std::string& tx_id : kinfo.txs_hashes)
+          {
+            tools::msg_writer() << "  tx: " << tx_id;
+          }
         }
       }
     }
-    if (res.transactions.empty())
+    if (!nres.spent_key_images.empty())
+    {
+      for (const cryptonote::spent_key_image_info& kinfo : nres.spent_key_images)
+      {
+        tools::msg_writer() << "key image: " << kinfo.id_hash;
+        if (kinfo.txs_hashes.size() == 1)
+        {
+          tools::msg_writer() << "  tx: " << kinfo.txs_hashes[0];
+        }
+        else if (kinfo.txs_hashes.size() == 0)
+        {
+          tools::msg_writer() << "  WARNING: spent key image has no txs associated";
+        }
+        else
+        {
+          tools::msg_writer() << "  NOTE: key image for multiple txs: " << kinfo.txs_hashes.size();
+          for (const std::string& tx_id : kinfo.txs_hashes)
+          {
+            tools::msg_writer() << "  tx: " << tx_id;
+          }
+        }
+      }
+    }
+    if (res.transactions.empty() && nres.transactions.empty())
     {
       tools::msg_writer() << "WARNING: Inconsistent pool state - no transactions";
     }
@@ -968,6 +1035,8 @@ bool t_rpc_command_executor::print_transaction_pool_short() {
 bool t_rpc_command_executor::print_transaction_pool_stats() {
   cryptonote::COMMAND_RPC_GET_TRANSACTION_POOL_STATS::request req;
   cryptonote::COMMAND_RPC_GET_TRANSACTION_POOL_STATS::response res;
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL_STATS::request nreq;
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL_STATS::response nres;
   cryptonote::COMMAND_RPC_GET_INFO::request ireq;
   cryptonote::COMMAND_RPC_GET_INFO::response ires;
 
@@ -979,6 +1048,10 @@ bool t_rpc_command_executor::print_transaction_pool_stats() {
     {
       return true;
     }
+    if (!m_rpc_client->rpc_request(nreq, nres, "/get_pending_ntz_pool_stats", fail_message.c_str()))
+    {
+      return true;
+    }
     if (!m_rpc_client->rpc_request(ireq, ires, "/getinfo", fail_message.c_str()))
     {
       return true;
@@ -987,9 +1060,15 @@ bool t_rpc_command_executor::print_transaction_pool_stats() {
   else
   {
     memset(static_cast<void*>(&res.pool_stats), 0, sizeof(res.pool_stats));
+    memset(static_cast<void*>(&nres.pool_stats), 0, sizeof(nres.pool_stats));
     if (!m_rpc_server->on_get_transaction_pool_stats(req, res, false) || res.status != CORE_RPC_STATUS_OK)
     {
       tools::fail_msg_writer() << make_error(fail_message, res.status);
+      return true;
+    }
+    if (!m_rpc_server->on_get_pending_ntz_pool_stats(nreq, nres, false) || res.status != CORE_RPC_STATUS_OK)
+    {
+      tools::fail_msg_writer() << make_error(fail_message, nres.status);
       return true;
     }
     if (!m_rpc_server->on_get_info(ireq, ires) || ires.status != CORE_RPC_STATUS_OK)
@@ -999,7 +1078,17 @@ bool t_rpc_command_executor::print_transaction_pool_stats() {
     }
   }
 
-  size_t n_transactions = res.pool_stats.txs_total;
+  size_t num_transactions = 0;
+  size_t num_ntz_transactions = 0;
+  if (res.pool_stats.txs_total)
+  {
+    size_t num_transactions = res.pool_stats.txs_total;
+  }
+  if (nres.pool_stats.txs_total)
+  {
+    size_t n_ntz_transactions = nres.pool_stats.txs_total;
+  }
+  size_t n_transactions = num_transactions + num_ntz_transactions;
   const uint64_t now = time(NULL);
   size_t avg_bytes = n_transactions ? res.pool_stats.bytes_total / n_transactions : 0;
 
@@ -1015,7 +1104,7 @@ bool t_rpc_command_executor::print_transaction_pool_stats() {
     backlog_message = (boost::format("estimated %u block (%u minutes) backlog") % backlog % (backlog * DIFFICULTY_TARGET / 60)).str();
   }
 
-  tools::msg_writer() << n_transactions << " tx(es), " << res.pool_stats.bytes_total << " bytes total (min " << res.pool_stats.bytes_min << ", max " << res.pool_stats.bytes_max << ", avg " << avg_bytes << ", median " << res.pool_stats.bytes_med << ")" << std::endl
+  tools::msg_writer() << n_transactions << " tx(es), " << num_ntz_transactions << " of which are pending notarizations " << res.pool_stats.bytes_total << " bytes total (min " << res.pool_stats.bytes_min << ", max " << res.pool_stats.bytes_max << ", avg " << avg_bytes << ", median " << res.pool_stats.bytes_med << ")" << std::endl
       << "fees " << cryptonote::print_money(res.pool_stats.fee_total) << " (avg " << cryptonote::print_money(n_transactions ? res.pool_stats.fee_total / n_transactions : 0) << " per tx" << ", " << cryptonote::print_money(res.pool_stats.bytes_total ? res.pool_stats.fee_total / res.pool_stats.bytes_total : 0) << " per byte)" << std::endl
       << res.pool_stats.num_double_spends << " double spends, " << res.pool_stats.num_not_relayed << " not relayed, " << res.pool_stats.num_failing << " failing, " << res.pool_stats.num_10m << " older than 10 minutes (oldest " << (res.pool_stats.oldest == 0 ? "-" : get_human_time_ago(res.pool_stats.oldest, now)) << "), " << backlog_message;
 

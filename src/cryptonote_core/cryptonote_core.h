@@ -495,7 +495,7 @@ namespace cryptonote
       *
       * @note see tx_memory_pool::get_pool_transactions_and_spent_keys_info
       */
-     bool get_pending_ntz_pool_and_spent_keys_info(std::vector<tx_info>& tx_infos, std::vector<spent_key_image_info>& key_image_infos, bool include_unrelayed_txes = true) const;
+     bool get_pending_ntz_pool_and_spent_keys_info(std::vector<ntz_tx_info>& tx_infos, std::vector<spent_key_image_info>& key_image_infos, bool include_unrelayed_txes = true) const;
 
      /**
       * @copydoc tx_memory_pool::get_transactions

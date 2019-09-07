@@ -1654,6 +1654,45 @@ namespace cryptonote
     END_KV_SERIALIZE_MAP()
   };
 
+  struct ntz_tx_info
+  {
+    std::string id_hash;
+    std::string tx_json; // TODO - expose this data directly
+    uint64_t blob_size;
+    uint64_t fee;
+    std::string max_used_block_id_hash;
+    uint64_t max_used_block_height;
+    bool kept_by_block;
+    uint64_t last_failed_height;
+    std::string last_failed_id_hash;
+    uint64_t receive_time;
+    bool relayed;
+    uint64_t last_relayed_time;
+    bool do_not_relay;
+    bool double_spend_seen;
+    std::string tx_blob;
+    int sig_count;
+
+    BEGIN_KV_SERIALIZE_MAP()
+      KV_SERIALIZE(id_hash)
+      KV_SERIALIZE(tx_json)
+      KV_SERIALIZE(blob_size)
+      KV_SERIALIZE(fee)
+      KV_SERIALIZE(max_used_block_id_hash)
+      KV_SERIALIZE(max_used_block_height)
+      KV_SERIALIZE(kept_by_block)
+      KV_SERIALIZE(last_failed_height)
+      KV_SERIALIZE(last_failed_id_hash)
+      KV_SERIALIZE(receive_time)
+      KV_SERIALIZE(relayed)
+      KV_SERIALIZE(last_relayed_time)
+      KV_SERIALIZE(do_not_relay)
+      KV_SERIALIZE(double_spend_seen)
+      KV_SERIALIZE(tx_blob)
+      KV_SERIALIZE(sig_count)
+   END_KV_SERIALIZE_MAP()
+  };
+
   struct COMMAND_RPC_GET_TRANSACTION_POOL
   {
     struct request
@@ -1715,7 +1754,7 @@ namespace cryptonote
     struct response
     {
       std::string status;
-      std::vector<tx_info> transactions;
+      std::vector<ntz_tx_info> transactions;
       std::vector<spent_key_image_info> spent_key_images;
       bool untrusted;
 
