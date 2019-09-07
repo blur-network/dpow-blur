@@ -764,6 +764,23 @@ namespace cryptonote
     }, true, include_unrelayed_txes);
   }
   //------------------------------------------------------------------
+  void tx_memory_pool::get_pending_ntz_pool_transactions(std::list<transaction>& txs, bool include_unrelayed_txes) const
+  {
+    CRITICAL_REGION_LOCAL(m_transactions_lock);
+    CRITICAL_REGION_LOCAL1(m_blockchain);
+    m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, const cryptonote::blobdata *bd){
+      transaction tx;
+      if (!parse_and_validate_tx_from_blob(*bd, tx))
+      {
+        MERROR("Failed to parse tx from txpool");
+        // continue
+        return true;
+      }
+      txs.push_back(tx);
+      return true;
+    }, true, include_unrelayed_txes);
+  }
+  //------------------------------------------------------------------
   void tx_memory_pool::get_transaction_hashes(std::vector<crypto::hash>& txs, bool include_unrelayed_txes) const
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);

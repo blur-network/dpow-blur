@@ -1259,6 +1259,27 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_pending_ntz_pool(const COMMAND_RPC_GET_PENDING_NTZ_POOL::request& req, COMMAND_RPC_GET_PENDING_NTZ_POOL::response& res, bool request_has_rpc_origin)
+  {
+    PERF_TIMER(on_get_pending_ntz_pool);
+    bool r;
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_PENDING_NTZ_POOL>(invoke_http_mode::JON, "/get_pending_ntz_pool", req, res, r))
+      return r;
+
+    m_core.get_pending_ntz_pool_and_spent_keys_info(res.transactions, res.spent_key_images, !request_has_rpc_origin || !m_restricted);
+
+    if (req.json_only)
+    {
+      for(auto& tx: res.transactions)
+      {
+        tx.blob_size = 0;
+        tx.tx_blob = "";
+      }
+    }
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_transaction_pool_hashes(const COMMAND_RPC_GET_TRANSACTION_POOL_HASHES::request& req, COMMAND_RPC_GET_TRANSACTION_POOL_HASHES::response& res, bool request_has_rpc_origin)
   {
     PERF_TIMER(on_get_transaction_pool_hashes);
@@ -1267,6 +1288,18 @@ namespace cryptonote
       return r;
 
     m_core.get_pool_transaction_hashes(res.tx_hashes, !request_has_rpc_origin || !m_restricted);
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_pending_ntz_pool_hashes(const COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::request& req, COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::response& res, bool request_has_rpc_origin)
+  {
+    PERF_TIMER(on_get_transaction_pool_hashes);
+    bool r;
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES>(invoke_http_mode::JON, "/get_pending_ntz_pool_hashes.bin", req, res, r))
+      return r;
+
+    m_core.get_pending_ntz_pool_hashes(res.tx_hashes, !request_has_rpc_origin || !m_restricted);
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
@@ -1308,6 +1341,18 @@ namespace cryptonote
       return r;
 
     m_core.get_pool_transaction_stats(res.pool_stats, !request_has_rpc_origin || !m_restricted);
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_pending_ntz_pool_stats(const COMMAND_RPC_GET_PENDING_NTZ_POOL_STATS::request& req, COMMAND_RPC_GET_PENDING_NTZ_POOL_STATS::response& res, bool request_has_rpc_origin)
+  {
+    PERF_TIMER(on_get_pending_ntz_pool_stats);
+    bool r;
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_PENDING_NTZ_POOL_STATS>(invoke_http_mode::JON, "/get_pending_ntz_pool_stats", req, res, r))
+      return r;
+
+    m_core.get_pending_ntz_pool_stats(res.pool_stats, !request_has_rpc_origin || !m_restricted);
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }

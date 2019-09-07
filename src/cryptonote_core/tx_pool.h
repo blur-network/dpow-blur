@@ -240,6 +240,14 @@ namespace cryptonote
      *
      */
     void get_transactions(std::list<transaction>& txs, bool include_unrelayed_txes = true) const;
+    /**
+     * @brief get a list of all transactions in the pool
+     *
+     * @param txs return-by-reference the list of transactions
+     * @param include_unrelayed_txes include unrelayed txes in the result
+     *
+     */
+    void get_pending_ntz_pool_transactions(std::list<transaction>& txs, bool include_unrelayed_txes = true) const;
 
     /**
      * @brief get a list of all transaction hashes in the pool

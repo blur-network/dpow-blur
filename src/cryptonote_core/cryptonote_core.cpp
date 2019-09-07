@@ -1519,6 +1519,24 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
+  bool core::get_pending_ntz_pool_transactions(std::list<transaction>& txs, bool include_sensitive_data) const
+  {
+    m_mempool.get_pending_ntz_pool_transactions(txs, include_sensitive_data);
+    return true;
+  }
+  //-----------------------------------------------------------------------------------------------
+  bool core::get_pending_ntz_pool_hashes(std::vector<crypto::hash>& txs, bool include_sensitive_data) const
+  {
+    m_mempool.get_transaction_hashes(txs, include_sensitive_data);
+    return true;
+  }
+  //-----------------------------------------------------------------------------------------------
+  bool core::get_pending_ntz_pool_stats(struct txpool_stats& stats, bool include_sensitive_data) const
+  {
+    m_mempool.get_transaction_stats(stats, include_sensitive_data);
+    return true;
+  }
+  //-----------------------------------------------------------------------------------------------
   bool core::get_pool_transaction(const crypto::hash &id, cryptonote::blobdata& tx) const
   {
     return m_mempool.get_transaction(id, tx);
@@ -1530,6 +1548,11 @@ namespace cryptonote
   }
   //-----------------------------------------------------------------------------------------------
   bool core::get_pool_transactions_and_spent_keys_info(std::vector<tx_info>& tx_infos, std::vector<spent_key_image_info>& key_image_infos, bool include_sensitive_data) const
+  {
+    return m_mempool.get_transactions_and_spent_keys_info(tx_infos, key_image_infos, include_sensitive_data);
+  }
+  //-----------------------------------------------------------------------------------------------
+  bool core::get_pending_ntz_pool_and_spent_keys_info(std::vector<tx_info>& tx_infos, std::vector<spent_key_image_info>& key_image_infos, bool include_sensitive_data) const
   {
     return m_mempool.get_transactions_and_spent_keys_info(tx_infos, key_image_infos, include_sensitive_data);
   }

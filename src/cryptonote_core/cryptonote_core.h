@@ -434,7 +434,7 @@ namespace cryptonote
       * @note see tx_memory_pool::get_txpool_backlog
       */
      bool get_txpool_backlog(std::vector<tx_backlog_entry>& backlog) const;
-     
+
      /**
       * @copydoc tx_memory_pool::get_transactions
       * @param include_unrelayed_txes include unrelayed txes in result
@@ -465,6 +465,45 @@ namespace cryptonote
       * @note see tx_memory_pool::get_pool_transactions_and_spent_keys_info
       */
      bool get_pool_transactions_and_spent_keys_info(std::vector<tx_info>& tx_infos, std::vector<spent_key_image_info>& key_image_infos, bool include_unrelayed_txes = true) const;
+
+     /**
+      * @copydoc tx_memory_pool::get_transactions
+      * @param include_unrelayed_txes include unrelayed txes in result
+      *
+      * @note see tx_memory_pool::get_transactions
+      */
+     bool get_pending_ntz_pool_hashes(std::vector<crypto::hash>& txs, bool include_unrelayed_txes = true) const;
+
+     /**
+      * @copydoc tx_memory_pool::get_transactions
+      * @param include_unrelayed_txes include unrelayed txes in result
+      *
+      * @note see tx_memory_pool::get_transactions
+      */
+     bool get_pending_ntz_pool_stats(struct txpool_stats& stats, bool include_unrelayed_txes = true) const;
+
+     /**
+      * @copydoc tx_memory_pool::get_transaction
+      *
+      * @note see tx_memory_pool::get_transaction
+      */
+     bool get_pending_ntz_pool_transaction(const crypto::hash& id, cryptonote::blobdata& tx) const;
+
+     /**
+      * @copydoc tx_memory_pool::get_pool_transactions_and_spent_keys_info
+      * @param include_unrelayed_txes include unrelayed txes in result
+      *
+      * @note see tx_memory_pool::get_pool_transactions_and_spent_keys_info
+      */
+     bool get_pending_ntz_pool_and_spent_keys_info(std::vector<tx_info>& tx_infos, std::vector<spent_key_image_info>& key_image_infos, bool include_unrelayed_txes = true) const;
+
+     /**
+      * @copydoc tx_memory_pool::get_transactions
+      * @param include_unrelayed_txes include unrelayed txes in result
+      *
+      * @note see tx_memory_pool::get_transactions
+      */
+     bool get_pending_ntz_pool_transactions(std::list<transaction>& txs, bool include_unrelayed_txes = true) const;
 
      /**
       * @copydoc tx_memory_pool::get_pool_for_rpc

@@ -1701,7 +1701,55 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
   };
-  
+
+  struct COMMAND_RPC_GET_PENDING_NTZ_POOL
+  {
+    struct request
+    {
+      bool json_only;
+      BEGIN_KV_SERIALIZE_MAP()
+      KV_SERIALIZE_OPT(json_only, false)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string status;
+      std::vector<tx_info> transactions;
+      std::vector<spent_key_image_info> spent_key_images;
+      bool untrusted;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+        KV_SERIALIZE(transactions)
+        KV_SERIALIZE(spent_key_images)
+        KV_SERIALIZE(untrusted)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES
+  {
+    struct request
+    {
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string status;
+      std::vector<crypto::hash> tx_hashes;
+      bool untrusted;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+        KV_SERIALIZE_CONTAINER_POD_AS_BLOB(tx_hashes)
+        KV_SERIALIZE(untrusted)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
   struct COMMAND_RPC_GET_BLOCKS_JSON
   {
     struct request
@@ -1798,6 +1846,28 @@ namespace cryptonote
   };
 
   struct COMMAND_RPC_GET_TRANSACTION_POOL_STATS
+  {
+    struct request
+    {
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string status;
+      txpool_stats pool_stats;
+      bool untrusted;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+        KV_SERIALIZE(pool_stats)
+        KV_SERIALIZE(untrusted)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_GET_PENDING_NTZ_POOL_STATS
   {
     struct request
     {
