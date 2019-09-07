@@ -1556,6 +1556,7 @@ uint64_t BlockchainLMDB::get_txpool_tx_count(bool include_unrelayed_txes) const
   check_open();
 
   int result;
+  int resultntz;
   uint64_t num_entries = 0;
 
   TXN_PREFIX_RDONLY();
@@ -1564,9 +1565,19 @@ uint64_t BlockchainLMDB::get_txpool_tx_count(bool include_unrelayed_txes) const
   {
     // No filtering, we can get the number of tx the "fast" way
     MDB_stat db_stats;
-    if ((result = mdb_stat(m_txn, m_txpool_meta, &db_stats)))
-      throw0(DB_ERROR(lmdb_error("Failed to query m_txpool_meta: ", result).c_str()));
+    if ((result = mdb_stat(m_txn, m_txpool_meta, &db_stats))) {
+      throw1(DB_ERROR(lmdb_error("Failed to query m_txpool_meta: ", result).c_str()));
+      if ((resultntz = mdb_stat(m_txn, m_ntzpool_meta, &db_stats))) {
+        throw0(DB_ERROR(lmdb_error("Failed to enumerate both txpool & ntzpool tx metadata: ", result).c_str()));
+      } else {
+        throw1(DB_ERROR(lmdb_error("Failed to enumerate txpool tx metadata, but found ntzpool meta instead: ", result).c_str()));
+      }
+    }
     num_entries = db_stats.ms_entries;
+    if (!resultntz)
+    {
+      num_entries--;
+    }
   }
   else
   {
@@ -1580,14 +1591,33 @@ uint64_t BlockchainLMDB::get_txpool_tx_count(bool include_unrelayed_txes) const
     while (1)
     {
       result = mdb_cursor_get(m_cur_txpool_meta, &k, &v, op);
+      resultntz = mdb_cursor_get(m_cur_ntzpool_meta, &k, &v, op);
       op = MDB_NEXT;
       if (result == MDB_NOTFOUND)
         break;
       if (result)
-        throw0(DB_ERROR(lmdb_error("Failed to enumerate txpool tx metadata: ", result).c_str()));
-      const txpool_tx_meta_t &meta = *(const txpool_tx_meta_t*)v.mv_data;
-      if (!meta.do_not_relay)
-        ++num_entries;
+      {
+        throw1(DB_ERROR(lmdb_error("Failed to enumerate txpool tx metadata, so checking for ntzpool data: ", result).c_str()));
+        if (resultntz)
+        {
+          throw0(DB_ERROR(lmdb_error("Failed to enumerate both txpool & ntzpool tx metadata: ", result).c_str()));
+        }
+        else
+        {
+          throw1(DB_ERROR(lmdb_error("Failed to enumerate txpool tx metadata, but found ntzpool meta instead: ", result).c_str()));
+        }
+      }
+      if (!result && resultntz)
+      {
+        const txpool_tx_meta_t &meta = *(const txpool_tx_meta_t*)v.mv_data;
+        if (!meta.do_not_relay)
+          ++num_entries;
+      }
+      else if (!resultntz && result)
+      {
+        const ntzpool_tx_meta_t &meta = *(const ntzpool_tx_meta_t*)v.mv_data;
+        --num_entries;
+      }
     }
   }
   TXN_POSTFIX_RDONLY();

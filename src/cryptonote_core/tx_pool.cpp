@@ -355,8 +355,7 @@ namespace cryptonote
     crypto::hash max_used_block_id = null_hash;
     uint64_t max_used_block_height = 0;
     cryptonote::ntzpool_tx_meta_t meta;
-    cryptonote::tx_verification_context txvc = AUTO_VAL_INIT(txvc);
-    bool ch_inp_res = m_blockchain.check_tx_inputs(tx, max_used_block_height, max_used_block_id, txvc, kept_by_block);
+    bool ch_inp_res = m_blockchain.check_tx_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
     if(!ch_inp_res)
     {
         LOG_PRINT_L1("tx used wrong inputs, rejected");
@@ -378,6 +377,7 @@ namespace cryptonote
       meta.relayed = relayed;
       meta.do_not_relay = do_not_relay;
       meta.double_spend_seen = false;
+      meta.sig_count = sig_count;
       memset(meta.padding, 0, sizeof(meta.padding));
 
 
@@ -396,8 +396,8 @@ namespace cryptonote
           MERROR("internal error: transaction already exists at inserting in ntz pool: " << e.what());
           return false;
         }
-        tvc.m_added_to_pool = true;
-        tvc.m_should_be_relayed = false;
+        tvc.m_added_to_pool = false;
+        tvc.m_should_be_relayed = true;
 
     tvc.m_verifivation_failed = false;
     m_txpool_size += blob_size;
@@ -1237,11 +1237,22 @@ namespace cryptonote
     while (sorted_it != m_txs_by_fee_and_receive_time.end())
     {
       txpool_tx_meta_t meta;
+      ntzpool_tx_meta_t ntz_meta;
       if (!m_blockchain.get_txpool_tx_meta(sorted_it->second, meta))
       {
-        MERROR("  failed to find tx meta");
-        continue;
+        MWARNING("  failed to find tx meta, trying for ntz meta");
+        if (!m_blockchain.get_ntzpool_tx_meta(sorted_it->second, ntz_meta))
+        {
+          MERROR("  failed to find both tx meta & ntz meta");
+          continue;
+        }
+        else
+        {
+          MWARNING("Found ntz meta, ignoring pending notarization tx.");
+          m_txs_by_fee_and_receive_time.erase(sorted_it);
+        }
       }
+
       LOG_PRINT_L2("Considering " << sorted_it->second << ", size " << meta.blob_size << ", current block size " << total_size << "/" << max_total_size << ", current coinbase " << print_money(best_coinbase));
 
       // Can not exceed maximum block size

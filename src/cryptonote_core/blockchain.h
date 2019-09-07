@@ -583,6 +583,24 @@ namespace cryptonote
     bool check_tx_inputs(transaction& tx, uint64_t& pmax_used_block_height, crypto::hash& max_used_block_id, tx_verification_context &tvc, bool kept_by_block = false);
 
     /**
+     * @brief validates a transaction's inputs
+     *
+     * validates a transaction's inputs as correctly used and not previously
+     * spent.  also returns the hash and height of the most recent block
+     * which contains an output that was used as an input to the transaction.
+     * The transaction's rct signatures, if any, are expanded.
+     *
+     * @param tx the transaction to validate
+     * @param pmax_used_block_height return-by-reference block height of most recent input
+     * @param max_used_block_id return-by-reference block hash of most recent input
+     * @param tvc returned information about tx verification
+     * @param kept_by_block whether or not the transaction is from a previously-verified block
+     *
+     * @return false if any input is invalid, otherwise true
+     */
+    bool check_tx_inputs(transaction& tx, uint64_t& pmax_used_block_height, crypto::hash& max_used_block_id, ntz_req_verification_context &tvc, bool kept_by_block = false);
+
+    /**
      * @brief get dynamic per kB fee for a given block size
      *
      * The dynamic fee is based on the block size in a past window, and

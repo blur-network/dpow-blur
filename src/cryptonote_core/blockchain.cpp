@@ -2448,6 +2448,37 @@ bool Blockchain::check_tx_inputs(transaction& tx, uint64_t& max_used_block_heigh
   return true;
 }
 //------------------------------------------------------------------
+bool Blockchain::check_tx_inputs(transaction& tx, uint64_t& max_used_block_height, crypto::hash& max_used_block_id, ntz_req_verification_context &tvc, bool kept_by_block)
+{
+  LOG_PRINT_L3("Blockchain::" << __func__);
+  CRITICAL_REGION_LOCAL(m_blockchain_lock);
+
+#if defined(PER_BLOCK_CHECKPOINT)
+  // check if we're doing per-block checkpointing
+  if (m_db->height() < m_blocks_hash_check.size() && kept_by_block)
+  {
+    max_used_block_id = null_hash;
+    max_used_block_height = 0;
+    return true;
+  }
+#endif
+
+  TIME_MEASURE_START(a);
+  bool res = check_tx_inputs(tx, tvc, &max_used_block_height);
+  TIME_MEASURE_FINISH(a);
+  if(m_show_time_stats)
+  {
+    size_t ring_size = !tx.vin.empty() && tx.vin[0].type() == typeid(txin_to_key) ? boost::get<txin_to_key>(tx.vin[0]).key_offsets.size() : 0;
+    MINFO("HASH: " <<  get_transaction_hash(tx) << " I/M/O: " << tx.vin.size() << "/" << ring_size << "/" << tx.vout.size() << " H: " << max_used_block_height << " ms: " << a + m_fake_scan_time << " B: " << get_object_blobsize(tx));
+  }
+  if (!res)
+    return false;
+
+  CHECK_AND_ASSERT_MES(max_used_block_height < m_db->height(), false,  "internal error: max used block index=" << max_used_block_height << " is not less then blockchain size = " << m_db->height());
+  max_used_block_id = m_db->get_block_hash_from_height(max_used_block_height);
+  return true;
+}
+//------------------------------------------------------------------
 bool Blockchain::check_tx_outputs(const transaction& tx, tx_verification_context &tvc)
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
