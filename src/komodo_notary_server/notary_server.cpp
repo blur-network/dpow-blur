@@ -1027,9 +1027,10 @@ namespace tools
 
       std::string address_str = get_account_address_as_str(m_wallet->nettype(), false, address);
 
-      uint64_t amount = 20000;
-      // arbitrary, but meaningful: 2 * 10^(-8) BLUR
+      uint64_t amount = 10000;
+      // arbitrary, but meaningful: 1 * 10^(-8) BLUR
       // for compatibility with BTC-flavored atomicity
+      // and exchange visibility
       notary_rpc::transfer_destination dest = AUTO_VAL_INIT(dest);
       dest.address = address_str;
       dest.amount = amount;
@@ -1062,9 +1063,9 @@ namespace tools
 
     try
     {
-      uint64_t mixin = m_wallet->adjust_mixin(5);
+      uint64_t mixin = m_wallet->adjust_mixin(4);
 
-      uint32_t priority = m_wallet->adjust_priority(3);
+      uint32_t priority = m_wallet->adjust_priority(1);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height() + 10;
       MWARNING("on_ntz_transfer calling create_ntz_transactions");
 

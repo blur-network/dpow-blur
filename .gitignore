@@ -65,6 +65,7 @@ cmake-build-debug/
 
 ### Linux ###
 *~
+*.save
 
 # KDE directory preferences
 .directory
