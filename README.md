@@ -8,6 +8,7 @@ There are files in here from many different projects, including but not limited 
 - <a href="https://github.com/blur-network/dpow-blur#start-wallet">Launching a notary wallet</a>
 - <a href="https://github.com/blur-network/dpow-blur#create-tx">Create a notarization tx</a>
 - <a href="https://github.com/blur-network/dpow-blur#relay-tx">Relaying a notarization tx</a>
+- <a href="https://github.com/blur-network/dpow-blur#view-pending">Viewing pending notarization txs</a>
 - <a href="https://github.com/blur-network/dpow-blur#rpc-calls">Other RPC calls</a>
 
 
@@ -145,6 +146,47 @@ curl -X POST http://localhost:21111/json_rpc -d '{"method":"request_ntz_sig","pa
 
 *Note once again: this command will not relay an actual transaction unless `sig_count` is greater than 13*
 
+
+<h2 id="view-pending">Viewing Pending Notarization Requests for Signatures from other Notary Nodes:</h2>
+
+To view pending notarization txs, which have requested further notarization signatures:
+
+Issue the following command to the running daemon interface: `print_pool`
+
+If a notarization is currently idling in the mempool, awaiting further signatures, they will show up under the heading `Pending Notarization Transactions: `
+
+Example output:
+
+```
+print_pool
+Pending Notarization Transactions: 
+=======================================================
+id: 4f74ad0f3d60c5e56a76ec31d1efbd32e628b665506213bd7876460ba2a57a93
+sig_count: 0
+sig_index:  0 0 0 0 0 0 0 0 0 0 0 0 0 
+blob_size: 53193
+blob_size: 0
+fee: 0.019524960000
+fee/byte: 0.000000367058
+receive_time: 1568837874 (26 hours ago)
+relayed: no
+do_not_relay: T
+kept_by_block: F
+double_spend_seen: F
+max_used_block_height: 512
+max_used_block_id: a1e31b5c8591ee5ee34614dd5c6f293bcf43f982ac3a84f5b1daa9f54da3b3f3
+last_failed_height: 0
+last_failed_id: 0000000000000000000000000000000000000000000000000000000000000000
+```
+
+While the code for the `sig_index` is still being written, this field will be populated with the equivalent of a `recv_mask`, which will include indices for the Notary nodes
+(from the `NotariesElected1` table, located in `src/komodo/komodo_notaries.h`) that have already signed and appended their transactions to the pending request, in time-sequential
+order.
+
+Because these notarization transactions use a completely separate validation structure (located in `src/cryptonote_basic/verification_context.h`), they will not validate
+as normal transactions until `sig_count` reaches a point of being greater than `13`.  At this point, the `ntz_tx_verification_context` will be converted to the standard
+`tx_verification_context`, and relayed to the network as a normal transcation.  Prior to this point, the separate context will prevent a transaction from being cleared
+from the mempool, or validated by other nodes.
 
 <h2 id="rpc-calls"> RPC Calls for KMD-BLUR Data </h2>
 
