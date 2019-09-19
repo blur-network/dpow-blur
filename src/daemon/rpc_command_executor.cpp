@@ -901,7 +901,7 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
       for (auto & ntz_tx_info : nres.transactions)
       {
       std::string indexes = " ";
-      for (int i = 0; i < 13; i++) { std::string index_string = (std::to_string(ntz_tx_info.signers_index.front()) + ","); indexes += index_string; ntz_tx_info.signers_index.pop_front(); }
+      for (int i = 0; i < 13; i++) { std::string index_string = (std::to_string(ntz_tx_info.signers_index.front()) + " "); indexes += index_string; ntz_tx_info.signers_index.pop_front(); }
 
         tools::msg_writer() << "id: " << ntz_tx_info.id_hash << std::endl
                           /*<< ntz_tx_info.tx_json << std::endl*/
