@@ -1010,7 +1010,7 @@ namespace cryptonote
     std::vector<ntz_req_verification_context> tvc = AUTO_VAL_INIT(tvc);
     const int sig_count = req.sig_count;
 
-    std::vector<bool> rs = m_core.handle_incoming_ntz_sig(req.tx_blobs, tvc, false, false, true, sig_count);
+    std::vector<bool> rs = m_core.handle_incoming_ntz_sig(req.tx_blobs, tvc, false, false, false, sig_count);
     for (uint32_t i = 0; i <= req.tx_blobs.size(); i++)
     {
       if (rs[i] == false)
