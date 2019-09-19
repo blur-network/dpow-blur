@@ -1672,8 +1672,8 @@ namespace cryptonote
     bool double_spend_seen;
     std::string tx_blob;
     int sig_count;
-   std::list<int>  signers_index = {  0, 0, 0, 0, 0, 0, 0,
-                                          0, 0, 0, 0, 0, 0 };
+    std::list<int> signers_index = {  0, 0, 0, 0, 0, 0, 0,
+                               0, 0, 0, 0, 0, 0 };
 
 
     BEGIN_KV_SERIALIZE_MAP()

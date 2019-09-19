@@ -109,7 +109,7 @@ namespace cryptonote
      */
     bool add_tx(transaction &tx, const crypto::hash &id, size_t blob_size, tx_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version);
 
-    bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count, std::list<int>& signer_index);
+    bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count, int signer_index[13]);
 
     /**
      * @brief add a transaction to the transaction pool
@@ -449,8 +449,8 @@ namespace cryptonote
 
       bool double_spend_seen; //!< true iff another tx was seen double spending this one
       uint8_t sig_count; // for notarization signature counting
-      std::list<int>  signers_index = {  0, 0, 0, 0, 0, 0, 0,
-                                         0, 0, 0, 0, 0, 0   };
+      int  signers_index[13] =    {  0, 0, 0, 0, 0, 0, 0,
+                                     0, 0, 0, 0, 0, 0   };
     };
 
   private:

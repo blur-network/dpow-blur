@@ -171,11 +171,11 @@ struct ntzpool_tx_meta_t
   uint8_t has_raw_ntz_data;           /* 1  */
 
   uint8_t  sig_count;                 /* 1  *    = 118 */
-                                      /* (13)(4)     = 52 */
-  std::list<int>  signers_index = {
+                                      /* (13)     = 131 */
+  int signers_index[13] = {
                     0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0 };
-  uint8_t padding[22];                /* till 192 bytes */
+  uint8_t padding[61];                /* till 192 bytes */
 };
 
 #define DBF_SAFE       1
