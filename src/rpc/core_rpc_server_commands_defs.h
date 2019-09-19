@@ -1672,6 +1672,9 @@ namespace cryptonote
     bool double_spend_seen;
     std::string tx_blob;
     int sig_count;
+   std::list<int>  signers_index = {  0, 0, 0, 0, 0, 0, 0,
+                                          0, 0, 0, 0, 0, 0 };
+
 
     BEGIN_KV_SERIALIZE_MAP()
       KV_SERIALIZE(id_hash)
@@ -1690,6 +1693,7 @@ namespace cryptonote
       KV_SERIALIZE(double_spend_seen)
       KV_SERIALIZE(tx_blob)
       KV_SERIALIZE(sig_count)
+      KV_SERIALIZE(signers_index)
    END_KV_SERIALIZE_MAP()
   };
 

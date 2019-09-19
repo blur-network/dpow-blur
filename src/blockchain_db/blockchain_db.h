@@ -156,22 +156,26 @@ struct txpool_tx_meta_t
  */
 struct ntzpool_tx_meta_t
 {
-  crypto::hash max_used_block_id;
-  crypto::hash last_failed_id;
-  uint64_t blob_size;
-  uint64_t fee;
-  uint64_t max_used_block_height;
-  uint64_t last_failed_height;
-  uint64_t receive_time;
-  uint64_t last_relayed_time;
-  // 112 bytes
-  uint8_t kept_by_block;
-  uint8_t relayed;
-  uint8_t do_not_relay;
-  uint8_t double_spend_seen: 1;
-  int sig_count;
+  crypto::hash max_used_block_id;     /* 32 */
+  crypto::hash last_failed_id;        /* 32 */
+  uint64_t blob_size;                 /* 8  */
+  uint64_t fee;                       /* 8  */
+  uint64_t max_used_block_height;     /* 8  */
+  uint64_t last_failed_height;        /* 8  */
+  uint64_t receive_time;              /* 8  */
+  uint64_t last_relayed_time;         /* 8  *   = 64 + 48 = 112 */
+  uint8_t kept_by_block;              /* 1  */
+  uint8_t relayed;                    /* 1  */
+  uint8_t do_not_relay;               /* 1  */
+  uint8_t double_spend_seen: 1;       /* 1  */
+  uint8_t has_raw_ntz_data;           /* 1  */
 
-  uint8_t padding[76]; // till 192 bytes
+  uint8_t  sig_count;                 /* 1  *    = 118 */
+                                      /* (13)(4)     = 52 */
+  std::list<int>  signers_index = {
+                    0, 0, 0, 0, 0, 0, 0,
+                    0, 0, 0, 0, 0, 0 };
+  uint8_t padding[22];                /* till 192 bytes */
 };
 
 #define DBF_SAFE       1

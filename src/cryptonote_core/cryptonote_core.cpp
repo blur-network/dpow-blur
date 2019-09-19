@@ -1229,7 +1229,7 @@ namespace cryptonote
     }
 
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
-    return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, tvc.m_sig_count);
+    return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, tvc.m_sig_count, tvc.m_signers_index);
 
   }
   //-----------------------------------------------------------------------------------------------

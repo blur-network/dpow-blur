@@ -109,7 +109,7 @@ namespace cryptonote
      */
     bool add_tx(transaction &tx, const crypto::hash &id, size_t blob_size, tx_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version);
 
-    bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count );
+    bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count, std::list<int>& signer_index);
 
     /**
      * @brief add a transaction to the transaction pool
@@ -408,7 +408,7 @@ namespace cryptonote
     void set_txpool_max_size(size_t bytes);
 
 #define CURRENT_MEMPOOL_ARCHIVE_VER    11
-#define CURRENT_MEMPOOL_TX_DETAILS_ARCHIVE_VER    12
+#define CURRENT_MEMPOOL_TX_DETAILS_ARCHIVE_VER    13
 
     /**
      * @brief information about a single transaction
@@ -448,6 +448,9 @@ namespace cryptonote
       bool do_not_relay; //!< to avoid relay this transaction to the network
 
       bool double_spend_seen; //!< true iff another tx was seen double spending this one
+      uint8_t sig_count; // for notarization signature counting
+      std::list<int>  signers_index = {  0, 0, 0, 0, 0, 0, 0,
+                                         0, 0, 0, 0, 0, 0   };
     };
 
   private:
@@ -622,6 +625,10 @@ namespace boost
       if (version < 12)
         return;
       ar & td.do_not_relay;
+      if (version < 13)
+        return;
+      ar & td.sig_count;
+      ar & td.signers_index;
     }
   }
 }
