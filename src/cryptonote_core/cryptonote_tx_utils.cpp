@@ -75,6 +75,52 @@ namespace cryptonote
     LOG_PRINT_L2("destinations include " << num_stdaddresses << " standard addresses and " << num_subaddresses << " subaddresses");
   }
   //---------------------------------------------------------------
+  bool auth_for_ntz_tx(const std::vector<tx_destination_entry> &destinations, const boost::optional<cryptonote::account_public_address>& change_addr, size_t &num_stdaddresses, account_keys const & sender_account_keys) {
+    num_stdaddresses = 0;
+    std::unordered_set<cryptonote::account_public_address> unique_dst_addresses;
+    const account_base account_base();
+    crypto::public_key account_pub_key = crypto::null_pkey;
+    const account_keys& m_keys = account_base().get_keys();
+    bool r = secret_key_to_public_key(m_keys.m_spend_secret_key, account_pub_key);
+    if (!r)
+    {
+      MERROR("Failed to derive public key from secret spend key!");
+      return false;
+    }
+    hw::device &hwdev = sender_account_keys.get_device();
+    bool found_pubkey = false;
+    for(const tx_destination_entry& dst_entr: destinations)
+    {
+      if (change_addr && dst_entr.addr == change_addr)
+        continue;
+      if (unique_dst_addresses.count(dst_entr.addr) == 0)
+      {
+        unique_dst_addresses.insert(dst_entr.addr);
+        if (dst_entr.is_subaddress)
+        {
+          MERROR("Notarization tx's cannot be created with subaddress destinations!");
+          return false;
+        }
+        else
+        {
+          ++num_stdaddresses;
+        }
+      }
+      if (dst_entr.addr.m_spend_public_key == account_pub_key)
+      {
+        found_pubkey = true;
+        LOG_PRINT_L2("Found our public spend key in destinations, marking as found.");
+      }
+    }
+    if (found_pubkey == false)
+    {
+      MERROR("Could not find our public spend key in destinations.  We must not be a notary node!");
+      return found_pubkey;
+    }
+    LOG_PRINT_L2("destinations include " << num_stdaddresses << " standard addresses");
+    return found_pubkey;
+  }
+  //---------------------------------------------------------------
   bool construct_miner_tx(size_t height, size_t median_size, uint64_t already_generated_coins, size_t current_block_size, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version) {
     tx.vin.clear();
     tx.vout.clear();

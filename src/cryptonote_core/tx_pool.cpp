@@ -379,7 +379,9 @@ namespace cryptonote
       meta.double_spend_seen = false;
       meta.sig_count = sig_count;
       for (int i = 0; i < 13; i++) {
-         memcpy(&meta.signers_index[i], &signer_index[i], sizeof(signer_index[i]));
+         if (signer_index[i] != 0) {
+           memcpy(&meta.signers_index[i], &signer_index[i], sizeof(signer_index[i]));
+         }
       }
       memset(meta.padding, 0, sizeof(meta.padding));
 
