@@ -16,6 +16,8 @@ There are files in here from many different projects, including but not limited 
 
 Libhydrogen requires CMake 3.14+ to compile.  If your distribution does not include this in the package manager, you can download the latest release's source from here: <a href="https://github.com/Kitware/CMake/releases/download/v3.15.2/cmake-3.15.2.tar.gz">CMake 3.15.2 from Kitware's github</a>
 
+Both libbtc and the native blur files require GCC 8.3 or below to compile.  GCC 9+ will error out.
+
 Once that is extracted from the archive, building and installing is as simple as `./configure && make && sudo make install`
 
 Ubuntu/Debian One-Liner:
