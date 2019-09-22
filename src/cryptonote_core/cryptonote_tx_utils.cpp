@@ -79,10 +79,8 @@ namespace cryptonote
   bool auth_and_get_ntz_signer_index(const std::vector<tx_destination_entry> &destinations, const boost::optional<cryptonote::account_public_address>& change_addr, size_t &num_stdaddresses, account_keys const & sender_account_keys, int& signer_index) {
     num_stdaddresses = 0;
     std::unordered_set<cryptonote::account_public_address> unique_dst_addresses;
-    const account_base account_base();
     crypto::public_key account_pub_key = crypto::null_pkey;
-    const account_keys& m_keys = account_base().get_keys();
-    bool r = secret_key_to_public_key(m_keys.m_spend_secret_key, account_pub_key);
+    bool r = secret_key_to_public_key(sender_account_keys.m_spend_secret_key, account_pub_key);
     if (!r)
     {
       MERROR("Failed to derive public key from secret spend key!");
