@@ -41,6 +41,7 @@ using namespace epee;
 #include "cryptonote_basic/miner.h"
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
+#include "komodo/komodo_validation.h"
 #include "ringct/rctSigs.h"
 #include "multisig/multisig.h"
 
@@ -75,7 +76,7 @@ namespace cryptonote
     LOG_PRINT_L2("destinations include " << num_stdaddresses << " standard addresses and " << num_subaddresses << " subaddresses");
   }
   //---------------------------------------------------------------
-  bool auth_for_ntz_tx(const std::vector<tx_destination_entry> &destinations, const boost::optional<cryptonote::account_public_address>& change_addr, size_t &num_stdaddresses, account_keys const & sender_account_keys) {
+  bool auth_and_get_ntz_signer_index(const std::vector<tx_destination_entry> &destinations, const boost::optional<cryptonote::account_public_address>& change_addr, size_t &num_stdaddresses, account_keys const & sender_account_keys, int& signer_index) {
     num_stdaddresses = 0;
     std::unordered_set<cryptonote::account_public_address> unique_dst_addresses;
     const account_base account_base();
@@ -110,6 +111,20 @@ namespace cryptonote
       {
         found_pubkey = true;
         LOG_PRINT_L2("Found our public spend key in destinations, marking as found.");
+        std::vector<std::pair<crypto::public_key,crypto::public_key>> keys_vec;
+        if (!get_notary_pubkeys(keys_vec)) {
+          MERROR("Failed to populate vector for notary pubkeys from hardcoded keys!");
+        }
+        bool pubkey_check = false;
+        for (int i = 0; i < 63; i++) {
+          if (account_pub_key == keys_vec[i].second) {
+            pubkey_check = true;
+            signer_index = i;
+          }
+        }
+        if (!pubkey_check) {
+          MERROR("Our public key does not match any of those found in the hardcoded notaries list! Failed to authenticate.");
+        }
       }
     }
     if (found_pubkey == false)
