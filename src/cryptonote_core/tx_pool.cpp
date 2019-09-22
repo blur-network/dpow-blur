@@ -401,7 +401,7 @@ namespace cryptonote
           MERROR("internal error: transaction already exists at inserting in ntz pool: " << e.what());
           return false;
         }
-        tvc.m_added_to_pool = false;
+        tvc.m_added_to_pool = true;
         tvc.m_should_be_relayed = true;
 
     tvc.m_verifivation_failed = false;
