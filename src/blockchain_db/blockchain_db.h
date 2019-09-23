@@ -173,8 +173,8 @@ struct ntzpool_tx_meta_t
   uint8_t  sig_count;                 /* 1  *    = 118 */
                                       /* (13)     = 131 */
   int signers_index[13] = {
-                    0, 0, 0, 0, 0, 0, 0,
-                    0, 0, 0, 0, 0, 0 };
+                    -1, -1, -1, -1, -1, -1, -1,
+                    -1, -1, -1, -1, -1, -1 };
   uint8_t padding[61];                /* till 192 bytes */
 };
 

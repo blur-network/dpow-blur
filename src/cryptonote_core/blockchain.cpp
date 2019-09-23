@@ -136,7 +136,7 @@ static const struct {
   {  8, 8, 0, 1529841602 },
   {  9, 9, 0, 1542681000 },
   { 10, 10, 0, 1550449900 },
-  { 11, 1000, 0, 1550459900 }
+  { 11, 700, 0, 1550459900 }
 }; //testnet hardfork v11 HF testing
 
 static const struct {
@@ -2544,6 +2544,12 @@ bool Blockchain::check_ntz_req_outputs(const transaction& tx, ntz_req_verificati
     }
   }
 
+ if (hf_version < 11) {
+   std::string s(std::to_string(11 - hf_version) + " forks from now!");
+   MERROR("Notarizations are not enabled until " << hf_version == 10 ? "after the next hardfork!" : s);
+   return false;
+ }
+
   // forbid invalid pubkeys
   if (hf_version >= 1) {
     for (const auto &o: tx.vout) {
@@ -2582,6 +2588,7 @@ bool Blockchain::have_tx_keyimges_as_spent(const transaction &tx) const
   }
   return false;
 }
+//------------------------------------------------------------------
 bool Blockchain::expand_transaction_2(transaction &tx, const crypto::hash &tx_prefix_hash, const std::vector<std::vector<rct::ctkey>> &pubkeys)
 {
   PERF_TIMER(expand_transaction_2);
@@ -3002,6 +3009,46 @@ bool Blockchain::check_tx_inputs(transaction& tx, ntz_req_verification_context &
 
     // make sure tx output has key offset(s) (is signed to be used)
     CHECK_AND_ASSERT_MES(in_to_key.key_offsets.size(), false, "empty in_to_key.key_offsets in transaction with id " << get_transaction_hash(tx));
+
+    std::vector<std::pair<crypto::public_key,crypto::public_key>> notary_keys;
+    if (!get_notary_pubkeys(notary_keys)) {
+      MERROR("Failed to fetch notary pubkeys from harcoded table!");
+      return false;
+    }
+
+    for (const auto& each : tvc.m_signers_index)
+    {
+      if (each > 63) {
+        MERROR("Invalid value for signers_index! Value: " << std::to_string(each) << " exceeds max value of 63!");
+        return false;
+      }
+      if (each >= 0) {
+        bool pubkeys_equal = false;
+        rct::key rct_pkey_hc = rct::pk2rct(notary_keys[each].second);
+        std::ostringstream rctbuff(0), pubkeys_stream(0);
+        epee::to_hex::formatted(rctbuff, epee::as_byte_span(rct_pkey_hc));
+        rct::ctkey pubkeys_n;
+        for (const auto& n : pubkeys[sig_index]) {
+          if (hydro_equal(&n,&rct_pkey_hc,64)) {
+            pubkeys_n = n;
+          }
+        }
+        epee::to_hex::formatted(pubkeys_stream, epee::as_byte_span(pubkeys_n));
+        MWARNING("Rct pubkey calculated from notary_pubkeys: " << rctbuff.str() << ", Pubkeys[sig_index]: " << pubkeys_stream.str() << ", in_to_key.k_image: " << in_to_key.k_image);
+//        if (rct_pkey_hc != pubkeys[sig_index])
+      }
+        if (!check_tx_input(tx.version, in_to_key, tx_prefix_hash, std::vector<crypto::signature>(), tx.rct_signatures, pubkeys[sig_index], pmax_used_block_height))
+        {
+          it->second[in_to_key.k_image] = false;
+          MERROR_VER("Failed to check ring signature for tx " << get_transaction_hash(tx) << "  vin key with k_image: " << in_to_key.k_image << "  sig_index: " << sig_index);
+          if (pmax_used_block_height) // a default value of NULL is used when called from Blockchain::handle_block_to_main_chain()
+          {
+            MERROR_VER("  *pmax_used_block_height: " << *pmax_used_block_height);
+          }
+
+          return false;
+        }
+    }
 
     if(have_tx_keyimg_as_spent(in_to_key.k_image))
     {

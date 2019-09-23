@@ -449,8 +449,8 @@ namespace cryptonote
 
       bool double_spend_seen; //!< true iff another tx was seen double spending this one
       uint8_t sig_count; // for notarization signature counting
-      int  signers_index[13] =    {  0, 0, 0, 0, 0, 0, 0,
-                                     0, 0, 0, 0, 0, 0   };
+      int  signers_index[13] =    {  -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1   };
     };
 
   private:
