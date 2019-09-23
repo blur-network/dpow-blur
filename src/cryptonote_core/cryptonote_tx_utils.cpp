@@ -88,6 +88,7 @@ namespace cryptonote
     }
     hw::device &hwdev = sender_account_keys.get_device();
     bool found_pubkey = false;
+    bool pubkey_check = false;
     for(const tx_destination_entry& dst_entr: destinations)
     {
       if (change_addr && dst_entr.addr == change_addr)
@@ -105,7 +106,7 @@ namespace cryptonote
           ++num_stdaddresses;
         }
       }
-      if (dst_entr.addr.m_spend_public_key == account_pub_key)
+      if (epee::string_tools::pod_to_hex(dst_entr.addr.m_spend_public_key) == epee::string_tools::pod_to_hex(account_pub_key))
       {
         found_pubkey = true;
         LOG_PRINT_L2("Found our public spend key in destinations, marking as found.");
@@ -113,8 +114,7 @@ namespace cryptonote
         if (!get_notary_pubkeys(keys_vec)) {
           MERROR("Failed to populate vector for notary pubkeys from hardcoded keys!");
         }
-        bool pubkey_check = false;
-        for (int i = 0; i < 63; i++) {
+        for (int i = 0; i <= 63; i++) {
           if (account_pub_key == keys_vec[i].second) {
             pubkey_check = true;
             signer_index = i;
