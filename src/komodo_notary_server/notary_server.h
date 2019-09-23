@@ -144,7 +144,7 @@ namespace tools
       bool on_set_account_tag_description(const notary_rpc::COMMAND_RPC_SET_ACCOUNT_TAG_DESCRIPTION::request& req, notary_rpc::COMMAND_RPC_SET_ACCOUNT_TAG_DESCRIPTION::response& res, epee::json_rpc::error& er);
       bool on_getheight(const notary_rpc::COMMAND_RPC_GET_HEIGHT::request& req, notary_rpc::COMMAND_RPC_GET_HEIGHT::response& res, epee::json_rpc::error& er);
       bool validate_transfer(const std::list<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, epee::json_rpc::error& er);
-      bool validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, epee::json_rpc::error& er);
+      bool validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, std::list<int> const& signer_index, epee::json_rpc::error& er);
       bool on_transfer(const notary_rpc::COMMAND_RPC_TRANSFER::request& req, notary_rpc::COMMAND_RPC_TRANSFER::response& res, epee::json_rpc::error& er);
       bool on_transfer_split(const notary_rpc::COMMAND_RPC_TRANSFER_SPLIT::request& req, notary_rpc::COMMAND_RPC_TRANSFER_SPLIT::response& res, epee::json_rpc::error& er);
       bool on_ntz_transfer(const notary_rpc::COMMAND_RPC_NTZ_TRANSFER::request& req, notary_rpc::COMMAND_RPC_NTZ_TRANSFER::response& res, epee::json_rpc::error& er);

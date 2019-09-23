@@ -661,14 +661,20 @@ namespace tools
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool notary_server::validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, epee::json_rpc::error& er)
+  bool notary_server::validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, std::list<int> const& signers_index, epee::json_rpc::error& er)
   {
     std::string ntz_txn_extra_data;
+    std::vector<int> signers_index_vec;
+
+    for (const auto each : signers_index)
+      signers_index_vec.push_back(each);
+
     for (auto it = destinations.begin(); it != destinations.end(); it++)
     {
       cryptonote::address_parse_info info;
       cryptonote::tx_destination_entry de;
       er.message = "";
+
       if(!get_account_address_from_str(info, m_wallet->nettype(), it->address))
       {
         er.code = NOTARY_RPC_ERROR_CODE_WRONG_ADDRESS;
@@ -739,6 +745,42 @@ namespace tools
         return false;
       }
 
+      bool r = false;
+      cryptonote::address_parse_info info;
+      if (!get_account_address_from_str(info, m_wallet->nettype(), m_wallet->get_account().get_public_address_str(m_wallet->nettype()))) {
+        MERROR("Unable to get our own address info from str!");
+        return false;
+      }
+      cryptonote::account_public_address const& own_address = info.address;
+      cryptonote::account_keys const& own_keys = m_wallet->get_account().get_keys();
+      size_t num_stdaddresses = 0;
+      int signer_index = -1;
+      r = auth_and_get_ntz_signer_index(dsts, own_address, num_stdaddresses, own_keys, signer_index);
+      if (!r) {
+        MERROR("Error authenticating and retrieving signer_index in notary_server!");
+        return false;
+      }
+      bool once = false;
+      int loc = -1;
+      for (size_t i = 0; i <= signers_index_vec.size(); i++) {
+        if (once) {
+          if (signer_index == signers_index_vec[i]) {
+            MERROR("Duplicate signer at index: " << std::to_string(i) << " and index: " << std::to_string(loc) << ", validation failed!");
+            return false;
+          }
+        }
+        if ((signer_index >= 0) && (signer_index == signers_index_vec[i]) && (loc == -1)) {
+          once = true;
+          loc = i;
+        }
+      }
+      if (!once && (loc < 0)) {
+        for (size_t j = 0; j < signers_index_vec.size(); j++) {
+          if (signers_index_vec[j] == (-1)) {
+            signers_index_vec[j] = signer_index;
+          }
+        }
+      }
     }
     return true;
   }
@@ -993,6 +1035,7 @@ namespace tools
 
     std::vector<cryptonote::tx_destination_entry> dsts;
     std::vector<uint8_t> extra;
+    int signer_index = -1;
 
     if (!m_wallet) return not_open(er);
     if (m_wallet->restricted())
@@ -1054,22 +1097,23 @@ namespace tools
         MERROR("Unable to find payment ID!");
       }
     }
-
+    std::list<int> signers_index = { -1, -1, -1, -1, -1, -1, -1,
+                                     -1, -1, -1, -1, -1, -1 };
     // validate the transfer requested and populate dsts & extra; RPC_TRANSFER::request and RPC_TRANSFER_SPLIT::request are identical types.
-    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, er))
+    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, signers_index, er))
     {
       return false;
     }
 
     try
     {
-      uint64_t mixin = m_wallet->adjust_mixin(4);
+      uint64_t mixin = m_wallet->adjust_mixin(req.sig_count);
 
       uint32_t priority = m_wallet->adjust_priority(1);
-      uint64_t unlock_time = m_wallet->get_blockchain_current_height() + 10;
+      uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       MWARNING("on_ntz_transfer calling create_ntz_transactions");
 
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, signers_index, m_trusted_daemon);
       MWARNING("on_ntz_transfer with sig_count = " << std::to_string(req.sig_count) << ": called create_ntz_transactions");
 
       const int new_count = req.sig_count + 1;
@@ -1083,7 +1127,7 @@ namespace tools
         m_wallet->commit_tx(ptx_vector);
         MWARNING("Signatures >= 13: [commit_tx] sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
       } else {
-        m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id);
+        m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id, signers_index);
         MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
       }
 

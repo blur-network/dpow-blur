@@ -157,8 +157,13 @@ int32_t komodo_importaddress(char* addr)
 
     for (int i =0; i < 64; i++) {
       std::pair<const char*,const char*> seed_and_pubkey_pair;
-      seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[i][3]);
- //     MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[0][3]);
+      if (i < 1) {
+        seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[i][3]);
+        MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[i][3]);
+      } else {
+        seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[1][3]);
+        MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[1][3]);
+      }
       notaries_keys.push_back(seed_and_pubkey_pair);
     }
 
@@ -832,7 +837,7 @@ namespace komodo {
           }
         } else fprintf(stderr,"unexpected error notary_hash %s ht.%d at ht.%lu\n",s_notarized_hash.c_str(),notarized_height,notary);
     } else if ( notarized_height > 0 )
-        fprintf(stderr,"%s couldnt find notarized.(%s %d) ht.%d\n",ASSETCHAINS_SYMBOL,s_notarized_hash.c_str(),notarized_height,pindex);
+        fprintf(stderr,"%s couldnt find notarized.(%s %d) ht.\n",ASSETCHAINS_SYMBOL,s_notarized_hash.c_str(),notarized_height);
     return(0);
   }
   //------------------------------------------------------------------

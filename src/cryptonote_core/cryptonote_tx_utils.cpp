@@ -44,6 +44,7 @@ using namespace epee;
 #include "komodo/komodo_validation.h"
 #include "ringct/rctSigs.h"
 #include "multisig/multisig.h"
+#include "libhydrogen/hydrogen.h"
 
 using namespace crypto;
 
@@ -86,13 +87,12 @@ namespace cryptonote
       MERROR("Failed to derive public key from secret spend key!");
       return false;
     }
+    MWARNING("In auth_ntz, account_pub_key = " << epee::string_tools::pod_to_hex(account_pub_key));
     hw::device &hwdev = sender_account_keys.get_device();
     bool found_pubkey = false;
     bool pubkey_check = false;
     for(const tx_destination_entry& dst_entr: destinations)
     {
-      if (change_addr && dst_entr.addr == change_addr)
-        continue;
       if (unique_dst_addresses.count(dst_entr.addr) == 0)
       {
         unique_dst_addresses.insert(dst_entr.addr);
@@ -115,7 +115,7 @@ namespace cryptonote
           MERROR("Failed to populate vector for notary pubkeys from hardcoded keys!");
         }
         for (int i = 0; i <= 63; i++) {
-          if (account_pub_key == keys_vec[i].second) {
+          if (hydro_equal(&account_pub_key, &keys_vec[i].second, 64)) {
             pubkey_check = true;
             signer_index = i;
           }

@@ -282,7 +282,7 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------------------------
-  bool tx_memory_pool::add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count, int signer_index[13] )
+  bool tx_memory_pool::add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count, std::list<int> const& signers_index )
   {
     // this should already be called with that lock, but let's make it explicit for clarity
     CRITICAL_REGION_LOCAL(m_transactions_lock);
@@ -377,11 +377,13 @@ namespace cryptonote
       meta.relayed = relayed;
       meta.do_not_relay = do_not_relay;
       meta.double_spend_seen = false;
-      meta.sig_count = sig_count;
-      for (int i = 0; i < 13; i++) {
-         if (signer_index[i] != -1) {
-           memcpy(&meta.signers_index[i], &signer_index[i], sizeof(signer_index[i]));
-         }
+      meta.sig_count = sig_count + 1;
+      int i = 0;
+      for (const auto& each : signers_index) {
+         if (each != (-1) && i <= 12) {
+           memcpy(&meta.signers_index[i], &each, sizeof(each));
+        }
+        i++;
       }
       memset(meta.padding, 0, sizeof(meta.padding));
 

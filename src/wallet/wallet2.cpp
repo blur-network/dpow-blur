@@ -4712,7 +4712,7 @@ void wallet2::commit_tx(std::vector<pending_tx>& ptx_vector)
   }
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_count, const std::string& payment_id)
+void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_count, const std::string& payment_id, std::list<int> const & signers_index)
 {
   using namespace cryptonote;
     // Normal submit
@@ -6578,9 +6578,8 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
   LOG_PRINT_L2("constructing tx");
   auto sources_copy = sources;
   size_t num_std;
-  int signer_index = -1;
-  bool R = auth_and_get_ntz_signer_index(splitted_dsts, change_dts.addr, num_std, m_account.get_keys(), signer_index);
-  if (!R) { MERROR("Failed to authenticate and retrieve signer index!"); return; }
+//  bool R = auth_and_get_ntz_signer_index(splitted_dsts, change_dts.addr, num_std, m_account.get_keys(), signer_index);
+//  if (!R) { MERROR("Failed to authenticate and retrieve signer index!"); return; }
   bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sources, splitted_dsts, change_dts.addr, extra, tx, unlock_time, tx_key, additional_tx_keys, true, bulletproof, m_multisig ? &msout : NULL);
   LOG_PRINT_L2("constructed tx, r="<<r);
   THROW_WALLET_EXCEPTION_IF(!r, error::tx_not_constructed, sources, dsts, unlock_time, m_nettype);
@@ -7000,12 +6999,12 @@ static uint32_t get_count_above(const std::vector<wallet2::transfer_details> &tr
   return count;
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon)
+std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, std::list<int> const& signers_index, bool trusted_daemon)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
   boost::unique_lock<hw::device> hwdev_lock (hwdev);
-  hw::reset_mode rst(hwdev);  
+  hw::reset_mode rst(hwdev);
 
   std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_transfers_indices_per_subaddr;
   std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_dust_indices_per_subaddr;

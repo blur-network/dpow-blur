@@ -73,8 +73,8 @@
 
   const char *Notaries_elected1[][4] =  /* need to add hardcoded BLUR spendkey pub */
   {
-    {"0dev1_jl777"       , "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828" , "RNJmgYaFF5DbnrNUX6pMYz9rcnDKC2tuAc", "8cf341ba0fdb3f8777c2195cbf2e38de2d85b912b33949bf3509bada4ad473cd"},
-    {"0dev2_kolo"        , "030f34af4b908fb8eb2099accb56b8d157d49f6cfb691baa80fdd34f385efed961" , "RLj9h7zfnx4X9hvquR3sEwzHvcvF61W2Rc", "c59868356b24c14195fd20458e3f2111df2e8bface8597a61d10c0fd61d8b012"},
+    {"0dev1_jl777"       , "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828" , "RNJmgYaFF5DbnrNUX6pMYz9rcnDKC2tuAc", "97204ae7d30e9d94c094f2884ff7a6a3855dab0078fc25c06863d5f805702a2a"},
+    {"0dev2_kolo"        , "030f34af4b908fb8eb2099accb56b8d157d49f6cfb691baa80fdd34f385efed961" , "RLj9h7zfnx4X9hvquR3sEwzHvcvF61W2Rc", "c4fa5396faf526fdd94520ccf8a6dccfc0c1ab92a0ee7be6e4012a5a166dcd8b"},
     {"0dev3_kolo"        , "025af9d2b2a05338478159e9ac84543968fd18c45fd9307866b56f33898653b014" , "RTZi9uC1wEu3PD9eoL4R7KyeAse7uvdHuS", "c59868356b24c14195fd20458e3f2111df2e8bface8597a61d10c0fd61d8b013"},
     {"0dev4_decker"      , "028eea44a09674dda00d88ffd199a09c9b75ba9782382cc8f1e97c0fd565fe5707" , "RDECKVXcWCgPpMrKqQmMX7PxzQVLCzcR5a", "c59868356b24c14195fd20458e3f2111df2e8bface8597a61d10c0fd61d8b014"},
     {"a-team_SH"         , "03b59ad322b17cb94080dc8e6dc10a0a865de6d47c16fb5b1a0b5f77f9507f3cce" , "RSuXRScqHNbRFqjur2C3tf3oDoauBs2B1i", "c59868356b24c14195fd20458e3f2111df2e8bface8597a61d10c0fd61d8b015"},
