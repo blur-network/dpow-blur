@@ -284,8 +284,9 @@ namespace cryptonote
   //---------------------------------------------------------------------------------
   bool tx_memory_pool::add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count, std::list<int> const& signers_index )
   {
-    // this should already be called with that lock, but let's make it explicit for clarity
-    CRITICAL_REGION_LOCAL(m_transactions_lock);
+    // locking here will screw things up, since handle_incoming can't lock,
+    // if anything in it has taken a tx_pool lock in the past
+    // CRITICAL_REGION_LOCAL(m_transactions_lock);
 
     if (tx.version == 0)
     {

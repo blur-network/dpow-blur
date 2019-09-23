@@ -970,11 +970,13 @@ namespace cryptonote
       int sig_count;
       std::list<blobdata> tx_blobs;
       std::string payment_id;
+      std::list<int> signers_index;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)
         KV_SERIALIZE(tx_blobs)
         KV_SERIALIZE(payment_id)
+        KV_SERIALIZE(signers_index)
       END_KV_SERIALIZE_MAP()
     };
 
@@ -992,6 +994,7 @@ namespace cryptonote
       bool fee_too_low;
       bool not_rct;
       int sig_count;
+      std::list<int> signers_index;
       bool untrusted;
 
       BEGIN_KV_SERIALIZE_MAP()
@@ -1007,6 +1010,7 @@ namespace cryptonote
         KV_SERIALIZE(fee_too_low)
         KV_SERIALIZE(not_rct)
         KV_SERIALIZE(sig_count)
+        KV_SERIALIZE(signers_index)
         KV_SERIALIZE(untrusted)
       END_KV_SERIALIZE_MAP()
     };
@@ -1672,8 +1676,7 @@ namespace cryptonote
     bool double_spend_seen;
     std::string tx_blob;
     int sig_count;
-    std::list<int> signers_index = {  -1, -1, -1, -1, -1, -1, -1,
-                               -1, -1, -1, -1, -1, -1 };
+    std::list<int> signers_index;
 
 
     BEGIN_KV_SERIALIZE_MAP()
