@@ -995,10 +995,6 @@ namespace cryptonote
   {
     CHECK_CORE_READY();
 
-    std::list<std::string> verified_tx_blobs;
-    std::vector<std::string> unverified_blobs;
-    unverified_blobs.push_back(req.tx_blob); // TODO: Unnecessary, but due to param types
-
     cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
     ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
     const int sig_count = req.sig_count;
@@ -1036,10 +1032,6 @@ namespace cryptonote
           MERROR("[on_request_ntz_sig]: tx verification failed" << punctuation << res.reason);
           return false;
         }
-        else
-        {
-          verified_tx_blobs.push_back(unverified_blobs[0]);
-        }
       }
 
     if ((req.sig_count < 13) && (req.sig_count > 0))
@@ -1059,6 +1051,8 @@ namespace cryptonote
     else if (req.sig_count >= 13)
     {
       NOTIFY_NEW_TRANSACTIONS::request r;
+      std::list<blobdata> verified_tx_blobs;
+      verified_tx_blobs.push_back(req.tx_blob);
       r.txs = verified_tx_blobs;
       m_core.get_protocol()->relay_transactions(r, fake_context);
       res.status = CORE_RPC_STATUS_OK;

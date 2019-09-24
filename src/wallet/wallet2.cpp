@@ -2057,6 +2057,14 @@ void wallet2::update_pool_state(bool refreshed)
         break;
       }
     }
+    for (const auto &it2: nres.tx_hashes)
+    {
+      if (it2 == txid)
+      {
+        found = true;
+        break;
+      }
+    }
     auto pit = it++;
     if (!found)
     {
