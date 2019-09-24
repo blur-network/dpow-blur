@@ -760,6 +760,7 @@ namespace tools
       }
       bool once = false;
       int loc = -1;
+      std::vector<int> vec_ret;
       for (size_t i = 0; i <= signers_index_vec.size(); i++) {
         if (once) {
           if (signer_index == signers_index_vec[i]) {
@@ -770,15 +771,15 @@ namespace tools
         if ((signer_index >= 0) && (signer_index == signers_index_vec[i]) && (loc == -1)) {
           once = true;
           loc = i;
+        } else if ((signer_index >= 0) && (signers_index_vec[i] == (-1)) && (vec_ret.empty())) {
+          vec_ret.push_back(signer_index);
+        } else if ((signers_index_vec[i] != (-1)) && !vec_ret.empty()) {
+          vec_ret.push_back(signers_index_vec[i]);
+        } else if ((signers_index_vec[i] == (-1)) && !vec_ret.empty()) {
+          vec_ret.push_back(-1);
         }
       }
-      if (!once && (loc < 0)) {
-        for (size_t j = 0; j < signers_index_vec.size(); j++) {
-          if (signers_index_vec[j] == (-1)) {
-            signers_index_vec[j] = signer_index;
-          }
-        }
-      }
+    signers_index_vec = vec_ret;
     }
     return true;
   }
@@ -1113,10 +1114,12 @@ namespace tools
       std::list<int> signers_list;
       for (const auto& each : signers_index)
         signers_list.push_back(each);
+      std::string list = " ";
+      for (const auto& each : signers_list) { std::string tmp = std::to_string(each) + " "; list += tmp;  }
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, signers_list, m_trusted_daemon);
-      MWARNING("on_ntz_transfer with sig_count = " << std::to_string(req.sig_count) << ": called create_ntz_transactions");
-
       const int new_count = req.sig_count + 1;
+      MWARNING("on_ntz_transfer with sig_count = " << std::to_string(new_count) << ", and signers_list : " << list << ": called create_ntz_transactions");
+
 
       bool ready_to_send = false;
       if (new_count >= 13) {
