@@ -7082,7 +7082,7 @@ static uint32_t get_count_above(const std::vector<wallet2::transfer_details> &tr
   return count;
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, std::list<int> const& signers_index, bool trusted_daemon)
+std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();

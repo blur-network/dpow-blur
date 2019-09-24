@@ -1111,14 +1111,9 @@ namespace tools
       uint32_t priority = m_wallet->adjust_priority(1);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       MWARNING("on_ntz_transfer calling create_ntz_transactions");
-      std::list<int> signers_list;
-      for (const auto& each : signers_index)
-        signers_list.push_back(each);
-      std::string list = " ";
-      for (const auto& each : signers_list) { std::string tmp = std::to_string(each) + " "; list += tmp;  }
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, signers_list, m_trusted_daemon);
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
       const int new_count = req.sig_count + 1;
-      MWARNING("on_ntz_transfer with sig_count = " << std::to_string(new_count) << ", and signers_list : " << list << ": called create_ntz_transactions");
+      MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(new_count));
 
 
       bool ready_to_send = false;
@@ -1130,8 +1125,11 @@ namespace tools
         m_wallet->commit_tx(ptx_vector);
         MWARNING("Signatures >= 13: [commit_tx] sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
       } else {
-        m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id, signers_index);
-        MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
+        std::string index_vec = " ";
+        for (const auto& each : signers_index) { std::string tmp = std::to_string(each) + " "; index_vec += tmp;  }
+        const std::vector<int> si_const = signers_index;
+        m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id, si_const);
+        MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(new_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
       }
 
       return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,

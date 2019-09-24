@@ -65,8 +65,7 @@ namespace cryptonote
     bool m_fee_too_low;
     bool m_not_rct;
     int  m_sig_count;
-    int m_signers_index[13] = { -1, -1, -1, -1, -1, -1,
-                             -1, -1, -1, -1, -1, -1, -1 };
+    std::string m_signers_index;
   };
 
   struct block_verification_context

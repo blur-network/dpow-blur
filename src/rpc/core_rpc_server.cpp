@@ -1000,6 +1000,9 @@ namespace cryptonote
     const int sig_count = req.sig_count;
 
     bool rs = false;
+    tvc.m_signers_index = req.signers_index;
+    tvc.m_sig_count = req.sig_count;
+;
     rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, false, false, sig_count);
       if (rs == false)
       {
@@ -1043,8 +1046,13 @@ namespace cryptonote
       for (int i = 0; i < 13; i++) {
         r.signers_index.push_back(get_index<int>(i, req.signers_index));
       }
+      std::string si = " ";
+      for (const auto& each : r.signers_index) {
+        std::string tmp = std::to_string(each);
+        si += tmp;
+      }
       m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
-      MWARNING("request ntz sig sent with sigs count: " << std::to_string(r.sig_count) << ", and payment id: " << req.payment_id);
+      MWARNING("request ntz sig sent with sigs count: " << std::to_string(r.sig_count) << ", signers_index = " << si << ", and payment id: " << req.payment_id);
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }
