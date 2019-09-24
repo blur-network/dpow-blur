@@ -34,6 +34,7 @@
 #include "serialization/keyvalue_serialization.h"
 #include "cryptonote_basic/cryptonote_basic.h"
 #include "cryptonote_basic/blobdatatype.h"
+#include "common/pod-class.h"
 namespace cryptonote
 {
 
@@ -284,6 +285,18 @@ namespace cryptonote
   /************************************************************************/
   /*                                                                      */
   /************************************************************************/
+
+#define S_INDEX(i) s##i
+
+  template<class T, class Tt>
+  T get_index(T i, Tt j) {
+    std::string I = std::to_string(i);
+    decltype(i) S_INDEX(I);
+    S_INDEX(I) = j[i];
+    return S_INDEX(I);
+  }
+
+
   struct NOTIFY_REQUEST_NTZ_SIG
   {
     const static int ID = BC_COMMANDS_POOL_BASE + 10;
@@ -291,13 +304,15 @@ namespace cryptonote
     struct request
     {
       int sig_count;
-      std::list<blobdata> tx_blobs;
+      blobdata tx_blob;
       std::string payment_id;
+      std::vector<int> signers_index;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)
-        KV_SERIALIZE(tx_blobs)
+        KV_SERIALIZE(tx_blob)
         KV_SERIALIZE(payment_id)
+        KV_SERIALIZE(signers_index)
       END_KV_SERIALIZE_MAP()
     };
   };

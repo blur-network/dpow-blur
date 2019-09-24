@@ -968,13 +968,13 @@ namespace cryptonote
     struct request
     {
       int sig_count;
-      std::list<blobdata> tx_blobs;
+      blobdata tx_blob;
       std::string payment_id;
-      std::list<int> signers_index;
+      std::string signers_index/* = "-1-1-1-1-1-1-1-1-1-1-1-1-1"*/;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)
-        KV_SERIALIZE(tx_blobs)
+        KV_SERIALIZE(tx_blob)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(signers_index)
       END_KV_SERIALIZE_MAP()

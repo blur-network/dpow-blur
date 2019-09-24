@@ -843,7 +843,7 @@ namespace cryptonote
   template<class t_core>
   int t_cryptonote_protocol_handler<t_core>::handle_request_ntz_sig(int command, NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& context)
   {
-    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", tx blob count: " << arg.tx_blobs.size() << ", payment id: " << arg.payment_id);
+    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", payment id: " << arg.payment_id);
 
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;
@@ -857,23 +857,23 @@ namespace cryptonote
     }
     NOTIFY_REQUEST_NTZ_SIG::request ag;
     cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
-    std::list<cryptonote::blobdata> tx_blobs;
-    for (const auto& tx : arg.tx_blobs)
-    {
-      const int s_count = arg.sig_count;
-      m_core.handle_incoming_ntz_sig(tx, tvc, false, true, false, s_count);
+
+
+      int const& s_count = arg.sig_count;
+      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count);
       if(tvc.m_verifivation_failed)
       {
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
         drop_connection(context, false, false);
         return 1;
       }
-      tx_blobs.push_back(tx);
-    }
 
-    ag.tx_blobs = tx_blobs;
+    ag.tx_blob = arg.tx_blob;
     ag.sig_count = arg.sig_count;
     ag.payment_id = arg.payment_id;
+    for (int i = 1; i <= 13; i++) {
+      ag.signers_index.push_back(get_index<int>(i, arg.signers_index));
+    } 
     relay_request_ntz_sig(ag, context);
 
    return 1;
@@ -1780,12 +1780,9 @@ skip:
     // no check for success, so tell core they're relayed unconditionally
     if (arg.sig_count >= 13) {
       NOTIFY_NEW_TRANSACTIONS::request r;
-      for(const auto& tx : arg.tx_blobs)
-      {
-        m_core.on_transaction_relayed(tx);
-        r.txs.push_back(tx);
-      }
-      return relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(r, exclude_context);
+        m_core.on_transaction_relayed(arg.tx_blob);
+        r.txs.push_back(arg.tx_blob);
+        return relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(r, exclude_context);
     }
     else if (arg.sig_count > 0 && arg.sig_count < 13) {
       return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(arg, exclude_context);

@@ -993,75 +993,73 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_request_ntz_sig(const COMMAND_RPC_REQUEST_NTZ_SIG::request& req, COMMAND_RPC_REQUEST_NTZ_SIG::response& res)
   {
-    PERF_TIMER(on_request_ntz_sig);
-    bool ok;
-    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_REQUEST_NTZ_SIG>(invoke_http_mode::JON, "/requesntzsig", req, res, ok))
-      return ok;
-
     CHECK_CORE_READY();
 
     std::list<std::string> verified_tx_blobs;
     std::vector<std::string> unverified_blobs;
-    for (const auto& each : req.tx_blobs)
-    {
-      unverified_blobs.push_back(each);
-    }
+    unverified_blobs.push_back(req.tx_blob); // TODO: Unnecessary, but due to param types
+
     cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
-    std::vector<ntz_req_verification_context> tvc = AUTO_VAL_INIT(tvc);
+    ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
     const int sig_count = req.sig_count;
 
-    std::vector<bool> rs = m_core.handle_incoming_ntz_sig(req.tx_blobs, tvc, false, false, false, sig_count);
-    for (uint32_t i = 0; i <= req.tx_blobs.size(); i++)
-    {
-      if (rs[i] == false)
+    bool rs = false;
+    rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, false, false, sig_count);
+/*    for (uint32_t i = 0; i <= req.tx_blobs.size(); i++)
+    {*/
+      if (rs == false)
       {
         res.status = "Failed";
         res.reason = "";
-/*        if ((res.low_mixin = tvc[i].m_low_mixin))
-          add_reason(res.reason, "ring size too small");
-        if ((res.double_spend = tvc[i].m_double_spend))
-          add_reason(res.reason, "double spend");*/
-        if ((res.invalid_input = tvc[i].m_invalid_input))
+/*        if ((res.low_mixin = tvc.m_low_mixin))
+          add_reason(res.reason, "ring size too small");*/
+        if ((res.double_spend = tvc.m_double_spend))
+          add_reason(res.reason, "double spend");
+        if ((res.invalid_input = tvc.m_invalid_input))
           add_reason(res.reason, "invalid input");
-        if ((res.invalid_output = tvc[i].m_invalid_output))
+        if ((res.invalid_output = tvc.m_invalid_output))
           add_reason(res.reason, "invalid output");
-/*        if ((res.too_big = tvc[i].m_too_big))
-          add_reason(res.reason, "too big");*/
-        if ((res.overspend = tvc[i].m_overspend))
+        if ((res.too_big = tvc.m_too_big))
+          add_reason(res.reason, "too big");
+        if ((res.overspend = tvc.m_overspend))
           add_reason(res.reason, "overspend");
-        if ((res.fee_too_low = tvc[i].m_fee_too_low))
+        if ((res.fee_too_low = tvc.m_fee_too_low))
           add_reason(res.reason, "fee too low");
-        if ((res.not_rct = tvc[i].m_not_rct))
+        if ((res.not_rct = tvc.m_not_rct))
           add_reason(res.reason, "tx is not ringct");
-/*        if ((res.sig_count != tvc[i].m_sig_count))
-          add_reason(res.reason, "signature count mismatch");*/
-        if ((tvc[i].m_sig_count > 13))
+        if ((res.sig_count != tvc.m_sig_count))
+          add_reason(res.reason, "signature count mismatch");
+        if ((tvc.m_sig_count > 13))
           add_reason(res.reason, "too many signatures");
+        // TODO :: add signers_index count compared to sig_count here.
         const std::string punctuation = res.reason.empty() ? "" : ": ";
-        if (tvc[i].m_verifivation_failed)
+        if (tvc.m_verifivation_failed)
         {
           LOG_PRINT_L0("[on_request_ntz_sig]: tx verification failed" << punctuation << res.reason);
           return false;
         }
         else
         {
-          verified_tx_blobs.push_back(unverified_blobs[i]);
+          verified_tx_blobs.push_back(unverified_blobs[0]);
         }
       }
-    }
+ //   }
 
     if ((req.sig_count < 13) && (req.sig_count > 0))
     {
       NOTIFY_REQUEST_NTZ_SIG::request r;
-      r.tx_blobs = verified_tx_blobs;
+      r.tx_blob = req.tx_blob;
       r.sig_count = req.sig_count;
       r.payment_id = req.payment_id;
-      m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
-      for (const auto& each : r.tx_blobs)
-      {
-        MWARNING("request ntz sig sent with tx blob(s): " << each << ", sigs count: " << std::to_string(r.sig_count) << ", and payment id: " << req.payment_id);
-        //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
+      for (int i = 0; i < 13; i++) {
+        r.signers_index.push_back(get_index<int>(i, req.signers_index));
       }
+      m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
+/*      for (const auto& each : r.tx_blobs)
+      {*/
+        MWARNING("request ntz sig sent with tx blob(s): " << r.tx_blob << ", sigs count: " << std::to_string(r.sig_count) << ", and payment id: " << req.payment_id);
+        //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
+     // }
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }

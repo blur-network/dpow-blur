@@ -4647,7 +4647,7 @@ crypto::hash wallet2::get_payment_id(const pending_tx &ptx) const
 void wallet2::commit_tx(pending_tx& ptx)
 {
   using namespace cryptonote;
-  
+
     // Normal submit
     COMMAND_RPC_SEND_RAW_TX::request req;
     req.tx_as_hex = epee::string_tools::buff_to_hex_nodelimer(tx_to_blob(ptx.tx));
@@ -4712,28 +4712,37 @@ void wallet2::commit_tx(std::vector<pending_tx>& ptx_vector)
   }
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_count, const std::string& payment_id, std::list<int> const & signers_index)
+void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const & signers_index)
 {
   using namespace cryptonote;
     // Normal submit
-    COMMAND_RPC_REQUEST_NTZ_SIG::request req = AUTO_VAL_INIT(req);
-    req.sig_count = sigs_count;
-    std::list<std::string> tx_blobs;
+    COMMAND_RPC_REQUEST_NTZ_SIG::request request = AUTO_VAL_INIT(request);
+    request.sig_count = sigs_count;
+    std::vector<std::string> tx_blobs;
     for (const auto& each : ptxs) {
       blobdata blob = tx_to_blob(each.tx);
       tx_blobs.push_back(blob);
       std::string blobhex = epee::string_tools::buff_to_hex_nodelimer(blob);
       MWARNING("trying to relay request ntz sig with tx blob: " << blobhex << ", sigs_count: " << std::to_string(sigs_count) << ", and payment id: " << payment_id);
     }
-    req.tx_blobs = tx_blobs;
-    req.payment_id = payment_id;
+    request.tx_blob = tx_blobs[0];
+    request.payment_id = payment_id;
+    std::string temp;
+    int i = 0;
+    for (const auto& each : signers_index) {
+      char each_ind[] = "-1";
+      strcpy(each_ind, std::to_string(get_index<int>(i, signers_index)).c_str());
+      temp += each_ind;
+      i++;
+    }
+    request.signers_index = temp;
     COMMAND_RPC_REQUEST_NTZ_SIG::response daemon_send_resp = AUTO_VAL_INIT(daemon_send_resp);
     m_daemon_rpc_mutex.lock();
-//    bool r = epee::net_utils::invoke_http_json_rpc("/json_rpc", "request_ntz_sig", req, daemon_send_resp, m_http_client);
-    bool r = epee::net_utils::invoke_http_json("/requestntzsig", req, daemon_send_resp, m_http_client, rpc_timeout);
+    bool r = epee::net_utils::invoke_http_json_rpc("/json_rpc", "request_ntz_sig", request, daemon_send_resp, m_http_client);
+//    bool r = epee::net_utils::invoke_http_json("/requestntzsig", request, daemon_send_resp, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
-//    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig failed with status: " + daemon_send_resp.status + " and reason: " + daemon_send_resp.reason);
-    THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "requestntzsig");
+    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig failed with status: " + daemon_send_resp.status + " and reason: " + daemon_send_resp.reason);
+//    THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "requestntzsig");
     for (const auto& ptx : ptxs)
     {
 //      THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status != CORE_RPC_STATUS_OK, error::tx_rejected, ptx.tx, daemon_send_resp.status, daemon_send_resp.reason);

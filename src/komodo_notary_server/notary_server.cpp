@@ -661,13 +661,9 @@ namespace tools
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool notary_server::validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, std::list<int> const& signers_index, epee::json_rpc::error& er)
+  bool notary_server::validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, std::vector<int>& signers_index_vec, epee::json_rpc::error& er)
   {
     std::string ntz_txn_extra_data;
-    std::vector<int> signers_index_vec;
-
-    for (const auto each : signers_index)
-      signers_index_vec.push_back(each);
 
     for (auto it = destinations.begin(); it != destinations.end(); it++)
     {
@@ -1097,9 +1093,8 @@ namespace tools
         MERROR("Unable to find payment ID!");
       }
     }
-    std::list<int> signers_index = { -1, -1, -1, -1, -1, -1, -1,
+    std::vector<int> signers_index = { -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1 };
-    // validate the transfer requested and populate dsts & extra; RPC_TRANSFER::request and RPC_TRANSFER_SPLIT::request are identical types.
     if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, signers_index, er))
     {
       return false;
@@ -1112,8 +1107,10 @@ namespace tools
       uint32_t priority = m_wallet->adjust_priority(1);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       MWARNING("on_ntz_transfer calling create_ntz_transactions");
-
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, signers_index, m_trusted_daemon);
+      std::list<int> signers_list;
+      for (const auto& each : signers_index)
+        signers_list.push_back(each);
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, signers_list, m_trusted_daemon);
       MWARNING("on_ntz_transfer with sig_count = " << std::to_string(req.sig_count) << ": called create_ntz_transactions");
 
       const int new_count = req.sig_count + 1;
