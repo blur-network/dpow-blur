@@ -121,7 +121,7 @@ curl -X POST http://127.0.0.1:12121/json_rpc -d '{"method":"ntz_transfer","param
 
 **The command above will NOT send the blob as a transaction if `sig_count` is less than a value of 12.**
 
-If sig_count is less than 12 but greater than 0, the transaction blob created with this command will be automatically relayed to the network, via a protocol command `relay_request_ntz_sig` which will add the transaction to a partitioned area of the transaction pool.  This area, known as the `ntz_pool` holds pending transactions that still need more signatures.
+If sig_count is less than 12, the transaction blob created with this command will be automatically relayed to the network, via a protocol command `relay_request_ntz_sig` which will add the transaction to a partitioned area of the transaction pool.  This area, known as the `ntz_pool` holds pending transactions that still need more signatures.
 
 Destinations for the transaction are automatically populated using the BTC pubkeys, and CryptoNote pubkeys provided in `komodo_notaries.h`.  Each notary wallet is sent 0.00000001 BLUR.
 

@@ -113,25 +113,30 @@ namespace cryptonote
         std::vector<std::pair<crypto::public_key,crypto::public_key>> keys_vec;
         if (!get_notary_pubkeys(keys_vec)) {
           MERROR("Failed to populate vector for notary pubkeys from hardcoded keys!");
-        }
-        for (int i = 0; i <= 63; i++) {
-          if (hydro_equal(&account_pub_key, &keys_vec[i].second, 64)) {
-            pubkey_check = true;
-            signer_index = i;
+          return false;
+        } else {
+          for (int i = 0; i <= 63; i++) {
+            if (epee::string_tools::pod_to_hex(account_pub_key) == epee::string_tools::pod_to_hex(keys_vec[i].second)) {
+              pubkey_check = true;
+              signer_index = i;
+            }
           }
-        }
-        if (!pubkey_check) {
-          MERROR("Our public key does not match any of those found in the hardcoded notaries list! Failed to authenticate.");
         }
       }
     }
-    if (found_pubkey == false)
-    {
-      MERROR("Could not find our public spend key in destinations.  We must not be a notary node!");
-      return found_pubkey;
+
+    if (!found_pubkey) {
+      MERROR("Failed to find our pubkey in the destinations list! Failed to authenticate.");
+      return false;
     }
-    LOG_PRINT_L2("destinations include " << num_stdaddresses << " standard addresses");
-    return found_pubkey;
+    if (!pubkey_check) {
+      MERROR("Our public key does not match any of those found in the hardcoded notaries list! Failed to authenticate.");
+      return false;
+    }
+      if (found_pubkey && pubkey_check) {
+        LOG_PRINT_L2("destinations include " << num_stdaddresses << " standard addresses");
+      }
+   return (found_pubkey && pubkey_check);
   }
   //---------------------------------------------------------------
   bool construct_miner_tx(size_t height, size_t median_size, uint64_t already_generated_coins, size_t current_block_size, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version) {
