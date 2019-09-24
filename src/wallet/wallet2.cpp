@@ -2029,11 +2029,17 @@ void wallet2::update_pool_state(bool refreshed)
   // get the pool state
   cryptonote::COMMAND_RPC_GET_TRANSACTION_POOL_HASHES::request req;
   cryptonote::COMMAND_RPC_GET_TRANSACTION_POOL_HASHES::response res;
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::request nreq;
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::response nres;
   m_daemon_rpc_mutex.lock();
   bool r = epee::net_utils::invoke_http_json("/get_transaction_pool_hashes.bin", req, res, m_http_client, rpc_timeout);
+  bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool_hashes.bin", nreq, nres, m_http_client, rpc_timeout);
   m_daemon_rpc_mutex.unlock();
   THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "get_transaction_pool_hashes.bin");
   THROW_WALLET_EXCEPTION_IF(res.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "get_transaction_pool_hashes.bin");
+  THROW_WALLET_EXCEPTION_IF(res.status != CORE_RPC_STATUS_OK, error::get_tx_pool_error);
+  THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "get_pending_ntz_pool_hashes.bin");
+  THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "get_pending_ntz_pool_hashes.bin");
   THROW_WALLET_EXCEPTION_IF(res.status != CORE_RPC_STATUS_OK, error::get_tx_pool_error);
   MDEBUG("update_pool_state got pool");
 
@@ -2106,6 +2112,66 @@ void wallet2::update_pool_state(bool refreshed)
   // gather txids of new pool txes to us
   std::vector<std::pair<crypto::hash, bool>> txids;
   for (const auto &txid: res.tx_hashes)
+  {
+    bool txid_found_in_up = false;
+    for (const auto &up: m_unconfirmed_payments)
+    {
+      if (up.second.m_pd.m_tx_hash == txid)
+      {
+        txid_found_in_up = true;
+        break;
+      }
+    }
+    if (m_scanned_pool_txs[0].find(txid) != m_scanned_pool_txs[0].end() || m_scanned_pool_txs[1].find(txid) != m_scanned_pool_txs[1].end())
+    {
+      // if it's for us, we want to keep track of whether we saw a double spend, so don't bail out
+      if (!txid_found_in_up)
+      {
+        LOG_PRINT_L2("Already seen " << txid << ", and not for us, skipped");
+        continue;
+      }
+    }
+    if (!txid_found_in_up)
+    {
+      LOG_PRINT_L1("Found new pool tx: " << txid);
+      bool found = false;
+      for (const auto &i: m_unconfirmed_txs)
+      {
+        if (i.first == txid)
+        {
+          found = true;
+          // if this is a payment to yourself at a different subaddress account, don't skip it
+          // so that you can see the incoming pool tx with 'show_transfers' on that receiving subaddress account
+          const unconfirmed_transfer_details& utd = i.second;
+          for (const auto& dst : utd.m_dests)
+          {
+            auto subaddr_index = m_subaddresses.find(dst.addr.m_spend_public_key);
+            if (subaddr_index != m_subaddresses.end() && subaddr_index->second.major != utd.m_subaddr_account)
+            {
+              found = false;
+              break;
+            }
+          }
+          break;
+        }
+      }
+      if (!found)
+      {
+        // not one of those we sent ourselves
+        txids.push_back({txid, false});
+      }
+      else
+      {
+        LOG_PRINT_L1("We sent that one");
+      }
+    }
+    else
+    {
+      LOG_PRINT_L1("Already saw that one, it's for us");
+      txids.push_back({txid, true});
+    }
+  }
+  for (const auto &txid: nres.tx_hashes)
   {
     bool txid_found_in_up = false;
     for (const auto &up: m_unconfirmed_payments)
