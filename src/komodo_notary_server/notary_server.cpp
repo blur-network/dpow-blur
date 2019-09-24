@@ -755,6 +755,8 @@ namespace tools
       if (!r) {
         MERROR("Error authenticating and retrieving signer_index in notary_server!");
         return false;
+      } else {
+        MWARNING("Signer index: " << std::to_string(signer_index));
       }
       bool once = false;
       int loc = -1;
@@ -1095,6 +1097,7 @@ namespace tools
     }
     std::vector<int> signers_index = { -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1 };
+
     if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, signers_index, er))
     {
       return false;

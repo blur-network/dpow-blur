@@ -1005,14 +1005,12 @@ namespace cryptonote
 
     bool rs = false;
     rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, false, false, sig_count);
-/*    for (uint32_t i = 0; i <= req.tx_blobs.size(); i++)
-    {*/
       if (rs == false)
       {
         res.status = "Failed";
         res.reason = "";
-/*        if ((res.low_mixin = tvc.m_low_mixin))
-          add_reason(res.reason, "ring size too small");*/
+        if ((res.low_mixin = tvc.m_low_mixin))
+          add_reason(res.reason, "ring size too small");
         if ((res.double_spend = tvc.m_double_spend))
           add_reason(res.reason, "double spend");
         if ((res.invalid_input = tvc.m_invalid_input))
@@ -1035,7 +1033,7 @@ namespace cryptonote
         const std::string punctuation = res.reason.empty() ? "" : ": ";
         if (tvc.m_verifivation_failed)
         {
-          LOG_PRINT_L0("[on_request_ntz_sig]: tx verification failed" << punctuation << res.reason);
+          MERROR("[on_request_ntz_sig]: tx verification failed" << punctuation << res.reason);
           return false;
         }
         else
@@ -1043,7 +1041,6 @@ namespace cryptonote
           verified_tx_blobs.push_back(unverified_blobs[0]);
         }
       }
- //   }
 
     if ((req.sig_count < 13) && (req.sig_count > 0))
     {
@@ -1055,11 +1052,7 @@ namespace cryptonote
         r.signers_index.push_back(get_index<int>(i, req.signers_index));
       }
       m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
-/*      for (const auto& each : r.tx_blobs)
-      {*/
-        MWARNING("request ntz sig sent with tx blob(s): " << r.tx_blob << ", sigs count: " << std::to_string(r.sig_count) << ", and payment id: " << req.payment_id);
-        //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
-     // }
+      MWARNING("request ntz sig sent with sigs count: " << std::to_string(r.sig_count) << ", and payment id: " << req.payment_id);
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }

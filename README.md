@@ -111,7 +111,7 @@ The RPC interface will prompt you for the wallet password.  Enter the password y
 
 
 ```
-curl -X POST http://127.0.0.1:12121/json_rpc -d '{"method":"ntz_transfer","params":{"tx_blobs":[""],"sig_count":0,"payment_id":""}}'
+curl -X POST http://127.0.0.1:12121/json_rpc -d '{"method":"ntz_transfer","params":{"sig_count":0,"payment_id":""}}'
 ```
 
 
@@ -163,20 +163,19 @@ Example output:
 print_pool
 Pending Notarization Transactions: 
 =======================================================
-id: 4f74ad0f3d60c5e56a76ec31d1efbd32e628b665506213bd7876460ba2a57a93
-sig_count: 0
-sig_index:  0 0 0 0 0 0 0 0 0 0 0 0 0 
-blob_size: 53193
-blob_size: 0
-fee: 0.019524960000
-fee/byte: 0.000000367058
-receive_time: 1568837874 (26 hours ago)
+id: 3a30f09ff2f270616ec7819f2cb7def166050f8d342d5ba6b8b040b96c3d83e1
+sig_count: 1
+sig_index:  -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 
+blob_size: 53195
+fee: 0.019510400000
+fee/byte: 0.000000366771
+receive_time: 1569300744 (3 hours ago)
 relayed: no
-do_not_relay: T
+do_not_relay: F
 kept_by_block: F
 double_spend_seen: F
-max_used_block_height: 512
-max_used_block_id: a1e31b5c8591ee5ee34614dd5c6f293bcf43f982ac3a84f5b1daa9f54da3b3f3
+max_used_block_height: 1313
+max_used_block_id: 70199f642e334a6f5349f1198cae8295556a04154748783b64eec34b35fb5fdb
 last_failed_height: 0
 last_failed_id: 0000000000000000000000000000000000000000000000000000000000000000
 ```
