@@ -860,7 +860,17 @@ namespace cryptonote
 
 
       int const& s_count = arg.sig_count;
-      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count);
+      std::string signers_index_s;
+      for (int i = 0; i < 13; i++)
+      {
+        std::string each_ind = "-1";
+        int tmp = get_index<int>(i, arg.signers_index);
+        if (tmp < 10)
+          each_ind = "0" + std::to_string(tmp);
+        signers_index_s += each_ind;
+      }
+      MWARNING("Signers index prior to handle_incoming_ntz_sig (protocol): " << signers_index_s); 
+      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index_s);
       if(tvc.m_verifivation_failed)
       {
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
@@ -871,9 +881,7 @@ namespace cryptonote
     ag.tx_blob = arg.tx_blob;
     ag.sig_count = arg.sig_count;
     ag.payment_id = arg.payment_id;
-    for (int i = 1; i <= 13; i++) {
-      ag.signers_index.push_back(get_index<int>(i, arg.signers_index));
-    } 
+    ag.signers_index = arg.signers_index;
     relay_request_ntz_sig(ag, context);
 
    return 1;

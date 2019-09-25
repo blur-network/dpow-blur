@@ -4803,19 +4803,22 @@ void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_cou
     request.payment_id = payment_id;
     std::string temp;
     int i = 0;
-    for (const auto& each : signers_index) {
-      char each_ind[] = "-1";
-      strcpy(each_ind, std::to_string(get_index<int>(i, signers_index)).c_str());
-      temp += each_ind;
-      i++;
+    for (int i = 0; i < 13; i++) {
+      int each = get_index<int>(i, signers_index);
+      if ((each < 10) && (each != (-1))) {
+        std::string each_lten = "0" + std::to_string(each);
+        temp += each_lten;
+      } else {
+        temp += std::to_string(each);
+      }
     }
- //   MWARNING("Indexes string created using get_index template:" << temp);
+    MWARNING("Indexes string created using get_index template:" << temp);
     request.signers_index = temp;
     COMMAND_RPC_REQUEST_NTZ_SIG::response daemon_send_resp = AUTO_VAL_INIT(daemon_send_resp);
     m_daemon_rpc_mutex.lock();
-    bool r = epee::net_utils::invoke_http_json_rpc("/json_rpc", "request_ntz_sig", request, daemon_send_resp, m_http_client);
+    bool r = epee::net_utils::invoke_http_json("/requestntzsig", request, daemon_send_resp, m_http_client);
     m_daemon_rpc_mutex.unlock();
-    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig failed with status: " + daemon_send_resp.status + " and reason: " + daemon_send_resp.reason);
+//    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig failed with status: " + daemon_send_resp.status + " and reason: " + daemon_send_resp.reason);
     THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "request_ntz_sig");
     for (const auto& ptx : ptxs)
     {

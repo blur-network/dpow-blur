@@ -849,9 +849,18 @@ namespace cryptonote
     return r;
   }
   //-----------------------------------------------------------------------------------------------
-  std::vector<bool> core::handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<ntz_req_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
+  std::vector<bool> core::handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<ntz_req_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count, std::string const& signers_index)
   {
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
+    std::vector<std::string> si_clones;
+    std::vector<int> count_vec;
+    for (size_t i = 0; i < tx_blobs.size(); i++)
+    {
+      tvc[i].m_signers_index = signers_index;
+      tvc[i].m_sig_count = sig_count;
+      count_vec.push_back(sig_count);
+      si_clones.push_back(signers_index);
+    }
 
     struct result { bool res; cryptonote::transaction tx; crypto::hash hash; crypto::hash prefix_hash; bool in_txpool; bool in_blockchain; };
     std::vector<result> results(tx_blobs.size());
@@ -922,7 +931,7 @@ namespace cryptonote
       if (already_have[i]) {
         continue; }
 
-        ok &= add_new_tx(results[i].tx, results[i].hash, results[i].prefix_hash, it->size(), tvc[i], keeped_by_block, relayed, do_not_relay);
+        ok &= add_new_tx(results[i].tx, results[i].hash, results[i].prefix_hash, it->size(), tvc[i], keeped_by_block, relayed, do_not_relay, count_vec[i], si_clones[i]);
         oks.push_back(ok);
         if(tvc[i].m_verifivation_failed)
         {MERROR_VER("Transaction verification failed: " << results[i].hash);}
@@ -934,12 +943,12 @@ namespace cryptonote
     return oks;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count)
+  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count, std::string const& signers_index)
   {
     std::list<cryptonote::blobdata> tx_blobs;
     tx_blobs.push_back(tx_blob);
     std::vector<ntz_req_verification_context> tvcv(1);
-    std::vector<bool> rs = handle_incoming_ntz_sig(tx_blobs, tvcv, keeped_by_block, relayed, do_not_relay, sig_count);
+    std::vector<bool> rs = handle_incoming_ntz_sig(tx_blobs, tvcv, keeped_by_block, relayed, do_not_relay, sig_count, signers_index);
     bool r = false;
     for (const auto& each : rs)
     {
@@ -1182,7 +1191,7 @@ namespace cryptonote
     return m_mempool.add_tx(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version);
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::add_new_tx(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay)
+  bool core::add_new_tx(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_str)
   {
     if(m_mempool.have_tx(tx_hash))
     {
@@ -1190,7 +1199,7 @@ namespace cryptonote
       return true;
     }
 
-    if(tvc.m_sig_count < 13)
+    if(sig_count < 13)
     {
       LOG_PRINT_L2("tx " << tx_hash << "not ready to be sent yet, sig count: " << std::to_string(tvc.m_sig_count));
     }
@@ -1231,10 +1240,11 @@ namespace cryptonote
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
     std::list<int> signers_index;
     for (int i = 0; i < 13; i++) {
-      int s_ind = tvc.m_signers_index[i];
+      std::string si_tmp = signers_str.substr(i*2, 2);
+      int s_ind = std::stoi(si_tmp, nullptr, 10);
       signers_index.push_back(s_ind);
     }
-    return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, tvc.m_sig_count, signers_index);
+    return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, sig_count, signers_index);
 
   }
   //-----------------------------------------------------------------------------------------------

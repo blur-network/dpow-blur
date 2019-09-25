@@ -994,7 +994,7 @@ namespace cryptonote
       bool fee_too_low;
       bool not_rct;
       int sig_count;
-      std::list<int> signers_index;
+      std::string signers_index;
       bool untrusted;
 
       BEGIN_KV_SERIALIZE_MAP()
