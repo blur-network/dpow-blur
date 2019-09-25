@@ -1574,10 +1574,6 @@ uint64_t BlockchainLMDB::get_txpool_tx_count(bool include_unrelayed_txes) const
       }
     }
     num_entries = db_stats.ms_entries;
-    if (!resultntz)
-    {
-      num_entries--;
-    }
   }
   else
   {
@@ -1593,8 +1589,11 @@ uint64_t BlockchainLMDB::get_txpool_tx_count(bool include_unrelayed_txes) const
       result = mdb_cursor_get(m_cur_txpool_meta, &k, &v, op);
       resultntz = mdb_cursor_get(m_cur_ntzpool_meta, &k, &v, op);
       op = MDB_NEXT;
-      if (result == MDB_NOTFOUND)
-        break;
+      if (result == MDB_NOTFOUND) {
+        if (resultntz == MDB_NOTFOUND) {
+          break;
+        }
+      }
       if (result)
       {
         throw1(DB_ERROR(lmdb_error("Failed to enumerate txpool tx metadata, so checking for ntzpool data: ", result).c_str()));
@@ -1616,7 +1615,6 @@ uint64_t BlockchainLMDB::get_txpool_tx_count(bool include_unrelayed_txes) const
       else if (!resultntz && result)
       {
         const ntzpool_tx_meta_t &meta = *(const ntzpool_tx_meta_t*)v.mv_data;
-        --num_entries;
       }
     }
   }
