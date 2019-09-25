@@ -429,6 +429,14 @@ namespace cryptonote
      bool get_pool_transactions(std::list<transaction>& txs, bool include_unrelayed_txes = true) const;
 
      /**
+      * @copydoc tx_memory_pool::get_transactions
+      * @param include_unrelayed_txes include unrelayed txes in result
+      *
+      * @note see tx_memory_pool::get_transactions
+      */
+     bool get_ntzpool_transactions(std::list<transaction>& txs, bool include_unrelayed_txes = true) const;
+
+     /**
       * @copydoc tx_memory_pool::get_txpool_backlog
       *
       * @note see tx_memory_pool::get_txpool_backlog

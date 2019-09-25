@@ -158,7 +158,7 @@ int32_t komodo_importaddress(char* addr)
     for (int i =0; i < 64; i++) {
         std::pair<const char*,const char*> seed_and_pubkey_pair;
         seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[i][3]);
-        MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[i][3]);
+        //MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[i][3]);
         notaries_keys.push_back(seed_and_pubkey_pair);
     }
 

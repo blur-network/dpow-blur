@@ -2219,18 +2219,25 @@ namespace cryptonote
 
     bool failed = false;
     std::list<crypto::hash> txids;
+    std::list<crypto::hash> ntz_txids;
     if (req.txids.empty())
     {
       std::list<transaction> pool_txs;
+      std::list<transaction> ntzpool_txs;
       bool r = m_core.get_pool_transactions(pool_txs);
-      if (!r)
+      bool R = m_core.get_ntzpool_transactions(ntzpool_txs);
+      if (!r && !R)
       {
-        res.status = "Failed to get txpool contents";
+        res.status = "Failed to get both txpool & ntzpool contents";
         return true;
       }
       for (const auto &tx: pool_txs)
       {
         txids.push_back(cryptonote::get_transaction_hash(tx));
+      }
+      for (const auto &tx: ntzpool_txs)
+      {
+        ntz_txids.push_back(cryptonote::get_transaction_hash(tx));
       }
     }
     else
@@ -2248,16 +2255,32 @@ namespace cryptonote
           txids.push_back(txid);
         }
       }
+      for (const auto &str: req.txids)
+      {
+        cryptonote::blobdata ntz_txid_data;
+        if(!epee::string_tools::parse_hexstr_to_binbuff(str, ntz_txid_data))
+        {
+          failed = true;
+        }
+        else
+        {
+          crypto::hash ntz_txid = *reinterpret_cast<const crypto::hash*>(ntz_txid_data.data());
+          ntz_txids.push_back(ntz_txid);
+        }
+      }
     }
     if (!m_core.get_blockchain_storage().flush_txes_from_pool(txids))
     {
-      res.status = "Failed to remove one or more tx(es)";
-      return false;
+      if (!m_core.get_blockchain_storage().flush_txes_from_pool(ntz_txids))
+      {
+        res.status = "Failed to remove one or more tx(es)";
+        return false;
+      }
     }
 
     if (failed)
     {
-      if (txids.empty())
+      if (txids.empty() && ntz_txids.empty())
         res.status = "Failed to parse txid";
       else
         res.status = "Failed to parse some of the txids";

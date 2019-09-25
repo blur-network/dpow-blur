@@ -1125,8 +1125,11 @@ namespace tools
         m_wallet->commit_tx(ptx_vector);
         MWARNING("Signatures >= 13: [commit_tx] sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
       } else {
-        std::string index_vec = " ";
-        for (const auto& each : signers_index) { std::string tmp = std::to_string(each) + " "; index_vec += tmp;  }
+        std::string index_vec;
+        for (int i = 0; i < 13; i++) {
+          std::string tmp = std::to_string(cryptonote::get_index<int>(i, signers_index)) + " ";
+          index_vec += tmp;
+        }
         const std::vector<int> si_const = signers_index;
         m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id, si_const);
         MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(new_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
