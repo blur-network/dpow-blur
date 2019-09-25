@@ -598,7 +598,7 @@ namespace cryptonote
      *
      * @return false if any input is invalid, otherwise true
      */
-    bool check_tx_inputs(transaction& tx, uint64_t& pmax_used_block_height, crypto::hash& max_used_block_id, ntz_req_verification_context &tvc, bool kept_by_block = false);
+    bool check_ntz_req_inputs(transaction& tx, uint64_t& pmax_used_block_height, crypto::hash& max_used_block_id, ntz_req_verification_context &tvc, bool kept_by_block = false);
 
     /**
      * @brief get dynamic per kB fee for a given block size
@@ -1162,7 +1162,7 @@ namespace cryptonote
      *
      * @return false if any validation step fails, otherwise true
      */
-    bool check_tx_inputs(transaction& tx, ntz_req_verification_context &tvc, uint64_t* pmax_used_block_height = NULL);
+    bool check_ntz_req_inputs(transaction& tx, ntz_req_verification_context &tvc, uint64_t* pmax_used_block_height = NULL);
 
     /**
      * @brief performs a blockchain reorganization according to the longest chain rule

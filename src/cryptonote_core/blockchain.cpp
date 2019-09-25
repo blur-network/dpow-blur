@@ -2448,7 +2448,7 @@ bool Blockchain::check_tx_inputs(transaction& tx, uint64_t& max_used_block_heigh
   return true;
 }
 //------------------------------------------------------------------
-bool Blockchain::check_tx_inputs(transaction& tx, uint64_t& max_used_block_height, crypto::hash& max_used_block_id, ntz_req_verification_context &tvc, bool kept_by_block)
+bool Blockchain::check_ntz_req_inputs(transaction& tx, uint64_t& max_used_block_height, crypto::hash& max_used_block_id, ntz_req_verification_context &tvc, bool kept_by_block)
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
@@ -2464,7 +2464,7 @@ bool Blockchain::check_tx_inputs(transaction& tx, uint64_t& max_used_block_heigh
 #endif
 
   TIME_MEASURE_START(a);
-  bool res = check_tx_inputs(tx, tvc, &max_used_block_height);
+  bool res = check_ntz_req_inputs(tx, tvc, &max_used_block_height);
   TIME_MEASURE_FINISH(a);
   if(m_show_time_stats)
   {
@@ -2922,8 +2922,9 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
 }
 
 //------------------------------------------------------------------
-bool Blockchain::check_tx_inputs(transaction& tx, ntz_req_verification_context &tvc, uint64_t* pmax_used_block_height)
+bool Blockchain::check_ntz_req_inputs(transaction& tx, ntz_req_verification_context &tvc, uint64_t* pmax_used_block_height)
 {
+
   PERF_TIMER(check_tx_inputs);
   LOG_PRINT_L3("Blockchain::" << __func__);
   size_t sig_index = 0;

@@ -356,7 +356,7 @@ namespace cryptonote
     crypto::hash max_used_block_id = null_hash;
     uint64_t max_used_block_height = 0;
     cryptonote::ntzpool_tx_meta_t meta;
-    bool ch_inp_res = m_blockchain.check_tx_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
+    bool ch_inp_res = m_blockchain.check_ntz_req_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
     if(!ch_inp_res)
     {
         LOG_PRINT_L1("tx used wrong inputs, rejected");
