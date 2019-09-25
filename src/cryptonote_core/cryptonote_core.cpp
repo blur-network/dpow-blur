@@ -856,8 +856,6 @@ namespace cryptonote
     std::vector<int> count_vec;
     for (size_t i = 0; i < tx_blobs.size(); i++)
     {
-      tvc[i].m_signers_index = signers_index;
-      tvc[i].m_sig_count = sig_count;
       count_vec.push_back(sig_count);
       si_clones.push_back(signers_index);
     }
@@ -872,7 +870,7 @@ namespace cryptonote
       m_threadpool.submit(&waiter, [&, i, it] {
         try
         {
-          results[i].res = handle_incoming_ntz_sig_pre(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, tvc[i].m_sig_count);
+          results[i].res = handle_incoming_ntz_sig_pre(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, count_vec[i]);
         }
         catch (const std::exception &e)
         {
@@ -903,7 +901,7 @@ namespace cryptonote
           m_threadpool.submit(&waiter, [&, i, it] {
             try
             {
-              results[i].res = handle_incoming_ntz_sig_post(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, tvc[i].m_sig_count);
+              results[i].res = handle_incoming_ntz_sig_post(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, count_vec[i]);
             }
             catch (const std::exception &e)
             {
@@ -1199,15 +1197,25 @@ namespace cryptonote
       return true;
     }
 
-    if(sig_count < 13)
-    {
-      LOG_PRINT_L2("tx " << tx_hash << "not ready to be sent yet, sig count: " << std::to_string(tvc.m_sig_count));
+    std::list<int> signers_index;
+    for (int i = 0; i < 13; i++) {
+      std::string si_tmp = signers_str.substr(i*2, 2);
+      int s_ind = std::stoi(si_tmp, nullptr, 10);
+      signers_index.push_back(s_ind);
     }
 
-    tx_verification_context txvc = AUTO_VAL_INIT(txvc);
+    int neg = -1;
+    int count = std::count(signers_index.begin(), signers_index.end(), neg);
+    bool ready = false;
+    bool count_check = false;
 
-    if (tvc.m_sig_count == 13)
-    {
+    ready = (sig_count >= 13);
+    count_check = (count == sig_count);
+
+    if (ready) {
+
+      tx_verification_context txvc = AUTO_VAL_INIT(txvc);
+
       txvc.m_should_be_relayed = tvc.m_should_be_relayed;;
       txvc.m_verifivation_failed = tvc.m_verifivation_failed;
       txvc.m_verifivation_impossible = tvc.m_verifivation_impossible;
@@ -1227,25 +1235,33 @@ namespace cryptonote
         return true;
       }
 
+      if (!count_check) {
+        MERROR("Error: Signature count does not match signer index!");
+        return false;
+      } else {
+        uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
+        return m_mempool.add_tx(tx, tx_hash, blob_size, txvc, keeped_by_block, relayed, do_not_relay, version);
+      }
+    } else {
+
+      LOG_PRINT_L2("tx " << tx_hash << "not ready to be sent yet, sig count: " << std::to_string(sig_count));
+
+
+      if(m_blockchain_storage.have_tx(tx_hash))
+      {
+        LOG_PRINT_L2("tx " << tx_hash << " already have transaction in blockchain");
+        return true;
+      }
+
       uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
-      return m_mempool.add_tx(tx, tx_hash, blob_size, txvc, keeped_by_block, relayed, do_not_relay, version);
-    }
 
-    if(m_blockchain_storage.have_tx(tx_hash))
-    {
-      LOG_PRINT_L2("tx " << tx_hash << " already have transaction in blockchain");
-      return true;
+      if(!count_check) {
+        MERROR("Error: Signature count does not match signer index!");
+        return false;
+      } else {
+        return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, sig_count, signers_index);
+      }
     }
-
-    uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
-    std::list<int> signers_index;
-    for (int i = 0; i < 13; i++) {
-      std::string si_tmp = signers_str.substr(i*2, 2);
-      int s_ind = std::stoi(si_tmp, nullptr, 10);
-      signers_index.push_back(s_ind);
-    }
-    return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, sig_count, signers_index);
-
   }
   //-----------------------------------------------------------------------------------------------
   bool core::relay_txpool_transactions()
