@@ -378,7 +378,7 @@ namespace cryptonote
       meta.relayed = relayed;
       meta.do_not_relay = do_not_relay;
       meta.double_spend_seen = false;
-      meta.sig_count = sig_count + 1;
+      meta.sig_count = sig_count;
       int i = 0;
       for (const auto& each : signers_index) {
          if (each != (-1) && i <= 12) {
