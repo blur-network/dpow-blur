@@ -907,7 +907,7 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
                           << "id: " << ntz_tx_info.id_hash << std::endl
                           /*<< ntz_tx_info.tx_json << std::endl*/
                           << "sig_count: " << ntz_tx_info.sig_count << std::endl
-                          << "sig_index: " << indexes << std::endl
+                          << "signers_index: " << indexes << std::endl
                           << "blob_size: " << ntz_tx_info.blob_size << std::endl
                           << "fee: " << cryptonote::print_money(ntz_tx_info.fee) << std::endl
                           << "fee/byte: " << cryptonote::print_money(ntz_tx_info.fee / (double)ntz_tx_info.blob_size) << std::endl
