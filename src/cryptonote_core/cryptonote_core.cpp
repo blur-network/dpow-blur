@@ -1209,7 +1209,7 @@ namespace cryptonote
     }
 
     int neg = -1;
-    int count = std::count(signers_index.begin(), signers_index.end(), neg);
+    int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
     bool ready = false;
     bool count_check = false;
 
