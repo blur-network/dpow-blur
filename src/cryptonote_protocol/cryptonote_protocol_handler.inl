@@ -865,7 +865,7 @@ namespace cryptonote
       {
         std::string each_ind = "-1";
         int tmp = get_index<int>(i, arg.signers_index);
-        if (tmp < 10)
+        if ((tmp < 10) && (tmp != (-1)))
           each_ind = "0" + std::to_string(tmp);
         signers_index_s += each_ind;
       }
