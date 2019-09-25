@@ -3550,6 +3550,29 @@ bool Blockchain::flush_txes_from_pool(const std::list<crypto::hash> &txids)
   return res;
 }
 //------------------------------------------------------------------
+bool Blockchain::flush_txes_from_ntzpool(const std::list<crypto::hash> &txids)
+{
+  CRITICAL_REGION_LOCAL(m_tx_pool);
+
+  bool res = true;
+  for (const auto &txid: txids)
+  {
+    cryptonote::transaction tx;
+    size_t blob_size;
+    uint64_t fee;
+    bool relayed, do_not_relay, double_spend_seen;
+    uint8_t has_raw_ntz_data, sig_count;
+    std::list<int> signers_index;
+    MINFO("Removing txid " << txid << " from the pool");
+    if(m_tx_pool.have_tx(txid) && !m_tx_pool.take_ntzpool_tx(txid, tx, blob_size, fee, relayed, do_not_relay, double_spend_seen, has_raw_ntz_data, sig_count, signers_index))
+    {
+      MERROR("Failed to remove txid " << txid << " from the notarization pool");
+      res = false;
+    }
+  }
+  return res;
+}
+//------------------------------------------------------------------
 //      Needs to validate the block and acquire each transaction from the
 //      transaction mem_pool, then pass the block and transactions to
 //      m_db->add_block()

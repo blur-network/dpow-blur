@@ -1208,6 +1208,8 @@ namespace cryptonote
       signers_index.push_back(s_ind);
     }
 
+    uint8_t has_raw_ntz_data = 12;
+
     int neg = -1;
     int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
     bool ready = false;
@@ -1263,7 +1265,7 @@ namespace cryptonote
         MERROR("Error: Signature count does not match signer index!");
         return false;
       } else {
-        return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, sig_count, signers_index);
+        return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, has_raw_ntz_data, sig_count, signers_index);
       }
     }
   }

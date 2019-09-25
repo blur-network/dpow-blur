@@ -282,7 +282,7 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------------------------
-  bool tx_memory_pool::add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count, std::list<int> const& signers_index )
+  bool tx_memory_pool::add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t const& version, uint8_t const& has_raw_ntz_data, int const& sig_count, std::list<int> const& signers_index )
   {
     // locking here will screw things up, since handle_incoming can't lock,
     // if anything in it has taken a tx_pool lock in the past
@@ -378,6 +378,7 @@ namespace cryptonote
       meta.relayed = relayed;
       meta.do_not_relay = do_not_relay;
       meta.double_spend_seen = false;
+      meta.has_raw_ntz_data = has_raw_ntz_data;
       meta.sig_count = sig_count;
       int i = 0;
       for (const auto& each : signers_index) {
@@ -572,6 +573,56 @@ namespace cryptonote
 
       // remove first, in case this throws, so key images aren't removed
       m_blockchain.remove_txpool_tx(id);
+      m_txpool_size -= blob_size;
+      remove_transaction_keyimages(tx);
+    }
+    catch (const std::exception &e)
+    {
+      MERROR("Failed to remove tx from txpool: " << e.what());
+      return false;
+    }
+
+    m_txs_by_fee_and_receive_time.erase(sorted_it);
+    return true;
+  }
+  //---------------------------------------------------------------------------------
+  bool tx_memory_pool::take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& has_raw_ntz_data, uint8_t& sig_count, std::list<int>& signers_index)
+  {
+    CRITICAL_REGION_LOCAL(m_transactions_lock);
+    CRITICAL_REGION_LOCAL1(m_blockchain);
+
+    auto sorted_it = find_tx_in_sorted_container(id);
+    if (sorted_it == m_txs_by_fee_and_receive_time.end())
+      return false;
+
+    try
+    {
+      LockedTXN lock(m_blockchain);
+      ntzpool_tx_meta_t meta;
+      if (!m_blockchain.get_ntzpool_tx_meta(id, meta))
+      {
+        MERROR("Failed to find pending notarization tx in ntzpool");
+        return false;
+      }
+      cryptonote::blobdata txblob = m_blockchain.get_ntzpool_tx_blob(id);
+      if (!parse_and_validate_tx_from_blob(txblob, tx))
+      {
+        MERROR("Failed to parse tx from txpool");
+        return false;
+      }
+      blob_size = meta.blob_size;
+      fee = meta.fee;
+      relayed = meta.relayed;
+      do_not_relay = meta.do_not_relay;
+      double_spend_seen = meta.double_spend_seen;
+      has_raw_ntz_data = meta.has_raw_ntz_data;
+      sig_count = meta.sig_count;
+      for (int i = 0; i < 13; i++) {
+        signers_index.push_back(get_index<int>(i, meta.signers_index));
+      }
+
+      // remove first, in case this throws, so key images aren't removed
+      m_blockchain.remove_ntzpool_tx(id);
       m_txpool_size -= blob_size;
       remove_transaction_keyimages(tx);
     }

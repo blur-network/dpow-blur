@@ -2271,7 +2271,7 @@ namespace cryptonote
     }
     if (!m_core.get_blockchain_storage().flush_txes_from_pool(txids))
     {
-      if (!m_core.get_blockchain_storage().flush_txes_from_pool(ntz_txids))
+      if (!m_core.get_blockchain_storage().flush_txes_from_ntzpool(ntz_txids))
       {
         res.status = "Failed to remove one or more tx(es)";
         return false;

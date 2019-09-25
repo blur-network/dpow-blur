@@ -109,7 +109,7 @@ namespace cryptonote
      */
     bool add_tx(transaction &tx, const crypto::hash &id, size_t blob_size, tx_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version);
 
-    bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version, int const& sig_count, std::list<int> const& signers_index);
+    bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t const& version, uint8_t const& has_raw_ntz_data, int const& sig_count, std::list<int> const& signers_index );
 
     /**
      * @brief add a transaction to the transaction pool
@@ -144,6 +144,20 @@ namespace cryptonote
      * @return true unless the transaction cannot be found in the pool
      */
     bool take_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen);
+    /**
+     * @brief takes a transaction with the given hash from the pool
+     *
+     * @param id the hash of the transaction
+     * @param tx return-by-reference the transaction taken
+     * @param blob_size return-by-reference the transaction's size
+     * @param fee the transaction fee
+     * @param relayed return-by-reference was transaction relayed to us by the network?
+     * @param do_not_relay return-by-reference is transaction not to be relayed to the network?
+     * @param double_spend_seen return-by-reference was a double spend seen for that transaction?
+     *
+     * @return true unless the transaction cannot be found in the pool
+     */
+     bool take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& has_raw_ntz_data, uint8_t& sig_count, std::list<int>& signers_index);
 
     /**
      * @brief checks if the pool has a transaction with the given hash
