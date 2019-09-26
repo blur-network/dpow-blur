@@ -186,8 +186,7 @@ order.
 
 Because these notarization transactions use a completely separate validation structure (located in `src/cryptonote_basic/verification_context.h`), they will not validate
 as normal transactions until `sig_count` reaches a point of being greater than `13`.  At this point, the `ntz_tx_verification_context` will be converted to the standard
-`tx_verification_context`, and relayed to the network as a normal transcation.  Prior to this point, the separate context will prevent a transaction from being cleared
-from the mempool, or validated by other nodes.
+`tx_verification_context`, and relayed to the network as a normal transcation.  Prior to this point, the separate context will prevent a transaction from being treated as a normal transaction, or validated as such by other nodes.
 
 <h2 id="rpc-calls"> RPC Calls for KMD-BLUR Data </h2>
 

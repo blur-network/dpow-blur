@@ -1081,6 +1081,25 @@ namespace cryptonote
     tvc.m_signers_index = req.signers_index;
     tvc.m_sig_count = req.sig_count;
     const std::string signers_index = req.signers_index;
+    std::list<int> signers_list;
+
+    for (int i = 0; i < 13; i++) {
+      std::string tmp = signers_index.substr(i*2, 2);
+      int each_ind  = std::stoi(tmp, nullptr, 10);
+      signers_list.push_back(each_ind);
+    }
+
+    int neg = -1;
+    int count = 13 - std::count(signers_list.begin(), signers_list.end(), neg);
+    bool count_check = false;
+
+    count_check = (count == req.sig_count);
+
+    if (count_check != req.sig_count) {
+      MERROR("Error signature count check against signers index failed!");
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
 
     rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, false, false, sig_count, signers_index);
       if (rs == false)
@@ -1128,6 +1147,7 @@ namespace cryptonote
         tmp = std::stoi(sub, nullptr, 10);
         r.signers_index.push_back(tmp);
       }
+
       std::string si = " ";
       for (const auto& each : r.signers_index) {
         std::string tmp = std::to_string(each);
