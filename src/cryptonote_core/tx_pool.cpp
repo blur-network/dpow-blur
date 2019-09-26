@@ -586,7 +586,7 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------------------------
-  bool tx_memory_pool::take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& has_raw_ntz_data, uint8_t& sig_count, std::list<int>& signers_index)
+  bool tx_memory_pool::take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& sig_count, std::list<int>& signers_index)
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
@@ -615,7 +615,6 @@ namespace cryptonote
       relayed = meta.relayed;
       do_not_relay = meta.do_not_relay;
       double_spend_seen = meta.double_spend_seen;
-      has_raw_ntz_data = meta.has_raw_ntz_data;
       sig_count = meta.sig_count;
       for (int i = 0; i < 13; i++) {
         signers_index.push_back(get_index<int>(i, meta.signers_index));
@@ -678,6 +677,28 @@ namespace cryptonote
       return true;
     }, false);
 
+    m_blockchain.for_all_ntzpool_txes([this, &remove](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, const cryptonote::blobdata*) {
+      uint64_t tx_age = time(nullptr) - meta.receive_time;
+
+      if((tx_age > CRYPTONOTE_MEMPOOL_TX_LIVETIME && !meta.kept_by_block) ||
+         (tx_age > CRYPTONOTE_MEMPOOL_TX_FROM_ALT_BLOCK_LIVETIME && meta.kept_by_block) )
+      {
+        LOG_PRINT_L1("Tx " << txid << " removed from tx pool due to outdated, age: " << tx_age );
+        auto sorted_it = find_tx_in_sorted_container(txid);
+        if (sorted_it == m_txs_by_fee_and_receive_time.end())
+        {
+          LOG_PRINT_L1("Removing tx " << txid << " from tx pool, but it was not found in the sorted txs container!");
+        }
+        else
+        {
+          m_txs_by_fee_and_receive_time.erase(sorted_it);
+        }
+        m_timed_out_transactions.insert(txid);
+        remove.insert(txid);
+      }
+      return true;
+    }, false);
+
     if (!remove.empty())
     {
       LockedTXN lock(m_blockchain);
@@ -686,6 +707,7 @@ namespace cryptonote
         try
         {
           cryptonote::blobdata bd = m_blockchain.get_txpool_tx_blob(txid);
+          cryptonote::blobdata nbd = m_blockchain.get_ntzpool_tx_blob(txid);
           cryptonote::transaction tx;
           if (!parse_and_validate_tx_from_blob(bd, tx))
           {
@@ -696,6 +718,18 @@ namespace cryptonote
           {
             // remove first, so we only remove key images if the tx removal succeeds
             m_blockchain.remove_txpool_tx(txid);
+            m_txpool_size -= bd.size();
+            remove_transaction_keyimages(tx);
+          }
+          if (!parse_and_validate_tx_from_blob(nbd, tx))
+          {
+            MERROR("Failed to parse tx from ntzpool");
+            // continue
+          }
+          else
+          {
+            // remove first, so we only remove key images if the tx removal succeeds
+            m_blockchain.remove_ntzpool_tx(txid);
             m_txpool_size -= bd.size();
             remove_transaction_keyimages(tx);
           }

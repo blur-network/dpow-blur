@@ -157,7 +157,7 @@ namespace cryptonote
      *
      * @return true unless the transaction cannot be found in the pool
      */
-     bool take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& has_raw_ntz_data, uint8_t& sig_count, std::list<int>& signers_index);
+     bool take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& sig_count, std::list<int>& signers_index);
 
     /**
      * @brief checks if the pool has a transaction with the given hash
