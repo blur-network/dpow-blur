@@ -655,6 +655,7 @@ namespace cryptonote
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
     std::unordered_set<crypto::hash> remove;
+    std::unordered_set<crypto::hash> ntzremove;
     m_blockchain.for_all_txpool_txes([this, &remove](const crypto::hash &txid, const txpool_tx_meta_t &meta, const cryptonote::blobdata*) {
       uint64_t tx_age = time(nullptr) - meta.receive_time;
 
@@ -677,7 +678,7 @@ namespace cryptonote
       return true;
     }, false);
 
-    m_blockchain.for_all_ntzpool_txes([this, &remove](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, const cryptonote::blobdata*) {
+    m_blockchain.for_all_ntzpool_txes([this, &ntzremove](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, const cryptonote::blobdata*) {
       uint64_t tx_age = time(nullptr) - meta.receive_time;
 
       if((tx_age > CRYPTONOTE_MEMPOOL_TX_LIVETIME && !meta.kept_by_block) ||
@@ -687,14 +688,14 @@ namespace cryptonote
         auto sorted_it = find_tx_in_sorted_container(txid);
         if (sorted_it == m_txs_by_fee_and_receive_time.end())
         {
-          LOG_PRINT_L1("Removing tx " << txid << " from tx pool, but it was not found in the sorted txs container!");
+          LOG_PRINT_L1("Removing tx " << txid << " from ntz pool, but it was not found in the sorted txs container!");
         }
         else
         {
           m_txs_by_fee_and_receive_time.erase(sorted_it);
         }
         m_timed_out_transactions.insert(txid);
-        remove.insert(txid);
+        ntzremove.insert(txid);
       }
       return true;
     }, false);
@@ -707,7 +708,6 @@ namespace cryptonote
         try
         {
           cryptonote::blobdata bd = m_blockchain.get_txpool_tx_blob(txid);
-          cryptonote::blobdata nbd = m_blockchain.get_ntzpool_tx_blob(txid);
           cryptonote::transaction tx;
           if (!parse_and_validate_tx_from_blob(bd, tx))
           {
@@ -721,7 +721,25 @@ namespace cryptonote
             m_txpool_size -= bd.size();
             remove_transaction_keyimages(tx);
           }
-          if (!parse_and_validate_tx_from_blob(nbd, tx))
+        }
+        catch (const std::exception &e)
+        {
+          MWARNING("Failed to remove stuck transaction: " << txid);
+          // ignore error
+        }
+      }
+    }
+
+    if (!ntzremove.empty())
+    {
+      LockedTXN lock(m_blockchain);
+      for (const crypto::hash &txid: remove)
+      {
+        try
+        {
+          cryptonote::transaction ntz_tx;
+          cryptonote::blobdata nbd = m_blockchain.get_ntzpool_tx_blob(txid);
+          if (!parse_and_validate_tx_from_blob(nbd, ntz_tx))
           {
             MERROR("Failed to parse tx from ntzpool");
             // continue
@@ -730,8 +748,8 @@ namespace cryptonote
           {
             // remove first, so we only remove key images if the tx removal succeeds
             m_blockchain.remove_ntzpool_tx(txid);
-            m_txpool_size -= bd.size();
-            remove_transaction_keyimages(tx);
+            m_txpool_size -= nbd.size();
+            remove_transaction_keyimages(ntz_tx);
           }
         }
         catch (const std::exception &e)
@@ -878,6 +896,18 @@ namespace cryptonote
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
     m_blockchain.for_all_txpool_txes([&txs](const crypto::hash &txid, const txpool_tx_meta_t &meta, const cryptonote::blobdata *bd){
+      transaction tx;
+      if (!parse_and_validate_tx_from_blob(*bd, tx))
+      {
+        MERROR("Failed to parse tx from txpool");
+        // continue
+        return true;
+      }
+      txs.push_back(tx);
+      return true;
+    }, true, include_unrelayed_txes);
+
+    m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, const cryptonote::blobdata *bd){
       transaction tx;
       if (!parse_and_validate_tx_from_blob(*bd, tx))
       {
@@ -1501,10 +1531,20 @@ namespace cryptonote
       }
 
       cryptonote::blobdata txblob = m_blockchain.get_txpool_tx_blob(sorted_it->second);
+      cryptonote::blobdata ntzblob = m_blockchain.get_ntzpool_tx_blob(sorted_it->second);
       cryptonote::transaction tx;
+      cryptonote::transaction ntz_tx;
+
       if (!parse_and_validate_tx_from_blob(txblob, tx))
       {
         MERROR("Failed to parse tx from txpool");
+        sorted_it++;
+        continue;
+      }
+
+      if (!parse_and_validate_tx_from_blob(ntzblob, ntz_tx))
+      {
+        MERROR("Failed to parse tx from ntzpool");
         sorted_it++;
         continue;
       }
@@ -1561,6 +1601,7 @@ namespace cryptonote
     CRITICAL_REGION_LOCAL1(m_blockchain);
     size_t tx_size_limit = get_transaction_size_limit(version);
     std::unordered_set<crypto::hash> remove;
+    std::unordered_set<crypto::hash> ntzremove;
 
     m_txpool_size = 0;
     m_blockchain.for_all_txpool_txes([this, &remove, tx_size_limit](const crypto::hash &txid, const txpool_tx_meta_t &meta, const cryptonote::blobdata*) {
@@ -1572,6 +1613,20 @@ namespace cryptonote
       else if (m_blockchain.have_tx(txid)) {
         LOG_PRINT_L1("Transaction " << txid << " is in the blockchain, removing it from pool");
         remove.insert(txid);
+      }
+      return true;
+    }, false);
+
+
+    m_blockchain.for_all_ntzpool_txes([this, &ntzremove, tx_size_limit](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, const cryptonote::blobdata*) {
+      m_txpool_size += meta.blob_size;
+      if (meta.blob_size > tx_size_limit) {
+        LOG_PRINT_L1("Transaction " << txid << " is too big (" << meta.blob_size << " bytes), removing it from pool");
+        ntzremove.insert(txid);
+      }
+      else if (m_blockchain.have_tx(txid)) {
+        LOG_PRINT_L1("Transaction " << txid << " is in the blockchain, removing it from pool");
+        ntzremove.insert(txid);
       }
       return true;
     }, false);
@@ -1591,6 +1646,7 @@ namespace cryptonote
             MERROR("Failed to parse tx from txpool");
             continue;
           }
+
           // remove tx from db first
           m_blockchain.remove_txpool_tx(txid);
           m_txpool_size -= txblob.size();
@@ -1613,6 +1669,44 @@ namespace cryptonote
         }
       }
     }
+    if (!ntzremove.empty())
+    {
+      LockedTXN lock(m_blockchain);
+      for (const crypto::hash &txid: remove)
+      {
+        try
+        {
+          cryptonote::blobdata ntzblob = m_blockchain.get_ntzpool_tx_blob(txid);
+          cryptonote::transaction ntz_tx;
+          if (!parse_and_validate_tx_from_blob(ntzblob, ntz_tx))
+          {
+            MERROR("Failed to parse tx from txpool");
+            continue;
+          }
+
+          // remove tx from db first
+          m_blockchain.remove_ntzpool_tx(txid);
+          m_txpool_size -= ntzblob.size();
+          remove_transaction_keyimages(ntz_tx);
+          auto sorted_it = find_tx_in_sorted_container(txid);
+          if (sorted_it == m_txs_by_fee_and_receive_time.end())
+          {
+            LOG_PRINT_L1("Removing tx " << txid << " from ntz pool, but it was not found in the sorted txs container!");
+          }
+          else
+          {
+            m_txs_by_fee_and_receive_time.erase(sorted_it);
+          }
+          ++n_removed;
+        }
+        catch (const std::exception &e)
+        {
+          MERROR("Failed to remove invalid tx from pool");
+          // continue
+        }
+      }
+    }
+
     return n_removed;
   }
   //---------------------------------------------------------------------------------
@@ -1652,6 +1746,36 @@ namespace cryptonote
         try
         {
           m_blockchain.remove_txpool_tx(txid);
+        }
+        catch (const std::exception &e)
+        {
+          MWARNING("Failed to remove corrupt transaction: " << txid);
+          // ignore error
+        }
+      }
+    }
+    std::vector<crypto::hash> ntzremove;
+    bool R = m_blockchain.for_all_ntzpool_txes([this, &ntzremove](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, const cryptonote::blobdata *bd) {
+      cryptonote::transaction tx;
+      if (!parse_and_validate_tx_from_blob(*bd, tx))
+      {
+        MWARNING("Failed to parse tx from txpool, removing");
+        ntzremove.push_back(txid);
+      }
+      m_txs_by_fee_and_receive_time.emplace(std::pair<double, time_t>(meta.fee / (double)meta.blob_size, meta.receive_time), txid);
+      m_txpool_size += meta.blob_size;
+      return true;
+    }, true);
+    if (!R)
+      return false;
+    if (!ntzremove.empty())
+    {
+      LockedTXN lock(m_blockchain);
+      for (const auto &txid: remove)
+      {
+        try
+        {
+          m_blockchain.remove_ntzpool_tx(txid);
         }
         catch (const std::exception &e)
         {

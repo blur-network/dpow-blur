@@ -597,12 +597,16 @@ namespace cryptonote
     {
       std::vector<tx_info> pool_tx_info;
       std::vector<spent_key_image_info> pool_key_image_info;
+      std::vector<ntz_tx_info> ntzpool_tx_info;
+      std::vector<spent_key_image_info> ntzpool_key_image_info;
       bool r = m_core.get_pool_transactions_and_spent_keys_info(pool_tx_info, pool_key_image_info);
-      if(r)
+      bool R = m_core.get_pending_ntz_pool_and_spent_keys_info(ntzpool_tx_info, ntzpool_key_image_info);
+      if(r || R)
       {
         // sort to match original request
         std::list<transaction> sorted_txs;
         std::vector<tx_info>::const_iterator i;
+        std::vector<ntz_tx_info>::const_iterator j;
         for (const crypto::hash &h: vh)
         {
           if (std::find(missed_txs.begin(), missed_txs.end(), h) == missed_txs.end())
@@ -634,6 +638,28 @@ namespace cryptonote
             pool_tx_hashes.insert(h);
             const std::string hash_string = epee::string_tools::pod_to_hex(h);
             for (const auto &ti: pool_tx_info)
+            {
+              if (ti.id_hash == hash_string)
+              {
+                double_spend_seen.insert(std::make_pair(h, ti.double_spend_seen));
+                break;
+              }
+            }
+            ++found_in_pool;
+          }
+          else if ((j = std::find_if(ntzpool_tx_info.begin(), ntzpool_tx_info.end(), [h](const ntz_tx_info &txi) { return epee::string_tools::pod_to_hex(h) == txi.id_hash; })) != ntzpool_tx_info.end())
+          {
+            cryptonote::transaction tx;
+            if (!cryptonote::parse_and_validate_tx_from_blob(j->tx_blob, tx))
+            {
+              res.status = "Failed to parse and validate tx from blob";
+              return true;
+            }
+            sorted_txs.push_back(tx);
+            missed_txs.remove(h);
+            pool_tx_hashes.insert(h);
+            const std::string hash_string = epee::string_tools::pod_to_hex(h);
+            for (const auto &ti: ntzpool_tx_info)
             {
               if (ti.id_hash == hash_string)
               {
@@ -747,13 +773,17 @@ namespace cryptonote
     if (!missed_txs.empty())
     {
       std::vector<tx_info> pool_tx_info;
+      std::vector<ntz_tx_info> ntzpool_tx_info;
       std::vector<spent_key_image_info> pool_key_image_info;
+      std::vector<spent_key_image_info> ntzpool_key_image_info;
       bool r = m_core.get_pool_transactions_and_spent_keys_info(pool_tx_info, pool_key_image_info);
-      if(r)
+      bool R = m_core.get_pending_ntz_pool_and_spent_keys_info(ntzpool_tx_info, ntzpool_key_image_info);
+      if(r || R)
       {
         // sort to match original request
         std::list<transaction> sorted_txs;
         std::vector<tx_info>::const_iterator i;
+        std::vector<ntz_tx_info>::const_iterator j;
         for (const crypto::hash &h: vh)
         {
           if (std::find(missed_txs.begin(), missed_txs.end(), h) == missed_txs.end())
@@ -785,6 +815,28 @@ namespace cryptonote
             pool_tx_hashes.insert(h);
             const std::string hash_string = epee::string_tools::pod_to_hex(h);
             for (const auto &ti: pool_tx_info)
+            {
+              if (ti.id_hash == hash_string)
+              {
+                double_spend_seen.insert(std::make_pair(h, ti.double_spend_seen));
+                break;
+              }
+            }
+            ++found_in_pool;
+          }
+          else if ((j = std::find_if(ntzpool_tx_info.begin(), ntzpool_tx_info.end(), [h](const ntz_tx_info &txi) { return epee::string_tools::pod_to_hex(h) == txi.id_hash; })) != ntzpool_tx_info.end())
+          {
+            cryptonote::transaction tx;
+            if (!cryptonote::parse_and_validate_tx_from_blob(j->tx_blob, tx))
+            {
+              res.status = "Failed to parse and validate tx from blob";
+              return true;
+            }
+            sorted_txs.push_back(tx);
+            missed_txs.remove(h);
+            pool_tx_hashes.insert(h);
+            const std::string hash_string = epee::string_tools::pod_to_hex(h);
+            for (const auto &ti: ntzpool_tx_info)
             {
               if (ti.id_hash == hash_string)
               {
@@ -891,14 +943,40 @@ namespace cryptonote
 
     // check the pool too
     std::vector<cryptonote::tx_info> txs;
+    std::vector<cryptonote::ntz_tx_info> ntxs;
     std::vector<cryptonote::spent_key_image_info> ki;
+    std::vector<cryptonote::spent_key_image_info> nki;
     r = m_core.get_pool_transactions_and_spent_keys_info(txs, ki, !request_has_rpc_origin || !m_restricted);
+    bool R = m_core.get_pending_ntz_pool_and_spent_keys_info(ntxs, nki, !request_has_rpc_origin || !m_restricted);
     if(!r)
     {
-      res.status = "Failed";
-      return true;
+      if (!R)
+      {
+        res.status = "Failed";
+        return true;
+      }
     }
     for (std::vector<cryptonote::spent_key_image_info>::const_iterator i = ki.begin(); i != ki.end(); ++i)
+    {
+      crypto::hash hash;
+      crypto::key_image spent_key_image;
+      if (parse_hash256(i->id_hash, hash))
+      {
+        memcpy(&spent_key_image, &hash, sizeof(hash)); // a bit dodgy, should be other parse functions somewhere
+        for (size_t n = 0; n < res.spent_status.size(); ++n)
+        {
+          if (res.spent_status[n] == COMMAND_RPC_IS_KEY_IMAGE_SPENT::UNSPENT)
+          {
+            if (key_images[n] == spent_key_image)
+            {
+              res.spent_status[n] = COMMAND_RPC_IS_KEY_IMAGE_SPENT::SPENT_IN_POOL;
+              break;
+            }
+          }
+        }
+      }
+    }
+    for (std::vector<cryptonote::spent_key_image_info>::const_iterator i = nki.begin(); i != nki.end(); ++i)
     {
       crypto::hash hash;
       crypto::key_image spent_key_image;
