@@ -998,6 +998,7 @@ namespace cryptonote
       * @return true
       */
      bool relay_txpool_transactions();
+     bool relay_ntzpool_transactions();
 
      /**
       * @brief checks free disk space

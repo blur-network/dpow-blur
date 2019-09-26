@@ -3564,7 +3564,7 @@ bool Blockchain::flush_txes_from_ntzpool(const std::list<crypto::hash> &txids)
     uint8_t has_raw_ntz_data, sig_count;
     std::list<int> signers_index;
     MINFO("Removing txid " << txid << " from the pool");
-    if(m_tx_pool.have_tx(txid) && !m_tx_pool.take_ntzpool_tx(txid, tx, blob_size, fee, relayed, do_not_relay, double_spend_seen, has_raw_ntz_data, sig_count, signers_index))
+    if(!m_tx_pool.take_ntzpool_tx(txid, tx, blob_size, fee, relayed, do_not_relay, double_spend_seen, has_raw_ntz_data, sig_count, signers_index))
     {
       MERROR("Failed to remove txid " << txid << " from the notarization pool");
       res = false;

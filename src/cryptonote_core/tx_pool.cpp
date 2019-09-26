@@ -743,6 +743,39 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------------------------
+  bool tx_memory_pool::get_relayable_ntz_transactions(std::list<std::pair<crypto::hash, cryptonote::blobdata>> &txs) const
+  {
+    CRITICAL_REGION_LOCAL(m_transactions_lock);
+    CRITICAL_REGION_LOCAL1(m_blockchain);
+    const uint64_t now = time(NULL);
+    m_blockchain.for_all_ntzpool_txes([this, now, &txs](const crypto::hash &txid, const ntzpool_tx_meta_t &ntz_meta, const cryptonote::blobdata *){
+      // 0 fee transactions are never relayed
+      if(ntz_meta.fee > 0 && !ntz_meta.do_not_relay && now - ntz_meta.last_relayed_time > get_relay_delay(now, ntz_meta.receive_time))
+      {
+        // if the tx is older than half the max lifetime, we don't re-relay it, to avoid a problem
+        // mentioned by smooth where nodes would flush txes at slightly different times, causing
+        // flushed txes to be re-added when received from a node which was just about to flush it
+        uint64_t max_age = ntz_meta.kept_by_block ? CRYPTONOTE_MEMPOOL_TX_FROM_ALT_BLOCK_LIVETIME : CRYPTONOTE_MEMPOOL_TX_LIVETIME;
+        if (now - ntz_meta.receive_time <= max_age / 2)
+        {
+          try
+          {
+            cryptonote::blobdata bd = m_blockchain.get_ntzpool_tx_blob(txid);
+            txs.push_back(std::make_pair(txid, bd));
+          }
+          catch (const std::exception &e)
+          {
+            MERROR("Failed to get notarization tx blob from db");
+            // ignore error
+          }
+        }
+      }
+      return true;
+    }, false);
+
+    return true;
+  }
+  //---------------------------------------------------------------------------------
   void tx_memory_pool::set_relayed(const std::list<std::pair<crypto::hash, cryptonote::blobdata>> &txs)
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
@@ -769,7 +802,7 @@ namespace cryptonote
     }
   }
   //---------------------------------------------------------------------------------
-  void tx_memory_pool::req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata> &tx, int const& sig_count)
+  void tx_memory_pool::req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata> &tx, int const& sig_count, std::string const& signers_index)
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
@@ -1173,7 +1206,15 @@ namespace cryptonote
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
-    return m_blockchain.get_db().txpool_has_tx(id);
+    if (!m_blockchain.get_db().txpool_has_tx(id)) {
+      if(!m_blockchain.get_db().ntzpool_has_tx(id)) {
+        return false;
+      } else {
+        return m_blockchain.get_db().ntzpool_has_tx(id);
+      }
+    } else {
+      return m_blockchain.get_db().txpool_has_tx(id);
+    }
   }
   //---------------------------------------------------------------------------------
   bool tx_memory_pool::have_tx_keyimges_as_spent(const transaction& tx) const

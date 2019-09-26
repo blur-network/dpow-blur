@@ -1289,6 +1289,25 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
+  bool core::relay_ntzpool_transactions()
+  {
+    // we attempt to relay txes that should be relayed, but were not
+    std::list<std::pair<crypto::hash, cryptonote::blobdata>> ntz_txs;
+    if (m_mempool.get_relayable_ntz_transactions(ntz_txs) && !ntz_txs.empty())
+    {
+      cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+      ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
+      NOTIFY_REQUEST_NTZ_SIG::request r;
+      for (auto it = ntz_txs.begin(); it != ntz_txs.end(); ++it)
+      {
+        r.tx_blob = it->second;
+        get_protocol()->relay_request_ntz_sig(r, fake_context);
+      }
+      m_mempool.set_relayed(ntz_txs);
+    }
+    return true;
+  }
+  //-----------------------------------------------------------------------------------------------
   void core::on_transaction_relayed(const cryptonote::blobdata& tx_blob)
   {
     std::list<std::pair<crypto::hash, cryptonote::blobdata>> txs;

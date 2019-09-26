@@ -364,6 +364,21 @@ namespace cryptonote
     bool get_relayable_transactions(std::list<std::pair<crypto::hash, cryptonote::blobdata>>& txs) const;
 
     /**
+     * @brief get a list of all relayable transactions and their hashes
+     *
+     * "relayable" in this case means:
+     *   nonzero fee
+     *   hasn't been relayed too recently
+     *   isn't old enough that relaying it is considered harmful
+     * Note a transaction can be "relayable" even if do_not_relay is true
+     *
+     * @param txs return-by-reference the transactions and their hashes
+     *
+     * @return true
+     */
+    bool get_relayable_ntz_transactions(std::list<std::pair<crypto::hash, cryptonote::blobdata>>& txs) const;
+
+    /**
      * @brief tell the pool that certain transactions were just relayed
      *
      * @param txs the list of transactions (and their hashes)
@@ -376,7 +391,7 @@ namespace cryptonote
      * @param tx pair of hash, blob
      * @param sig_count signature count for the tx
      */
-    void req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata>& tx, int const& sig_count);
+    void req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata>& tx, int const& sig_count, std::string const& signers_index);
 
     /**
      * @brief get the total number of transactions in the pool

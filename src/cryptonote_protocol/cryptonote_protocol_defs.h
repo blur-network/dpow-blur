@@ -286,14 +286,17 @@ namespace cryptonote
   /*                                                                      */
   /************************************************************************/
 
-#define S_INDEX(i) s##i
+//#define S_INDEX(i) s##i
 
   template<class T, class Tt>
   T get_index(T i, Tt j) {
     std::string I = std::to_string(i);
-    decltype(i) S_INDEX(I);
+/*    decltype(i) S_INDEX(I);
     S_INDEX(I) = j[i];
-    return S_INDEX(I);
+    return S_INDEX(I);*/
+    decltype(i) s;
+    s = j[i];
+    return s;
   }
 
 
@@ -319,21 +322,4 @@ namespace cryptonote
   /************************************************************************/
   /*                                                                      */
   /************************************************************************/
-  struct NOTIFY_RESPONSE_NTZ_SIG
-  {
-    const static int ID = BC_COMMANDS_POOL_BASE + 11;
-
-    struct request
-    {
-      int sig_count;
-      std::list<blobdata> tx_blobs;
-      std::string payment_id;
-
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(sig_count)
-        KV_SERIALIZE(tx_blobs)
-        KV_SERIALIZE(payment_id)
-      END_KV_SERIALIZE_MAP()
-    };
-  };
 }
