@@ -38,10 +38,12 @@
 using namespace epee;
 
 #include "notary_server.h"
+#include "notarization_tx_cache.h"
 #include "wallet/wallet_args.h"
 #include "common/command_line.h"
 #include "common/i18n.h"
 #include "cryptonote_config.h"
+#include "cryptonote_core/tx_pool.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_basic/account.h"
 #include "komodo/komodo_validation.h"
@@ -675,7 +677,7 @@ namespace tools
       {
         er.code = NOTARY_RPC_ERROR_CODE_WRONG_ADDRESS;
         if (er.message.empty())
-          er.message = std::string("NOTARY_RPC_ERROR_CODE_WRONG_ADDRESS: ") + it->address;
+          er.message = std::string("NOTARY_RPC_ERROR_UNTRUSTED_ADDRESS: ") + it->address;
         return false;
       }
 
@@ -1029,12 +1031,13 @@ namespace tools
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool notary_server::on_ntz_transfer(const notary_rpc::COMMAND_RPC_NTZ_TRANSFER::request& req, notary_rpc::COMMAND_RPC_NTZ_TRANSFER::response& res, epee::json_rpc::error& er)
+  bool notary_server::on_create_ntz_transfer(const notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request& req, notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response& res, epee::json_rpc::error& er)
   {
 
     std::vector<cryptonote::tx_destination_entry> dsts;
     std::vector<uint8_t> extra;
     int signer_index = -1;
+
 
     if (!m_wallet) return not_open(er);
     if (m_wallet->restricted())
@@ -1079,23 +1082,13 @@ namespace tools
       not_validated_dsts.push_back(dest);
     }
 
-    bool need_payment_id = req.sig_count < 1;
-
-    std::string payment_id;
-
-    if (need_payment_id) {
       uint8_t buf[32];
       hydro_random_buf(buf, sizeof buf);
-      payment_id = epee::string_tools::pod_to_hex(buf);
+      std::string payment_id = epee::string_tools::pod_to_hex(buf);
       if (payment_id.empty()) {
         MERROR("Unable to create random payment_id by parsing binbuff to hexstr!");
       }
-    } else {
-      payment_id = req.payment_id;
-      if (payment_id.empty()) {
-        MERROR("Unable to find payment ID!");
-      }
-    }
+
     std::vector<int> signers_index = { -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1 };
 
@@ -1106,9 +1099,167 @@ namespace tools
 
     try
     {
+      uint64_t mixin = m_wallet->adjust_mixin(0);
+
+      uint32_t priority = m_wallet->adjust_priority(3);
+      uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
+      MWARNING("on_ntz_transfer calling create_ntz_transactions");
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
+      const int new_count = 1;
+      MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(new_count));
+
+        std::string index_vec;
+        for (int i = 0; i < 13; i++) {
+          std::string tmp = std::to_string(cryptonote::get_index<int>(i, signers_index)) + " ";
+          index_vec += tmp;
+        }
+        std::list<cryptonote::transaction> ntzpool_txs;
+        const std::vector<int> si_const = signers_index;
+        bool refreshed = false;
+
+        std::list<std::pair<crypto::hash,wallet2::pool_payment_details>> pool_payments_list;
+        m_wallet->update_pool_state(refreshed);
+        m_wallet->get_unconfirmed_payments(pool_payments_list, 0, {0,0});
+        if (!pool_payments_list.empty())
+        {
+          for (const auto& each : pool_payments_list) {
+            crypto::hash ntz_hash = each.first;
+                MWARNING("Found pending ntz txs in pool! hash = " << epee::string_tools::pod_to_hex(ntz_hash));
+          }
+        }
+          if (get_ntz_cache_count() >= 2) {
+            m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id, si_const);
+
+            MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(new_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+            return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
+               res.tx_hash_list, true, res.tx_blob_list, false, res.tx_metadata_list, er);
+          } else {
+            bool added = false;
+            added = add_ptx_to_cache(ptx_vector);
+            if (!added) {
+              MERROR("Failed to add ptx to cache! Relaying instead");
+              m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id, si_const);
+
+              MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(new_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+              return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
+                 res.tx_hash_list, true, res.tx_blob_list, false, res.tx_metadata_list, er);
+            }
+            else
+              return true;
+          }
+    }
+    catch (const std::exception& e)
+    {
+      handle_rpc_exception(std::current_exception(), er, NOTARY_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);
+      return false;
+    }
+  }
+//------------------------------------------------------------------------------------------------------------------------------
+  bool notary_server::on_append_ntz_sig(const notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request& req, notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response& res, epee::json_rpc::error& er)
+  {
+
+    std::vector<cryptonote::tx_destination_entry> dsts;
+    std::vector<uint8_t> extra;
+    int signer_index = -1;
+
+    if (!m_wallet) return not_open(er);
+    if (m_wallet->restricted())
+    {
+      er.code = NOTARY_RPC_ERROR_CODE_DENIED;
+      er.message = "Command unavailable in restricted mode.";
+      return false;
+    }
+
+    std::string recv_blob = req.recv_blob;
+    std::string local_blob = req.local_blob;
+    std::vector<int> signers_index = req.signers_index;
+    int sig_count = req.sig_count;
+
+    std::vector<crypto::secret_key> notary_viewkeys;
+    bool r = false;
+    r = get_notary_secret_viewkeys(notary_viewkeys);
+
+    if (!r)
+    {
+      er.code = NOTARY_RPC_ERROR_CODE_DENIED;
+      er.message = "Couldn't fetch notary pubkeys";
+      return false;
+    }
+
+    cryptonote::transaction tx;
+    parse_and_validate_tx_from_blob(recv_blob, tx);
+
+      rct::rctSig &rv = tx.rct_signatures;
+      if (rv.outPk.size() != tx.vout.size())
+      {
+        LOG_PRINT_L1("Failed to parse transaction from blob, bad outPk size in tx " << get_transaction_hash(tx));
+        return false;
+      }
+      for (size_t n = 0; n < tx.rct_signatures.outPk.size(); ++n)
+      {
+        if (tx.vout[n].target.type() != typeid(cryptonote::txout_to_key))
+        {
+          LOG_PRINT_L1("Unsupported output type in tx " << get_transaction_hash(tx));
+          return false;
+        }
+        rv.outPk[n].dest = rct::pk2rct(boost::get<cryptonote::txout_to_key>(tx.vout[n].target).key);
+      }
+
+    size_t pk_index = 0;
+    crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index);
+    std::vector<crypto::key_derivation> recv_derivations;
+    for (const auto& each : notary_viewkeys) {
+      crypto::key_derivation recv_derivation;
+      bool R = generate_key_derivation(recv_tx_key, each, recv_derivation);
+      if (!R) {
+        MERROR("Failed to generate recv_derivation at append_ntz_sig! recv_tx_key = " << recv_tx_key << ", notary_viewkey = " << epee::string_tools::pod_to_hex(each));
+        return false;
+      } else {
+        recv_derivations.push_back(recv_derivation);
+      }
+    }
+
+    std::vector<notary_rpc::transfer_destination> not_validated_dsts;
+    std::vector<std::pair<crypto::public_key,crypto::public_key>> notaries_keys;
+    bool z = get_notary_pubkeys(notaries_keys);
+
+    for (const auto& pair : notaries_keys)
+    {
+//      MWARNING("Pair: " << epee::string_tools::pod_to_hex(pair.first) << " and " << epee::string_tools::pod_to_hex(pair.second));
+
+      const crypto::public_key view_pubkey = pair.first;
+      const crypto::public_key spend_pubkey = pair.second;
+      cryptonote::account_public_address address;
+      address.m_view_public_key = view_pubkey;
+      address.m_spend_public_key = spend_pubkey;
+
+      std::string address_str = get_account_address_as_str(m_wallet->nettype(), false, address);
+
+      uint64_t amount = 10000;
+      // arbitrary, but meaningful: 1 * 10^(-8) BLUR
+      // for compatibility with BTC-flavored atomicity
+
+      notary_rpc::transfer_destination dest = AUTO_VAL_INIT(dest);
+      dest.address = address_str;
+      dest.amount = amount;
+      not_validated_dsts.push_back(dest);
+    }
+
+    std::string payment_id = req.payment_id;
+    if (payment_id.empty()) {
+      MERROR("Unable to find payment ID!");
+    }
+
+    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, signers_index, er))
+    {
+      return false;
+    }
+
+    try
+    {
       uint64_t mixin = m_wallet->adjust_mixin(req.sig_count);
 
-      uint32_t priority = m_wallet->adjust_priority(1);
+      uint32_t priority = m_wallet->adjust_priority(3);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       MWARNING("on_ntz_transfer calling create_ntz_transactions");
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);

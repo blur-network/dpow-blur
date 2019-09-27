@@ -1,9 +1,12 @@
 set(komodo_notary_server_sources
+  notarization_tx_cache.cpp
   notary_server.cpp)
 
 set(komodo_notary_server_headers)
 
 set(komodo_notary_server_private_headers
+  notarization_tx_cache.h
+  notarization_tx_container.h
   notary_server.h
   notary_server_error_codes.h
   notary_server_commands_defs.h)
