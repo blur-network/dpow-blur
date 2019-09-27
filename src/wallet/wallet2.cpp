@@ -4846,11 +4846,11 @@ void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_cou
 
       MWARNING("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
       //fee includes dust if dust policy specified it.
-      MWARNING("Signatures added and ntz_sig requested. <" << txid << ">" << ENDL
+      MWARNING("Signatures added. " << sig_count << " more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <" << txid << ">" << ENDL
             << "Signatures count: " << std::to_string(sigs_count) << "Commission: " << print_money(ptx.fee) << ENDL
             << "Balance: " << print_money(balance(ptx.construction_data.subaddr_account)) << ENDL
             << "Unlocked: " << print_money(unlocked_balance(ptx.construction_data.subaddr_account)) << ENDL
-            << "Please, wait for for further ntz_sigs.");
+            << "Please, wait for further signatures");
     }
 }
 //----------------------------------------------------------------------------------------------------

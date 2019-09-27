@@ -166,7 +166,7 @@ int32_t komodo_importaddress(char* addr)
     {
       std::string viewkey_seed_oversize = notaries_keys[n].first;
       std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 64);
-      MWARNING("viewkey_seed_str: " << viewkey_seed_str);
+//      MWARNING("viewkey_seed_str: " << viewkey_seed_str);
       cryptonote::blobdata btc_pubkey_data;
 
       if(!epee::string_tools::parse_hexstr_to_binbuff(viewkey_seed_str, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
@@ -204,7 +204,7 @@ int32_t komodo_importaddress(char* addr)
 
     for (int i =0; i < 64; i++) {
         const char* seed = Notaries_elected1[i][1];
-        MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[i][3]);
+   //     MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[i][3]);
         notary_seed_strings.push_back(seed);
     }
 
@@ -212,7 +212,7 @@ int32_t komodo_importaddress(char* addr)
     {
       std::string viewkey_seed_oversize = notary_seed_strings[n];
       std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 64);
-      MWARNING("viewkey_seed_str: " << viewkey_seed_str);
+     // MWARNING("viewkey_seed_str: " << viewkey_seed_str);
       cryptonote::blobdata btc_pubkey_data;
 
       if(!epee::string_tools::parse_hexstr_to_binbuff(viewkey_seed_str, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
