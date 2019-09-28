@@ -860,6 +860,7 @@ namespace cryptonote
 
 
       int const& s_count = arg.sig_count;
+      ag.ptx_string = arg.ptx_string;
       std::string signers_index_s;
       for (int i = 0; i < 13; i++)
       {

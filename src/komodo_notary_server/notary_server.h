@@ -85,7 +85,8 @@ namespace tools
         MAP_JON_RPC_WE("getheight",          on_getheight,          notary_rpc::COMMAND_RPC_GET_HEIGHT)
         MAP_JON_RPC_WE("transfer",           on_transfer,           notary_rpc::COMMAND_RPC_TRANSFER)
         MAP_JON_RPC_WE("transfer_split",     on_transfer_split,     notary_rpc::COMMAND_RPC_TRANSFER_SPLIT)
-        MAP_JON_RPC_WE("ntz_transfer",       on_ntz_transfer,       notary_rpc::COMMAND_RPC_NTZ_TRANSFER)
+        MAP_JON_RPC_WE("create_ntz_transfer",on_create_ntz_transfer,notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER)
+        MAP_JON_RPC_WE("append_ntz_sig",     on_append_ntz_sig,     notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG)
         MAP_JON_RPC_WE("sweep_all",          on_sweep_all,          notary_rpc::COMMAND_RPC_SWEEP_ALL)
         MAP_JON_RPC_WE("sweep_single",       on_sweep_single,       notary_rpc::COMMAND_RPC_SWEEP_SINGLE)
         MAP_JON_RPC_WE("relay_tx",           on_relay_tx,           notary_rpc::COMMAND_RPC_RELAY_TX)
@@ -144,10 +145,11 @@ namespace tools
       bool on_set_account_tag_description(const notary_rpc::COMMAND_RPC_SET_ACCOUNT_TAG_DESCRIPTION::request& req, notary_rpc::COMMAND_RPC_SET_ACCOUNT_TAG_DESCRIPTION::response& res, epee::json_rpc::error& er);
       bool on_getheight(const notary_rpc::COMMAND_RPC_GET_HEIGHT::request& req, notary_rpc::COMMAND_RPC_GET_HEIGHT::response& res, epee::json_rpc::error& er);
       bool validate_transfer(const std::list<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, epee::json_rpc::error& er);
-      bool validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, std::vector<int>& signer_index_vec, epee::json_rpc::error& er);
+      bool validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, int& sig_count, std::vector<int>& signer_index_vec, epee::json_rpc::error& er);
       bool on_transfer(const notary_rpc::COMMAND_RPC_TRANSFER::request& req, notary_rpc::COMMAND_RPC_TRANSFER::response& res, epee::json_rpc::error& er);
       bool on_transfer_split(const notary_rpc::COMMAND_RPC_TRANSFER_SPLIT::request& req, notary_rpc::COMMAND_RPC_TRANSFER_SPLIT::response& res, epee::json_rpc::error& er);
-      bool on_ntz_transfer(const notary_rpc::COMMAND_RPC_NTZ_TRANSFER::request& req, notary_rpc::COMMAND_RPC_NTZ_TRANSFER::response& res, epee::json_rpc::error& er);
+      bool on_create_ntz_transfer(const notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request& req, notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response& res, epee::json_rpc::error& er);
+      bool on_append_ntz_sig(const notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request& req, notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response& res, epee::json_rpc::error& er);
       bool on_sweep_all(const notary_rpc::COMMAND_RPC_SWEEP_ALL::request& req, notary_rpc::COMMAND_RPC_SWEEP_ALL::response& res, epee::json_rpc::error& er);
       bool on_sweep_single(const notary_rpc::COMMAND_RPC_SWEEP_SINGLE::request& req, notary_rpc::COMMAND_RPC_SWEEP_SINGLE::response& res, epee::json_rpc::error& er);
       bool on_relay_tx(const notary_rpc::COMMAND_RPC_RELAY_TX::request& req, notary_rpc::COMMAND_RPC_RELAY_TX::response& res, epee::json_rpc::error& er);

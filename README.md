@@ -111,22 +111,16 @@ The RPC interface will prompt you for the wallet password.  Enter the password y
 
 
 ```
-curl -X POST http://127.0.0.1:12121/json_rpc -d '{"method":"ntz_transfer","params":{"sig_count":0,"payment_id":""}}'
+curl -X POST http://127.0.0.1:12121/json_rpc -d '{"method":"create_ntz_transfer"}'
 ```
 
 
 *Notes:*
-- `sig_count` is a signed `int`, not enclosed in quotes
-- `payment_id` is a `std::string`, enclosed in quotes
 
-**The command above will NOT send the blob as a transaction if `sig_count` is less than a value of 12.**
+The command above will create a new notarization tx with one signature.  The first two times it is called, transactions will be added to a cache. Once there are two in the cache, the third will be relayed as a request for more signatures using `NOTIFY_REQUEST_NTZ_SIG`
 
-If sig_count is less than 12, the transaction blob created with this command will be automatically relayed to the network, via a protocol command `relay_request_ntz_sig` which will add the transaction to a partitioned area of the transaction pool.  This area, known as the `ntz_pool` holds pending transactions that still need more signatures.
+Destinations for the transaction are automatically populated, using the BTC & CryptoNote pubkeys provided in `komodo_notaries.h`.  Each notary wallet is sent 0.00000001 BLUR.
 
-Destinations for the transaction are automatically populated using the BTC pubkeys, and CryptoNote pubkeys provided in `komodo_notaries.h`.  Each notary wallet is sent 0.00000001 BLUR.
-
-
-Since these fields are not yet populated, the CryptoNote pubkey from the first entry in `Notaries_elected1` is used for the first address, and the remainder of addresses are a clone of the second keypair in the table.  This will change once the list is fully populated with CN-compatible pubkeys.  These may be reused on every CryptoNote coin, in an identical fashion to the BTC-pubkeys, on BTC-derived assetchains/KMD.
 
 
 <h2 id="relay-tx">Relaying a request for Notarization Signatures from other Notary Nodes:</h2>

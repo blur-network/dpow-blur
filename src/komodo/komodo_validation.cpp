@@ -165,8 +165,8 @@ int32_t komodo_importaddress(char* addr)
     for (int n = 0; n < 64; n++)
     {
       std::string viewkey_seed_oversize = notaries_keys[n].first;
-      std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 65);
- //     MWARNING("viewkey_seed_str: " << viewkey_seed_str);
+      std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 64);
+//      MWARNING("viewkey_seed_str: " << viewkey_seed_str);
       cryptonote::blobdata btc_pubkey_data;
 
       if(!epee::string_tools::parse_hexstr_to_binbuff(viewkey_seed_str, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
@@ -197,7 +197,40 @@ int32_t komodo_importaddress(char* addr)
     return true;
   }
 
+  bool get_notary_secret_viewkeys(std::vector<crypto::secret_key>& notary_viewkeys)
+  {
 
+    std::vector<std::string> notary_seed_strings;
+
+    for (int i =0; i < 64; i++) {
+        const char* seed = Notaries_elected1[i][1];
+   //     MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[i][3]);
+        notary_seed_strings.push_back(seed);
+    }
+
+    for (int n = 0; n < 64; n++)
+    {
+      std::string viewkey_seed_oversize = notary_seed_strings[n];
+      std::string viewkey_seed_str = viewkey_seed_oversize.substr(2, 64);
+     // MWARNING("viewkey_seed_str: " << viewkey_seed_str);
+      cryptonote::blobdata btc_pubkey_data;
+
+      if(!epee::string_tools::parse_hexstr_to_binbuff(viewkey_seed_str, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
+      {
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse btc_pubkey_data"));
+        return false;
+      }
+
+      const crypto::secret_key btc_pubkey_secret = *reinterpret_cast<const crypto::secret_key*>(btc_pubkey_data.data());
+      crypto::public_key view_pubkey;
+      crypto::secret_key view_seckey;
+      crypto::secret_key rngview = crypto::generate_keys(view_pubkey, view_seckey, btc_pubkey_secret, true);
+
+      const crypto::secret_key vk = view_seckey;
+      notary_viewkeys.push_back(vk);
+    }
+    return true;
+  }
 
 
 namespace cryptonote {

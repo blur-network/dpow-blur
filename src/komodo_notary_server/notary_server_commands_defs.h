@@ -502,15 +502,61 @@ namespace notary_rpc
     };
   };
 
-  struct COMMAND_RPC_NTZ_TRANSFER
+  struct COMMAND_RPC_CREATE_NTZ_TRANSFER
   {
     struct request
     {
+
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct key_list
+    {
+      std::list<std::string> keys;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(keys)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::list<std::string> tx_hash_list;
+      std::list<std::string> tx_key_list;
+      std::list<uint64_t> amount_list;
+      std::list<uint64_t> fee_list;
+      std::list<std::string> tx_blob_list;
+      std::list<std::string> tx_metadata_list;
+      std::string multisig_txset;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(tx_hash_list)
+        KV_SERIALIZE(tx_key_list)
+        KV_SERIALIZE(amount_list)
+        KV_SERIALIZE(fee_list)
+        KV_SERIALIZE(tx_blob_list)
+        KV_SERIALIZE(tx_metadata_list)
+        KV_SERIALIZE(multisig_txset)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_APPEND_NTZ_SIG
+  {
+    struct request
+    {
+      std::string recv_blob;
+      std::string local_blob;
       int sig_count;
+      std::vector<int> signers_index;
       std::string payment_id;
 
       BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(recv_blob)
+        KV_SERIALIZE(local_blob)
         KV_SERIALIZE(sig_count)
+        KV_SERIALIZE(signers_index)
         KV_SERIALIZE(payment_id)
       END_KV_SERIALIZE_MAP()
     };

@@ -4786,12 +4786,13 @@ void wallet2::commit_tx(std::vector<pending_tx>& ptx_vector)
   }
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const & signers_index)
+void wallet2::request_ntz_sig(std::string const& ptx_string, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const & signers_index)
 {
   using namespace cryptonote;
     // Normal submit
     COMMAND_RPC_REQUEST_NTZ_SIG::request request = AUTO_VAL_INIT(request);
     request.sig_count = sigs_count;
+    request.ptx_string = ptx_string;
     std::vector<std::string> tx_blobs;
     for (const auto& each : ptxs) {
       blobdata blob = tx_to_blob(each.tx);
@@ -4846,11 +4847,11 @@ void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_cou
 
       MWARNING("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
       //fee includes dust if dust policy specified it.
-      MWARNING("Signatures added and ntz_sig requested. <" << txid << ">" << ENDL
+      MWARNING("Signatures added. " << std::to_string(13 - sigs_count) << " more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <" << txid << ">" << ENDL
             << "Signatures count: " << std::to_string(sigs_count) << "Commission: " << print_money(ptx.fee) << ENDL
             << "Balance: " << print_money(balance(ptx.construction_data.subaddr_account)) << ENDL
             << "Unlocked: " << print_money(unlocked_balance(ptx.construction_data.subaddr_account)) << ENDL
-            << "Please, wait for for further ntz_sigs.");
+            << "Please, wait for further signatures");
     }
 }
 //----------------------------------------------------------------------------------------------------
@@ -6389,9 +6390,16 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
   for (auto i = ++selected_transfers.begin(); i != selected_transfers.end(); ++i)
     THROW_WALLET_EXCEPTION_IF(subaddr_account != m_transfers[*i].m_subaddr_index.major, error::wallet_internal_error, "the tx uses funds from multiple accounts");
 
-  if (outs.empty())
-    get_outs(outs, selected_transfers, fake_outputs_count); // may throw
 
+  if (outs.empty())
+  {
+    try {
+      get_outs(outs, selected_transfers, fake_outputs_count); // may throw
+    } catch (std::exception& e) {
+      MERROR("Error at transfer_ntz_selected: exception caught when calling get_outs!");
+      return;
+    }
+  }
   //prepare inputs
   LOG_PRINT_L2("preparing outputs");
   typedef cryptonote::tx_source_entry::output_entry tx_output_entry;
@@ -6477,11 +6485,11 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
     return true;
   });
   THROW_WALLET_EXCEPTION_IF(!all_are_txin_to_key, error::unexpected_txin_type, tx);
-  
-  
+
+
   bool dust_sent_elsewhere = (dust_policy.addr_for_dust.m_view_public_key != change_dts.addr.m_view_public_key
                                 || dust_policy.addr_for_dust.m_spend_public_key != change_dts.addr.m_spend_public_key);
-  
+
   if (dust_policy.add_to_fee || dust_sent_elsewhere) change_dts.amount -= dust;
 
   ptx.key_images = key_images;
@@ -6534,26 +6542,27 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
   }
 
   // if this is a multisig wallet, create a list of multisig signers we can use
-  std::deque<crypto::public_key> ntz_signers;
+  std::vector<std::pair<crypto::public_key,crypto::public_key>> ntz_signers_keys;
+  std::list<crypto::public_key> ntz_signers;
   size_t n_ntz_txes = 0;
   if (!m_transfers.empty())
   {
     const crypto::public_key local_signer = get_ntz_signer_public_key();
-//    THROW_WALLET_EXCEPTION_IF(hydro_equal(&local_signer, &null_pkey, 64), error::zero_destination); // placeholder error until I check error codes
     size_t n_available_signers = 1;
-    for (const crypto::public_key &signer: ntz_signers)
+    for (const auto &signer: ntz_signers_keys)
     {
-      bool z = hydro_equal(&signer, &local_signer, 64);
+      bool z = false;
+      z = epee::string_tools::pod_to_hex(signer.second) ==  epee::string_tools::pod_to_hex(local_signer);
       if (z)
         continue;
-      ntz_signers.push_front(signer);
+      ntz_signers.push_back(signer.second);
       for (const auto &i: m_transfers[0].m_multisig_info)
       {
-        z = hydro_equal(&i.m_signer, &signer, 64);
+        z = epee::string_tools::pod_to_hex(i.m_signer) == epee::string_tools::pod_to_hex(signer);
         if (z)
         {
           ntz_signers.pop_front();
-          ntz_signers.push_back(signer);
+          ntz_signers.push_back(signer.second);
           ++n_available_signers;
           break;
         }
@@ -6578,8 +6587,14 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
     THROW_WALLET_EXCEPTION_IF(subaddr_account != m_transfers[*i].m_subaddr_index.major, error::wallet_internal_error, "the tx uses funds from multiple accounts");
 
   if (outs.empty())
-    get_outs(outs, selected_transfers, peer_ntz_outputs_count); // may throw
-
+  {
+    try {
+      get_outs(outs, selected_transfers, peer_ntz_outputs_count); // may throw
+    } catch (std::exception& e) {
+      MERROR("Error at transfer_ntz_selected: exception caught when calling get_outs!");
+      return;
+    }
+  }
   //prepare inputs
   LOG_PRINT_L2("preparing outputs");
   size_t i = 0, out_index = 0;
@@ -6789,8 +6804,14 @@ void wallet2::transfer_selected_rct(std::vector<cryptonote::tx_destination_entry
     THROW_WALLET_EXCEPTION_IF(subaddr_account != m_transfers[*i].m_subaddr_index.major, error::wallet_internal_error, "the tx uses funds from multiple accounts");
 
   if (outs.empty())
-    get_outs(outs, selected_transfers, fake_outputs_count); // may throw
-
+  {
+    try {
+      get_outs(outs, selected_transfers, fake_outputs_count); // may throw
+    } catch (std::exception& e) {
+      MERROR("Error at transfer_ntz_selected: exception caught when calling get_outs!");
+      return;
+    }
+  }
   //prepare inputs
   LOG_PRINT_L2("preparing outputs");
   size_t i = 0, out_index = 0;

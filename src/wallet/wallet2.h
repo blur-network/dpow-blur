@@ -676,7 +676,7 @@ namespace tools
       uint64_t unlock_time, uint64_t fee, const std::vector<uint8_t>& extra, cryptonote::transaction& tx, pending_tx &ptx, bool bulletproof);
 
     void commit_tx(pending_tx& ptx_vector);
-    void request_ntz_sig(std::vector<pending_tx>& ptx, int const& sigs_count, std::string const& payment_id, std::vector<int> const& sig_index);
+    void request_ntz_sig(std::string const& ptx_string, std::vector<pending_tx> ptxs, int const& sigs_count, std::string const& payment_id, std::vector<int> const& sig_index);
     void commit_tx(std::vector<pending_tx>& ptx_vector);
     bool save_tx(const std::vector<pending_tx>& ptx_vector, const std::string &filename) const;
     std::string save_multisig_tx(multisig_tx_set txs);

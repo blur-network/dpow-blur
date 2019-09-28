@@ -113,6 +113,7 @@ extern void ImportAddress(btc_wallet* const pwallet, const char* p2pkh_address, 
 extern int32_t komodo_importaddress(const char* addr);
 
 bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys);
+bool get_notary_secret_viewkeys(std::vector<crypto::secret_key>& notary_viewkeys);
 
 namespace cryptonote {
 
