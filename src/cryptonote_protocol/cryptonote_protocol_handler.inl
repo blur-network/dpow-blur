@@ -868,6 +868,8 @@ namespace cryptonote
         int tmp = get_index<int>(i, arg.signers_index);
         if ((tmp < 10) && (tmp != (-1)))
           each_ind = "0" + std::to_string(tmp);
+        else
+          each_ind = std::to_string(tmp);
         signers_index_s += each_ind;
       }
       MWARNING("Signers index prior to handle_incoming_ntz_sig (protocol): " << signers_index_s); 
