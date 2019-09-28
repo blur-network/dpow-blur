@@ -663,7 +663,7 @@ namespace tools
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool notary_server::validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, std::vector<int>& signers_index_vec, epee::json_rpc::error& er)
+  bool notary_server::validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, int& sig_count, std::vector<int>& signers_index_vec, epee::json_rpc::error& er)
   {
     std::string ntz_txn_extra_data;
 
@@ -722,7 +722,6 @@ namespace tools
 
     if (!payment_id.empty())
     {
-
       const std::string& payment_id_str = payment_id;
 
       crypto::hash long_payment_id;
@@ -762,6 +761,8 @@ namespace tools
       }
       bool once = false;
       int loc = -1;
+      const int neg = -1;
+      const size_t count = 13 - std::count(signers_index_vec.begin(), signers_index_vec.end(), neg);
       std::vector<int> vec_ret;
       for (size_t i = 0; i <= signers_index_vec.size(); i++) {
         if (once) {
@@ -773,15 +774,17 @@ namespace tools
         if ((signer_index >= 0) && (signer_index == signers_index_vec[i]) && (loc == -1)) {
           once = true;
           loc = i;
-        } else if ((signer_index >= 0) && (signers_index_vec[i] == (-1)) && (vec_ret.empty())) {
           vec_ret.push_back(signer_index);
-        } else if ((signers_index_vec[i] != (-1)) && !vec_ret.empty()) {
+        } else if ((signer_index >= 0) && (signers_index_vec[i] == (-1)) && (vec_ret.size() == count)) {
+          vec_ret.push_back(signer_index);
+        } else if ((signers_index_vec[i] > (-1)) && (vec_ret.size() < count)) {
           vec_ret.push_back(signers_index_vec[i]);
-        } else if ((signers_index_vec[i] == (-1)) && !vec_ret.empty()) {
+        } else if ((signers_index_vec[i] == (-1)) && (vec_ret.size() > count)) {
           vec_ret.push_back(-1);
         }
       }
     signers_index_vec = vec_ret;
+    sig_count = count + 1;
     }
     return true;
   }
@@ -1037,7 +1040,7 @@ namespace tools
     std::vector<cryptonote::tx_destination_entry> dsts;
     std::vector<uint8_t> extra;
     int signer_index = -1;
-
+    int sig_count = 0;
 
     if (!m_wallet) return not_open(er);
     if (m_wallet->restricted())
@@ -1092,7 +1095,7 @@ namespace tools
     std::vector<int> signers_index = { -1, -1, -1, -1, -1, -1, -1,
                                      -1, -1, -1, -1, -1, -1 };
 
-    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, signers_index, er))
+    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
     {
       return false;
     }
@@ -1105,8 +1108,7 @@ namespace tools
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       MWARNING("on_ntz_transfer calling create_ntz_transactions");
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
-      const int new_count = 1;
-      MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(new_count));
+      MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(sig_count));
 
         std::string index_vec;
         for (int i = 0; i < 13; i++) {
@@ -1128,19 +1130,24 @@ namespace tools
           }
         }
           if (get_ntz_cache_count() >= 2) {
-            m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id, si_const);
-
-            MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(new_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+            for (const auto& each : ptx_vector) {
+              std::string ptx_string = ptx_to_string(each);
+              m_wallet->request_ntz_sig(ptx_string, ptx_vector, sig_count, payment_id, si_const);
+              MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+            }
             return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
                res.tx_hash_list, true, res.tx_blob_list, false, res.tx_metadata_list, er);
           } else {
             bool added = false;
             added = add_ptx_to_cache(ptx_vector);
             if (!added) {
-              MERROR("Failed to add ptx to cache! Relaying instead");
-              m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id, si_const);
 
-              MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(new_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+              for (const auto& each : ptx_vector) {
+                std::string ptx_string = ptx_to_string(each);
+                MERROR("Failed to add ptx to cache! Relaying instead");
+                m_wallet->request_ntz_sig(ptx_string, ptx_vector, sig_count, payment_id, si_const);
+                MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+              }
               return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
                  res.tx_hash_list, true, res.tx_blob_list, false, res.tx_metadata_list, er);
             }
@@ -1170,13 +1177,21 @@ namespace tools
       return false;
     }
 
-    std::string recv_blob = req.recv_blob;
-    std::string local_blob = req.local_blob;
+    std::string recv_blob;
+    const std::string hex_blob = req.recv_blob;
+    if (!epee::string_tools::parse_hexstr_to_binbuff(hex_blob, recv_blob)) {
+      MERROR("Failed to parse recv_blob from hexstr!");
+      return false;
+    }
+    cryptonote::transaction tx;
+    bool r = parse_and_validate_tx_from_blob(recv_blob, tx);
     std::vector<int> signers_index = req.signers_index;
     int sig_count = req.sig_count;
-
+    const int neg = -1;
+    const int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
+    MWARNING("Count = " << std::to_string(count));
     std::vector<crypto::secret_key> notary_viewkeys;
-    bool r = false;
+    r = false;
     r = get_notary_secret_viewkeys(notary_viewkeys);
 
     if (!r)
@@ -1186,8 +1201,7 @@ namespace tools
       return false;
     }
 
-    cryptonote::transaction tx;
-    parse_and_validate_tx_from_blob(recv_blob, tx);
+    std::vector<std::pair<crypto::public_key,size_t>> recv_out_keys;
 
       rct::rctSig &rv = tx.rct_signatures;
       if (rv.outPk.size() != tx.vout.size())
@@ -1203,9 +1217,11 @@ namespace tools
           return false;
         }
         rv.outPk[n].dest = rct::pk2rct(boost::get<cryptonote::txout_to_key>(tx.vout[n].target).key);
+        std::pair<crypto::public_key,size_t> each = std::make_pair(reinterpret_cast<const crypto::public_key&>(rv.outPk[n].dest), n);
+        recv_out_keys.push_back(each);
       }
 
-    size_t pk_index = 0;
+    size_t pk_index = 1;
     crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index);
     std::vector<crypto::key_derivation> recv_derivations;
     for (const auto& each : notary_viewkeys) {
@@ -1215,6 +1231,7 @@ namespace tools
         MERROR("Failed to generate recv_derivation at append_ntz_sig! recv_tx_key = " << recv_tx_key << ", notary_viewkey = " << epee::string_tools::pod_to_hex(each));
         return false;
       } else {
+ //       MWARNING("Recv derivation = " << recv_derivation);
         recv_derivations.push_back(recv_derivation);
       }
     }
@@ -1222,13 +1239,15 @@ namespace tools
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
     std::vector<std::pair<crypto::public_key,crypto::public_key>> notaries_keys;
     bool z = get_notary_pubkeys(notaries_keys);
+    std::vector<crypto::public_key> out_eph_keys;
 
-    for (const auto& pair : notaries_keys)
+    for (int i = 0; i < 64; i++)
     {
 //      MWARNING("Pair: " << epee::string_tools::pod_to_hex(pair.first) << " and " << epee::string_tools::pod_to_hex(pair.second));
 
-      const crypto::public_key view_pubkey = pair.first;
-      const crypto::public_key spend_pubkey = pair.second;
+      const crypto::public_key view_pubkey = notaries_keys[i].first;
+      const crypto::secret_key view_seckey = notary_viewkeys[i];
+      const crypto::public_key spend_pubkey = notaries_keys[i].second;
       cryptonote::account_public_address address;
       address.m_view_public_key = view_pubkey;
       address.m_spend_public_key = spend_pubkey;
@@ -1239,42 +1258,85 @@ namespace tools
       // arbitrary, but meaningful: 1 * 10^(-8) BLUR
       // for compatibility with BTC-flavored atomicity
 
+      if (i == signers_index[sig_count]) {
+
+        cryptonote::account_keys ack;
+        ack.m_account_address.m_view_public_key = view_pubkey;
+        ack.m_view_secret_key = view_seckey;
+        ack.m_account_address.m_spend_public_key = spend_pubkey;
+        ack.m_spend_secret_key = crypto::null_skey;
+        bool pkey_deriv = false;
+        crypto::public_key eph_pubkey = crypto::null_pkey;
+        for (size_t j = 0; j < recv_out_keys.size(); j++) {
+          for(size_t I = 0; I < recv_derivations.size(); I++) {
+            pkey_deriv = derive_public_key(recv_derivations[I], recv_out_keys[j].second, ack.m_account_address.m_spend_public_key, eph_pubkey);
+            if (pkey_deriv) {
+              if (epee::string_tools::pod_to_hex(eph_pubkey) != epee::string_tools::pod_to_hex(recv_out_keys[j].first)) {
+                MERROR("Generated pubkey does not match eph_pubkey!");
+              } else {
+                MWARNING("Generated pubkey matched with eph_outkey!");
+                out_eph_keys.push_back(eph_pubkey);
+                break;
+              }
+            } else {
+              MERROR("Failed to derive eph_pubkey!");
+            }
+          }
+        }
+      }
+
       notary_rpc::transfer_destination dest = AUTO_VAL_INIT(dest);
       dest.address = address_str;
       dest.amount = amount;
       not_validated_dsts.push_back(dest);
     }
 
+
     std::string payment_id = req.payment_id;
     if (payment_id.empty()) {
       MERROR("Unable to find payment ID!");
     }
 
-    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, signers_index, er))
+    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
     {
       return false;
     }
-
+/*
+    tools::wallet2::pending_tx recv_ptx = AUTO_VAL_INIT(recv_ptx);
+    recv_ptx.tx = tx;
+    recv_ptx.fee = 58529640000;
+//    std::vector<size_t> 
+*/
     try
     {
       uint64_t mixin = m_wallet->adjust_mixin(req.sig_count);
 
       uint32_t priority = m_wallet->adjust_priority(3);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
-      MWARNING("on_ntz_transfer calling create_ntz_transactions");
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
-      const int new_count = req.sig_count + 1;
-      MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(new_count));
-
+      std::vector<wallet2::pending_tx> ptx_vector;
+      if (get_ntz_cache_count() < 2) {
+        std::string index_str;
+        for (size_t i = 0; i < signers_index.size(); i++) {
+          std::string tmp = std::to_string(signers_index[i]) + " ";
+          index_str += tmp;
+        }
+        MWARNING("append_ntz_sig calling create_ntz_transactions, with signers_index: " << index_str);
+        ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
+        MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(sig_count) <<
+          ", and signers_index = " << index_str);
+      } else {
+        ptx_vector = get_cached_ptx();
+        MWARNING("Ptx loaded from cache!");
+      }
 
       bool ready_to_send = false;
-      if (new_count >= 13) {
+      if (sig_count >= 13) {
         ready_to_send = true;
       }
 
       if (ready_to_send) {
         m_wallet->commit_tx(ptx_vector);
-        MWARNING("Signatures >= 13: [commit_tx] sent with sig_count: " << std::to_string(new_count) << " and payment id: " << payment_id);
+        MWARNING("Signatures >= 13: [commit_tx] sent with sig_count: " << std::to_string(sig_count) << " and payment id: " << payment_id);
       } else {
         std::string index_vec;
         for (int i = 0; i < 13; i++) {
@@ -1282,8 +1344,11 @@ namespace tools
           index_vec += tmp;
         }
         const std::vector<int> si_const = signers_index;
-        m_wallet->request_ntz_sig(ptx_vector, new_count, payment_id, si_const);
-        MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(new_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+        for (const auto& each : ptx_vector) {
+          std::string ptx_string = ptx_to_string(each);
+          m_wallet->request_ntz_sig(ptx_string, ptx_vector, sig_count, payment_id, si_const);
+          MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+        }
       }
 
       return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,

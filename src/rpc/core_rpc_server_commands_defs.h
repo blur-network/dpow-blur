@@ -34,6 +34,8 @@
 #include "cryptonote_basic/difficulty.h"
 #include "crypto/hash.h"
 #include "bitcoin/bitcoin.h"
+#include "cryptonote_core/cryptonote_tx_utils.h"
+
 namespace cryptonote
 {
   //-----------------------------------------------
@@ -968,12 +970,14 @@ namespace cryptonote
     struct request
     {
       int sig_count;
-      blobdata tx_blob;
+      std::string ptx_string;
+      std::string tx_blob;
       std::string payment_id;
       std::string signers_index/* = "-1-1-1-1-1-1-1-1-1-1-1-1-1"*/;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)
+        KV_SERIALIZE(ptx_string)
         KV_SERIALIZE(tx_blob)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(signers_index)

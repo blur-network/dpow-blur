@@ -4786,12 +4786,13 @@ void wallet2::commit_tx(std::vector<pending_tx>& ptx_vector)
   }
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const & signers_index)
+void wallet2::request_ntz_sig(std::string const& ptx_string, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const & signers_index)
 {
   using namespace cryptonote;
     // Normal submit
     COMMAND_RPC_REQUEST_NTZ_SIG::request request = AUTO_VAL_INIT(request);
     request.sig_count = sigs_count;
+    request.ptx_string = ptx_string;
     std::vector<std::string> tx_blobs;
     for (const auto& each : ptxs) {
       blobdata blob = tx_to_blob(each.tx);
@@ -4846,7 +4847,7 @@ void wallet2::request_ntz_sig(std::vector<pending_tx>& ptxs, const int& sigs_cou
 
       MWARNING("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
       //fee includes dust if dust policy specified it.
-      MWARNING("Signatures added. " << sig_count << " more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <" << txid << ">" << ENDL
+      MWARNING("Signatures added. " << std::to_string(13 - sigs_count) << " more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <" << txid << ">" << ENDL
             << "Signatures count: " << std::to_string(sigs_count) << "Commission: " << print_money(ptx.fee) << ENDL
             << "Balance: " << print_money(balance(ptx.construction_data.subaddr_account)) << ENDL
             << "Unlocked: " << print_money(unlocked_balance(ptx.construction_data.subaddr_account)) << ENDL

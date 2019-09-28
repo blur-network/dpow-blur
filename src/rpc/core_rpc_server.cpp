@@ -1091,11 +1091,8 @@ namespace cryptonote
 
     int neg = -1;
     int count = 13 - std::count(signers_list.begin(), signers_list.end(), neg);
-    bool count_check = false;
 
-    count_check = (count == req.sig_count);
-
-    if (count_check != req.sig_count) {
+    if (count != req.sig_count) {
       MERROR("Error signature count check against signers index failed!");
       tvc.m_verifivation_failed = true;
       return false;
@@ -1138,6 +1135,7 @@ namespace cryptonote
     if ((req.sig_count < 13) && (req.sig_count > 0))
     {
       NOTIFY_REQUEST_NTZ_SIG::request r;
+      r.ptx_string = req.ptx_string;
       r.tx_blob = req.tx_blob;
       r.sig_count = req.sig_count;
       r.payment_id = req.payment_id;
