@@ -91,6 +91,7 @@ namespace cryptonote
       HANDLE_NOTIFY_T2(NOTIFY_NEW_FLUFFY_BLOCK, &cryptonote_protocol_handler::handle_notify_new_fluffy_block)
       HANDLE_NOTIFY_T2(NOTIFY_REQUEST_FLUFFY_MISSING_TX, &cryptonote_protocol_handler::handle_request_fluffy_missing_tx)
       HANDLE_NOTIFY_T2(NOTIFY_REQUEST_NTZ_SIG, &cryptonote_protocol_handler::handle_request_ntz_sig)
+      HANDLE_NOTIFY_T2(NOTIFY_RESPONSE_NTZ_SIG, &cryptonote_protocol_handler::handle_response_ntz_sig)
     END_INVOKE_MAP2()
 
     bool on_idle();
@@ -122,11 +123,13 @@ namespace cryptonote
     int handle_notify_new_fluffy_block(int command, NOTIFY_NEW_FLUFFY_BLOCK::request& arg, cryptonote_connection_context& context);
     int handle_request_fluffy_missing_tx(int command, NOTIFY_REQUEST_FLUFFY_MISSING_TX::request& arg, cryptonote_connection_context& context);
     int handle_request_ntz_sig(int command, NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& context);
+    int handle_response_ntz_sig(int command, NOTIFY_RESPONSE_NTZ_SIG::request& arg, cryptonote_connection_context& context);
 
     //----------------- i_bc_protocol_layout ---------------------------------------
     virtual bool relay_block(NOTIFY_NEW_BLOCK::request& arg, cryptonote_connection_context& exclude_context);
     virtual bool relay_transactions(NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& exclude_context);
     virtual bool relay_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context);
+    virtual bool relay_response_ntz_sig(NOTIFY_RESPONSE_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context);
     //----------------------------------------------------------------------------------
     //bool get_payload_sync_data(HANDSHAKE_DATA::request& hshd, cryptonote_connection_context& context);
     bool request_missing_objects(cryptonote_connection_context& context, bool check_having_blocks, bool force_next_span = false);

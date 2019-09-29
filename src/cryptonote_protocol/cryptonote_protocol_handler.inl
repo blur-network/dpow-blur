@@ -67,10 +67,10 @@ namespace cryptonote
        nodetool::i_p2p_endpoint<connection_context>* p_net_layout,
        bool offline):
        m_core(rcore),
-                                                                                                              m_p2p(p_net_layout),
-                                                                                                              m_syncronized_connections_count(0),
-                                                                                                              m_synchronized(offline),
-                                                                                                              m_stopping(false)
+       m_p2p(p_net_layout),
+       m_syncronized_connections_count(0),
+       m_synchronized(offline),
+       m_stopping(false)
 
   {
     if(!m_p2p)
@@ -843,7 +843,21 @@ namespace cryptonote
   template<class t_core>
   int t_cryptonote_protocol_handler<t_core>::handle_request_ntz_sig(int command, NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& context)
   {
-    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", payment id: " << arg.payment_id);
+
+      int const& s_count = arg.sig_count;
+      std::string signers_index_s;
+      for (int i = 0; i < 13; i++)
+      {
+        std::string each_ind = "-1";
+        int tmp = get_index<int>(i, arg.signers_index);
+        if ((tmp < 10) && (tmp != (-1)))
+          each_ind = "0" + std::to_string(tmp);
+        else
+          each_ind = std::to_string(tmp);
+        signers_index_s += each_ind;
+      }
+
+    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: << signers_index_s << ", payment id: " << arg.payment_id);
 
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;
@@ -859,8 +873,28 @@ namespace cryptonote
     cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
 
 
+      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index_s);
+      if(tvc.m_verifivation_failed)
+      {
+        LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
+        drop_connection(context, false, false);
+        return 1;
+      }
+
+/*    ag.ptx_string = arg.ptx_string;
+    ag.tx_blob = arg.tx_blob;
+    ag.sig_count = arg.sig_count;
+    ag.payment_id = arg.payment_id;
+    ag.signers_index = arg.signers_index;
+    return post_notify<NOTIFY_REQUEST_NTZ_SIG>(ag, context);
+*/
+   return 1;
+  }
+  //------------------------------------------------------------------------------------------------------------------------
+  template<class t_core>
+  int t_cryptonote_protocol_handler<t_core>::handle_response_ntz_sig(int command, NOTIFY_RESPONSE_NTZ_SIG::request& arg, cryptonote_connection_context& context)
+  {
       int const& s_count = arg.sig_count;
-      ag.ptx_string = arg.ptx_string;
       std::string signers_index_s;
       for (int i = 0; i < 13; i++)
       {
@@ -872,8 +906,22 @@ namespace cryptonote
           each_ind = std::to_string(tmp);
         signers_index_s += each_ind;
       }
-      MWARNING("Signers index prior to handle_incoming_ntz_sig (protocol): " << signers_index_s); 
-      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index_s);
+
+    MLOG_P2P_MESSAGE("Received NOTIFY_RESPONSE_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: << signers_index_s << ", payment id: " << arg.payment_id);
+
+    if(context.m_state != cryptonote_connection_context::state_normal)
+      return 1;
+    // while syncing, core will lock for a long time, so we ignore
+    // those txes as they aren't really needed anyway, and avoid a
+    // long block before replying
+    if(!is_synchronized())
+    {
+      LOG_DEBUG_CC(context, "Received new tx while syncing, ignored");
+      return 1;
+    }
+    NOTIFY_RESPONSE_NTZ_SIG::request ag;
+    cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
+
       if(tvc.m_verifivation_failed)
       {
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
@@ -881,12 +929,13 @@ namespace cryptonote
         return 1;
       }
 
+/*    ag.ptx_string = arg.ptx_string;
     ag.tx_blob = arg.tx_blob;
     ag.sig_count = arg.sig_count;
     ag.payment_id = arg.payment_id;
     ag.signers_index = arg.signers_index;
-    relay_request_ntz_sig(ag, context);
-
+    return post_notify<NOTIFY_REQUEST_NTZ_SIG>(ag, context);
+*/
    return 1;
   }
   //------------------------------------------------------------------------------------------------------------------------
@@ -1800,6 +1849,18 @@ skip:
     }
     else {
       MERROR("Could not relay_request_ntz_sig!  Sig count must be within range of 0-13");
+      return false;
+    }
+  }
+//------------------------------------------------------------------------------------------------------------------------
+  template<class t_core>
+  bool t_cryptonote_protocol_handler<t_core>::relay_response_ntz_sig(NOTIFY_RESPONSE_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context)
+  {
+    if (arg.sig_count > 0 && arg.sig_count < 13) {
+      return relay_post_notify<NOTIFY_RESPONSE_NTZ_SIG>(arg, exclude_context);
+    }
+    else {
+      MERROR("Could not relay_response_ntz_sig!  Sig count must be within range of 0-13");
       return false;
     }
   }

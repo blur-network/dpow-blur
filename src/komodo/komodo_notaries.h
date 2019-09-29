@@ -1,3 +1,51 @@
+/******************************************************************************
+ * Copyright © 2014-2018 The SuperNET Developers.                     *
+ *                                                    *
+ * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at            *
+ * the top-level directory of this distribution for the individual copyright  *
+ * holder information and the developer policies on copyright and licensing.  *
+ *                                                    *
+ * Unless otherwise agreed in a custom licensing agreement, no part of the    *
+ * SuperNET software, including this file may be copied, modified, propagated *
+ * or distributed except according to the terms contained in the LICENSE file *
+ *                                                    *
+ * Removal or modification of this copyright notice is prohibited.        *
+ *                                                    *
+ ******************************************************************************/
+
+/****************************************************************************************
+ * Parts of this file have been modified for compatibility with the Blur Nework.
+ * The copyright notice below applies to only those portions that have been changed.
+ *
+ * Copyright (c) Blur Network, 2018-2020
+ *
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification, are
+ * permitted provided that the following conditions are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright notice, this list of
+ *    conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright notice, this list
+ *    of conditions and the following disclaimer in the documentation and/or other
+ *    materials provided with the distribution.
+ *
+ * 3. Neither the name of the copyright holder nor the names of its contributors may be
+ *    used to endorse or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
+ * THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
+ * THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ ****************************************************************************************/
+
 #ifndef KOMODO_NOTARIES_H
 #define KOMODO_NOTARIES_H
 
@@ -71,7 +119,7 @@
     { "xxspot2_XX", "03d85b221ea72ebcd25373e7961f4983d12add66a92f899deaf07bab1d8b6f5573" }
   };
 
-  const char *Notaries_elected1[][4] =  /* need to add hardcoded BLUR spendkey pub */
+  const char *Notaries_elected1[][4] =
   {
     {"0dev1_jl777"       , "03b7621b44118017a16043f19b30cc8a4cfe068ac4e42417bae16ba460c80f3828" , "RNJmgYaFF5DbnrNUX6pMYz9rcnDKC2tuAc", "97204ae7d30e9d94c094f2884ff7a6a3855dab0078fc25c06863d5f805702a2a"},
     {"0dev2_kolo"        , "030f34af4b908fb8eb2099accb56b8d157d49f6cfb691baa80fdd34f385efed961" , "RLj9h7zfnx4X9hvquR3sEwzHvcvF61W2Rc", "c4fa5396faf526fdd94520ccf8a6dccfc0c1ab92a0ee7be6e4012a5a166dcd8b"},

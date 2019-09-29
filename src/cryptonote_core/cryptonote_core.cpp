@@ -1301,7 +1301,7 @@ namespace cryptonote
       for (auto it = ntz_txs.begin(); it != ntz_txs.end(); ++it)
       {
         r.tx_blob = it->second;
-        get_protocol()->relay_request_ntz_sig(r, fake_context);
+    //    get_protocol()->relay_request_ntz_sig(r, fake_context);
       }
       m_mempool.set_relayed(ntz_txs);
     }

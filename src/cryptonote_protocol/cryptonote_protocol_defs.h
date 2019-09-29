@@ -324,4 +324,25 @@ namespace cryptonote
   /************************************************************************/
   /*                                                                      */
   /************************************************************************/
+  struct NOTIFY_RESPONSE_NTZ_SIG
+  {
+    const static int ID = BC_COMMANDS_POOL_BASE + 11;
+
+    struct request
+    {
+      int sig_count;
+      blobdata ptx_string;
+      blobdata tx_blob;
+      std::string payment_id;
+      std::vector<int> signers_index;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(sig_count)
+        KV_SERIALIZE(ptx_string)
+        KV_SERIALIZE(tx_blob)
+        KV_SERIALIZE(payment_id)
+        KV_SERIALIZE(signers_index)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
 }
