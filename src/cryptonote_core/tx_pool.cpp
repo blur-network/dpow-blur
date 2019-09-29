@@ -1415,8 +1415,15 @@ namespace cryptonote
             }
             catch (const std::exception &e)
             {
-              MERROR("Failed to update tx meta: " << e.what());
-              // continue, not fatal
+              try
+              {
+                m_blockchain.update_ntzpool_tx(txid, ntz_meta);
+              }
+              catch (const std::exception& e)
+              {
+                MERROR("Failed to update both tx meta and ntz meta: " << e.what());
+                // continue, not fatal
+              }
             }
           }
         }

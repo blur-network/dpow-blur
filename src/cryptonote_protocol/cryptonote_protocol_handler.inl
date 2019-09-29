@@ -857,7 +857,7 @@ namespace cryptonote
         signers_index_s += each_ind;
       }
 
-    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: << signers_index_s << ", payment id: " << arg.payment_id);
+    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index_s << ", payment id: " << arg.payment_id);
 
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;
@@ -907,7 +907,7 @@ namespace cryptonote
         signers_index_s += each_ind;
       }
 
-    MLOG_P2P_MESSAGE("Received NOTIFY_RESPONSE_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: << signers_index_s << ", payment id: " << arg.payment_id);
+    MLOG_P2P_MESSAGE("Received NOTIFY_RESPONSE_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index_s << ", payment id: " << arg.payment_id);
 
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;
