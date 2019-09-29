@@ -4808,24 +4808,27 @@ void wallet2::commit_tx(std::vector<pending_tx>& ptx_vector)
 //----------------------------------------------------------------------------------------------------
 void wallet2::get_ntzpool_tx(std::vector<pending_tx>& ptx_vector)
 {
-  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::request nreq;
-  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::response nres;
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::request nreq;
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::response nres;
   m_daemon_rpc_mutex.lock();
-  bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool_hashes.bin", nreq, nres, m_http_client, rpc_timeout);
+  bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool", nreq, nres, m_http_client, rpc_timeout);
   m_daemon_rpc_mutex.unlock();
-  THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "get_pending_ntz_pool_hashes.bin");
-  THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "get_pending_ntz_pool_hashes.bin");
+  THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "get_pending_ntz_pool");
+  THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "get_pending_ntz_pool");
   THROW_WALLET_EXCEPTION_IF(nres.status != CORE_RPC_STATUS_OK, error::get_tx_pool_error);
   MDEBUG("update_pool_state got pool");
 
-  cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request req;
-  cryptonote::COMMAND_RPC_GET_TRANSACTIONS::response res;
 
-  req.txs_hashes.push_back(epee::string_tools::pod_to_hex(nres.tx_hashes[0]));
+  blobdata bd;
+  bd = nres.transactions[0].tx_blob;
+/*  for (const auto& p : nres.tx_hashes) {
+    req.txs_hashes.push_back(epee::string_tools::pod_to_hex(p));
+  }
   req.decode_as_json = false;
   req.prune = false;
-
+    m_daemon_rpc_mutex.lock();
   bool r = epee::net_utils::invoke_http_json("/gettransactions", req, res, m_http_client, rpc_timeout);
+    m_daemon_rpc_mutex.unlock();
 
   THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "gettransactions");
   THROW_WALLET_EXCEPTION_IF(res.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "gettransactions");
@@ -4834,7 +4837,7 @@ void wallet2::get_ntzpool_tx(std::vector<pending_tx>& ptx_vector)
     "daemon returned wrong response for gettransactions, wrong txs count = " +
     std::to_string(res.txs.size()) + ", expected 1");
   cryptonote::blobdata bd;
-  THROW_WALLET_EXCEPTION_IF(!epee::string_tools::parse_hexstr_to_binbuff(res.txs[0].as_hex, bd), error::wallet_internal_error, "failed to parse tx from hexstr");
+  THROW_WALLET_EXCEPTION_IF(!epee::string_tools::parse_hexstr_to_binbuff(res.txs[0].as_hex, bd), error::wallet_internal_error, "failed to parse tx from hexstr");*/
   std::istringstream iss(bd);
   boost::archive::portable_binary_iarchive ar(iss);
 

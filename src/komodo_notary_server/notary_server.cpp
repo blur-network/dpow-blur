@@ -136,7 +136,9 @@ namespace tools
           {
             if (get_peer_ptx_cache_count() < 1)
             {
-              std::vector<wallet2::pending_tx> ptx;
+              std::vector<wallet2::pending_tx> ptx = AUTO_VAL_INIT(ptx);
+              std::list<int> signers_index;
+              int sig_count = -1;
               m_wallet->get_ntzpool_tx(ptx);
               add_peer_ptx_to_cache(ptx);
             } else {
@@ -1161,7 +1163,7 @@ namespace tools
               MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
             }
             return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
-               res.tx_hash_list, true, res.tx_blob_list, false, res.tx_metadata_list, er);
+               res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
           } else {
             bool added = false;
             added = add_ptx_to_cache(ptx_vector);
