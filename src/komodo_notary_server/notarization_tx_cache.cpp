@@ -40,7 +40,15 @@ std::vector<wallet2::pending_tx> get_cached_ptx()
   return ptx;
 }
 
-bool add_ptx_to_cache(std::vector<wallet2::pending_tx>& ptx)
+std::vector<wallet2::pending_tx> get_cached_peer_ptx()
+{
+  std::vector<wallet2::pending_tx> ptx = peer_ptx_cache.back();
+  if (!ptx.empty())
+    peer_ptx_cache.pop_back();
+  return ptx;
+}
+
+bool add_ptx_to_cache(std::vector<wallet2::pending_tx> const& ptx)
 {
   if (ptx.empty()) {
     MERROR("Error: attempted to add empty ptx vector to cache!");
@@ -50,10 +58,52 @@ bool add_ptx_to_cache(std::vector<wallet2::pending_tx>& ptx)
     return true;
   }
 }
-
+bool add_peer_ptx_to_cache(std::vector<wallet2::pending_tx> const& ptx)
+{
+  if (ptx.empty()) {
+    MERROR("Error: attempted to add empty ptx vector to cache!");
+    return false;
+  } else {
+    peer_ptx_cache.push_back(ptx);
+    return true;
+  }
+}
+/*
+bool add_peer_ptx_to_cache(std::string const& ptx_string)
+{
+  if (ptx_string.empty()) {
+    MERROR("Error: attempted to add empty ptx string to cache!");
+    return false;
+  } else {
+    try {
+      std::vector<wallet2::pending_tx> peer_ptx_vec;
+      wallet2::pending_tx peer_ptx;
+      std::istringstream iss(ptx_string);
+      boost::archive::portable_binary_iarchive ar(iss);
+      ar >> peer_ptx;
+      peer_ptx_vec.push_back(peer_ptx);
+      if (!peer_ptx_vec.empty())
+        peer_ptx_cache.push_back(peer_ptx_vec);
+    } catch (std::exception& e) {
+      MERROR("Exception at add_peer_ptx_to_cache!");
+      return false;
+    }
+    if (peer_ptx_cache.empty()) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+}
+*/
 size_t get_ntz_cache_count()
 {
   return ntz_ptx_cache.size();
+}
+
+size_t get_peer_ptx_cache_count()
+{
+  return peer_ptx_cache.size();
 }
 
 }

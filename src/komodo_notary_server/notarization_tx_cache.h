@@ -31,6 +31,10 @@
 namespace tools {
 
 std::vector<tools::wallet2::pending_tx> get_cached_ptx();
-bool add_ptx_to_cache(std::vector<tools::wallet2::pending_tx>& ptx);
+bool add_ptx_to_cache(std::vector<tools::wallet2::pending_tx> const& ptx);
 size_t get_ntz_cache_count();
-}
+std::vector<tools::wallet2::pending_tx> get_cached_peer_ptx();
+bool add_peer_ptx_to_cache(std::vector<tools::wallet2::pending_tx> const& ptx);
+size_t get_peer_ptx_cache_count();
+
+} // namespace tools

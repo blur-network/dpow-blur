@@ -31,5 +31,6 @@
 namespace tools {
 
 std::list<std::vector<wallet2::pending_tx>> ntz_ptx_cache;
+std::list<std::vector<wallet2::pending_tx>> peer_ptx_cache;
 
 }
