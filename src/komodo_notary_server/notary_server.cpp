@@ -122,35 +122,31 @@ namespace tools
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res;
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res2;
         epee::json_rpc::error e;
-        if (get_ntz_cache_count() < 1)
+        bool r = false;
+        if (m_wallet)
         {
-          bool r = on_create_ntz_transfer(req, res, e);
-        }
-        if (get_ntz_cache_count() < 2)
-        {
-          bool r = on_create_ntz_transfer(req, res, e);
-        }
-        else
-        {
-          if (m_wallet)
-          {
+            if (get_ntz_cache_count() < 1) {
+              r = on_create_ntz_transfer(req, res, e);
+            }
             if (get_peer_ptx_cache_count() < 1)
             {
               std::vector<wallet2::pending_tx> ptx = AUTO_VAL_INIT(ptx);
               std::list<int> signers_index;
               int sig_count = -1;
               m_wallet->get_ntzpool_tx(ptx);
-              add_peer_ptx_to_cache(ptx);
-            } else {
+              if (!ptx.empty()) {
+                add_peer_ptx_to_cache(ptx);
+            }
+            if (get_peer_ptx_cache_count() >= 1) {
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request req;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response res;
               epee::json_rpc::error err;
               bool R = on_append_ntz_sig(req,res,err);
             }
           }
-        }
       } catch (const std::exception& ex) {
         LOG_ERROR("Exception while populating ntz ptx caches, what=" << ex.what());
+        throw;
       }
       return true;
     }, 20000);
@@ -1146,7 +1142,7 @@ namespace tools
       uint32_t priority = m_wallet->adjust_priority(3);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       MWARNING("on_ntz_transfer calling create_ntz_transactions");
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count);
       MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(sig_count));
 
         std::string index_vec;
@@ -1223,7 +1219,7 @@ namespace tools
       er.message = "Failed to parse tx metadata.";
       return false;
     }
-    
+
 
     std::vector<int> signers_index = req.signers_index;
     int sig_count = req.sig_count;
@@ -1240,9 +1236,12 @@ namespace tools
       er.message = "Couldn't fetch notary pubkeys";
       return false;
     }
+/*    int i = -1;
+    for (int j = 0; j < count; j++) {
+      i = signers_index[count];
+      crypto::secret_key viewkey = 
+      crypto::public_key real_out_tx_key = get_tx_pub_key_from_extra(recv_ptx, 0);
 
-    std::vector<std::pair<crypto::public_key,size_t>> recv_out_keys;
-/*
       rct::rctSig &rv = tx.rct_signatures;
       if (rv.outPk.size() != tx.vout.size())
       {
@@ -1361,7 +1360,7 @@ namespace tools
           index_str += tmp;
         }
         MWARNING("append_ntz_sig calling create_ntz_transactions, with signers_index: " << index_str);
-        ptx_vector = m_wallet->create_ntz_transactions(dsts, mixin, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon);
+        ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count);
         MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(sig_count) <<
           ", and signers_index = " << index_str);
       } else {

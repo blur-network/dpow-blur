@@ -2065,10 +2065,12 @@ void wallet2::update_pool_state(bool refreshed)
 
   // remove any pending tx that's not in the pool
   std::unordered_map<crypto::hash, wallet2::unconfirmed_transfer_details>::iterator it = m_unconfirmed_txs.begin();
+  std::unordered_map<crypto::hash, wallet2::unconfirmed_transfer_details>::iterator it2 = m_unconfirmed_txs.begin();
   while (it != m_unconfirmed_txs.end())
   {
     const crypto::hash &txid = it->first;
     bool found = false;
+    bool found2 = false;
     for (const auto &it2: res.tx_hashes)
     {
       if (it2 == txid)
@@ -2081,11 +2083,12 @@ void wallet2::update_pool_state(bool refreshed)
     {
       if (it2 == txid)
       {
-        found = true;
+        found2 = true;
         break;
       }
     }
     auto pit = it++;
+    auto pit2 = it2++;
     if (!found)
     {
       // we want to avoid a false positive when we ask for the pool just after
@@ -2096,7 +2099,7 @@ void wallet2::update_pool_state(bool refreshed)
       // we're sure we've seen the blockchain state first)
       if (pit->second.m_state == wallet2::unconfirmed_transfer_details::pending)
       {
-        LOG_PRINT_L1("Pending txid " << txid << " not in pool, marking as not in pool");
+        LOG_PRINT_L1("Pending txid " << txid << " not in tx pool, marking as not in pool");
         pit->second.m_state = wallet2::unconfirmed_transfer_details::pending_not_in_pool;
       }
       else if (pit->second.m_state == wallet2::unconfirmed_transfer_details::pending_not_in_pool && refreshed)
@@ -2111,6 +2114,39 @@ void wallet2::update_pool_state(bool refreshed)
           if (pit->second.m_tx.vin[vini].type() == typeid(txin_to_key))
           {
             txin_to_key &tx_in_to_key = boost::get<txin_to_key>(pit->second.m_tx.vin[vini]);
+            for (size_t i = 0; i < m_transfers.size(); ++i)
+            {
+              const transfer_details &td = m_transfers[i];
+              if (td.m_key_image == tx_in_to_key.k_image)
+              {
+                 LOG_PRINT_L1("Resetting spent status for output " << vini << ": " << td.m_key_image);
+                 set_unspent(i);
+                 break;
+              }
+            }
+          }
+        }
+      }
+    }
+    if (!found2)
+    {
+     if (pit2->second.m_state == wallet2::unconfirmed_transfer_details::pending)
+      {
+        LOG_PRINT_L1("Pending txid " << txid << " not in tx pool, marking as not in pool");
+        pit2->second.m_state = wallet2::unconfirmed_transfer_details::pending_not_in_pool;
+      }
+      else if (pit2->second.m_state == wallet2::unconfirmed_transfer_details::pending_not_in_pool && refreshed)
+      {
+        LOG_PRINT_L1("Pending txid " << txid << " not in pool, marking as failed");
+        pit2->second.m_state = wallet2::unconfirmed_transfer_details::failed;
+
+        // the inputs aren't spent anymore, since the tx failed
+        remove_rings(pit2->second.m_tx);
+        for (size_t vini = 0; vini < pit->second.m_tx.vin.size(); ++vini)
+        {
+          if (pit2->second.m_tx.vin[vini].type() == typeid(txin_to_key))
+          {
+            txin_to_key &tx_in_to_key = boost::get<txin_to_key>(pit2->second.m_tx.vin[vini]);
             for (size_t i = 0; i < m_transfers.size(); ++i)
             {
               const transfer_details &td = m_transfers[i];
@@ -4820,7 +4856,12 @@ void wallet2::get_ntzpool_tx(std::vector<pending_tx>& ptx_vector)
 
 
   blobdata bd;
-  bd = nres.transactions[0].tx_blob;
+  if (nres.transactions.size() >= 1) {
+    bd = nres.transactions[0].tx_blob;
+  } else {
+    MERROR("No notarization tx's currently in pool!");
+    return;
+  }
 /*  for (const auto& p : nres.tx_hashes) {
     req.txs_hashes.push_back(epee::string_tools::pod_to_hex(p));
   }
@@ -6580,7 +6621,7 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
   LOG_PRINT_L2("transfer_selected done");
 }
 
-void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry> dsts, const std::vector<size_t>& selected_transfers, size_t peer_ntz_outputs_count,
+void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry> dsts, const std::vector<size_t>& selected_transfers, size_t const& sig_count,
   std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs,
   uint64_t unlock_time, uint64_t fee, const std::vector<uint8_t>& extra, cryptonote::transaction& tx, pending_tx &ptx, bool bulletproof)
 {
@@ -6651,7 +6692,7 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
   if (outs.empty())
   {
     try {
-      get_outs(outs, selected_transfers, peer_ntz_outputs_count); // may throw
+      get_outs(outs, selected_transfers, sig_count); // may throw
     } catch (std::exception& e) {
       MERROR("Error at transfer_ntz_selected: exception caught when calling get_outs!");
       return;
@@ -6675,7 +6716,7 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
 //    THROW_WALLET_EXCEPTION_IF(outs[out_index].size() < fake_outputs_count ,  error::wallet_internal_error, "fake_outputs_count > random outputs found");
 
     typedef cryptonote::tx_source_entry::output_entry tx_output_entry;
-    for (size_t n = 0; n < peer_ntz_outputs_count + 1; ++n)
+    for (size_t n = 0; n < (sig_count + 1); ++n)
     {
       tx_output_entry oe;
       oe.first = std::get<0>(outs[out_index][n]);
@@ -7168,7 +7209,7 @@ static uint32_t get_count_above(const std::vector<wallet2::transfer_details> &tr
   return count;
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const size_t fake_outs_count, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon)
+std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon, int const& sig_count)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
@@ -7337,13 +7378,12 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
   // the destination, and one for change.
   LOG_PRINT_L2("checking preferred");
   std::vector<size_t> preferred_inputs;
-  uint64_t rct_outs_needed = 2 * (fake_outs_count + 1);
-  rct_outs_needed += 100; // some fudge factor since we don't know how many are locked
+  uint64_t rct_outs_needed = (sig_count + 1);
   if (use_rct)
   {
     // this is used to build a tx that's 1 or 2 inputs, and 2 outputs, which
     // will get us a known fee.
-    uint64_t estimated_fee = calculate_fee(fee_per_kb, estimate_rct_tx_size(2, fake_outs_count, 2, extra.size(), bulletproof), fee_multiplier);
+    uint64_t estimated_fee = calculate_fee(fee_per_kb, estimate_rct_tx_size(2, sig_count, 2, extra.size(), bulletproof), fee_multiplier);
     preferred_inputs = pick_preferred_rct_inputs(needed_money + estimated_fee, subaddr_account, subaddr_indices);
     if (!preferred_inputs.empty())
     {
@@ -7380,7 +7420,7 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
   unsigned int original_output_index = 0;
   std::vector<size_t>* unused_transfers_indices = &unused_transfers_indices_per_subaddr[0].second;
   std::vector<size_t>* unused_dust_indices      = &unused_dust_indices_per_subaddr[0].second;
-  
+
   hwdev.set_mode(hw::device::TRANSACTION_CREATE_FAKE);
   while ((!dsts.empty() && dsts[0].amount > 0) || adding_fee || !preferred_inputs.empty() || should_pick_a_second_output(use_rct, txes.back().selected_transfers.size(), *unused_transfers_indices, *unused_dust_indices)) {
     tx_struct &tx = txes.back();
@@ -7448,7 +7488,7 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
     }
     else
     {
-      while (!dsts.empty() && dsts[0].amount <= available_amount && estimate_tx_size(use_rct, tx.selected_transfers.size(), fake_outs_count, tx.dsts.size(), extra.size(), bulletproof) < TX_SIZE_TARGET(upper_transaction_size_limit))
+      while (!dsts.empty() && dsts[0].amount <= available_amount && estimate_tx_size(use_rct, tx.selected_transfers.size(), sig_count, tx.dsts.size(), extra.size(), bulletproof) < TX_SIZE_TARGET(upper_transaction_size_limit))
       {
         // we can fully pay that destination
         LOG_PRINT_L2("We can fully pay " << get_account_address_as_str(m_nettype, dsts[0].is_subaddress, dsts[0].addr) <<
@@ -7460,7 +7500,7 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
         ++original_output_index;
       }
 
-      if (available_amount > 0 && !dsts.empty() && estimate_tx_size(use_rct, tx.selected_transfers.size(), fake_outs_count, tx.dsts.size(), extra.size(), bulletproof) < TX_SIZE_TARGET(upper_transaction_size_limit))
+      if (available_amount > 0 && !dsts.empty() && estimate_tx_size(use_rct, tx.selected_transfers.size(), sig_count, tx.dsts.size(), extra.size(), bulletproof) < TX_SIZE_TARGET(upper_transaction_size_limit))
       {
         // we can partially fill that destination
          LOG_PRINT_L2("Only enough funds to partially pay... returning the pending_tx instead of doing that");
@@ -7483,7 +7523,7 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
       }
       else
       {
-        const size_t estimated_rct_tx_size = estimate_tx_size(use_rct, tx.selected_transfers.size(), fake_outs_count, tx.dsts.size(), extra.size(), bulletproof);
+        const size_t estimated_rct_tx_size = estimate_tx_size(use_rct, tx.selected_transfers.size(), sig_count, tx.dsts.size(), extra.size(), bulletproof);
         try_tx = dsts.empty() || (estimated_rct_tx_size >= TX_SIZE_TARGET(upper_transaction_size_limit));
       }
     }
@@ -7492,7 +7532,7 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
       cryptonote::transaction test_tx;
       pending_tx test_ptx;
 
-      const size_t estimated_tx_size = estimate_tx_size(use_rct, tx.selected_transfers.size(), fake_outs_count, tx.dsts.size(), extra.size(), bulletproof);
+      const size_t estimated_tx_size = estimate_tx_size(use_rct, tx.selected_transfers.size(), sig_count, tx.dsts.size(), extra.size(), bulletproof);
       needed_fee = calculate_fee(fee_per_kb, estimated_tx_size, fee_multiplier);
 
       uint64_t inputs = 0, outputs = needed_fee;
@@ -7508,7 +7548,7 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
 
       LOG_PRINT_L2("Trying to create a tx now, with " << tx.dsts.size() << " outputs and " <<
         tx.selected_transfers.size() << " inputs");
-        transfer_selected_rct(tx.dsts, tx.selected_transfers, fake_outs_count, outs, unlock_time, needed_fee, extra,
+        transfer_selected_ntz(tx.dsts, tx.selected_transfers, sig_count, outs, unlock_time, needed_fee, extra,
           test_tx, test_ptx, bulletproof);
       auto txBlob = t_serializable_object_to_blob(test_ptx.tx);
       needed_fee = calculate_fee(fee_per_kb, txBlob, fee_multiplier);
@@ -7547,7 +7587,7 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
       {
         LOG_PRINT_L2("We made a tx, adjusting fee and saving it, we need " << print_money(needed_fee) << " and we have " << print_money(test_ptx.fee));
         while (needed_fee > test_ptx.fee) {
-            transfer_selected_rct(tx.dsts, tx.selected_transfers, fake_outs_count, outs, unlock_time, needed_fee, extra,
+            transfer_selected_ntz(tx.dsts, tx.selected_transfers, sig_count, outs, unlock_time, needed_fee, extra,
               test_tx, test_ptx, bulletproof);
           txBlob = t_serializable_object_to_blob(test_ptx.tx);
           needed_fee = calculate_fee(fee_per_kb, txBlob, fee_multiplier);
@@ -7609,7 +7649,7 @@ skip_tx:
     pending_tx test_ptx;
       transfer_selected_ntz(tx.dsts,                    /* NOMOD std::vector<cryptonote::tx_destination_entry> dsts,*/
                             tx.selected_transfers,      /* const std::list<size_t> selected_transfers */
-                            fake_outs_count,            /* CONST size_t peer_outputs_count, */
+                            sig_count,                          /* CONST size_t peer_outputs_count, */
                             tx.outs,                    /* MOD   std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs, */
                             unlock_time,                /* CONST uint64_t unlock_time,  */
                             needed_fee,                 /* CONST uint64_t fee, */
