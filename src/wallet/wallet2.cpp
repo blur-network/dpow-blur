@@ -38,13 +38,17 @@
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/algorithm/string/split.hpp>
+#include <boost/thread/thread.hpp>
 #include "include_base_utils.h"
+
+
 using namespace epee;
 
 #include "cryptonote_config.h"
 #include "wallet2.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "rpc/core_rpc_server_commands_defs.h"
+#include "komodo_notary_server/notary_server_commands_defs.h"
 #include "misc_language.h"
 #include "cryptonote_basic/cryptonote_basic_impl.h"
 #include "multisig/multisig.h"
@@ -1125,12 +1129,19 @@ void wallet2::check_acc_out_precomp(const tx_out &o, const crypto::key_derivatio
 //----------------------------------------------------------------------------------------------------
 void wallet2::check_acc_out_precomp_once(const tx_out &o, const crypto::key_derivation &derivation, const std::vector<crypto::key_derivation> &additional_derivations, size_t i, tx_scan_info_t &tx_scan_info, bool &already_seen) const
 {
-  tx_scan_info.received = boost::none;
-  if (already_seen)
+  try {
+    tx_scan_info.received = boost::none;
+    if (already_seen)
+      return;
+    check_acc_out_precomp(o, derivation, additional_derivations, i, tx_scan_info);
+    if (tx_scan_info.received)
+      already_seen = true;
+  } catch (boost::thread_interrupted&) {
+    throw;
+  }  catch (...) {
+    MERROR("Exception at check_acc_out_precomp_once!");
     return;
-  check_acc_out_precomp(o, derivation, additional_derivations, i, tx_scan_info);
-  if (tx_scan_info.received)
-    already_seen = true;
+  }
 }
 //----------------------------------------------------------------------------------------------------
 static uint64_t decodeRct(const rct::rctSig & rv, const crypto::key_derivation &derivation, unsigned int i, rct::key & mask, hw::device &hwdev)
@@ -1176,6 +1187,7 @@ void wallet2::scan_output(const cryptonote::transaction &tx, const crypto::publi
   }
 
   THROW_WALLET_EXCEPTION_IF(std::find(outs.begin(), outs.end(), i) != outs.end(), error::wallet_internal_error, "Same output cannot be added twice");
+
   if (tx_scan_info.money_transfered == 0)
   {
     tx_scan_info.money_transfered = tools::decodeRct(tx.rct_signatures, tx_scan_info.received->derivation, i, tx_scan_info.mask, m_account.get_device());
@@ -1463,69 +1475,71 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
   uint64_t tx_money_spent_in_ins = 0;
   // The line below is equivalent to "boost::optional<uint32_t> subaddr_account;", but avoids the GCC warning: ‘*((void*)& subaddr_account +4)’ may be used uninitialized in this function
   // It's a GCC bug with boost::optional, see https://gcc.gnu.org/bugzilla/show_bug.cgi?id=47679
-  auto subaddr_account ([]()->boost::optional<uint32_t> {return boost::none;}());
-  std::set<uint32_t> subaddr_indices;
-  // check all outputs for spending (compare key images)
-  for(auto& in: tx.vin)
-  {
-    if(in.type() != typeid(cryptonote::txin_to_key))
-      continue;
-    auto it = m_key_images.find(boost::get<cryptonote::txin_to_key>(in).k_image);
-    if(it != m_key_images.end())
+
+  try {
+    auto subaddr_account ([]()->boost::optional<uint32_t> {return boost::none;}());
+    std::set<uint32_t> subaddr_indices;
+    // check all outputs for spending (compare key images)
+    for(auto& in: tx.vin)
     {
-      transfer_details& td = m_transfers[it->second];
-      uint64_t amount = boost::get<cryptonote::txin_to_key>(in).amount;
-      if (amount > 0)
+      if(in.type() != typeid(cryptonote::txin_to_key))
+        continue;
+      auto it = m_key_images.find(boost::get<cryptonote::txin_to_key>(in).k_image);
+      if(it != m_key_images.end())
       {
-        if(amount != td.amount())
+        transfer_details& td = m_transfers[it->second];
+        uint64_t amount = boost::get<cryptonote::txin_to_key>(in).amount;
+        if (amount > 0)
         {
-          MERROR("Inconsistent amount in tx input: got " << print_money(amount) <<
-            ", expected " << print_money(td.amount()));
-          // this means:
-          //   1) the same output pub key was used as destination multiple times,
-          //   2) the wallet set the highest amount among them to transfer_details::m_amount, and
-          //   3) the wallet somehow spent that output with an amount smaller than the above amount, causing inconsistency
-          td.m_amount = amount;
+          if(amount != td.amount())
+          {
+            MERROR("Inconsistent amount in tx input: got " << print_money(amount) <<
+              ", expected " << print_money(td.amount()));
+            // this means:
+            //   1) the same output pub key was used as destination multiple times,
+            //   2) the wallet set the highest amount among them to transfer_details::m_amount, and
+            //   3) the wallet somehow spent that output with an amount smaller than the above amount, causing inconsistency
+            td.m_amount = amount;
+          }
+        }
+        else
+        {
+          amount = td.amount();
+        }
+        tx_money_spent_in_ins += amount;
+        if (subaddr_account && *subaddr_account != td.m_subaddr_index.major)
+          LOG_ERROR("spent funds are from different subaddress accounts; count of incoming/outgoing payments will be incorrect");
+        subaddr_account = td.m_subaddr_index.major;
+        subaddr_indices.insert(td.m_subaddr_index.minor);
+        if (!pool)
+        {
+          LOG_PRINT_L0("Spent money: " << print_money(amount) << ", with tx: " << txid);
+          set_spent(it->second, height);
+          if (m_callback != nullptr)
+            m_callback->on_money_spent(height, txid, tx, amount, tx, td.m_subaddr_index);
         }
       }
-      else
-      {
-        amount = td.amount();
-      }
-      tx_money_spent_in_ins += amount;
-      if (subaddr_account && *subaddr_account != td.m_subaddr_index.major)
-        LOG_ERROR("spent funds are from different subaddress accounts; count of incoming/outgoing payments will be incorrect");
-      subaddr_account = td.m_subaddr_index.major;
-      subaddr_indices.insert(td.m_subaddr_index.minor);
-      if (!pool)
-      {
-        LOG_PRINT_L0("Spent money: " << print_money(amount) << ", with tx: " << txid);
-        set_spent(it->second, height);
-        if (m_callback != nullptr)
-          m_callback->on_money_spent(height, txid, tx, amount, tx, td.m_subaddr_index);
-      }
     }
-  }
 
-  uint64_t fee = miner_tx ? 0 : tx.rct_signatures.txnFee;
+    uint64_t fee = miner_tx ? 0 : tx.rct_signatures.txnFee;
 
-  if (tx_money_spent_in_ins > 0 && !pool)
-  {
-    uint64_t self_received = std::accumulate<decltype(tx_money_got_in_outs.begin()), uint64_t>(tx_money_got_in_outs.begin(), tx_money_got_in_outs.end(), 0,
-      [&subaddr_account] (uint64_t acc, const std::pair<cryptonote::subaddress_index, uint64_t>& p)
-      {
-        return acc + (p.first.major == *subaddr_account ? p.second : 0);
-      });
-    process_outgoing(txid, tx, height, ts, tx_money_spent_in_ins, self_received, *subaddr_account, subaddr_indices);
-    // if sending to yourself at the same subaddress account, set the outgoing payment amount to 0 so that it's less confusing
-    if (tx_money_spent_in_ins == self_received + fee)
+    if (tx_money_spent_in_ins > 0 && !pool)
     {
-      auto i = m_confirmed_txs.find(txid);
-      THROW_WALLET_EXCEPTION_IF(i == m_confirmed_txs.end(), error::wallet_internal_error,
-        "confirmed tx wasn't found: " + string_tools::pod_to_hex(txid));
-      i->second.m_change = self_received;
+      uint64_t self_received = std::accumulate<decltype(tx_money_got_in_outs.begin()), uint64_t>(tx_money_got_in_outs.begin(), tx_money_got_in_outs.end(), 0,
+        [&subaddr_account] (uint64_t acc, const std::pair<cryptonote::subaddress_index, uint64_t>& p)
+        {
+          return acc + (p.first.major == *subaddr_account ? p.second : 0);
+        });
+      process_outgoing(txid, tx, height, ts, tx_money_spent_in_ins, self_received, *subaddr_account, subaddr_indices);
+      // if sending to yourself at the same subaddress account, set the outgoing payment amount to 0 so that it's less confusing
+      if (tx_money_spent_in_ins == self_received + fee)
+      {
+        auto i = m_confirmed_txs.find(txid);
+        THROW_WALLET_EXCEPTION_IF(i == m_confirmed_txs.end(), error::wallet_internal_error,
+          "confirmed tx wasn't found: " + string_tools::pod_to_hex(txid));
+        i->second.m_change = self_received;
+      }
     }
-  }
 
   // remove change sent to the spending subaddress account from the list of received funds
   uint64_t sub_change = 0;
@@ -1615,6 +1629,12 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
       LOG_PRINT_L2("Payment found in " << (pool ? "pool" : "block") << ": " << payment_id << " / " << payment.m_tx_hash << " / " << payment.m_amount);
     }
   }
+  } catch (boost::thread_interrupted&) {
+    throw;
+  } catch (...) {
+    return;
+  }
+
 }
 //----------------------------------------------------------------------------------------------------
 void wallet2::process_unconfirmed(const crypto::hash &txid, const cryptonote::transaction& tx, uint64_t height)
@@ -8861,6 +8881,7 @@ void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_de
 
 std::string wallet2::get_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message)
 {
+try {
   // determine if the address is found in the subaddress hash table (i.e. whether the proof is outbound or inbound)
   const bool is_out = m_subaddresses.count(address.m_spend_public_key) == 0;
 
@@ -8990,6 +9011,11 @@ std::string wallet2::get_tx_proof(const crypto::hash &txid, const cryptonote::ac
       tools::base58::encode(std::string((const char *)&shared_secret[i], sizeof(crypto::public_key))) +
       tools::base58::encode(std::string((const char *)&sig[i], sizeof(crypto::signature)));
   return sig_str;
+} catch ( boost::thread_interrupted&) {
+  throw;
+} catch (...) {
+  return "";
+}
 }
 
 bool wallet2::check_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message, const std::string &sig_str, uint64_t &received, bool &in_pool, uint64_t &confirmations, uint64_t &rawconfirmations)
@@ -10027,34 +10053,41 @@ crypto::public_key wallet2::get_multisig_signer_public_key() const
 //----------------------------------------------------------------------------------------------------
 crypto::public_key wallet2::get_ntz_signer_public_key() const
 {
-  crypto::public_key viewkey_pub;
-  crypto::public_key  notary_viewkey_pub, notary_spendkey_pub;
-  std::vector<std::pair<crypto::public_key,crypto::public_key>> notary_pubkeys;
-  CHECK_AND_ASSERT_THROW_MES(crypto::secret_key_to_public_key(get_account().get_keys().m_view_secret_key, viewkey_pub), "Failed to generate signer viewkey pub");
   if (hydro_init() < 0) {
     MERROR("Error: libhydrogen not initialized!");
   }
-  bool r = get_notary_pubkeys(notary_pubkeys);
+  crypto::public_key viewkey_pub;
+  crypto::public_key  notary_viewkey_pub, notary_spendkey_pub;
+  std::vector<std::pair<crypto::public_key,crypto::public_key>> notary_pubkeys;
+  bool r = crypto::secret_key_to_public_key(get_account().get_keys().m_view_secret_key, viewkey_pub);
   if (!r) {
-    MERROR("Error: Couldn't retrieve notary pubkeys!");
-  }
-  crypto::public_key signer;
-  CHECK_AND_ASSERT_THROW_MES(crypto::secret_key_to_public_key(get_account().get_keys().m_spend_secret_key, signer), "Failed to generate signer public key");
-
-  bool z = false;
-  bool zz = false;
-  int i = 0;
-
-  while (!z && (i < 64)) {
-    r = hydro_equal(&notary_pubkeys[i].first, &viewkey_pub, 64);
-    i++;
-  } if (z && (i < 64)) {
-    zz = hydro_equal(&notary_pubkeys[i].second, &signer, 64);
-  } if (z && zz) {
-    return signer;
-  } else {
+    MERROR("Failed to generate signer viewkey pub");
     return crypto::null_pkey;
   }
+
+  r = get_notary_pubkeys(notary_pubkeys);
+  if (!r) {
+    MERROR("Error: Couldn't retrieve notary pubkeys!");
+    return crypto::null_pkey;
+  }
+  crypto::public_key signer;
+  r = crypto::secret_key_to_public_key(get_account().get_keys().m_spend_secret_key, signer);
+  if (!r) {
+    MERROR("Failed to generate signer public key");
+    return crypto::null_pkey;
+  }
+  r = false;
+  bool R = false;
+  for (int i = 0; i < 64; i++) {
+    r = epee::string_tools::pod_to_hex(notary_pubkeys[i].first) == epee::string_tools::pod_to_hex(viewkey_pub);
+    if (r) {
+      R = epee::string_tools::pod_to_hex(notary_pubkeys[i].second) == epee::string_tools::pod_to_hex(signer);
+      if (R) {
+        return signer;
+      }
+    }
+  }
+    return crypto::null_pkey;
 }
 //----------------------------------------------------------------------------------------------------
 crypto::public_key wallet2::get_multisig_signing_public_key(const crypto::secret_key &msk) const

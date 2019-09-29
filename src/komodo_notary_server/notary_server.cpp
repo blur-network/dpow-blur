@@ -112,7 +112,27 @@ namespace tools
       try {
         if (m_wallet) m_wallet->refresh();
       } catch (const std::exception& ex) {
-        LOG_ERROR("Exception at while refreshing, what=" << ex.what());
+        LOG_ERROR("Exception while refreshing, what=" << ex.what());
+      }
+      return true;
+    }, 20000);
+    m_net_server.add_idle_handler([this](){
+      try {
+        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
+        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res;
+        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res2;
+        epee::json_rpc::error e;
+        if (get_ntz_cache_count() < 1)
+        {
+          bool r = on_create_ntz_transfer(req, res, e);
+        }
+        if (get_ntz_cache_count() < 2)
+        {
+          bool r = on_create_ntz_transfer(req, res, e);
+        }
+        else { /*ignore */ }
+      } catch (const std::exception& ex) {
+        LOG_ERROR("Exception while populating ntz cache, what=" << ex.what());
       }
       return true;
     }, 20000);
@@ -168,7 +188,7 @@ namespace tools
         m_trusted_daemon = true;
       }
     }
-    
+
     if (command_line::has_arg(*m_vm, arg_notary_wallet_dir))
     {
       m_notary_wallet_dir = command_line::get_arg(*m_vm, arg_notary_wallet_dir);
@@ -241,7 +261,7 @@ namespace tools
     return epee::http_server_impl_base<notary_server, connection_context>::init(
       rng, std::move(bind_port), std::move(rpc_config->bind_ip), std::move(rpc_config->access_control_origins), std::move(http_login)
     );
-  }
+}
 
   bool notary_server::not_open(epee::json_rpc::error& er)
   {
@@ -767,20 +787,21 @@ namespace tools
       for (size_t i = 0; i <= signers_index_vec.size(); i++) {
         if (once) {
           if (signer_index == signers_index_vec[i]) {
-            MERROR("Duplicate signer at index: " << std::to_string(i) << " and index: " << std::to_string(loc) << ", validation failed!");
+            MERROR("Duplicate signer at index: " << std::to_string(i) << " and index: " << std::to_string(loc) << ", we must have already signed this one!");
             return false;
           }
         }
-        if ((signer_index >= 0) && (signer_index == signers_index_vec[i]) && (loc == -1)) {
+        if ((signer_index >= 0) && (signer_index == signers_index_vec[i]) && (loc == neg)) {
+          LOG_PRINT_L1("Found our index in signers index, we must have already signed this one!");
+          return false;
+        } else if ((signer_index >= 0) && (signers_index_vec[i] == neg) && (vec_ret.size() == count) && (!once)) {
           once = true;
           loc = i;
           vec_ret.push_back(signer_index);
-        } else if ((signer_index >= 0) && (signers_index_vec[i] == (-1)) && (vec_ret.size() == count)) {
-          vec_ret.push_back(signer_index);
-        } else if ((signers_index_vec[i] > (-1)) && (vec_ret.size() < count)) {
+        } else if ((signers_index_vec[i] > neg) && (vec_ret.size() < count)) {
           vec_ret.push_back(signers_index_vec[i]);
-        } else if ((signers_index_vec[i] == (-1)) && (vec_ret.size() > count)) {
-          vec_ret.push_back(-1);
+        } else if ((signers_index_vec[i] == neg) && (vec_ret.size() > count)) {
+          vec_ret.push_back(neg);
         }
       }
     signers_index_vec = vec_ret;
@@ -1183,15 +1204,28 @@ namespace tools
       MERROR("Failed to parse recv_blob from hexstr!");
       return false;
     }
-    cryptonote::transaction tx;
-    bool r = parse_and_validate_tx_from_blob(recv_blob, tx);
+    tools::wallet2::pending_tx recv_ptx;
+    try
+    {
+      std::istringstream iss(recv_blob);
+      boost::archive::portable_binary_iarchive ar(iss);
+      ar >> recv_ptx;
+    }
+    catch (...)
+    {
+      er.code = NOTARY_RPC_ERROR_CODE_BAD_TX_METADATA;
+      er.message = "Failed to parse tx metadata.";
+      return false;
+    }
+    
+
     std::vector<int> signers_index = req.signers_index;
     int sig_count = req.sig_count;
     const int neg = -1;
     const int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
     MWARNING("Count = " << std::to_string(count));
     std::vector<crypto::secret_key> notary_viewkeys;
-    r = false;
+    bool r = false;
     r = get_notary_secret_viewkeys(notary_viewkeys);
 
     if (!r)
@@ -1202,7 +1236,7 @@ namespace tools
     }
 
     std::vector<std::pair<crypto::public_key,size_t>> recv_out_keys;
-
+/*
       rct::rctSig &rv = tx.rct_signatures;
       if (rv.outPk.size() != tx.vout.size())
       {
@@ -1235,7 +1269,7 @@ namespace tools
         recv_derivations.push_back(recv_derivation);
       }
     }
-
+*/
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
     std::vector<std::pair<crypto::public_key,crypto::public_key>> notaries_keys;
     bool z = get_notary_pubkeys(notaries_keys);
@@ -1257,7 +1291,7 @@ namespace tools
       uint64_t amount = 10000;
       // arbitrary, but meaningful: 1 * 10^(-8) BLUR
       // for compatibility with BTC-flavored atomicity
-
+/*
       if (i == signers_index[sig_count]) {
 
         cryptonote::account_keys ack;
@@ -1284,7 +1318,7 @@ namespace tools
           }
         }
       }
-
+*/
       notary_rpc::transfer_destination dest = AUTO_VAL_INIT(dest);
       dest.address = address_str;
       dest.amount = amount;
@@ -1344,16 +1378,13 @@ namespace tools
           index_vec += tmp;
         }
         const std::vector<int> si_const = signers_index;
-        for (const auto& each : ptx_vector) {
-          std::string ptx_string = ptx_to_string(each);
+          std::string ptx_string = ptx_to_string(ptx_vector[0]);
+          ptx_vector.push_back(recv_ptx);
           m_wallet->request_ntz_sig(ptx_string, ptx_vector, sig_count, payment_id, si_const);
           MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
-        }
       }
-
       return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
           res.tx_hash_list, true, res.tx_blob_list, false, res.tx_metadata_list, er);
-
     }
     catch (const std::exception& e)
     {
