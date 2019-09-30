@@ -6648,7 +6648,7 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
   std::vector<std::pair<crypto::public_key,crypto::public_key>> ntz_signers_keys;
   std::list<crypto::public_key> ntz_signers;
   size_t n_ntz_txes = 0;
-  if (!m_transfers.empty())
+/*  if (!m_transfers.empty())
   {
     const crypto::public_key local_signer = get_ntz_signer_public_key();
     size_t n_available_signers = 1;
@@ -6674,7 +6674,7 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
     ntz_signers.push_back(local_signer);
     MDEBUG("We can use " << n_available_signers << "/" << m_multisig_signers.size() <<  " other signers");
     THROW_WALLET_EXCEPTION_IF(n_available_signers+1 < m_multisig_threshold, error::multisig_import_needed);
-  }
+  }*/
 
   uint64_t found_money = 0;
   for(size_t idx: selected_transfers)
@@ -10133,43 +10133,51 @@ crypto::public_key wallet2::get_multisig_signer_public_key() const
   return signer;
 }
 //----------------------------------------------------------------------------------------------------
-crypto::public_key wallet2::get_ntz_signer_public_key() const
+bool wallet2::is_notary_node()
 {
-  if (hydro_init() < 0) {
-    MERROR("Error: libhydrogen not initialized!");
-  }
-  crypto::public_key viewkey_pub;
-  crypto::public_key  notary_viewkey_pub, notary_spendkey_pub;
+  crypto::public_key viewkey_pub = crypto::null_pkey;
   std::vector<std::pair<crypto::public_key,crypto::public_key>> notary_pubkeys;
   bool r = crypto::secret_key_to_public_key(get_account().get_keys().m_view_secret_key, viewkey_pub);
   if (!r) {
-    MERROR("Failed to generate signer viewkey pub");
-    return crypto::null_pkey;
+    MERROR("Failed to generate local public viewkey");
+    return false;
   }
 
   r = get_notary_pubkeys(notary_pubkeys);
   if (!r) {
     MERROR("Error: Couldn't retrieve notary pubkeys!");
-    return crypto::null_pkey;
+    return false;
   }
-  crypto::public_key signer;
-  r = crypto::secret_key_to_public_key(get_account().get_keys().m_spend_secret_key, signer);
+  crypto::public_key local_pubkey;
+  r = crypto::secret_key_to_public_key(get_account().get_keys().m_spend_secret_key, local_pubkey);
   if (!r) {
-    MERROR("Failed to generate signer public key");
-    return crypto::null_pkey;
+    MERROR("Failed to generate local public spendkey");
+    return false;
+  }
+
+  std::vector<crypto::secret_key> viewkeys;
+  bool vk = get_notary_secret_viewkeys(viewkeys);
+  if (!vk) {
+    MERROR("Failed to populate notary secret viewkeys!");
+    return false;
   }
   r = false;
   bool R = false;
+  bool pubkeys_check = false;
+  bool secret_viewkey_check = false;
   for (int i = 0; i < 64; i++) {
     r = epee::string_tools::pod_to_hex(notary_pubkeys[i].first) == epee::string_tools::pod_to_hex(viewkey_pub);
     if (r) {
-      R = epee::string_tools::pod_to_hex(notary_pubkeys[i].second) == epee::string_tools::pod_to_hex(signer);
+      R = epee::string_tools::pod_to_hex(notary_pubkeys[i].second) == epee::string_tools::pod_to_hex(local_pubkey);
       if (R) {
-        return signer;
+        pubkeys_check = true;
+        secret_viewkey_check = (epee::string_tools::pod_to_hex(viewkeys[i]) == epee::string_tools::pod_to_hex(get_account().get_keys().m_view_secret_key));
+        if (secret_viewkey_check)
+          break;
       }
     }
   }
-    return crypto::null_pkey;
+    return (pubkeys_check && secret_viewkey_check);
 }
 //----------------------------------------------------------------------------------------------------
 crypto::public_key wallet2::get_multisig_signing_public_key(const crypto::secret_key &msk) const
