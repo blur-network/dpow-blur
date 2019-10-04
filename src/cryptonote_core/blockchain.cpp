@@ -2453,16 +2453,6 @@ bool Blockchain::check_ntz_req_inputs(transaction& tx, uint64_t& max_used_block_
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
 
-#if defined(PER_BLOCK_CHECKPOINT)
-  // check if we're doing per-block checkpointing
-  if (m_db->height() < m_blocks_hash_check.size() && kept_by_block)
-  {
-    max_used_block_id = null_hash;
-    max_used_block_height = 0;
-    return true;
-  }
-#endif
-
   TIME_MEASURE_START(a);
   bool res = check_ntz_req_inputs(tx, tvc, &max_used_block_height);
   TIME_MEASURE_FINISH(a);
@@ -2682,7 +2672,7 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
   {
     for (const auto& txin : tx.vin)
     {
-      if (boost::get<txin_to_key>(txin).key_offsets.size() != DEFAULT_RINGSIZE)
+      if (boost::get<txin_to_key>(txin).key_offsets.size() < DEFAULT_RINGSIZE)
       {
         MERROR_VER("Tx " << get_transaction_hash(tx) << " must have ring size (" << DEFAULT_RINGSIZE << ")");
         tvc.m_low_mixin = true;
@@ -2925,28 +2915,20 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
 bool Blockchain::check_ntz_req_inputs(transaction& tx, ntz_req_verification_context &tvc, uint64_t* pmax_used_block_height)
 {
 
-  PERF_TIMER(check_tx_inputs);
+  PERF_TIMER(check_ntz_req_inputs);
   LOG_PRINT_L3("Blockchain::" << __func__);
   size_t sig_index = 0;
   if(pmax_used_block_height)
     *pmax_used_block_height = 0;
 
-  crypto::hash tx_prefix_hash = get_transaction_prefix_hash(tx);
+  crypto::hash tx_prefix_hash;
+  tx_prefix_hash = get_transaction_prefix_hash(tx);
 
   const uint8_t hf_version = m_hardfork->get_current_version();
 
-  // from hard fork 2, we require mixin at least 2 unless one output cannot mix with 2 others
-  // if one output cannot mix with 2 others, we accept at most 1 output that can mix
-  if (hf_version >= 1)
-  {
-    for (const auto& txin : tx.vin)
-    {
-      if (boost::get<txin_to_key>(txin).key_offsets.size() != DEFAULT_RINGSIZE)
-      {
-        MERROR_VER("Tx " << get_transaction_hash(tx) << " must have ring size (" << DEFAULT_RINGSIZE << ")");
-        tvc.m_low_mixin = true;
-        return false;
-      }
+    if (hf_version < 11) {
+      MERROR("Notarization transactions are not enabled until after version 11!");
+      return false;
     }
 
     // min/max tx version based on HF, and we accept v1 txes if having a non mixable
@@ -2957,14 +2939,15 @@ bool Blockchain::check_ntz_req_inputs(transaction& tx, ntz_req_verification_cont
       tvc.m_verifivation_failed = true;
       return false;
     }
+
     const size_t min_tx_version = 1;
+
     if (tx.version < min_tx_version && hf_version >= 5)
     {
       MERROR_VER("transaction version " << (unsigned)tx.version << " is lower than min accepted version " << min_tx_version);
       tvc.m_verifivation_failed = true;
       return false;
     }
-  }
 
   // from v5, sorted ins
   if (hf_version >= 5) {
@@ -3005,7 +2988,7 @@ bool Blockchain::check_ntz_req_inputs(transaction& tx, ntz_req_verification_cont
   {
     // make sure output being spent is of type txin_to_key, rather than
     // e.g. txin_gen, which is only used for miner transactions
-    CHECK_AND_ASSERT_MES(txin.type() == typeid(txin_to_key), false, "wrong type id in tx input at Blockchain::check_tx_inputs");
+    CHECK_AND_ASSERT_MES(txin.type() == typeid(txin_to_key), false, "wrong type id in tx input at Blockchain::check_ntz_req_inputs");
     const txin_to_key& in_to_key = boost::get<txin_to_key>(txin);
 
     // make sure tx output has key offset(s) (is signed to be used)
@@ -3019,7 +3002,7 @@ bool Blockchain::check_ntz_req_inputs(transaction& tx, ntz_req_verification_cont
 
     for (const auto& each : tvc.m_signers_index)
     {
-      if (each > 63) {
+      if (each > 63 || each < (-1)) {
         MERROR("Invalid value for signers_index! Value: " << std::to_string(each) << " exceeds max value of 63!");
         return false;
       }
@@ -3030,8 +3013,9 @@ bool Blockchain::check_ntz_req_inputs(transaction& tx, ntz_req_verification_cont
         epee::to_hex::formatted(rctbuff, epee::as_byte_span(rct_pkey_hc));
         rct::ctkey pubkeys_n;
         for (const auto& n : pubkeys[sig_index]) {
-          if (hydro_equal(&n,&rct_pkey_hc,64)) {
+          if (epee::string_tools::pod_to_hex(n) ==  epee::string_tools::pod_to_hex(rct_pkey_hc)) {
             pubkeys_n = n;
+            break;
           }
         }
         epee::to_hex::formatted(pubkeys_stream, epee::as_byte_span(pubkeys_n));
@@ -3049,7 +3033,7 @@ bool Blockchain::check_ntz_req_inputs(transaction& tx, ntz_req_verification_cont
 
           return false;
         }
-    }
+      }
 
     if(have_tx_keyimg_as_spent(in_to_key.k_image))
     {

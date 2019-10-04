@@ -57,7 +57,8 @@
 #include "komodo_notaries.h"
 #include "komodo_notary_server/notary_server.h"
 #include "bitcoin/bitcoin.h"
-#include "libbtc/include/btc/tool.h"
+#include "libbtc/libbtc.h"
+#include "libbtc/src/secp256k1/include/secp256k1.h"
 #include <limits.h>
 #include <assert.h>
 #include <stddef.h>

@@ -117,16 +117,20 @@ namespace tools
       return true;
     }, 20000);
     m_net_server.add_idle_handler([this](){
-      try {
+     try
+     {
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res;
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res2;
         epee::json_rpc::error e;
-        bool r = false;
         if (m_wallet)
         {
-            if (get_ntz_cache_count() < 1) {
-              r = on_create_ntz_transfer(req, res, e);
+          bool notary = m_wallet->is_notary_node();
+          if (notary)
+          {
+            if (get_ntz_cache_count() < 1)
+            {
+              bool r = on_create_ntz_transfer(req, res, e);
             }
             if (get_peer_ptx_cache_count() < 1)
             {
@@ -136,17 +140,19 @@ namespace tools
               m_wallet->get_ntzpool_tx(ptx);
               if (!ptx.empty()) {
                 add_peer_ptx_to_cache(ptx);
+              }
             }
-            if (get_peer_ptx_cache_count() >= 1) {
+            if (get_peer_ptx_cache_count() >= 1)
+            {
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request req;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response res;
               epee::json_rpc::error err;
               bool R = on_append_ntz_sig(req,res,err);
             }
           }
+        }
       } catch (const std::exception& ex) {
         LOG_ERROR("Exception while populating ntz ptx caches, what=" << ex.what());
-        throw;
       }
       return true;
     }, 20000);
