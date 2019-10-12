@@ -1242,11 +1242,13 @@ namespace tools
       er.message = "Couldn't fetch notary pubkeys";
       return false;
     }
+    std::vector<std::pair<crypto::public_key,size_t>> recv_outkeys;
     int i = -1;
     for (int j = 0; j < count; j++) {
       i = signers_index[count];
-      crypto::secret_key viewkey = 
-      crypto::public_key real_out_tx_key = get_tx_pub_key_from_extra(recv_ptx, 0);
+      crypto::secret_key viewkey = notary_viewkeys[i];
+      cryptonote::transaction tx = recv_ptx.tx;
+      //crypto::public_key real_out_tx_key = get_tx_pub_key_from_extra(tx, 0);
 
       rct::rctSig &rv = tx.rct_signatures;
       if (rv.outPk.size() != tx.vout.size())
@@ -1263,7 +1265,7 @@ namespace tools
         }
         rv.outPk[n].dest = rct::pk2rct(boost::get<cryptonote::txout_to_key>(tx.vout[n].target).key);
         std::pair<crypto::public_key,size_t> each = std::make_pair(reinterpret_cast<const crypto::public_key&>(rv.outPk[n].dest), n);
-        recv_out_keys.push_back(each);
+        recv_outkeys.push_back(each);
       }
 
     size_t pk_index = 1;
@@ -1277,13 +1279,15 @@ namespace tools
         return false;
       } else {
         MWARNING("Recv derivation = " << recv_derivation);
-        if (epee::string_tools::pod_to_hex(recv_derivation) != epee::string_tools::pod_to_hex(0100000000000000000000000000000000000000000000000000000000000000)) {
+        if (epee::string_tools::pod_to_hex(recv_derivation) != "0100000000000000000000000000000000000000000000000000000000000000") {
           MERROR("Recv derivation does not equal rct identity element! Validation failed!");
+          return false;
         } else {
           recv_derivations.push_back(recv_derivation);
         }
       }
     }
+  }
 
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
     std::vector<std::pair<crypto::public_key,crypto::public_key>> notaries_keys;
