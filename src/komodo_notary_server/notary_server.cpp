@@ -1242,7 +1242,7 @@ namespace tools
       er.message = "Couldn't fetch notary pubkeys";
       return false;
     }
-/*    int i = -1;
+    int i = -1;
     for (int j = 0; j < count; j++) {
       i = signers_index[count];
       crypto::secret_key viewkey = 
@@ -1276,11 +1276,15 @@ namespace tools
         MERROR("Failed to generate recv_derivation at append_ntz_sig! recv_tx_key = " << recv_tx_key << ", notary_viewkey = " << epee::string_tools::pod_to_hex(each));
         return false;
       } else {
- //       MWARNING("Recv derivation = " << recv_derivation);
-        recv_derivations.push_back(recv_derivation);
+        MWARNING("Recv derivation = " << recv_derivation);
+        if (epee::string_tools::pod_to_hex(recv_derivation) != epee::string_tools::pod_to_hex(0100000000000000000000000000000000000000000000000000000000000000)) {
+          MERROR("Recv derivation does not equal rct identity element! Validation failed!");
+        } else {
+          recv_derivations.push_back(recv_derivation);
+        }
       }
     }
-*/
+
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
     std::vector<std::pair<crypto::public_key,crypto::public_key>> notaries_keys;
     bool z = get_notary_pubkeys(notaries_keys);
