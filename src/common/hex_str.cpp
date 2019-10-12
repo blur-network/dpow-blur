@@ -106,12 +106,12 @@
   {
     size_t len = input.length();
     bool too_long = (len > 4096);
-    std::string short_long = too_long ? ("longer") : ("shorter");
+    std::string short_long = "longer";
     std::vector<uint8_t> out;
 
-    if (len != 64) {
+    if (len >= 4095) {
       MERROR("Tried to convert a hex string that is " << short_long << " than the required 4096-character length.");
-      std::fill(out.begin(), out.begin()+4096, 0);
+      std::fill(out.begin(), out.begin()+len, 0);
       return out;
     }
 
