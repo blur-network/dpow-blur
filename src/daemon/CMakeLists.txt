@@ -98,6 +98,10 @@ target_link_libraries(daemon
     serialization
     daemon_rpc_server
     epee
+    komodo
+    ${EVENT_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${BTC_LIBRARY}
     ${EPEE_READLINE}
     version
     ${Boost_CHRONO_LIBRARY}

@@ -38,6 +38,10 @@ target_link_libraries(gen_multisig
     cncrypto
     common
     epee
+    komodo
+    ${EVENT_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${BTC_LIBRARY}
     ${EPEE_READLINE}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

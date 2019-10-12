@@ -104,6 +104,10 @@ target_link_libraries(blockchain_import
     p2p
     version
     epee
+    komodo
+    ${EVENT_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${BTC_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
@@ -131,6 +135,10 @@ target_link_libraries(blockchain_export
     p2p
     version
     epee
+    komodo
+    ${EVENT_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${BTC_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
@@ -151,10 +159,13 @@ target_link_libraries(blockchain_blackball
     wallet
     cryptonote_core
     blockchain_db
-    komodo
     p2p
     version
     epee
+    komodo
+    ${EVENT_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${BTC_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
@@ -178,6 +189,10 @@ target_link_libraries(blockchain_usage
     p2p
     version
     epee
+    komodo
+    ${EVENT_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${BTC_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}

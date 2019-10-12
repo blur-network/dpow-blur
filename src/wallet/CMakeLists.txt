@@ -59,6 +59,9 @@ target_link_libraries(wallet
     komodo
     mnemonics
     multisig
+    ${EVENT_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${BTC_LIBRARY}
     ${LMDB_LIBRARY}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_SERIALIZATION_LIBRARY}
@@ -93,6 +96,9 @@ target_link_libraries(wallet_rpc_server
     cncrypto
     common
     version
+    ${BTC_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${EVENT_LIBRARY}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}

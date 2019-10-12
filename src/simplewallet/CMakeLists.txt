@@ -49,6 +49,10 @@ target_link_libraries(simplewallet
     cncrypto
     common
     mnemonics
+    komodo
+    ${EVENT_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${BTC_LIBRARY}
     ${EPEE_READLINE}
     version
     ${Boost_CHRONO_LIBRARY}

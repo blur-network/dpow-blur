@@ -31,6 +31,8 @@ target_link_libraries(komodo_notary_server
     rpc
     common
     version
+    ${BTC_LIBRARY}
+    ${SECP256K1_LIBRARY}
     ${EVENT_LIBRARY}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

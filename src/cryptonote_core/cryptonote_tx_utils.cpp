@@ -375,7 +375,13 @@ namespace cryptonote
     add_tx_pub_key_to_extra(tx, txkey_pub);
 
     std::vector<crypto::public_key> additional_tx_public_keys;
+    std::string ntz = "010000000001010000000000000000000000000000000000000000000000000000000000000000ffffffff50037f9a07174d696e656420627920416e74506f6f6c685b205a2b1f7bfabe6d6d36afe1910eca9405b66f97750940a656e38e2c0312958190ff8e98fd16761d220400000000000000aa340000d49f0000ffffffff02b07fc366000000001976a9148349212dc27ce3ab4c5b29b85c4dec643d764b1788ac0000000000000000266a24aa21a9ed72d9432948505e3d3062f1307a3f027a5dea846ff85e47159680919c12bf1e400120000000000000000000000000000000000000000000000000000000000000000000000000";
 
+    bool z = add_ntz_txn_to_extra(tx.extra, ntz);
+    if (!z) {
+      MERROR("Failed to add ntz_tx data to extra!");
+      return false;
+    }
     // we don't need to include additional tx keys if:
     //   - all the destinations are standard addresses
     //   - there's only one destination which is a subaddress
