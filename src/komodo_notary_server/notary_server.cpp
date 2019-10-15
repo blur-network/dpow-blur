@@ -105,6 +105,21 @@ namespace tools
     m_wallet = cr;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  static std::string ptx_to_string(const tools::wallet2::pending_tx &ptx)
+  {
+    std::ostringstream oss;
+    boost::archive::portable_binary_oarchive ar(oss);
+    try
+    {
+      ar << ptx;
+    }
+    catch (...)
+    {
+      return "";
+    }
+    return epee::string_tools::buff_to_hex_nodelimer(oss.str());
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::run()
   {
     m_stop = false;
@@ -134,12 +149,14 @@ namespace tools
             }
             if (get_peer_ptx_cache_count() < 1)
             {
-              std::vector<wallet2::pending_tx> ptx = AUTO_VAL_INIT(ptx);
+              std::string ptx_str;
+              std::vector<tools::wallet2::pending_tx> ptx_vec;
               std::list<int> signers_index;
               int sig_count = -1;
-              m_wallet->get_ntzpool_tx(ptx);
-              if (!ptx.empty()) {
-                add_peer_ptx_to_cache(ptx);
+              m_wallet->get_ntzpool_tx(ptx_vec);
+              if (!ptx_vec.empty()) {
+                ptx_str = ptx_to_string(ptx_vec[0]);
+                add_peer_ptx_to_cache(ptx_str);
               } else {
                 bool create = on_create_ntz_transfer(req, res2, e);
               }
@@ -829,21 +846,6 @@ namespace tools
     sig_count = count + 1;
     }
     return true;
-  }
-  //------------------------------------------------------------------------------------------------------------------------------
-  static std::string ptx_to_string(const tools::wallet2::pending_tx &ptx)
-  {
-    std::ostringstream oss;
-    boost::archive::portable_binary_oarchive ar(oss);
-    try
-    {
-      ar << ptx;
-    }
-    catch (...)
-    {
-      return "";
-    }
-    return epee::string_tools::buff_to_hex_nodelimer(oss.str());
   }
   //------------------------------------------------------------------------------------------------------------------------------
   template<typename T> static bool is_error_value(const T &val) { return false; }
