@@ -140,10 +140,10 @@ namespace tools
               m_wallet->get_ntzpool_tx(ptx);
               if (!ptx.empty()) {
                 add_peer_ptx_to_cache(ptx);
+              } else {
+                bool create = on_create_ntz_transfer(req, res2, e);
               }
-            }
-            if (get_peer_ptx_cache_count() >= 1)
-            {
+            } else {
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request req;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response res;
               epee::json_rpc::error err;
@@ -1212,7 +1212,7 @@ namespace tools
       MERROR("Failed to parse recv_blob from hexstr!");
       return false;
     }
-    tools::wallet2::pending_tx recv_ptx;
+    std::vector<tools::wallet2::pending_tx> recv_ptx;
     try
     {
       std::istringstream iss(recv_blob);
@@ -1247,7 +1247,7 @@ namespace tools
     for (int j = 0; j < count; j++) {
       i = signers_index[count];
       crypto::secret_key viewkey = notary_viewkeys[i];
-      cryptonote::transaction tx = recv_ptx.tx;
+      cryptonote::transaction tx = recv_ptx[0].tx;
       //crypto::public_key real_out_tx_key = get_tx_pub_key_from_extra(tx, 0);
 
       rct::rctSig &rv = tx.rct_signatures;
@@ -1398,7 +1398,7 @@ namespace tools
         }
         const std::vector<int> si_const = signers_index;
           std::string ptx_string = ptx_to_string(ptx_vector[0]);
-          ptx_vector.push_back(recv_ptx);
+          ptx_vector.push_back(recv_ptx[0]);
           m_wallet->request_ntz_sig(ptx_string, ptx_vector, sig_count, payment_id, si_const);
           MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
       }

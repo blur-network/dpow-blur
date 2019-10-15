@@ -4859,7 +4859,7 @@ void wallet2::get_ntzpool_tx(std::vector<pending_tx>& ptx_vector)
   if (nres.transactions.size() >= 1) {
     bd = nres.transactions[0].tx_blob;
   } else {
-    MERROR("No notarization tx's currently in pool!");
+    LOG_PRINT_L2("No notarization tx's currently in pool!");
     return;
   }
 /*  for (const auto& p : nres.tx_hashes) {
