@@ -125,9 +125,9 @@ namespace tools
         epee::json_rpc::error e;
         if (m_wallet)
         {
-          bool notary = m_wallet->is_notary_node();
-          if (notary)
-          {
+ //         bool notary = m_wallet->is_notary_node();
+ //         if (notary)
+ //         {
             if (get_ntz_cache_count() < 1)
             {
               bool r = on_create_ntz_transfer(req, res, e);
@@ -149,14 +149,15 @@ namespace tools
               epee::json_rpc::error err;
               bool R = on_append_ntz_sig(req,res,err);
             }
-          }
+//          }
         }
       } catch (const std::exception& ex) {
         LOG_ERROR("Exception while populating ntz ptx caches, what=" << ex.what());
       }
       return true;
     }, 20000);
-    m_net_server.add_idle_handler([this](){
+   
+ m_net_server.add_idle_handler([this](){
       if (m_stop.load(std::memory_order_relaxed))
       {
         send_stop_signal();
