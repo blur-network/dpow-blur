@@ -25,9 +25,9 @@ target_link_libraries(komodo
     rpc
     common
     version
-    ${EVENT_LIBRARY}
-    ${SECP256K1_LIBRARY}
     ${BTC_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${EVENT_LIBRARY}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}

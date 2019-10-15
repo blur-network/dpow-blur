@@ -18,7 +18,6 @@ monero_add_executable(komodo_notary_server
   ${komodo_notary_server_headers}
   ${komodo_notary_server_private_headers}
   ${BACKWARD_ENABLE})
-
 add_backward(komodo_notary_server)
 
 target_link_libraries(komodo_notary_server
@@ -29,6 +28,7 @@ target_link_libraries(komodo_notary_server
     cryptonote_core
     cncrypto
     rpc
+    komodo
     common
     version
     ${BTC_LIBRARY}

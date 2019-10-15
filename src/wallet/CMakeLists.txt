@@ -56,12 +56,12 @@ target_link_libraries(wallet
   PUBLIC
     common
     cryptonote_core
-    komodo
     mnemonics
     multisig
-    ${EVENT_LIBRARY}
-    ${SECP256K1_LIBRARY}
+    komodo
     ${BTC_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${EVENT_LIBRARY}
     ${LMDB_LIBRARY}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_SERIALIZATION_LIBRARY}
@@ -95,6 +95,7 @@ target_link_libraries(wallet_rpc_server
     cryptonote_core
     cncrypto
     common
+    komodo
     version
     ${BTC_LIBRARY}
     ${SECP256K1_LIBRARY}

@@ -59,7 +59,6 @@ target_link_libraries(cryptonote_core
     blockchain_db
     common
     cncrypto
-    komodo
     multisig
     ringct
     device

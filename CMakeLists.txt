@@ -273,7 +273,7 @@ endif()
 # elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
 #   set(BSDI TRUE)
 
-include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/libbtc/include external/libbtc/src/logdb/include external/backward)
+include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/backward)
 
 if(APPLE)
   include_directories(SYSTEM /usr/include/malloc)
@@ -429,26 +429,26 @@ add_subdirectory(external)
 include(ExternalProject)
 ExternalProject_Add(libbtc
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
-  CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static
-  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no
+  CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static -DLD_FLAGS+=-lsecp256k1
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no
   BUILD_COMMAND make
   INSTALL_COMMAND make install
   BUILD_IN_SOURCE 1
 )
 
-set(BTC_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/libbtc/lib/libbtc.a)
+set(BTC_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/.libs/libbtc.a)
 
 include(ExternalProject)
 ExternalProject_Add(secp256k1
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1
   CMAKE_ARGS -DSECP256K1_PATH=${SECP256K1_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static -DLD_FLAGS+=-llibbtc
-  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no
   BUILD_COMMAND make
   INSTALL_COMMAND make install
   BUILD_IN_SOURCE 1
 )
 
-set(SECP256K1_LIBRARY ${CMAKE_CURRENT_BINARY_DIR}/libbtc/lib/libsecp256k1.a)
+set(SECP256K1_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/.libs/libsecp256k1.a)
 
 
 # Final setup for easylogging++
