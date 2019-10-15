@@ -40,16 +40,21 @@ std::vector<wallet2::pending_tx> get_cached_ptx()
   return ptx;
 }
 
-std::vector<wallet2::pending_tx> const get_cached_peer_ptx()
+std::vector<wallet2::pending_tx> get_cached_peer_ptx()
 {
-  std::string const ptx = peer_ptx_cache.back();
-  if (!ptx.empty())
-    peer_ptx_cache.pop_back();
-  std::stringstream ss;
-  ss << ptx;
-  boost::archive::portable_binary_iarchive ar(ss);
+  std::list<std::string> ptx_list = peer_ptx_cache.back();
   std::vector<wallet2::pending_tx> ptx_vec;
-  ar >> ptx_vec;
+  if (!ptx_list.empty()) {
+    peer_ptx_cache.pop_back();
+  }
+  for (const auto& each : ptx_list) {
+    std::stringstream ss;
+    ss << each;
+    boost::archive::portable_binary_oarchive ar(ss);
+    wallet2::pending_tx ptx;
+    ar << ptx;
+    ptx_vec.push_back(ptx);
+  }
   return ptx_vec;
 }
 
@@ -75,13 +80,13 @@ bool add_ptx_to_cache(std::vector<wallet2::pending_tx> const& ptx)
   }
 }
 */
-bool add_peer_ptx_to_cache(std::string const& ptx_string)
+bool add_peer_ptx_to_cache(std::list<std::string>& ptx_strings)
 {
-  if (ptx_string.empty()) {
+  if (ptx_strings.empty()) {
     MERROR("Error: attempted to add empty ptx string to cache!");
     return false;
   } else {
-      peer_ptx_cache.push_back(ptx_string);
+      peer_ptx_cache.push_back(ptx_strings);
     if (peer_ptx_cache.empty()) {
       return false;
     } else {

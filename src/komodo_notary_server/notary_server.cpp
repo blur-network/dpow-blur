@@ -154,11 +154,13 @@ namespace tools
               std::list<int> signers_index;
               int sig_count = -1;
               m_wallet->get_ntzpool_tx(ptx_vec);
+              std::list<std::string> ptxss;
               if (!ptx_vec.empty()) {
                 for(const auto& each : ptx_vec) {
                   ptx_str = ptx_to_string(each);
-                  add_peer_ptx_to_cache(ptx_str);
+                  ptxss.push_back(ptx_str);
                 }
+                add_peer_ptx_to_cache(ptxss);
               } else {
                 bool create = on_create_ntz_transfer(req, res2, e);
               }

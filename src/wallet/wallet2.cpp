@@ -2089,7 +2089,7 @@ void wallet2::update_pool_state(bool refreshed)
     }
     auto pit = it++;
     auto pit2 = it2++;
-    if (!found)
+    if (!found || !found2)
     {
       // we want to avoid a false positive when we ask for the pool just after
       // a tx is removed from the pool due to being found in a new block, but
@@ -2097,12 +2097,17 @@ void wallet2::update_pool_state(bool refreshed)
       // that the first time we don't see the tx, we set that boolean, and only
       // delete it the second time it is checked (but only when refreshed, so
       // we're sure we've seen the blockchain state first)
-      if (pit->second.m_state == wallet2::unconfirmed_transfer_details::pending)
+      if (pit->second.m_state == wallet2::unconfirmed_transfer_details::pending && found2)
       {
         LOG_PRINT_L1("Pending txid " << txid << " not in tx pool, marking as not in pool");
         pit->second.m_state = wallet2::unconfirmed_transfer_details::pending_not_in_pool;
       }
-      else if (pit->second.m_state == wallet2::unconfirmed_transfer_details::pending_not_in_pool && refreshed)
+      else if (pit2->second.m_state == wallet2::unconfirmed_transfer_details::pending && found)
+      {
+        LOG_PRINT_L1("Pending txid " << txid << " not in tx pool, marking as not in pool");
+        pit2->second.m_state = wallet2::unconfirmed_transfer_details::pending_not_in_pool;
+      }
+      if (pit->second.m_state == wallet2::unconfirmed_transfer_details::pending_not_in_pool && refreshed && !found2)
       {
         LOG_PRINT_L1("Pending txid " << txid << " not in pool, marking as failed");
         pit->second.m_state = wallet2::unconfirmed_transfer_details::failed;
@@ -2127,22 +2132,14 @@ void wallet2::update_pool_state(bool refreshed)
           }
         }
       }
-    }
-    if (!found2)
-    {
-     if (pit2->second.m_state == wallet2::unconfirmed_transfer_details::pending)
-      {
-        LOG_PRINT_L1("Pending txid " << txid << " not in tx pool, marking as not in pool");
-        pit2->second.m_state = wallet2::unconfirmed_transfer_details::pending_not_in_pool;
-      }
-      else if (pit2->second.m_state == wallet2::unconfirmed_transfer_details::pending_not_in_pool && refreshed)
+      else if (pit2->second.m_state == wallet2::unconfirmed_transfer_details::pending_not_in_pool && refreshed && !found)
       {
         LOG_PRINT_L1("Pending txid " << txid << " not in pool, marking as failed");
         pit2->second.m_state = wallet2::unconfirmed_transfer_details::failed;
 
         // the inputs aren't spent anymore, since the tx failed
         remove_rings(pit2->second.m_tx);
-        for (size_t vini = 0; vini < pit->second.m_tx.vin.size(); ++vini)
+        for (size_t vini = 0; vini < pit2->second.m_tx.vin.size(); ++vini)
         {
           if (pit2->second.m_tx.vin[vini].type() == typeid(txin_to_key))
           {
