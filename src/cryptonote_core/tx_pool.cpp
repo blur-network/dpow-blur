@@ -1404,6 +1404,23 @@ namespace cryptonote
               // it was in code, prior to these changes, until futher investigation
               continue;
             }
+            else
+            {
+              MWARNING("Found in ntzpool!");
+              if (!ntz_meta.double_spend_seen)
+              {
+                MDEBUG("Marking " << txid << " as double spending " << itk.k_image);
+                ntz_meta.double_spend_seen = true;
+                try
+                {
+                  m_blockchain.update_ntzpool_tx(txid, ntz_meta);
+                 }
+                 catch (std::exception& e)
+                 {
+                   MERROR("Failed to update ntz meta: " << e.what());
+                 }
+              }
+            }
           }
           if (!meta.double_spend_seen)
           {
@@ -1415,15 +1432,8 @@ namespace cryptonote
             }
             catch (const std::exception &e)
             {
-              try
-              {
-                m_blockchain.update_ntzpool_tx(txid, ntz_meta);
-              }
-              catch (const std::exception& e)
-              {
-                MERROR("Failed to update both tx meta and ntz meta: " << e.what());
-                // continue, not fatal
-              }
+              MERROR("Failed to update tx meta: " << e.what());
+              // continue, not fatal
             }
           }
         }
@@ -1538,9 +1548,9 @@ namespace cryptonote
       }
 
       cryptonote::blobdata txblob = m_blockchain.get_txpool_tx_blob(sorted_it->second);
-      cryptonote::blobdata ntzblob = m_blockchain.get_ntzpool_tx_blob(sorted_it->second);
+   //   cryptonote::blobdata ntzblob = m_blockchain.get_ntzpool_tx_blob(sorted_it->second);
       cryptonote::transaction tx;
-      cryptonote::transaction ntz_tx;
+   //   cryptonote::transaction ntz_tx;
 
       if (!parse_and_validate_tx_from_blob(txblob, tx))
       {
@@ -1549,12 +1559,12 @@ namespace cryptonote
         continue;
       }
 
-      if (!parse_and_validate_tx_from_blob(ntzblob, ntz_tx))
+     /* if (!parse_and_validate_tx_from_blob(ntzblob, ntz_tx))
       {
         MERROR("Failed to parse tx from ntzpool");
         sorted_it++;
         continue;
-      }
+      }*/
 
       // Skip transactions that are not ready to be
       // included into the blockchain or that are

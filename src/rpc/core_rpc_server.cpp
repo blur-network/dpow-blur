@@ -591,6 +591,7 @@ namespace cryptonote
 
     // try the pool for any missing txes
     size_t found_in_pool = 0;
+    size_t found_in_ntzpool = 0;
     std::unordered_set<crypto::hash> pool_tx_hashes;
     std::unordered_map<crypto::hash, bool> double_spend_seen;
     if (!missed_txs.empty())
@@ -601,12 +602,11 @@ namespace cryptonote
       std::vector<spent_key_image_info> ntzpool_key_image_info;
       bool r = m_core.get_pool_transactions_and_spent_keys_info(pool_tx_info, pool_key_image_info);
       bool R = m_core.get_pending_ntz_pool_and_spent_keys_info(ntzpool_tx_info, ntzpool_key_image_info);
-      if(r || R)
+      if(r)
       {
         // sort to match original request
-        std::list<transaction> sorted_txs;
         std::vector<tx_info>::const_iterator i;
-        std::vector<ntz_tx_info>::const_iterator j;
+        std::list<transaction> sorted_txs;
         for (const crypto::hash &h: vh)
         {
           if (std::find(missed_txs.begin(), missed_txs.end(), h) == missed_txs.end())
@@ -647,6 +647,30 @@ namespace cryptonote
             }
             ++found_in_pool;
           }
+        }
+      }
+      else if (R)
+      {
+        std::list<transaction> sorted_ntz_txs;
+        std::vector<ntz_tx_info>::const_iterator j;
+        for (const crypto::hash &h: vh)
+        {
+          if (std::find(missed_txs.begin(), missed_txs.end(), h) == missed_txs.end())
+          {
+            if (txs.empty())
+            {
+              res.status = "Failed: internal error - txs is empty";
+              return true;
+            }
+            // core returns the ones it finds in the right order
+            if (get_transaction_hash(txs.front()) != h)
+            {
+              res.status = "Failed: tx hash mismatch";
+              return true;
+            }
+            sorted_ntz_txs.push_back(std::move(txs.front()));
+            txs.pop_front();
+          }
           else if ((j = std::find_if(ntzpool_tx_info.begin(), ntzpool_tx_info.end(), [h](const ntz_tx_info &txi) { return epee::string_tools::pod_to_hex(h) == txi.id_hash; })) != ntzpool_tx_info.end())
           {
             cryptonote::transaction tx;
@@ -655,7 +679,7 @@ namespace cryptonote
               res.status = "Failed to parse and validate tx from blob";
               return true;
             }
-            sorted_txs.push_back(tx);
+            sorted_ntz_txs.push_back(tx);
             missed_txs.remove(h);
             pool_tx_hashes.insert(h);
             const std::string hash_string = epee::string_tools::pod_to_hex(h);
@@ -667,12 +691,13 @@ namespace cryptonote
                 break;
               }
             }
-            ++found_in_pool;
+            ++found_in_ntzpool;
           }
         }
-        txs = sorted_txs;
+        txs = sorted_ntz_txs;
       }
-      LOG_PRINT_L2("Found " << found_in_pool << "/" << vh.size() << " transactions in the pool");
+      LOG_PRINT_L2("Found " << found_in_pool << "/" << vh.size() << " transactions in the txpool");
+      LOG_PRINT_L2("Found " << found_in_ntzpool << "/" << vh.size() << " transactions in the ntzpool");
     }
 
     std::list<std::string>::const_iterator txhi = req.txs_hashes.begin();
@@ -768,22 +793,23 @@ namespace cryptonote
 
     // try the pool for any missing txes
     size_t found_in_pool = 0;
+    size_t found_in_ntzpool = 0;
     std::unordered_set<crypto::hash> pool_tx_hashes;
+    std::unordered_set<crypto::hash> ntzpool_tx_hashes;
     std::unordered_map<crypto::hash, bool> double_spend_seen;
     if (!missed_txs.empty())
     {
       std::vector<tx_info> pool_tx_info;
-      std::vector<ntz_tx_info> ntzpool_tx_info;
       std::vector<spent_key_image_info> pool_key_image_info;
+      std::vector<ntz_tx_info> ntzpool_tx_info;
       std::vector<spent_key_image_info> ntzpool_key_image_info;
       bool r = m_core.get_pool_transactions_and_spent_keys_info(pool_tx_info, pool_key_image_info);
       bool R = m_core.get_pending_ntz_pool_and_spent_keys_info(ntzpool_tx_info, ntzpool_key_image_info);
-      if(r || R)
+      if(r)
       {
         // sort to match original request
         std::list<transaction> sorted_txs;
         std::vector<tx_info>::const_iterator i;
-        std::vector<ntz_tx_info>::const_iterator j;
         for (const crypto::hash &h: vh)
         {
           if (std::find(missed_txs.begin(), missed_txs.end(), h) == missed_txs.end())
@@ -824,6 +850,30 @@ namespace cryptonote
             }
             ++found_in_pool;
           }
+        }
+      }
+      else if (R)
+      {
+        std::vector<ntz_tx_info>::const_iterator j;
+        std::list<transaction> sorted_ntz_txs;
+        for (const crypto::hash &h: vh)
+        {
+          if (std::find(missed_txs.begin(), missed_txs.end(), h) == missed_txs.end())
+          {
+            if (txs.empty())
+            {
+              res.status = "Failed: internal error - txs is empty";
+              return true;
+            }
+            // core returns the ones it finds in the right order
+            if (get_transaction_hash(txs.front()) != h)
+            {
+              res.status = "Failed: tx hash mismatch";
+              return true;
+            }
+            sorted_ntz_txs.push_back(std::move(txs.front()));
+            txs.pop_front();
+          }
           else if ((j = std::find_if(ntzpool_tx_info.begin(), ntzpool_tx_info.end(), [h](const ntz_tx_info &txi) { return epee::string_tools::pod_to_hex(h) == txi.id_hash; })) != ntzpool_tx_info.end())
           {
             cryptonote::transaction tx;
@@ -832,9 +882,9 @@ namespace cryptonote
               res.status = "Failed to parse and validate tx from blob";
               return true;
             }
-            sorted_txs.push_back(tx);
+            sorted_ntz_txs.push_back(tx);
             missed_txs.remove(h);
-            pool_tx_hashes.insert(h);
+            ntzpool_tx_hashes.insert(h);
             const std::string hash_string = epee::string_tools::pod_to_hex(h);
             for (const auto &ti: ntzpool_tx_info)
             {
@@ -844,12 +894,12 @@ namespace cryptonote
                 break;
               }
             }
-            ++found_in_pool;
+            ++found_in_ntzpool;
           }
         }
-        txs = sorted_txs;
       }
-      LOG_PRINT_L2("Found " << found_in_pool << "/" << vh.size() << " transactions in the pool");
+      LOG_PRINT_L2("Found " << found_in_pool << "/" << vh.size() << " transactions in the txpool");
+      LOG_PRINT_L2("Found " << found_in_pool << "/" << vh.size() << " transactions in the ntzpool");
     }
 
     std::list<std::string>::const_iterator txhi = tx_hashes.begin();
