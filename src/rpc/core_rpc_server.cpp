@@ -1135,7 +1135,7 @@ namespace cryptonote
     if ((req.sig_count < 13) && (req.sig_count > 0))
     {
       NOTIFY_REQUEST_NTZ_SIG::request r;
-      r.ptx_string = req.ptx_string;
+      r.ptx_strings = req.ptx_strings;
       r.tx_blob = req.tx_blob;
       r.sig_count = req.sig_count;
       r.payment_id = req.payment_id;

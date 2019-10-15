@@ -155,8 +155,10 @@ namespace tools
               int sig_count = -1;
               m_wallet->get_ntzpool_tx(ptx_vec);
               if (!ptx_vec.empty()) {
-                ptx_str = ptx_to_string(ptx_vec[0]);
-                add_peer_ptx_to_cache(ptx_str);
+                for(const auto& each : ptx_vec) {
+                  ptx_str = ptx_to_string(each);
+                  add_peer_ptx_to_cache(ptx_str);
+                }
               } else {
                 bool create = on_create_ntz_transfer(req, res2, e);
               }
@@ -1154,38 +1156,44 @@ namespace tools
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count);
       MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(sig_count));
 
-        std::string index_vec;
-        for (int i = 0; i < 13; i++) {
-          std::string tmp = std::to_string(cryptonote::get_index<int>(i, signers_index)) + " ";
-          index_vec += tmp;
+      std::string index_vec;
+      for (int i = 0; i < 13; i++) {
+        std::string tmp = std::to_string(cryptonote::get_index<int>(i, signers_index)) + " ";
+        index_vec += tmp;
+      }
+      const std::vector<int> si_const = signers_index;
+
+      if (get_ntz_cache_count() >= 2) {
+        bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
+           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
+      if (fill_res) {
+        m_wallet->request_ntz_sig(res.tx_metadata_list, ptx_vector, sig_count, payment_id, si_const);
+        MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+      }
+
+      return fill_res;
+
+      } else {
+
+        bool added = false;
+        added = add_ptx_to_cache(ptx_vector);
+        MWARNING("Pending ntz transaction added to cache!");
+        if (!added) {
+
+          MERROR("Failed to add ptx to cache! Relaying instead");
+          bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
+             res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
+          if (fill_res) {
+             m_wallet->request_ntz_sig(res.tx_metadata_list, ptx_vector, sig_count, payment_id, si_const);
+             MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+          } 
+
+          return fill_res;
+
+        } else {
+          return true;
         }
-        const std::vector<int> si_const = signers_index;
-
-          if (get_ntz_cache_count() >= 2) {
-            for (const auto& each : ptx_vector) {
-              std::string ptx_string = ptx_to_string(each);
-              m_wallet->request_ntz_sig(ptx_string, ptx_vector, sig_count, payment_id, si_const);
-              MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
-            }
-            return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
-               res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
-          } else {
-            bool added = false;
-            added = add_ptx_to_cache(ptx_vector);
-            MWARNING("Pending ntz transaction added to cache!");
-            if (!added) {
-
-                std::string ptx_string = ptx_to_string(ptx_vector[0]);
-                MERROR("Failed to add ptx to cache! Relaying instead");
-                m_wallet->request_ntz_sig(ptx_string, ptx_vector, sig_count, payment_id, si_const);
-                MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
-
-              return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
-                 res.tx_hash_list, true, res.tx_blob_list, false, res.tx_metadata_list, er);
-            }
-            else
-              return true;
-          }
+      }  
     }
     catch (const std::exception& e)
     {
@@ -1399,20 +1407,27 @@ namespace tools
           std::string tmp = std::to_string(cryptonote::get_index<int>(i, signers_index)) + " ";
           index_vec += tmp;
         }
+
         const std::vector<int> si_const = signers_index;
-          std::string ptx_string = ptx_to_string(ptx_vector[0]);
-          ptx_vector.push_back(recv_ptx[0]);
-          m_wallet->request_ntz_sig(ptx_string, ptx_vector, sig_count, payment_id, si_const);
+        for (const auto& each : recv_ptx) {
+          ptx_vector.push_back(each);
+        }
+  
+        bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
+          res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
+        if (fill_res) {
+          m_wallet->request_ntz_sig(res.tx_metadata_list, ptx_vector, sig_count, payment_id, si_const);
           MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+        }
+        return fill_res;
       }
-      return fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
-          res.tx_hash_list, true, res.tx_blob_list, false, res.tx_metadata_list, er);
     }
     catch (const std::exception& e)
     {
       handle_rpc_exception(std::current_exception(), er, NOTARY_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);
       return false;
     }
+    return true;
   }
 //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::on_sweep_single(const notary_rpc::COMMAND_RPC_SWEEP_SINGLE::request& req, notary_rpc::COMMAND_RPC_SWEEP_SINGLE::response& res, epee::json_rpc::error& er)

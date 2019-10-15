@@ -4889,13 +4889,13 @@ void wallet2::get_ntzpool_tx(std::vector<pending_tx>& ptx_vector)
 
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::request_ntz_sig(std::string const& ptx_string, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const & signers_index)
+void wallet2::request_ntz_sig(std::list<std::string> const& ptx_string, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const & signers_index)
 {
   using namespace cryptonote;
     // Normal submit
     COMMAND_RPC_REQUEST_NTZ_SIG::request request = AUTO_VAL_INIT(request);
     request.sig_count = sigs_count;
-    request.ptx_string = ptx_string;
+    request.ptx_strings = ptx_string;
     std::vector<std::string> tx_blobs;
     for (const auto& each : ptxs) {
       blobdata blob = tx_to_blob(each.tx);
