@@ -4876,9 +4876,9 @@ void wallet2::get_ntzpool_tx(std::vector<pending_tx>& ptx_vector)
     std::to_string(res.txs.size()) + ", expected 1");
   cryptonote::blobdata bd;
   THROW_WALLET_EXCEPTION_IF(!epee::string_tools::parse_hexstr_to_binbuff(res.txs[0].as_hex, bd), error::wallet_internal_error, "failed to parse tx from hexstr");*/
-  std::istringstream iss(bd);
+  std::istringstream iss;
+  iss.str(bd);
   boost::archive::portable_binary_iarchive ar(iss);
-
   pending_tx ptx;
   ar >> ptx;
   ptx_vector.push_back(ptx);
@@ -10139,7 +10139,7 @@ bool wallet2::is_notary_node()
     MERROR("Failed to generate local public viewkey");
     return false;
   }
-
+  r = false;
   r = get_notary_pubkeys(notary_pubkeys);
   if (!r) {
     MERROR("Error: Couldn't retrieve notary pubkeys!");
@@ -10167,10 +10167,13 @@ bool wallet2::is_notary_node()
     if (r) {
       R = epee::string_tools::pod_to_hex(notary_pubkeys[i].second) == epee::string_tools::pod_to_hex(local_pubkey);
       if (R) {
+        MWARNING("Found our pubkey in notary keys! Pubkey: " << epee::string_tools::pod_to_hex(notary_pubkeys[i].second));
         pubkeys_check = true;
         secret_viewkey_check = (epee::string_tools::pod_to_hex(viewkeys[i]) == epee::string_tools::pod_to_hex(get_account().get_keys().m_view_secret_key));
-        if (secret_viewkey_check)
+        if (secret_viewkey_check) {
+          MWARNING("Found our viewkey in notary keys! Viewkey: " << epee::string_tools::pod_to_hex(viewkeys[i]));
           break;
+        }
       }
     }
   }

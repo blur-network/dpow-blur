@@ -1225,20 +1225,8 @@ namespace tools
       MERROR("Failed to parse recv_blob from hexstr!");
       return false;
     }
-    std::vector<tools::wallet2::pending_tx> recv_ptx;
-    try
-    {
-      std::istringstream iss(recv_blob);
-      boost::archive::portable_binary_iarchive ar(iss);
-      ar >> recv_ptx;
-    }
-    catch (...)
-    {
-      er.code = NOTARY_RPC_ERROR_CODE_BAD_TX_METADATA;
-      er.message = "Failed to parse tx metadata.";
-      return false;
-    }
-
+    std::vector<tools::wallet2::pending_tx> recv_ptx_vec = get_cached_peer_ptx();
+    for (const auto& recv_ptx : recv_ptx_vec) {
 
     std::vector<int> signers_index = req.signers_index;
     int sig_count = req.sig_count;
@@ -1260,7 +1248,7 @@ namespace tools
     for (int j = 0; j < count; j++) {
       i = signers_index[count];
       crypto::secret_key viewkey = notary_viewkeys[i];
-      cryptonote::transaction tx = recv_ptx[0].tx;
+      cryptonote::transaction tx = recv_ptx.tx;
       //crypto::public_key real_out_tx_key = get_tx_pub_key_from_extra(tx, 0);
 
       rct::rctSig &rv = tx.rct_signatures;
@@ -1411,9 +1399,7 @@ namespace tools
         }
 
         const std::vector<int> si_const = signers_index;
-        for (const auto& each : recv_ptx) {
-          ptx_vector.push_back(each);
-        }
+        ptx_vector.push_back(recv_ptx);
   
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
@@ -1421,14 +1407,15 @@ namespace tools
           m_wallet->request_ntz_sig(res.tx_metadata_list, ptx_vector, sig_count, payment_id, si_const);
           MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
-        return fill_res;
-      }
+       return fill_res;
+     }
     }
     catch (const std::exception& e)
     {
       handle_rpc_exception(std::current_exception(), er, NOTARY_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);
       return false;
     }
+  }
     return true;
   }
 //------------------------------------------------------------------------------------------------------------------------------
