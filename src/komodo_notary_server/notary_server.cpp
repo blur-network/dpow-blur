@@ -122,6 +122,8 @@ namespace tools
   //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::run()
   {
+    uint16_t num_calls = 0;
+    bool sent_to_pool = num_calls >= 3;
     m_stop = false;
     m_net_server.add_idle_handler([this](){
       try {
@@ -131,26 +133,39 @@ namespace tools
       }
       return true;
     }, 20000);
-    m_net_server.add_idle_handler([this](){
+    m_net_server.add_idle_handler([this, &num_calls](){
      try
      {
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
-        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res;
-        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res2;
+        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res = AUTO_VAL_INIT(res);;
+        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res2 = AUTO_VAL_INIT(res2);
         epee::json_rpc::error e;
         if (m_wallet)
         {
+            std::list<cryptonote::transaction> txs;
  //         bool notary = m_wallet->is_notary_node();
  //         if (notary)
  //         {
-            if (get_ntz_cache_count() < 1)
+            if (get_ntz_cache_count() < 1 && get_peer_ptx_cache_count() < 1)
             {
               bool r = on_create_ntz_transfer(req, res, e);
+              if(r) {
+                ++num_calls;
+                r = false;
+                r = on_create_ntz_transfer(req, res, e);
+                if (r) {
+                  ++num_calls;
+                }
+              }
             }
-            if (get_peer_ptx_cache_count() < 1 && get_ntz_cache_count() == 1) 
+            if (get_peer_ptx_cache_count() < 1 && get_ntz_cache_count() >= 2 && num_calls == 2) 
             {
-              bool r = on_create_ntz_transfer(req, res2, e);
-            } else if (get_peer_ptx_cache_count() >= 1 && get_ntz_cache_count() > 1) {
+                bool last = on_create_ntz_transfer(req, res, e);
+                if (last)
+                  ++num_calls;            
+            } 
+            if (get_peer_ptx_cache_count() >= 1 && get_ntz_cache_count() >= 2)
+            {
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
               epee::json_rpc::error err;
@@ -1206,15 +1221,30 @@ namespace tools
     }
 
     std::string recv_blob;
-    const std::string hex_blob = req.recv_blob;
-    if (!epee::string_tools::parse_hexstr_to_binbuff(hex_blob, recv_blob)) {
+    std::list<std::string> hex_blobs = req.recv_blob;
+    if (!epee::string_tools::parse_hexstr_to_binbuff(hex_blobs.back(), recv_blob)) {
       MERROR("Failed to parse recv_blob from hexstr!");
       return false;
     }
-    std::vector<tools::wallet2::pending_tx> recv_ptx_vec = get_cached_peer_ptx();
+
+    std::vector<int> signers_index;
+    for (int i = 0; i < 13; i++) {
+      std::string tmp = req.signers_index.substr(i,2);
+      int each = std::stoi(tmp, nullptr, 10);
+      signers_index.push_back(each);
+    }
+
+    std::vector<tools::wallet2::pending_tx> recv_ptx_vec;
+     
+    wallet2::pending_tx pen_tx;
+      std::stringstream iss;
+      iss << recv_blob;
+      boost::archive::portable_binary_iarchive ar(iss);
+      ar >> pen_tx;
+      recv_ptx_vec.push_back(pen_tx);
+
     for (const auto& recv_ptx : recv_ptx_vec) {
 
-    std::vector<int> signers_index = req.signers_index;
     int sig_count = req.sig_count;
     const int neg = -1;
     const int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);

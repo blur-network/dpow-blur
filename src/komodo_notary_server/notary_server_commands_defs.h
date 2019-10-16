@@ -546,9 +546,9 @@ namespace notary_rpc
   {
     struct request
     {
-      std::string recv_blob;
+      std::list<std::string> recv_blob;
       int sig_count;
-      std::vector<int> signers_index;
+      std::string signers_index;
       std::string payment_id;
 
       BEGIN_KV_SERIALIZE_MAP()

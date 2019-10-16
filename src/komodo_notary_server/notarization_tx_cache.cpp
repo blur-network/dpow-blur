@@ -42,9 +42,19 @@ std::vector<wallet2::pending_tx> get_cached_ptx()
   return ptx;
 }
 
+std::pair<std::list<std::string>, std::string> get_cached_peer_ptx_pair()
+{
+  std::pair<std::list<std::string>,std::string> cache_entry;
+  if (!peer_ptx_cache.empty())
+    cache_entry = peer_ptx_cache.back();
+  return cache_entry;
+}  
+
 std::vector<wallet2::pending_tx> get_cached_peer_ptx()
 {
-  std::pair<std::list<std::string>,std::string> cache_entry = peer_ptx_cache.back();
+  std::pair<std::list<std::string>,std::string> cache_entry;
+  if (!peer_ptx_cache.empty())
+    cache_entry = peer_ptx_cache.back();
   std::list<std::string> ptx_list = cache_entry.first;
   std::string signers_index_str = cache_entry.second;
   std::vector<wallet2::pending_tx> ptx_vec;
