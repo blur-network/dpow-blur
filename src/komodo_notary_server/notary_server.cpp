@@ -154,7 +154,7 @@ namespace tools
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
               epee::json_rpc::error err;
-              bool R = on_append_ntz_sig(req,res,err);
+              bool R = on_append_ntz_sig(request, response ,err);
             }
 //        }
         }
