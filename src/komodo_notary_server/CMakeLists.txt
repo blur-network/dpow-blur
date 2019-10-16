@@ -1,15 +1,15 @@
 set(komodo_notary_server_sources
-  notarization_tx_cache.cpp
-  notary_server.cpp)
+  notary_server.cpp
+  notarization_tx_cache.cpp)
 
 set(komodo_notary_server_headers)
 
 set(komodo_notary_server_private_headers
-  notarization_tx_cache.h
-  notarization_tx_container.h
   notary_server.h
   notary_server_error_codes.h
-  notary_server_commands_defs.h)
+  notary_server_commands_defs.h
+  notarization_tx_cache.h
+  notarization_tx_container.h)
 
 monero_private_headers(komodo_notary_server
   ${komodo_notary_server_private_headers})
@@ -26,6 +26,7 @@ target_link_libraries(komodo_notary_server
     epee
     rpc_base
     cryptonote_core
+    cryptonote_protocol
     cncrypto
     rpc
     komodo
@@ -47,5 +48,3 @@ set_property(TARGET komodo_notary_server
   PROPERTY
     OUTPUT_NAME "blur-notary-server-rpc")
 install(TARGETS komodo_notary_server DESTINATION bin)
-
-

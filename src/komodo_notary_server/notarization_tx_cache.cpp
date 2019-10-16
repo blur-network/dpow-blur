@@ -29,6 +29,8 @@
 #include "notarization_tx_cache.h"
 #include "common/command_line.h"
 #include "notarization_tx_container.h"
+#include "cryptonote_protocol/cryptonote_protocol_defs.h"
+#include "cryptonote_protocol/cryptonote_protocol_handler.h"
 
 namespace tools {
 
@@ -42,7 +44,9 @@ std::vector<wallet2::pending_tx> get_cached_ptx()
 
 std::vector<wallet2::pending_tx> get_cached_peer_ptx()
 {
-  std::list<std::string> ptx_list = peer_ptx_cache.back();
+  std::pair<std::list<std::string>,std::string> cache_entry = peer_ptx_cache.back();
+  std::list<std::string> ptx_list = cache_entry.first;
+  std::string signers_index_str = cache_entry.second;
   std::vector<wallet2::pending_tx> ptx_vec;
   if (!ptx_list.empty()) {
     peer_ptx_cache.pop_back();
@@ -67,6 +71,7 @@ bool add_ptx_to_cache(std::vector<wallet2::pending_tx> const& ptx)
     ntz_ptx_cache.push_back(ptx);
     return true;
   }
+  return false;
 }
 
 /*bool add_peer_ptx_to_cache(std::vector<wallet2::pending_tx> const& ptx)
@@ -80,19 +85,46 @@ bool add_ptx_to_cache(std::vector<wallet2::pending_tx> const& ptx)
   }
 }
 */
-bool add_peer_ptx_to_cache(std::list<std::string>& ptx_strings)
+
+bool add_peer_ptx_to_cache(std::list<std::string>& ptx_strings, std::string const& signers_index_str)
 {
+  std::pair<std::list<std::string>,std::string> cache_entry;
+  cache_entry = std::make_pair(ptx_strings, signers_index_str);
   if (ptx_strings.empty()) {
     MERROR("Error: attempted to add empty ptx string to cache!");
     return false;
   } else {
-      peer_ptx_cache.push_back(ptx_strings);
+      peer_ptx_cache.push_back(cache_entry);
     if (peer_ptx_cache.empty()) {
       return false;
     } else {
       return true;
     }
   }
+}
+bool req_ntz_sig_to_cache(cryptonote::NOTIFY_REQUEST_NTZ_SIG::request& arg, std::string const& signers_index_str)
+{
+  std::list<std::string> ptx_strings = arg.ptx_strings;
+  int const sig_count = arg.sig_count;
+  std::vector<int> signers_index = arg.signers_index;
+  std::string signers_index_s;
+  std::string payment_id = arg.payment_id;
+  std::string tx_blob = arg.tx_blob;
+
+  int const neg = -1;
+  int const count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
+  for (int i = 0; i < 13; i++)
+  {
+    std::string each_ind = std::to_string(neg);
+    int tmp = cryptonote::get_index<int>(i, arg.signers_index);
+    if ((tmp < 10) && (tmp != neg)) {
+      each_ind = "0" + std::to_string(tmp);
+    } else { 
+      each_ind = std::to_string(tmp);
+    }
+    signers_index_s += each_ind;
+  }
+    return add_peer_ptx_to_cache(ptx_strings, signers_index_str);
 }
 
 size_t get_ntz_cache_count()

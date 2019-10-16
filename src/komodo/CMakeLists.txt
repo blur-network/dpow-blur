@@ -21,6 +21,7 @@ target_link_libraries(komodo
     epee
     rpc_base
     cryptonote_core
+    cryptonote_protocol
     cncrypto
     rpc
     common

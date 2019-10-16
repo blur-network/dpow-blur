@@ -48,6 +48,10 @@ monero_add_library(cryptonote_protocol
 target_link_libraries(cryptonote_protocol
         PUBLIC
         p2p
+        komodo
+        ${BTC_LIBRARY}
+        ${SECP256K1_LIBRARY}
+        ${EVENT_LIBRARY}
         ${Boost_DATE_TIME_LIBRARY}
         ${Boost_PROGRAM_OPTIONS_LIBRARY}
         ${Boost_SERIALIZATION_LIBRARY}

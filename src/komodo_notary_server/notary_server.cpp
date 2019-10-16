@@ -147,30 +147,16 @@ namespace tools
             {
               bool r = on_create_ntz_transfer(req, res, e);
             }
-            if (get_peer_ptx_cache_count() < 1)
+            if (get_peer_ptx_cache_count() < 1 && get_ntz_cache_count() == 1) 
             {
-              std::string ptx_str;
-              std::vector<tools::wallet2::pending_tx> ptx_vec;
-              std::list<int> signers_index;
-              int sig_count = -1;
-              m_wallet->get_ntzpool_tx(ptx_vec);
-              std::list<std::string> ptxss;
-              if (!ptx_vec.empty()) {
-                for(const auto& each : ptx_vec) {
-                  ptx_str = ptx_to_string(each);
-                  ptxss.push_back(ptx_str);
-                }
-                add_peer_ptx_to_cache(ptxss);
-              } else {
-                bool create = on_create_ntz_transfer(req, res2, e);
-              }
-            } else {
-              notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request req;
-              notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response res;
+              bool r = on_create_ntz_transfer(req, res2, e);
+            } else if (get_peer_ptx_cache_count() >= 1 && get_ntz_cache_count() > 1) {
+              notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
+              notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
               epee::json_rpc::error err;
               bool R = on_append_ntz_sig(req,res,err);
             }
-//          }
+//        }
         }
       } catch (const std::exception& ex) {
         LOG_ERROR("Exception while populating ntz ptx caches, what=" << ex.what());

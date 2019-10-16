@@ -43,6 +43,7 @@
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "profile_tools.h"
 #include "net/network_throttle-detail.hpp"
+#include "komodo_notary_server/notarization_tx_cache.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "net.cn"
@@ -848,9 +849,11 @@ namespace cryptonote
       std::string signers_index_s;
       for (int i = 0; i < 13; i++)
       {
-        std::string each_ind = "-1";
+        int const neg = -1;
+        std::string each_ind = std::to_string(neg);
+
         int tmp = get_index<int>(i, arg.signers_index);
-        if ((tmp < 10) && (tmp != (-1)))
+        if ((tmp < 10) && (tmp != neg))
           each_ind = "0" + std::to_string(tmp);
         else
           each_ind = std::to_string(tmp);
@@ -879,8 +882,13 @@ namespace cryptonote
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
         drop_connection(context, false, false);
         return 1;
-      }
-
+      } else {
+        bool cached = req_ntz_sig_to_cache(arg, signers_index_s);
+        if (!cached) {
+          LOG_ERROR_CCONTEXT("Error adding data from req_ntz_sig to cache!");
+          return 1;
+        }
+      }        
 /*    ag.ptx_string = arg.ptx_string;
     ag.tx_blob = arg.tx_blob;
     ag.sig_count = arg.sig_count;
@@ -1863,6 +1871,12 @@ skip:
       MERROR("Could not relay_response_ntz_sig!  Sig count must be within range of 0-13");
       return false;
     }
+  }
+//------------------------------------------------------------------------------------------------------------------------
+  template<class t_core>
+  bool t_cryptonote_protocol_handler<t_core>::req_ntz_sig_to_cache(NOTIFY_REQUEST_NTZ_SIG::request& arg, std::string const& signers_index_str)
+  {
+      return req_ntz_sig_to_cache(arg, signers_index_str);
   }
 //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>

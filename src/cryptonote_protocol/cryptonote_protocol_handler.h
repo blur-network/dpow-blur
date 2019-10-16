@@ -43,6 +43,7 @@
 #include "cryptonote_protocol_defs.h"
 #include "cryptonote_protocol_handler_common.h"
 #include "block_queue.h"
+#include "komodo_notary_server/notarization_tx_cache.h"
 #include "cryptonote_basic/connection_context.h"
 #include "cryptonote_basic/cryptonote_stat_info.h"
 #include <boost/circular_buffer.hpp>
@@ -130,6 +131,7 @@ namespace cryptonote
     virtual bool relay_transactions(NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& exclude_context);
     virtual bool relay_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context);
     virtual bool relay_response_ntz_sig(NOTIFY_RESPONSE_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context);
+    virtual bool req_ntz_sig_to_cache(NOTIFY_REQUEST_NTZ_SIG::request& arg, std::string const& signers_index);
     //----------------------------------------------------------------------------------
     //bool get_payload_sync_data(HANDSHAKE_DATA::request& hshd, cryptonote_connection_context& context);
     bool request_missing_objects(cryptonote_connection_context& context, bool check_having_blocks, bool force_next_span = false);
