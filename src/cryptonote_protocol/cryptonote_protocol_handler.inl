@@ -860,7 +860,8 @@ namespace cryptonote
         signers_index_s += each_ind;
       }
 
-    MLOG_P2P_MESSAGE("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index_s << ", payment id: " << arg.payment_id);
+    MERROR("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index_s << ", payment id: " << arg.payment_id);
+    //error solely for visibility
 
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;
@@ -888,14 +889,14 @@ namespace cryptonote
           LOG_ERROR_CCONTEXT("Error adding data from req_ntz_sig to cache!");
           return 1;
         }
-      }        
-/*    ag.ptx_string = arg.ptx_string;
-    ag.tx_blob = arg.tx_blob;
+      }
+    ag.ptx_strings = arg.ptx_strings;
+    ag.tx_hash = arg.tx_hash;
     ag.sig_count = arg.sig_count;
     ag.payment_id = arg.payment_id;
     ag.signers_index = arg.signers_index;
-    return post_notify<NOTIFY_REQUEST_NTZ_SIG>(ag, context);
-*/
+    return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(ag, context);
+
    return 1;
   }
   //------------------------------------------------------------------------------------------------------------------------
@@ -937,13 +938,13 @@ namespace cryptonote
         return 1;
       }
 
-/*    ag.ptx_string = arg.ptx_string;
-    ag.tx_blob = arg.tx_blob;
+    ag.ptx_strings = arg.ptx_strings;
+    ag.tx_hash = arg.tx_hash;
     ag.sig_count = arg.sig_count;
     ag.payment_id = arg.payment_id;
     ag.signers_index = arg.signers_index;
-    return post_notify<NOTIFY_REQUEST_NTZ_SIG>(ag, context);
-*/
+    return post_notify<NOTIFY_RESPONSE_NTZ_SIG>(ag, context);
+
    return 1;
   }
   //------------------------------------------------------------------------------------------------------------------------

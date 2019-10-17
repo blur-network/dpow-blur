@@ -6686,14 +6686,14 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
   for (auto i = ++selected_transfers.begin(); i != selected_transfers.end(); ++i)
     THROW_WALLET_EXCEPTION_IF(subaddr_account != m_transfers[*i].m_subaddr_index.major, error::wallet_internal_error, "the tx uses funds from multiple accounts");
 
-  if (outs.empty())
-  {
-    try {
+  try {
+    if (outs.empty())
+    {
       get_outs(outs, selected_transfers, sig_count); // may throw
-    } catch (std::exception& e) {
-      MERROR("Error at transfer_ntz_selected: exception caught when calling get_outs!");
-      return;
     }
+  } catch (std::exception& e) {
+    MERROR("Error at transfer_ntz_selected: exception caught when calling get_outs!");
+    return;
   }
   //prepare inputs
   LOG_PRINT_L2("preparing outputs");

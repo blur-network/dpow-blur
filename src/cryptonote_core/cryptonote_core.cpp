@@ -1298,10 +1298,12 @@ namespace cryptonote
       cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
       ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
       NOTIFY_REQUEST_NTZ_SIG::request r;
+      
       for (auto it = ntz_txs.begin(); it != ntz_txs.end(); ++it)
       {
-        r.tx_blob = it->second;
-    //    get_protocol()->relay_request_ntz_sig(r, fake_context);
+//        r.tx_hash = epee::string_tools::pod_to_hex(it->first);
+//        r.signers_index = 
+//        get_protocol()->relay_request_ntz_sig(r, fake_context);
       }
       m_mempool.set_relayed(ntz_txs);
     }

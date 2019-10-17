@@ -846,10 +846,24 @@ namespace cryptonote
           m_blockchain.update_txpool_tx(it->first, meta);
         }
       }
-      catch (const std::exception &e)
+      catch (std::exception& e)
       {
-        MERROR("Failed to update txpool transaction metadata: " << e.what());
+        MWARNING("Failed to update txpool transaction metadata: " << e.what() << ", trying ntzpool...");
         // continue
+        try
+        {
+          ntzpool_tx_meta_t ntz_meta;
+          if (m_blockchain.get_ntzpool_tx_meta(it->first, ntz_meta)) {
+            ntz_meta.relayed = true;
+            ntz_meta.last_relayed_time = now;
+            m_blockchain.update_ntzpool_tx(it->first, ntz_meta);
+          }
+        }
+        catch (const std::exception &e)
+        {
+          MERROR("Failed to update transaction metadata, in both txpool and ntzpool: " << e.what());
+          // continue
+        }
       }
     }
   }
@@ -860,28 +874,6 @@ namespace cryptonote
     CRITICAL_REGION_LOCAL1(m_blockchain);
     const time_t now = time(NULL);
     LockedTXN lock(m_blockchain);
-    if (sig_count == 13)
-    {
-      try
-      {
-        txpool_tx_meta_t meta;
-        if (m_blockchain.get_txpool_tx_meta(tx.first, meta))
-        {
-          meta.relayed = true;
-          meta.last_relayed_time = now;
-          m_blockchain.update_txpool_tx(tx.first, meta);
-        }
-      }
-      catch (const std::exception &e)
-      {
-        MERROR("Failed to update ntzpool transaction metadata: " << e.what());
-        // continue
-      }
-    }
-    else if ((sig_count > 0) && (sig_count < 13))
-    {
-      
-    }
   }
   //---------------------------------------------------------------------------------
   size_t tx_memory_pool::get_transactions_count(bool include_unrelayed_txes) const

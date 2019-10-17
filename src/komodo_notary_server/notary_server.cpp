@@ -167,6 +167,9 @@ namespace tools
             if (get_peer_ptx_cache_count() >= 1 && get_ntz_cache_count() >= 2)
             {
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
+              std::pair<std::list<std::string>,std::string> cache_entry = get_cached_peer_ptx_pair();
+              request.recv_blob = cache_entry.first;
+              request.signers_index = cache_entry.second;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
               epee::json_rpc::error err;
               bool R = on_append_ntz_sig(request, response ,err);
