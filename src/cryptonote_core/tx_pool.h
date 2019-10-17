@@ -401,6 +401,13 @@ namespace cryptonote
     size_t get_transactions_count(bool include_unrelayed_txes = true) const;
 
     /**
+     * @brief get the total number of transactions in the pool
+     *
+     * @return the number of transactions in the pool
+     */
+    size_t get_ntzpool_transactions_count(bool include_unrelayed_txes = true) const;
+
+    /**
      * @brief get a string containing human-readable pool information
      *
      * @param short_format whether to use a shortened format for the info

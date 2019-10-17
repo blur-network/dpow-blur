@@ -4638,6 +4638,11 @@ uint64_t Blockchain::get_txpool_tx_count(bool include_unrelayed_txes) const
   return m_db->get_txpool_tx_count(include_unrelayed_txes);
 }
 
+uint64_t Blockchain::get_ntzpool_tx_count(bool include_unrelayed_txes) const
+{
+  return m_db->get_ntzpool_tx_count(include_unrelayed_txes);
+}
+
 void Blockchain::set_user_options(uint64_t maxthreads, uint64_t blocks_per_sync, blockchain_db_sync_mode sync_mode, bool fast_sync)
 {
   if (sync_mode == db_defaultsync)

@@ -977,6 +977,8 @@ namespace tools
     uint64_t import_key_images(const std::string &filename, uint64_t &spent, uint64_t &unspent);
 
     void update_pool_state(bool refreshed = false);
+    uint16_t get_ntzpool_count(bool include_unrelayed);
+
     void remove_obsolete_pool_txs(const std::vector<crypto::hash> &tx_hashes);
 
     std::string encrypt(const std::string &plaintext, const crypto::secret_key &skey, bool authenticated = true) const;

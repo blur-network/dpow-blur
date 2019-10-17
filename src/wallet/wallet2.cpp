@@ -2042,6 +2042,17 @@ void wallet2::remove_obsolete_pool_txs(const std::vector<crypto::hash> &tx_hashe
 }
 
 //----------------------------------------------------------------------------------------------------
+uint16_t wallet2::get_ntzpool_count(bool include_unrelayed)
+{
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::request nreq;
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::response nres;
+  m_daemon_rpc_mutex.lock();
+  bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool_hashes.bin", nreq, nres, m_http_client, rpc_timeout);
+  THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "get_pending_ntz_pool_hashes.bin");
+  THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "get_pending_ntz_pool_hashes.bin");
+  return nres.tx_hashes.size();
+}
+//----------------------------------------------------------------------------------------------------
 void wallet2::update_pool_state(bool refreshed)
 {
   MDEBUG("update_pool_state start");

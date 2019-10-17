@@ -158,13 +158,13 @@ namespace tools
                 }
               }
             }
-            if (get_peer_ptx_cache_count() < 1 && get_ntz_cache_count() >= 2 && num_calls == 2) 
-            {
+            if ((get_peer_ptx_cache_count() < 1) && (get_ntz_cache_count() >= 2) && (num_calls == 2) && (m_wallet->get_ntzpool_count(true) < 1)) 
+            {  //TODO: clean this conditional up, and below it... looking ugly
                 bool last = on_create_ntz_transfer(req, res, e);
                 if (last)
                   ++num_calls;            
             } 
-            if (get_peer_ptx_cache_count() >= 1 && get_ntz_cache_count() >= 2)
+            if ((get_peer_ptx_cache_count() >= 1) && (get_ntz_cache_count() >= 2) && (m_wallet->get_ntzpool_count(true) >= 1))
             {
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
               std::pair<std::list<std::string>,std::string> cache_entry = get_cached_peer_ptx_pair();
