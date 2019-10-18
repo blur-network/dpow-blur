@@ -146,6 +146,7 @@ namespace tools
       RefreshDefault = RefreshFull,
     };
 
+
     static const char* tr(const char* str);
 
     static bool has_testnet_option(const boost::program_options::variables_map& vm);
@@ -678,6 +679,7 @@ namespace tools
     void commit_tx(pending_tx& ptx_vector);
     void request_ntz_sig(std::list<std::string> const& ptx_string, std::vector<pending_tx> ptxs, int const& sigs_count, std::string const& payment_id, std::vector<int> const& sig_index);
     void get_ntzpool_tx(std::vector<pending_tx>& ptx_vector);
+    void get_ntzpool_txs_and_keys(std::vector<cryptonote::ntz_tx_info>& txs, std::vector<cryptonote::spent_key_image_info>& spent_key_images);
     void commit_tx(std::vector<pending_tx>& ptx_vector);
     bool save_tx(const std::vector<pending_tx>& ptx_vector, const std::string &filename) const;
     std::string save_multisig_tx(multisig_tx_set txs);

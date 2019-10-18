@@ -109,8 +109,8 @@
     std::string short_long = "longer";
     std::vector<uint8_t> out;
 
-    if (len >= 4095) {
-      MERROR("Tried to convert a hex string that is " << short_long << " than the required 4096-character length.");
+    if (len >= 8191) {
+      MERROR("Tried to convert a hex string that is " << short_long << " than the required 4096-byte length.");
       std::fill(out.begin(), out.begin()+len, 0);
       return out;
     }
@@ -122,4 +122,24 @@
       out.push_back(x);
     }
     return out;
+  }
+  //----------------------------------------------------------------
+  std::string bytes4096_to_hex(std::vector<uint8_t> &input)
+  {
+    static const char characters[] = "0123456789abcdef";
+    std::string ret(input.size() * 2, 0);
+    char *buffer = const_cast<char *>(ret.data());
+
+    size_t elements = input.size();
+
+    if (elements > 4095) {
+      MERROR("Tried to convert a vector that is longer than the required 4096-byte length.");
+      return "";
+    }
+
+    for (const auto &each_byte : input) {
+      *buffer++ = characters[each_byte >> 4];
+      *buffer++ = characters[each_byte & 0x0F];
+    }
+    return ret;
   }

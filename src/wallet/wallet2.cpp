@@ -2048,9 +2048,34 @@ uint16_t wallet2::get_ntzpool_count(bool include_unrelayed)
   cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::response nres;
   m_daemon_rpc_mutex.lock();
   bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool_hashes.bin", nreq, nres, m_http_client, rpc_timeout);
+  m_daemon_rpc_mutex.unlock();
   THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "get_pending_ntz_pool_hashes.bin");
   THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "get_pending_ntz_pool_hashes.bin");
   return nres.tx_hashes.size();
+}
+//----------------------------------------------------------------------------------------------------
+void wallet2::get_ntzpool_txs_and_keys(std::vector<cryptonote::ntz_tx_info>& txs, std::vector<cryptonote::spent_key_image_info>& spent_key_images)
+{
+  if (!txs.empty() || !spent_key_images.empty()) {
+    MERROR("Transaction vector and key image vector must both be empty prior to retrieving them from the pool!");
+    return;
+  }
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::request nreq = AUTO_VAL_INIT(nreq);
+  nreq.json_only = false;
+  cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::response nres = AUTO_VAL_INIT(nres);
+  m_daemon_rpc_mutex.lock();
+  bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool", nreq, nres, m_http_client, rpc_timeout);
+//  bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool", nreq, nres, m_http_client, rpc_timeout, "POST");
+//  m_daemon_rpc_mutex.unlock();
+  THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "get_pending_ntz_pool");
+  THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "get_pending_ntz_pool");
+  txs = nres.transactions;
+  spent_key_images = nres.spent_key_images;
+  if (txs.empty() || spent_key_images.empty()) {
+    MERROR("Wallet failed to retrieve transaction vector, or spent key vector from ntzpool!");
+    return;
+  }
+  return;
 }
 //----------------------------------------------------------------------------------------------------
 void wallet2::update_pool_state(bool refreshed)
@@ -7406,14 +7431,6 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
         if (unused_transfers_indices_per_subaddr[i].first == index_minor)
         {
           std::swap(unused_transfers_indices_per_subaddr[0], unused_transfers_indices_per_subaddr[i]);
-          break;
-        }
-      }
-      for (size_t i = 1; i < unused_dust_indices_per_subaddr.size(); ++i)
-      {
-        if (unused_dust_indices_per_subaddr[i].first == index_minor)
-        {
-          std::swap(unused_dust_indices_per_subaddr[0], unused_dust_indices_per_subaddr[i]);
           break;
         }
       }

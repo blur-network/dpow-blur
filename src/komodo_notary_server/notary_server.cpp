@@ -1223,29 +1223,58 @@ namespace tools
       return false;
     }
 
-    std::string recv_blob;
+    std::list<std::string> recv_blobs;
     std::list<std::string> hex_blobs = req.recv_blob;
-    if (!epee::string_tools::parse_hexstr_to_binbuff(hex_blobs.back(), recv_blob)) {
-      MERROR("Failed to parse recv_blob from hexstr!");
+    for (const auto& each : hex_blobs) {
+      std::string tmp;
+      if (!epee::string_tools::parse_hexstr_to_binbuff(each, tmp)) {
+        MERROR("Failed to parse recv_blob from hexstr!");
+        return false;
+      } else {
+        recv_blobs.push_back(tmp);
+      }
+    }
+    uint16_t pool_count = m_wallet->get_ntzpool_tx_count(true);
+    if (pool_count < 1) {
+      er.code = NOTARY_RPC_ERROR_CODE_DENIED;
+      er.message = "No pending transactions are in the ntzpool!";
       return false;
     }
 
+    std::vector<ntz_tx_info> ntzpool_txs;
+    std::vector<spent_key_image_info> ntzpool_key_images;
+    bool fetch_pool = m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_key_images);
+    if (!fetch_pool) {
+      er.code = NOTARY_RPC_ERROR_CODE_DENIED;
+      er.message = "Error fetching txs and keys from ntzpool!";
+      return false;
+    }
+    bool same_indices_values = true;
+    std::list<int> pool_index = txs.signers_index;
     std::vector<int> signers_index;
+
     for (int i = 0; i < 13; i++) {
       std::string tmp = req.signers_index.substr(i,2);
       int each = std::stoi(tmp, nullptr, 10);
-      signers_index.push_back(each);
+      if (each != pool_index.front()) {
+        same_indices_values = false;
+        MERROR("Signer index mismatch, keeping pool value instead! Pool value: " << std::to_string(pool_index.front()) << ", at position: " << std::to_string(i)); 
+        signers_index.push_back(pool_index.front());
+      } else {
+        signers_index.push_back(each);
+      }
+      pool_index.pop_front();
     }
 
     std::vector<tools::wallet2::pending_tx> recv_ptx_vec;
-     
-    wallet2::pending_tx pen_tx;
+    for (const auto& recv_blob : recv_blobs) {
+      wallet2::pending_tx pen_tx;
       std::stringstream iss;
       iss << recv_blob;
       boost::archive::portable_binary_iarchive ar(iss);
       ar >> pen_tx;
       recv_ptx_vec.push_back(pen_tx);
-
+    }
     for (const auto& recv_ptx : recv_ptx_vec) {
 
     int sig_count = req.sig_count;
