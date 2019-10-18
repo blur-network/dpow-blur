@@ -1234,36 +1234,38 @@ namespace tools
         recv_blobs.push_back(tmp);
       }
     }
-    uint16_t pool_count = m_wallet->get_ntzpool_tx_count(true);
+    uint16_t pool_count = m_wallet->get_ntzpool_count(true);
     if (pool_count < 1) {
       er.code = NOTARY_RPC_ERROR_CODE_DENIED;
       er.message = "No pending transactions are in the ntzpool!";
       return false;
     }
 
-    std::vector<ntz_tx_info> ntzpool_txs;
-    std::vector<spent_key_image_info> ntzpool_key_images;
-    bool fetch_pool = m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_key_images);
-    if (!fetch_pool) {
+    std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
+    std::vector<cryptonote::spent_key_image_info> ntzpool_key_images;
+    m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_key_images);
+    if (ntzpool_txs.empty() || ntzpool_key_images.empty()) {
       er.code = NOTARY_RPC_ERROR_CODE_DENIED;
       er.message = "Error fetching txs and keys from ntzpool!";
       return false;
     }
-    bool same_indices_values = true;
-    std::list<int> pool_index = txs.signers_index;
+    std::vector<std::list<int>> pool_indexes;
+    for (const auto& each : ntzpool_txs) {
+      pool_indexes.push_back(each.signers_index);
+    }
     std::vector<int> signers_index;
-
+    std::list<int> best_index;
     for (int i = 0; i < 13; i++) {
       std::string tmp = req.signers_index.substr(i,2);
       int each = std::stoi(tmp, nullptr, 10);
-      if (each != pool_index.front()) {
-        same_indices_values = false;
-        MERROR("Signer index mismatch, keeping pool value instead! Pool value: " << std::to_string(pool_index.front()) << ", at position: " << std::to_string(i)); 
-        signers_index.push_back(pool_index.front());
+      if (each != pool_indexes[0].front()) {
+        //TODO: Fix the pool_indexes[0] bit to check all indexes in ntzpool.  This means that the signers_index should probably be removed from request, and we should only grab them from the pool
+        MERROR("Signer index mismatch, keeping pool value instead! Pool value: " << std::to_string(pool_indexes[0].front()) << ", at position: " << std::to_string(i)); 
+        signers_index.push_back(pool_indexes[0].front());
       } else {
         signers_index.push_back(each);
       }
-      pool_index.pop_front();
+      pool_indexes[0].pop_front();
     }
 
     std::vector<tools::wallet2::pending_tx> recv_ptx_vec;

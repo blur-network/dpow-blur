@@ -46,6 +46,7 @@ using namespace epee;
 #include "multisig/multisig.h"
 #include "libhydrogen/hydrogen.h"
 #include "common/hex_str.h"
+#include "cryptonote_basic/cryptonote_format_utils.h"
 
 using namespace crypto;
 
