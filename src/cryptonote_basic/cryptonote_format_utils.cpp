@@ -451,6 +451,7 @@ namespace cryptonote
     std::string size = std::to_string(ntzstr.size());
     ss << std::hex << size;
     std::string ntz_size = ss.str();
+    std::cout << ntz_size;
     std::string ntz_size_first;
     std::string ntz_size_second;
     if (ntzstr.size() <= 255) {
@@ -463,11 +464,16 @@ namespace cryptonote
       ntz_size_first = ntz_size.substr(0,2);
       ntz_size_second = ntz_size.substr(2,2);
     }
-    tx_extra[start_pos] = hex_to_bytes4096(ntz_size_first).front();
+    tx_extra[start_pos] = std::stoi(ntz_size_first, nullptr, 16);
     ++start_pos;
-    tx_extra[start_pos] = hex_to_bytes4096(ntz_size_second).front();
+    tx_extra[start_pos] = std::stoi(ntz_size_second, nullptr, 16);
     //write data
-    std::vector<uint8_t> ntz_data = hex_to_bytes4096(ntzstr);
+    std::string ntzbin;
+    if (!epee::string_tools::parse_hexstr_to_binbuff(ntzstr, ntzbin)) {
+      MERROR("failed to parse hexstr to binbuff");
+      return false;
+    }
+    std::vector<uint8_t> ntz_data = hex_to_bytes4096(ntzbin);
     for (const auto& character : ntz_data)
     {
       tx_extra[++start_pos] = character;
