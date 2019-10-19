@@ -440,12 +440,37 @@ namespace cryptonote
   //---------------------------------------------------------------
   bool add_ntz_txn_to_extra(std::vector<uint8_t>& tx_extra, std::string& ntzstr)
   {
-    tx_extra.resize(tx_extra.size() + 1 + sizeof(TX_EXTRA_NTZ_MAX_COUNT));
-    tx_extra[tx_extra.size() - 1 - sizeof(TX_EXTRA_NTZ_MAX_COUNT)] = TX_EXTRA_NTZ_TXN_TAG;
+    CHECK_AND_ASSERT_MES(ntzstr.size() <= TX_EXTRA_NTZ_MAX_COUNT, false, "ntz data could be 4095 bytes max");
+    size_t start_pos = tx_extra.size();
+    tx_extra.resize(tx_extra.size() + 3 + ntzstr.size()); // we need 1 byte for tag, and 2 bytes for length
+    //write tag
+    tx_extra[start_pos] = TX_EXTRA_NTZ_TXN_TAG;
+    //write len
+    ++start_pos;
+    std::stringstream ss;
+    std::string size = std::to_string(ntzstr.size());
+    ss << std::hex << size;
+    std::string ntz_size = ss.str();
+    std::string ntz_size_first;
+    std::string ntz_size_second;
+    if (ntzstr.size() <= 255) {
+      ntz_size_first = "00";
+      ntz_size_second = ntz_size.substr(0,2);
+    } else if (ntzstr.size() <= 4095) {
+      ntz_size_first = "0" + ntz_size.substr(0,1);
+      ntz_size_second = ntz_size.substr(1,2);
+    } else {
+      ntz_size_first = ntz_size.substr(0,2);
+      ntz_size_second = ntz_size.substr(2,2);
+    }
+    tx_extra[start_pos] = hex_to_bytes4096(ntz_size_first).front();
+    ++start_pos;
+    tx_extra[start_pos] = hex_to_bytes4096(ntz_size_second).front();
+    //write data
     std::vector<uint8_t> ntz_data = hex_to_bytes4096(ntzstr);
     for (const auto& character : ntz_data)
     {
-      tx_extra.push_back(character);
+      tx_extra[++start_pos] = character;
     }
     return true;
   }

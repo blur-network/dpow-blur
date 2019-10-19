@@ -227,6 +227,7 @@ namespace cryptonote
 
    BEGIN_SERIALIZE()
      FIELD(data)
+     if(TX_EXTRA_NONCE_MAX_COUNT < data.size()) return false;
    END_SERIALIZE()
   };
 
