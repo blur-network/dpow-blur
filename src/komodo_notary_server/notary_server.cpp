@@ -162,13 +162,13 @@ namespace tools
             {  //TODO: clean this conditional up, and below it... looking ugly
                 bool last = on_create_ntz_transfer(req, res, e);
                 if (last)
-                  ++num_calls;            
-            } 
+                  ++num_calls;
+            }
             if ((get_peer_ptx_cache_count() >= 1) && (get_ntz_cache_count() >= 2) && (m_wallet->get_ntzpool_count(true) >= 1))
             {
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
-              std::pair<std::list<std::string>,std::string> cache_entry = get_cached_peer_ptx_pair();
-              request.recv_blob = cache_entry.first;
+              std::pair<std::string,std::string> cache_entry = get_cached_peer_ptx_pair();
+              request.ptx_blob = cache_entry.first;
               request.signers_index = cache_entry.second;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
               epee::json_rpc::error err;
@@ -181,8 +181,8 @@ namespace tools
       }
       return true;
     }, 20000);
-   
- m_net_server.add_idle_handler([this](){
+
+    m_net_server.add_idle_handler([this](){
       if (m_stop.load(std::memory_order_relaxed))
       {
         send_stop_signal();
@@ -1173,7 +1173,12 @@ namespace tools
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
            res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
       if (fill_res) {
-        m_wallet->request_ntz_sig(res.tx_metadata_list, ptx_vector, sig_count, payment_id, si_const);
+        std::string tx_metadata;
+        for (const auto& each : res.tx_metadata_list) {
+          tx_metadata = each;
+          break;
+        }
+        m_wallet->request_ntz_sig(tx_metadata, ptx_vector, sig_count, payment_id, si_const);
         MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
       }
 
@@ -1190,16 +1195,21 @@ namespace tools
           bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
              res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
           if (fill_res) {
-             m_wallet->request_ntz_sig(res.tx_metadata_list, ptx_vector, sig_count, payment_id, si_const);
-             MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
-          } 
+            std::string tx_metadata;
+            for (const auto& each : res.tx_metadata_list) {
+              tx_metadata = each;
+              break;
+            }
+            m_wallet->request_ntz_sig(tx_metadata, ptx_vector, sig_count, payment_id, si_const);
+            MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+          }
 
           return fill_res;
 
         } else {
           return true;
         }
-      }  
+      }
     }
     catch (const std::exception& e)
     {
@@ -1223,16 +1233,12 @@ namespace tools
       return false;
     }
 
-    std::list<std::string> recv_blobs;
-    std::list<std::string> hex_blobs = req.recv_blob;
-    for (const auto& each : hex_blobs) {
-      std::string tmp;
-      if (!epee::string_tools::parse_hexstr_to_binbuff(each, tmp)) {
-        MERROR("Failed to parse recv_blob from hexstr!");
+    std::string tx_blob;
+    std::string ptx_blob;
+    std::string hex_blob = req.tx_blob;
+    if (!epee::string_tools::parse_hexstr_to_binbuff(hex_blob, tx_blob)) {
+        MERROR("Failed to parse ptx_blob from hexstr!");
         return false;
-      } else {
-        recv_blobs.push_back(tmp);
-      }
     }
     uint16_t pool_count = m_wallet->get_ntzpool_count(true);
     if (pool_count < 1) {
@@ -1253,6 +1259,7 @@ namespace tools
     for (const auto& each : ntzpool_txs) {
       pool_indexes.push_back(each.signers_index);
     }
+
     std::vector<int> signers_index;
     std::list<int> best_index;
     for (int i = 0; i < 13; i++) {
@@ -1269,14 +1276,13 @@ namespace tools
     }
 
     std::vector<tools::wallet2::pending_tx> recv_ptx_vec;
-    for (const auto& recv_blob : recv_blobs) {
       wallet2::pending_tx pen_tx;
       std::stringstream iss;
-      iss << recv_blob;
+      iss << ptx_blob;
       boost::archive::portable_binary_iarchive ar(iss);
       ar >> pen_tx;
       recv_ptx_vec.push_back(pen_tx);
-    }
+
     for (const auto& recv_ptx : recv_ptx_vec) {
 
     int sig_count = req.sig_count;
@@ -1450,11 +1456,16 @@ namespace tools
 
         const std::vector<int> si_const = signers_index;
         ptx_vector.push_back(recv_ptx);
-  
+
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
         if (fill_res) {
-          m_wallet->request_ntz_sig(res.tx_metadata_list, ptx_vector, sig_count, payment_id, si_const);
+          std::string tx_metadata;
+          for (const auto& each : res.tx_metadata_list) {
+            tx_metadata = each;
+            break;
+          }
+          m_wallet->request_ntz_sig(tx_metadata, ptx_vector, sig_count, payment_id, si_const);
           MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
        return fill_res;

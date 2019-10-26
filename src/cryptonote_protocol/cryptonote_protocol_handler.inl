@@ -890,7 +890,7 @@ namespace cryptonote
           return 1;
         }
       }
-    ag.ptx_strings = arg.ptx_strings;
+    ag.ptx_string = arg.ptx_string;
     ag.tx_hash = arg.tx_hash;
     ag.sig_count = arg.sig_count;
     ag.payment_id = arg.payment_id;
@@ -938,7 +938,7 @@ namespace cryptonote
         return 1;
       }
 
-    ag.ptx_strings = arg.ptx_strings;
+    ag.ptx_string = arg.ptx_string;
     ag.tx_hash = arg.tx_hash;
     ag.sig_count = arg.sig_count;
     ag.payment_id = arg.payment_id;

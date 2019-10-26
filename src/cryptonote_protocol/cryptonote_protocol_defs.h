@@ -307,7 +307,7 @@ namespace cryptonote
     struct request
     {
       int sig_count;
-      std::list<blobdata> ptx_strings;
+      blobdata ptx_string;
       blobdata tx_blob;
       crypto::hash tx_hash;
       std::string payment_id;
@@ -315,7 +315,7 @@ namespace cryptonote
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)
-        KV_SERIALIZE(ptx_strings)
+        KV_SERIALIZE(ptx_string)
         KV_SERIALIZE(tx_blob)
         KV_SERIALIZE_VAL_POD_AS_BLOB(tx_hash)
         KV_SERIALIZE(payment_id)
@@ -333,7 +333,7 @@ namespace cryptonote
     struct request
     {
       int sig_count;
-      std::list<blobdata> ptx_strings;
+      blobdata ptx_string;
       blobdata tx_blob;
       crypto::hash tx_hash;
       std::string payment_id;
@@ -341,7 +341,7 @@ namespace cryptonote
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)
-        KV_SERIALIZE(ptx_strings)
+        KV_SERIALIZE(ptx_string)
         KV_SERIALIZE(tx_blob)
         KV_SERIALIZE_VAL_POD_AS_BLOB(tx_hash)
         KV_SERIALIZE(payment_id)

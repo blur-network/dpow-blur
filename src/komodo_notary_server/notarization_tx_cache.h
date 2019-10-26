@@ -34,8 +34,8 @@ std::vector<tools::wallet2::pending_tx> get_cached_ptx();
 bool add_ptx_to_cache(std::vector<tools::wallet2::pending_tx> const& ptx);
 size_t get_ntz_cache_count();
 std::vector<tools::wallet2::pending_tx> get_cached_peer_ptx();
-std::pair<std::list<std::string>,std::string> get_cached_peer_ptx_pair();
-bool add_peer_ptx_to_cache(std::list<std::string>& ptx, std::string const& signers_index);
+std::pair<std::string,std::string> get_cached_peer_ptx_pair();
+bool add_peer_ptx_to_cache(std::string& ptx, std::string const& signers_index);
 bool req_ntz_sig_to_cache(cryptonote::NOTIFY_REQUEST_NTZ_SIG::request& req, std::string const& signers_index);
 size_t get_peer_ptx_cache_count();
 
