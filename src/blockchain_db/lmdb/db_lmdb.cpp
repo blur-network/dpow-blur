@@ -1959,7 +1959,7 @@ bool BlockchainLMDB::get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_me
   return true;
 }
 
-bool BlockchainLMDB::get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata &bd) const
+bool BlockchainLMDB::get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata &ptx_blob) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -1970,18 +1970,20 @@ bool BlockchainLMDB::get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::b
 
   MDB_val k = {sizeof(txid), (void *)&txid};
   MDB_val v;
+  MDB_val w;
   auto result = mdb_cursor_get(m_cur_ntzpool_blob, &k, &v, MDB_SET);
   if (result == MDB_NOTFOUND)
     return false;
   if (result != 0)
       throw1(DB_ERROR(lmdb_error("Error finding ntzpool_ptx_blob: ", result).c_str()));
-  auto ptxresult = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &k, &v, MDB_SET);
+  auto ptxresult = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &k, &w, MDB_SET);
   if (ptxresult == MDB_NOTFOUND)
     return false;
   if (ptxresult != 0)
       throw1(DB_ERROR(lmdb_error("Error finding ntzpool_ptx_blob: ", result).c_str()));
 
   bd.assign(reinterpret_cast<const char*>(v.mv_data), v.mv_size);
+  ptx_blob.assign(reinterpret_cast<const char*>(w.mv_data), w.mv_size);
   TXN_POSTFIX_RDONLY();
   return true;
 }
@@ -2010,17 +2012,23 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
 
   MDB_val k;
   MDB_val v;
+  MDB_val w;
   bool ret = true;
 
   MDB_cursor_op op = MDB_FIRST;
   while (1)
   {
     int result = mdb_cursor_get(m_cur_ntzpool_meta, &k, &v, op);
+    int ptxresult = mdb_cursor_get(m_cur_ntzpool_meta, &k, &w, op);
     op = MDB_NEXT;
     if (result == MDB_NOTFOUND)
       break;
     if (result)
       throw0(DB_ERROR(lmdb_error("Failed to enumerate ntzpool tx metadata: ", result).c_str()));
+    if (ptxresult == MDB_NOTFOUND)
+      break;
+    if (ptxresult)
+      throw0(DB_ERROR(lmdb_error("Failed to enumerate ntzpool tx metadata: ", ptxresult).c_str()));
     const crypto::hash txid = *(const crypto::hash*)k.mv_data;
     const ntzpool_tx_meta_t &meta = *(const ntzpool_tx_meta_t*)v.mv_data;
     if (!include_unrelayed_txes && meta.do_not_relay)
@@ -2030,6 +2038,7 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
     const cryptonote::blobdata *passed_ptx_blob = NULL;
     cryptonote::blobdata bd;
     cryptonote::blobdata ptx_blob;
+    std::pair<cryptonote::blobdata,cryptonote::blobdata>* blob_pair = NULL;
     if (include_blob)
     {
       MDB_val b;
@@ -2048,11 +2057,11 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
         throw0(DB_ERROR(lmdb_error("Failed to enumerate ntzpool tx blob: ", ptxresult).c_str()));
       ptx_blob.assign(reinterpret_cast<const char*>(c.mv_data), c.mv_size);
       passed_ptx_blob = &ptx_blob;
+      blob_pair->first = *passed_bd;
+      blob_pair->second = *passed_ptx_blob;
     }
-    std::pair<cryptonote::blobdata,cryptonote::blobdata> blob_pair;
-    blob_pair.first = passed_bd;
-    blob_pair.second = passed_ptx_blob;
-    if (!f(txid, meta, blob_pair)) {
+    std::pair<cryptonote::blobdata,cryptonote::blobdata> const* blob_pair_c = blob_pair;
+    if (!f(txid, meta, blob_pair_c)) {
       ret = false;
       break;
     }

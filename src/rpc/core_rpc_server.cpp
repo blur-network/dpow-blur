@@ -1148,7 +1148,7 @@ namespace cryptonote
       return false;
     }
 
-    rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, false, false, sig_count, signers_index);
+    rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, false, false, sig_count, signers_index, req.ptx_string);
       if (rs == false)
       {
         res.status = "Failed";
