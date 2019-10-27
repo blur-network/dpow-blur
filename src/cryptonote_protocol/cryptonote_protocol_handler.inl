@@ -877,7 +877,7 @@ namespace cryptonote
     cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
 
 
-      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index_s);
+      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index_s, arg.ptx_string);
       if(tvc.m_verifivation_failed)
       {
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");

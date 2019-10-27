@@ -191,8 +191,9 @@ namespace tools
               std::pair<int,int> max_el = *std::max_element(scounts.begin(), scounts.end(), docheck);
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
               request.tx_blob = ntzpool_txs[max_el.second].tx_blob;
-              std::pair<std::string,std::string> cache_entry = get_cached_peer_ptx_pair();
-              request.ptx_blob = cache_entry.first;
+              request.ptx_blob = ntzpool_txs[max_el.second].ptx_blob;
+      //        std::pair<std::string,std::string> cache_entry = get_cached_peer_ptx_pair();
+      //        request.ptx_blob = cache_entry.first;
               request.signers_index = ntzpool_txs[max_el.second].signers_index;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
               epee::json_rpc::error err;
