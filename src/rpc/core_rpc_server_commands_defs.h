@@ -1679,6 +1679,7 @@ namespace cryptonote
     bool do_not_relay;
     bool double_spend_seen;
     std::string tx_blob;
+    std::string ptx_blob;
     int sig_count;
     std::list<int> signers_index;
 

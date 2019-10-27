@@ -549,7 +549,7 @@ namespace notary_rpc
       std::string tx_blob;
       std::string ptx_blob;
       int sig_count;
-      std::string signers_index;
+      std::list<int> signers_index;
       std::string payment_id;
 
       BEGIN_KV_SERIALIZE_MAP()

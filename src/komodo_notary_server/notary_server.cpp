@@ -84,6 +84,14 @@ namespace
 
 namespace tools
 {
+
+  struct check {
+    bool operator() (std::pair<int,int>& one, std::pair<int,int>& two)
+    {
+      return ( one.first > two.first);
+    }
+  } docheck;
+  //------------------------------------------------------------------------------------------------------------------------------
   const char* notary_server::tr(const char* str)
   {
     return i18n_translate(str, "komodo::notary_server");
@@ -158,18 +166,34 @@ namespace tools
                 }
               }
             }
-            if ((get_peer_ptx_cache_count() < 1) && (get_ntz_cache_count() >= 2) && (num_calls == 2) && (m_wallet->get_ntzpool_count(true) < 1)) 
+            if (m_wallet->get_ntzpool_count(true) < 1)
             {  //TODO: clean this conditional up, and below it... looking ugly
                 bool last = on_create_ntz_transfer(req, res, e);
                 if (last)
                   ++num_calls;
             }
-            if ((get_peer_ptx_cache_count() >= 1) && (get_ntz_cache_count() >= 2) && (m_wallet->get_ntzpool_count(true) >= 1))
+            if (m_wallet->get_ntzpool_count(true) >= 1)
             {
+              std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
+              std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
+              m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
+              std::vector<std::pair<int,int>> scounts;
+
+              for (const auto& each : ntzpool_txs) {
+                int index = 0;
+                std::pair<int,int> tmp;
+                tmp.first = each.sig_count;
+                tmp.second = index;
+                scounts.push_back(tmp);
+                index++;
+              }
+              int i = 0;
+              std::pair<int,int> max_el = *std::max_element(scounts.begin(), scounts.end(), docheck);
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
+              request.tx_blob = ntzpool_txs[max_el.second].tx_blob;
               std::pair<std::string,std::string> cache_entry = get_cached_peer_ptx_pair();
               request.ptx_blob = cache_entry.first;
-              request.signers_index = cache_entry.second;
+              request.signers_index = ntzpool_txs[max_el.second].signers_index;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
               epee::json_rpc::error err;
               bool R = on_append_ntz_sig(request, response ,err);
@@ -1262,9 +1286,8 @@ namespace tools
 
     std::vector<int> signers_index;
     std::list<int> best_index;
-    for (int i = 0; i < 13; i++) {
-      std::string tmp = req.signers_index.substr(i,2);
-      int each = std::stoi(tmp, nullptr, 10);
+    int i = 0;
+    for (const auto& each : req.signers_index) {
       if (each != pool_indexes[0].front()) {
         //TODO: Fix the pool_indexes[0] bit to check all indexes in ntzpool.  This means that the signers_index should probably be removed from request, and we should only grab them from the pool
         MERROR("Signer index mismatch, keeping pool value instead! Pool value: " << std::to_string(pool_indexes[0].front()) << ", at position: " << std::to_string(i)); 
@@ -1273,6 +1296,7 @@ namespace tools
         signers_index.push_back(each);
       }
       pool_indexes[0].pop_front();
+      i++;
     }
 
     std::vector<tools::wallet2::pending_tx> recv_ptx_vec;
