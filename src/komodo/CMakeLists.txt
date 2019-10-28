@@ -25,7 +25,6 @@ target_link_libraries(komodo
     cncrypto
     rpc
     common
-    version
     ${BTC_LIBRARY}
     ${SECP256K1_LIBRARY}
     ${EVENT_LIBRARY}

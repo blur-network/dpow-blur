@@ -96,13 +96,13 @@ monero_add_executable(blockchain_import
   ${blockchain_import_sources}
   ${blockchain_import_private_headers}
   ${blocksdat})
+add_dependencies(blockchain_import check_git_repository)
 
 target_link_libraries(blockchain_import
   PRIVATE
     cryptonote_core
     blockchain_db
     p2p
-    version
     epee
     komodo
     ${EVENT_LIBRARY}
@@ -133,7 +133,6 @@ target_link_libraries(blockchain_export
     cryptonote_core
     blockchain_db
     p2p
-    version
     epee
     komodo
     ${EVENT_LIBRARY}
@@ -160,7 +159,6 @@ target_link_libraries(blockchain_blackball
     cryptonote_core
     blockchain_db
     p2p
-    version
     epee
     komodo
     ${EVENT_LIBRARY}
@@ -187,7 +185,6 @@ target_link_libraries(blockchain_usage
     cryptonote_core
     blockchain_db
     p2p
-    version
     epee
     komodo
     ${EVENT_LIBRARY}

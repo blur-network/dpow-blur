@@ -133,8 +133,8 @@ struct tx_data_t
 #pragma pack(push, 1)
 struct ntz_data_t
 {
-  const char* bd;
-  const char* ptx;
+  char* bd;
+  char* ptx;
 };
 #pragma pack(push, 1)
 

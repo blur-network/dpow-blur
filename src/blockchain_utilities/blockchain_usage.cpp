@@ -27,10 +27,10 @@
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
-
-#include "komodo/komodo_validation.h"
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/algorithm/string.hpp>
+
+#include "komodo/komodo_validation.h"
 #include "common/command_line.h"
 #include "common/varint.h"
 #include "cryptonote_core/tx_pool.h"

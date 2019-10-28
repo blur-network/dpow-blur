@@ -178,7 +178,6 @@ int main(int argc, char* argv[])
     LOG_PRINT_L0("Error opening database: " << e.what());
     return 1;
   }
-
   std::unique_ptr<komodo::komodo_core> k_core;
   try
   {

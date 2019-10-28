@@ -52,6 +52,7 @@ monero_private_headers(wallet
 monero_add_library(wallet
   ${wallet_sources}
   ${wallet_private_headers})
+add_dependencies(wallet check_git_repository)
 target_link_libraries(wallet
   PUBLIC
     common
@@ -86,6 +87,7 @@ monero_add_executable(wallet_rpc_server
   ${wallet_rpc_sources}
   ${wallet_rpc_headers}
   ${wallet_rpc_private_headers})
+add_dependencies(wallet_rpc_server check_git_repository)
 
 target_link_libraries(wallet_rpc_server
   PRIVATE
@@ -96,7 +98,6 @@ target_link_libraries(wallet_rpc_server
     cncrypto
     common
     komodo
-    version
     ${BTC_LIBRARY}
     ${SECP256K1_LIBRARY}
     ${EVENT_LIBRARY}
@@ -126,8 +127,7 @@ if (BUILD_GUI_DEPS)
             device
             ringct
             ringct_basic
-            checkpoints
-            version)
+            checkpoints)
 
     foreach(lib ${libs_to_merge})
         list(APPEND objlibs $<TARGET_OBJECTS:obj_${lib}>) # matches naming convention in src/CMakeLists.txt

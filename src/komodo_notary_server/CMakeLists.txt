@@ -31,7 +31,6 @@ target_link_libraries(komodo_notary_server
     rpc
     komodo
     common
-    version
     ${BTC_LIBRARY}
     ${SECP256K1_LIBRARY}
     ${EVENT_LIBRARY}

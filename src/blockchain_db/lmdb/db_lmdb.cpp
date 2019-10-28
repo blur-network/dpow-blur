@@ -1791,8 +1791,10 @@ void BlockchainLMDB::add_ntzpool_tx(const transaction &tx, const char* ptx_blob,
       throw1(DB_ERROR(lmdb_error("Error adding ntzpool tx metadata to db transaction: ", result).c_str()));
   }
   ntz_data_t* ntz_data = NULL;
-  ntz_data->bd = tx_to_blob(tx).c_str();
-  ntz_data->ptx = ptx_blob;
+  const char* tmp_tx = tx_to_blob(tx).c_str();
+  const char* tmp_ptx = ptx_blob;
+  strcpy(ntz_data->bd, tmp_tx);
+  strcpy(ntz_data->ptx, tmp_ptx);
   MDB_val_copy<ntz_data_t> ntz_val(*ntz_data);
   if (auto result = mdb_cursor_put(m_cur_ntzpool_data, &k, &ntz_val, MDB_NODUPDATA)) {
     if (result == MDB_KEYEXIST)

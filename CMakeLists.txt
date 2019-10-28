@@ -135,8 +135,6 @@ if (ARM_TEST STREQUAL "arm")
   endif()
 endif()
 
-find_package(Backward)
-
 if (ARM_ID STREQUAL "aarch64" OR ARM_ID STREQUAL "arm64" OR ARM_ID STREQUAL "armv8-a")
   set(ARM 1)
   set(ARM8 1)
@@ -251,10 +249,6 @@ else()
 endif()
 message(STATUS "Building for a ${ARCH_WIDTH}-bit system")
 
-# CMAKE_SYSTEM_NAME checks are commonly known, but specifically taken from libsdl's CMakeLists
-if(CMAKE_SYSTEM_NAME MATCHES "kFreeBSD.*|FreeBSD")
-  set(FREEBSD TRUE)
-endif()
 
 # Check if we're on DragonFly BSD. See the README.md for build instructions.
 if(CMAKE_SYSTEM_NAME MATCHES "DragonFly.*")
@@ -273,7 +267,11 @@ endif()
 # elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
 #   set(BSDI TRUE)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/backward)
+else()
+include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external)
+endif()
 
 if(APPLE)
   include_directories(SYSTEM /usr/include/malloc)
@@ -381,6 +379,10 @@ if (UNIX AND NOT APPLE)
   find_package(Threads)
   add_c_flag_if_supported(-pthread CMAKE_C_FLAGS)
   add_cxx_flag_if_supported(-pthread CMAKE_CXX_FLAGS)
+endif()
+
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+find_package(Backward)
 endif()
 
 # Handle OpenSSL, used for sha256sum on binary updates and light wallet ssl http
@@ -551,7 +553,7 @@ else()
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ARCH_FLAG}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ARCH_FLAG}")
 
-  set(WARNINGS "-Wall -Wextra -Wpointer-arith -Wundef -Wvla -Wwrite-strings -Wno-error=extra -Wno-error=unused-function -Wno-error=format -Wno-format -Wno-error=sign-compare -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-unused-variable -Wno-error=unused-variable -Wno-error=undef -Wno-error=uninitialized")
+  set(WARNINGS "-Wall -Wextra -Wpointer-arith -Wundef -Wvla -Wwrite-strings -Wno-error=extra -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-unused-variable -Wno-error=unused-variable -Wno-error=undef -Wno-error=uninitialized")
   if(NOT MINGW)
     set(WARNINGS_AS_ERRORS_FLAG "-Werror")
   endif()
@@ -771,9 +773,6 @@ else()
     set(DEBUG_FLAGS "${DEBUG_FLAGS} -O0 ")
   endif()
 
-  # At least some CLANGs default to not enough for monero
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftemplate-depth=1024")
-
   if(NOT DEFINED USE_LTO_DEFAULT)
     set(USE_LTO_DEFAULT false)
   endif()
@@ -969,4 +968,9 @@ endif()
 option(BUILD_GUI_DEPS "Build GUI dependencies." OFF)
 
 CHECK_C_COMPILER_FLAG(-std=c11 HAVE_C11)
+# Define the two required variables before including
+# the source code for watching a git repository.
+set(PRE_CONFIGURE_FILE "${CMAKE_SOURCE_DIR}/src/git_version.h.in")
+set(POST_CONFIGURE_FILE "${CMAKE_SOURCE_DIR}/src/version.h")
 
+include(cmake/git-watcher.cmake)
