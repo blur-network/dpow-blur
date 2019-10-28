@@ -130,6 +130,14 @@ struct tx_data_t
 };
 #pragma pack(pop)
 
+#pragma pack(push, 1)
+struct ntz_data_t
+{
+  const char* bd;
+  const char* ptx;
+};
+#pragma pack(push, 1)
+
 /**
  * @brief a struct containing txpool per transaction metadata
  */
@@ -1409,7 +1417,7 @@ public:
    *
    * @param details the details of the transaction to add
    */
-  virtual void add_ntzpool_tx(const transaction &tx, cryptonote::blobdata const& ptx_blob, const ntzpool_tx_meta_t& details) = 0;
+  virtual void add_ntzpool_tx(const transaction &tx, char const* ptx_blob, const ntzpool_tx_meta_t& details) = 0;
 
   /**
    * @brief update a ntzpool transaction's metadata
@@ -1417,7 +1425,7 @@ public:
    * @param txid the txid of the transaction to update
    * @param details the details of the transaction to update
    */
-  virtual void update_ntzpool_tx(const crypto::hash &txid, cryptonote::blobdata const& ptx_blob, const ntzpool_tx_meta_t& details) = 0;
+  virtual void update_ntzpool_tx(const crypto::hash &txid, char const* ptx_blob, const ntzpool_tx_meta_t& details) = 0;
 
   /**
    * @brief get the number of transactions in the ntzpool
@@ -1455,7 +1463,7 @@ public:
    *
    * @return true if the txid was in the ntzpool, false otherwise
    */
-  virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata& ptx_blob) const = 0;
+  virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, ntz_data_t& ntz_data) const = 0;
 
   /**
    * @brief get a ntzpool transaction's blob
@@ -1464,7 +1472,7 @@ public:
    *
    * @return the blob for that transaction
    */
-  virtual std::pair<cryptonote::blobdata,cryptonote::blobdata> get_ntzpool_tx_blob(const crypto::hash& txid) const = 0;
+  virtual ntz_data_t get_ntzpool_tx_blob(const crypto::hash& txid) const = 0;
 
   /**
    * @brief runs a function over all ntzpool transactions
@@ -1479,7 +1487,7 @@ public:
    *
    * @return false if the function returns false for any transaction, otherwise true
    */
-  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, std::pair<cryptonote::blobdata,cryptonote::blobdata> const*)>, bool include_blob = false, bool include_unrelayed_txes = true) const = 0;
+  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, ntz_data_t&)>, bool include_blob = false, bool include_unrelayed_txes = true) const = 0;
 
   /**
    * @brief runs a function over all key images stored
