@@ -130,7 +130,6 @@ namespace tools
   //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::run()
   {
-    uint16_t num_calls = 0;
     bool sent_to_pool = false;
     m_stop = false;
     m_net_server.add_idle_handler([this](){
@@ -141,7 +140,7 @@ namespace tools
       }
       return true;
     }, 20000);
-    m_net_server.add_idle_handler([this, &num_calls, &sent_to_pool](){
+    m_net_server.add_idle_handler([this, &sent_to_pool](){
      try
      {
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
@@ -154,20 +153,19 @@ namespace tools
  //         bool notary = m_wallet->is_notary_node();
  //         if (notary)
  //         {
-          if (get_ntz_cache_count() <= 1 && num_calls <= 1)
+          if (get_ntz_cache_count() <= 1)
           {
             bool r = on_create_ntz_transfer(req, res, e);
             if(r) {
-              ++num_calls;
               r = false;
               if (get_ntz_cache_count() == 1) {
                 r = on_create_ntz_transfer(req, res, e);
-                if (r) {
-                  ++num_calls;
-                }
               }
             }
-          } else if (get_ntz_cache_count() >= 2) {
+          }
+          if (get_ntz_cache_count() >= 2) {
+            uint16_t count = m_wallet->get_ntzpool_count(true);
+            MERROR("ntzpool count: " << std::to_string(count));
             if (m_wallet->get_ntzpool_count(true) >= 1) {
               std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
               std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
@@ -198,7 +196,6 @@ namespace tools
             } else if ((m_wallet->get_ntzpool_count(true) < 1) && !sent_to_pool) {
               bool r = on_create_ntz_transfer(req, res, e);
               if (r) {
-                ++num_calls;
                 sent_to_pool = true;
               }
             }
