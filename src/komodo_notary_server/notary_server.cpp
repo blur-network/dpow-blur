@@ -154,51 +154,50 @@ namespace tools
  //         bool notary = m_wallet->is_notary_node();
  //         if (notary)
  //         {
-          if (get_ntz_cache_count() < 1 && get_peer_ptx_cache_count() < 1 && num_calls <= 1)
+          if (get_ntz_cache_count() <= 1 && num_calls <= 1)
           {
             bool r = on_create_ntz_transfer(req, res, e);
             if(r) {
               ++num_calls;
               r = false;
-              if (num_calls == 1) {
+              if (get_ntz_cache_count() == 1) {
                 r = on_create_ntz_transfer(req, res, e);
                 if (r) {
                   ++num_calls;
                 }
               }
             }
-          }
-          if (num_calls == 2) {
-            std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
-            std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
-            m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
-            if (!ntzpool_txs.empty()) {
-              std::vector<std::pair<int,int>> scounts;
+          } else if (get_ntz_cache_count() >= 2) {
+            if (m_wallet->get_ntzpool_count(true) >= 1) {
+              std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
+              std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
+              m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
+              if (!ntzpool_txs.empty()) {
+                std::vector<std::pair<int,int>> scounts;
 
-              for (const auto& each : ntzpool_txs) {
-                int index = 0;
-                std::pair<int,int> tmp;
-                tmp.first = each.sig_count;
-                tmp.second = index;
-                scounts.push_back(tmp);
-                index++;
-              }
-              std::pair<int,int> max_el = *std::max_element(scounts.begin(), scounts.end(), docheck);
-              notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
-              request.tx_blob = ntzpool_txs[max_el.second].tx_blob;
-              request.ptx_blob = ntzpool_txs[max_el.second].ptx_blob;
-              request.signers_index = ntzpool_txs[max_el.second].signers_index;
+                for (const auto& each : ntzpool_txs) {
+                  int index = 0;
+                  std::pair<int,int> tmp;
+                  tmp.first = each.sig_count;
+                  tmp.second = index;
+                  scounts.push_back(tmp);
+                  index++;
+                }
+                std::pair<int,int> max_el = *std::max_element(scounts.begin(), scounts.end(), docheck);
+                notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
+                request.tx_blob = ntzpool_txs[max_el.second].tx_blob;
+                request.ptx_blob = ntzpool_txs[max_el.second].ptx_blob;
+                request.signers_index = ntzpool_txs[max_el.second].signers_index;
       //        std::pair<std::string,std::string> cache_entry = get_cached_peer_ptx_pair();
       //        request.ptx_blob = cache_entry.first;
-              request.signers_index = ntzpool_txs[max_el.second].signers_index;
-              notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
-              epee::json_rpc::error err;
-              bool R = on_append_ntz_sig(request, response ,err);
-            } else {
-              if (!sent_to_pool) {
+                request.signers_index = ntzpool_txs[max_el.second].signers_index;
+                notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
+                epee::json_rpc::error err;
+                bool R = on_append_ntz_sig(request, response ,err);
+              } if ((m_wallet->get_ntzpool_count(true) < 1) && !sent_to_pool) {
                 bool r = on_create_ntz_transfer(req, res, e);
                 if (r) {
-                  num_calls++;
+                  ++num_calls;
                 }
               }
             }
