@@ -131,7 +131,7 @@ namespace tools
   bool notary_server::run()
   {
     uint16_t num_calls = 0;
-    bool sent_to_pool = num_calls >= 3;
+    bool sent_to_pool = false;
     m_stop = false;
     m_net_server.add_idle_handler([this](){
       try {
@@ -194,11 +194,12 @@ namespace tools
                 notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
                 epee::json_rpc::error err;
                 bool R = on_append_ntz_sig(request, response ,err);
-              } if ((m_wallet->get_ntzpool_count(true) < 1) && !sent_to_pool) {
-                bool r = on_create_ntz_transfer(req, res, e);
-                if (r) {
-                  ++num_calls;
-                }
+              }
+            } else if ((m_wallet->get_ntzpool_count(true) < 1) && !sent_to_pool) {
+              bool r = on_create_ntz_transfer(req, res, e);
+              if (r) {
+                ++num_calls;
+                sent_to_pool = true;
               }
             }
           }
@@ -1215,7 +1216,7 @@ namespace tools
 
         bool added = false;
         added = add_ptx_to_cache(ptx_vector);
-        MWARNING("Pending ntz transaction added to cache!");
+        MWARNING("Pending ntz transaction added to cache! Cache count: " << std::to_string(get_ntz_cache_count()));
         if (!added) {
 
           MERROR("Failed to add ptx to cache! Relaying instead");
@@ -1434,12 +1435,7 @@ namespace tools
     {
       return false;
     }
-/*
-    tools::wallet2::pending_tx recv_ptx = AUTO_VAL_INIT(recv_ptx);
-    recv_ptx.tx = tx;
-    recv_ptx.fee = 58529640000;
-//    std::vector<size_t> 
-*/
+
     try
     {
       uint64_t mixin = m_wallet->adjust_mixin(req.sig_count);
@@ -1447,7 +1443,7 @@ namespace tools
       uint32_t priority = m_wallet->adjust_priority(3);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       std::vector<wallet2::pending_tx> ptx_vector;
-      if (get_ntz_cache_count() < 2) {
+      if (!get_ntz_cache_count()) {
         std::string index_str;
         for (size_t i = 0; i < signers_index.size(); i++) {
           std::string tmp = std::to_string(signers_index[i]) + " ";

@@ -47,23 +47,20 @@ std::pair<std::string, std::string> get_cached_peer_ptx_pair()
   std::pair<std::string,std::string> cache_entry;
   if (!peer_ptx_cache.empty())
     cache_entry = peer_ptx_cache.back();
+  if (!cache_entry.first.empty() && !cache_entry.second.empty())
+    peer_ptx_cache.pop_back();
   return cache_entry;
 }
 
 std::vector<wallet2::pending_tx> get_cached_peer_ptx()
 {
-  std::pair<std::string,std::string> cache_entry;
-  if (!peer_ptx_cache.empty())
-    cache_entry = peer_ptx_cache.back();
-  std::string ptx_list = cache_entry.first;
-  std::string signers_index_str = cache_entry.second;
+  std::pair<std::string,std::string> cache_entry = get_cached_peer_ptx_pair();
   std::vector<wallet2::pending_tx> ptx_vec;
-  if (!ptx_list.empty()) {
-    peer_ptx_cache.pop_back();
-  }
-  for (const auto& each : ptx_list) {
+  std::string ptx_string = cache_entry.first;
+  std::string signers_index_str = cache_entry.second;
+  if (!ptx_string.empty()) {
     std::stringstream ss;
-    ss << each;
+    ss << ptx_string;
     boost::archive::portable_binary_oarchive ar(ss);
     wallet2::pending_tx ptx;
     ar << ptx;
