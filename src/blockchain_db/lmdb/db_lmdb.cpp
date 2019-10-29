@@ -2019,27 +2019,22 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
   while (1)
   {
     int result = mdb_cursor_get(m_cur_ntzpool_meta, &k, &v, op);
-    int ptxresult = mdb_cursor_get(m_cur_ntzpool_meta, &k, &w, op);
     op = MDB_NEXT;
     if (result == MDB_NOTFOUND)
       break;
     if (result)
       throw0(DB_ERROR(lmdb_error("Failed to enumerate ntzpool tx metadata: ", result).c_str()));
-    if (ptxresult == MDB_NOTFOUND)
-      break;
-    if (ptxresult)
-      throw0(DB_ERROR(lmdb_error("Failed to enumerate ntzpool tx metadata: ", ptxresult).c_str()));
     const crypto::hash txid = *(const crypto::hash*)k.mv_data;
     const ntzpool_tx_meta_t &meta = *(const ntzpool_tx_meta_t*)v.mv_data;
     if (!include_unrelayed_txes && meta.do_not_relay)
       // Skipping that tx
       continue;
-    const cryptonote::blobdata *passed_bd = NULL;
-    const cryptonote::blobdata *passed_ptx_blob = NULL;
+    cryptonote::blobdata *passed_bd = NULL;
+    cryptonote::blobdata *passed_ptx_blob = NULL;
     cryptonote::blobdata bd;
     cryptonote::blobdata ptx_blob;
     std::pair<cryptonote::blobdata,cryptonote::blobdata>* blob_pair = NULL;
-    if (include_blob)
+/*    if (include_blob)
     {
       MDB_val b;
       result = mdb_cursor_get(m_cur_ntzpool_blob, &k, &b, MDB_SET);
@@ -2050,7 +2045,7 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
       bd.assign(reinterpret_cast<const char*>(b.mv_data), b.mv_size);
       passed_bd = &bd;
       MDB_val c;
-      ptxresult = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &k, &c, MDB_SET);
+      auto ptxresult = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &k, &c, MDB_SET);
       if (ptxresult == MDB_NOTFOUND)
         throw0(DB_ERROR("Failed to find ntzpool tx blob to match metadata"));
       if (ptxresult)
@@ -2059,14 +2054,13 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
       passed_ptx_blob = &ptx_blob;
       blob_pair->first = *passed_bd;
       blob_pair->second = *passed_ptx_blob;
-    }
+    }*/
     std::pair<cryptonote::blobdata,cryptonote::blobdata> const* blob_pair_c = blob_pair;
     if (!f(txid, meta, blob_pair_c)) {
       ret = false;
       break;
     }
   }
-
   TXN_POSTFIX_RDONLY();
 
   return ret;

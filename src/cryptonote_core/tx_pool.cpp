@@ -908,14 +908,21 @@ namespace cryptonote
     }, true, include_unrelayed_txes);
 
     m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair){
-      transaction tx;
-      if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
-      {
-        MERROR("Failed to parse tx from txpool");
-        // continue
+      if (bd_pair == NULL) {
+        MERROR("Null value for bd_pair!");
         return true;
       }
-      txs.push_back(tx);
+      transaction tx;
+      if (!bd_pair->first.empty())
+      {
+        if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
+        {
+          MERROR("Failed to parse tx from txpool");
+          // continue
+          return true;
+        }
+        txs.push_back(tx);
+      }
       return true;
     }, true, include_unrelayed_txes);
   }
@@ -925,14 +932,20 @@ namespace cryptonote
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
     m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair){
-      transaction tx;
-      if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
-      {
-        MERROR("Failed to parse tx from txpool");
-        // continue
+      if (bd_pair == NULL) {
+        MERROR("Null value for bd_pair!");
         return true;
       }
-      txs.push_back(tx);
+      transaction tx;
+      if (!bd_pair->first.empty()) {
+        if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
+        {
+          MERROR("Failed to parse tx from txpool");
+          // continue
+          return true;
+        }
+        txs.push_back(tx);
+      }
       return true;
     }, true, include_unrelayed_txes);
   }
@@ -1113,16 +1126,22 @@ namespace cryptonote
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
     m_blockchain.for_all_ntzpool_txes([&tx_infos, key_image_infos, include_sensitive_data](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair){
+      if (bd_pair == NULL) {
+        MERROR("Null value for bd_pair!");
+        return true;
+      }
       ntz_tx_info txi;
       txi.id_hash = epee::string_tools::pod_to_hex(txid);
       txi.tx_blob = bd_pair->first;
       txi.ptx_blob = bd_pair->second;
       transaction tx;
-      if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
-      {
-        MERROR("Failed to parse tx from txpool");
-        // continue
-        return true;
+      if (!txi.tx_blob.empty()) {
+        if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
+        {
+          MERROR("Failed to parse tx from txpool");
+          // continue
+          return true;
+        }
       }
       txi.tx_json = obj_to_json_str(tx);
       txi.blob_size = meta.blob_size;
@@ -1637,6 +1656,10 @@ namespace cryptonote
 
 
     m_blockchain.for_all_ntzpool_txes([this, &ntzremove, tx_size_limit](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair) {
+      if (bd_pair == NULL) {
+        MERROR("Null value for bd_pair!");
+        return true;
+      }
       m_txpool_size += meta.blob_size;
       if (meta.blob_size > tx_size_limit) {
         LOG_PRINT_L1("Transaction " << txid << " is too big (" << meta.blob_size << " bytes), removing it from pool");
@@ -1775,15 +1798,21 @@ namespace cryptonote
     std::vector<crypto::hash> ntzremove;
     bool R = m_blockchain.for_all_ntzpool_txes([this, &ntzremove](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair) {
       cryptonote::transaction tx;
-      if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
-      {
-        MWARNING("Failed to parse tx from txpool, removing");
-        ntzremove.push_back(txid);
+      if (bd_pair == NULL) {
+        MERROR("Null value for bd_pair!");
+        return true;
       }
-      m_txs_by_fee_and_receive_time.emplace(std::pair<double, time_t>(meta.fee / (double)meta.blob_size, meta.receive_time), txid);
-      m_txpool_size += meta.blob_size;
-      return true;
-    }, true);
+        if (!bd_pair->first.empty()) {
+          if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
+          {
+            MWARNING("Failed to parse tx from txpool, removing");
+            ntzremove.push_back(txid);
+          }
+          m_txs_by_fee_and_receive_time.emplace(std::pair<double, time_t>(meta.fee / (double)meta.blob_size, meta.receive_time), txid);
+          m_txpool_size += meta.blob_size;
+        }
+       return true;
+      }, true);
     if (!R)
       return false;
     if (!ntzremove.empty())
