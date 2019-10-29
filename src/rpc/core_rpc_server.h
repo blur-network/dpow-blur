@@ -111,6 +111,7 @@ namespace cryptonote
       MAP_URI_AUTO_JON2("/get_transaction_pool", on_get_transaction_pool, COMMAND_RPC_GET_TRANSACTION_POOL)
       MAP_URI_AUTO_JON2("/get_transaction_pool_hashes.bin", on_get_transaction_pool_hashes, COMMAND_RPC_GET_TRANSACTION_POOL_HASHES)
       MAP_URI_AUTO_JON2("/get_pending_ntz_pool", on_get_pending_ntz_pool, COMMAND_RPC_GET_PENDING_NTZ_POOL)
+      MAP_URI_AUTO_JON2("/get_ntz_pool_count", on_get_ntz_pool_count, COMMAND_RPC_GET_PENDING_NTZ_POOL_COUNT)
       MAP_URI_AUTO_JON2("/get_pending_ntz_pool_hashes.bin", on_get_pending_ntz_pool_hashes, COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES)
       MAP_URI_AUTO_JON2("/get_blocks_json", on_get_blocks_json, COMMAND_RPC_GET_BLOCKS_JSON)
       MAP_URI_AUTO_JON2("/get_transaction_pool_stats", on_get_transaction_pool_stats, COMMAND_RPC_GET_TRANSACTION_POOL_STATS)
@@ -191,6 +192,7 @@ namespace cryptonote
     bool on_set_log_categories(const COMMAND_RPC_SET_LOG_CATEGORIES::request& req, COMMAND_RPC_SET_LOG_CATEGORIES::response& res);
     bool on_get_transaction_pool(const COMMAND_RPC_GET_TRANSACTION_POOL::request& req, COMMAND_RPC_GET_TRANSACTION_POOL::response& res, bool request_has_rpc_origin = true);
     bool on_get_pending_ntz_pool(const COMMAND_RPC_GET_PENDING_NTZ_POOL::request& req, COMMAND_RPC_GET_PENDING_NTZ_POOL::response& res, bool request_has_rpc_origin = true);
+    bool on_get_ntz_pool_count(const COMMAND_RPC_GET_PENDING_NTZ_POOL_COUNT::request& req, COMMAND_RPC_GET_PENDING_NTZ_POOL_COUNT::response& res, bool request_has_rpc_origin = true);
     bool on_get_blocks_json(const COMMAND_RPC_GET_BLOCKS_JSON::request& req, COMMAND_RPC_GET_BLOCKS_JSON::response& res, bool request_has_rpc_origin = true);
     bool on_get_transaction_pool_hashes(const COMMAND_RPC_GET_TRANSACTION_POOL_HASHES::request& req, COMMAND_RPC_GET_TRANSACTION_POOL_HASHES::response& res, bool request_has_rpc_origin = true);
     bool on_get_transaction_pool_stats(const COMMAND_RPC_GET_TRANSACTION_POOL_STATS::request& req, COMMAND_RPC_GET_TRANSACTION_POOL_STATS::response& res, bool request_has_rpc_origin = true);

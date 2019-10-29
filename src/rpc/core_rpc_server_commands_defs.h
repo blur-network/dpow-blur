@@ -1753,6 +1753,28 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_GET_PENDING_NTZ_POOL_COUNT
+  {
+    struct request
+    {
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string status;
+      uint16_t count;
+      bool untrusted;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+        KV_SERIALIZE(count)
+        KV_SERIALIZE(untrusted)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
   struct COMMAND_RPC_GET_PENDING_NTZ_POOL
   {
     struct request

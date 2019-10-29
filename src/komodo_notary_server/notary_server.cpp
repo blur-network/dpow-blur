@@ -164,8 +164,7 @@ namespace tools
             }
           }
           if (get_ntz_cache_count() >= 2) {
-            uint16_t count = m_wallet->get_ntzpool_count(true);
-            MERROR("ntzpool count: " << std::to_string(count));
+            size_t count = m_wallet->get_ntzpool_count(true);
             if (m_wallet->get_ntzpool_count(true) >= 1) {
               std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
               std::vector<cryptonote::spent_key_image_info> ntzpool_keys;

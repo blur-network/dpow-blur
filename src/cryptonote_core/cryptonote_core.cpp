@@ -1573,6 +1573,12 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
+  bool core::get_ntzpool_tx_count(size_t& count, bool include_sensitive_data) const
+  {
+    count = m_mempool.get_ntzpool_transactions_count(include_sensitive_data);
+    return true;
+  }
+  //-----------------------------------------------------------------------------------------------
   bool core::get_pool_transaction_hashes(std::vector<crypto::hash>& txs, bool include_sensitive_data) const
   {
     m_mempool.get_transaction_hashes(txs, include_sensitive_data);

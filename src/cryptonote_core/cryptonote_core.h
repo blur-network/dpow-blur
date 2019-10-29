@@ -527,6 +527,8 @@ namespace cryptonote
       */
      size_t get_pool_transactions_count() const;
 
+     bool get_ntzpool_tx_count(size_t& count, bool include_sensitive_data) const;
+
      /**
       * @copydoc Blockchain::get_total_transactions
       *
