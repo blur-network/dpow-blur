@@ -1479,7 +1479,7 @@ public:
    *
    * @return false if the function returns false for any transaction, otherwise true
    */
-  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, std::pair<cryptonote::blobdata,cryptonote::blobdata> const*)>, bool include_blob = false, bool include_unrelayed_txes = true) const = 0;
+  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, cryptonote::blobdata const*, cryptonote::blobdata const*)>, bool include_blob = true, bool include_unrelayed_txes = true) const = 0;
 
   /**
    * @brief runs a function over all key images stored

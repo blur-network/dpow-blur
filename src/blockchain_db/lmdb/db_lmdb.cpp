@@ -1722,7 +1722,7 @@ cryptonote::blobdata BlockchainLMDB::get_txpool_tx_blob(const crypto::hash& txid
   return bd;
 }
 
-bool BlockchainLMDB::for_all_txpool_txes(std::function<bool(const crypto::hash&, const txpool_tx_meta_t&, const cryptonote::blobdata*)> f, bool include_blob, bool include_unrelayed_txes) const
+bool BlockchainLMDB::for_all_txpool_txes(std::function<bool(const crypto::hash&, const txpool_tx_meta_t&, const cryptonote::blobdata* bd)> f, bool include_blob, bool include_unrelayed_txes) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -1749,7 +1749,6 @@ bool BlockchainLMDB::for_all_txpool_txes(std::function<bool(const crypto::hash&,
     if (!include_unrelayed_txes && meta.do_not_relay)
       // Skipping that tx
       continue;
-    const cryptonote::blobdata *passed_bd = NULL;
     cryptonote::blobdata bd;
     if (include_blob)
     {
@@ -1760,10 +1759,9 @@ bool BlockchainLMDB::for_all_txpool_txes(std::function<bool(const crypto::hash&,
       if (result)
         throw0(DB_ERROR(lmdb_error("Failed to enumerate txpool tx blob: ", result).c_str()));
       bd.assign(reinterpret_cast<const char*>(b.mv_data), b.mv_size);
-      passed_bd = &bd;
     }
 
-    if (!f(txid, meta, passed_bd)) {
+    if (!f(txid, meta, &bd)) {
       ret = false;
       break;
     }
@@ -2000,7 +1998,7 @@ std::pair<cryptonote::blobdata,cryptonote::blobdata> BlockchainLMDB::get_ntzpool
   return blob_pair;
 }
 
-bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, std::pair<cryptonote::blobdata,cryptonote::blobdata> const*)> f, bool include_blob, bool include_unrelayed_txes) const
+bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)> f, bool include_blob, bool include_unrelayed_txes) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -2029,12 +2027,9 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
     if (!include_unrelayed_txes && meta.do_not_relay)
       // Skipping that tx
       continue;
-    cryptonote::blobdata *passed_bd = NULL;
-    cryptonote::blobdata *passed_ptx_blob = NULL;
     cryptonote::blobdata bd;
     cryptonote::blobdata ptx_blob;
-    std::pair<cryptonote::blobdata,cryptonote::blobdata>* blob_pair = NULL;
-/*    if (include_blob)
+    if (include_blob)
     {
       MDB_val b;
       result = mdb_cursor_get(m_cur_ntzpool_blob, &k, &b, MDB_SET);
@@ -2043,20 +2038,15 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
       if (result)
         throw0(DB_ERROR(lmdb_error("Failed to enumerate ntzpool tx blob: ", result).c_str()));
       bd.assign(reinterpret_cast<const char*>(b.mv_data), b.mv_size);
-      passed_bd = &bd;
-      MDB_val c;
+    /*  MDB_val c;
       auto ptxresult = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &k, &c, MDB_SET);
       if (ptxresult == MDB_NOTFOUND)
-        throw0(DB_ERROR("Failed to find ntzpool tx blob to match metadata"));
+        throw0(DB_ERROR("Failed to find ntzpool ptx blob to match metadata"));
       if (ptxresult)
         throw0(DB_ERROR(lmdb_error("Failed to enumerate ntzpool tx blob: ", ptxresult).c_str()));
-      ptx_blob.assign(reinterpret_cast<const char*>(c.mv_data), c.mv_size);
-      passed_ptx_blob = &ptx_blob;
-      blob_pair->first = *passed_bd;
-      blob_pair->second = *passed_ptx_blob;
-    }*/
-    std::pair<cryptonote::blobdata,cryptonote::blobdata> const* blob_pair_c = blob_pair;
-    if (!f(txid, meta, blob_pair_c)) {
+      ptx_blob.assign(reinterpret_cast<const char*>(c.mv_data), c.mv_size);*/
+    }
+    if (!f(txid, meta, &bd, &ptx_blob)) {
       ret = false;
       break;
     }

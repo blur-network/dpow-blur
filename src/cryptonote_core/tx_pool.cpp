@@ -679,7 +679,7 @@ namespace cryptonote
       return true;
     }, false);
 
-    m_blockchain.for_all_ntzpool_txes([this, &ntzremove](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair) {
+    m_blockchain.for_all_ntzpool_txes([this, &ntzremove](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx) {
       uint64_t tx_age = time(nullptr) - meta.receive_time;
 
       if((tx_age > CRYPTONOTE_MEMPOOL_TX_LIVETIME && !meta.kept_by_block) ||
@@ -801,7 +801,7 @@ namespace cryptonote
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
     const uint64_t now = time(NULL);
-    m_blockchain.for_all_ntzpool_txes([this, now, &txs](const crypto::hash &txid, const ntzpool_tx_meta_t &ntz_meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair){
+    m_blockchain.for_all_ntzpool_txes([this, now, &txs](const crypto::hash &txid, const ntzpool_tx_meta_t &ntz_meta, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx){
       // 0 fee transactions are never relayed
       if(ntz_meta.fee > 0 && !ntz_meta.do_not_relay && now - ntz_meta.last_relayed_time > get_relay_delay(now, ntz_meta.receive_time))
       {
@@ -907,15 +907,11 @@ namespace cryptonote
       return true;
     }, true, include_unrelayed_txes);
 
-    m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair){
-      if (bd_pair == NULL) {
-        MERROR("Null value for bd_pair!");
-        return true;
-      }
+    m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx){
       transaction tx;
-      if (!bd_pair->first.empty())
+      if (!bd->empty())
       {
-        if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
+        if (!parse_and_validate_tx_from_blob(*bd, tx))
         {
           MERROR("Failed to parse tx from txpool");
           // continue
@@ -931,14 +927,10 @@ namespace cryptonote
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
-    m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair){
-      if (bd_pair == NULL) {
-        MERROR("Null value for bd_pair!");
-        return true;
-      }
+    m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx){
       transaction tx;
-      if (!bd_pair->first.empty()) {
-        if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
+      if (!bd->empty()) {
+        if (!parse_and_validate_tx_from_blob(*bd, tx))
         {
           MERROR("Failed to parse tx from txpool");
           // continue
@@ -1125,18 +1117,14 @@ namespace cryptonote
     //  and NN addresses, probably. Not sure of the latter, entirely.
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
-    m_blockchain.for_all_ntzpool_txes([&tx_infos, key_image_infos, include_sensitive_data](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair){
-      if (bd_pair == NULL) {
-        MERROR("Null value for bd_pair!");
-        return true;
-      }
+    m_blockchain.for_all_ntzpool_txes([&tx_infos, key_image_infos, include_sensitive_data](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx){
       ntz_tx_info txi;
       txi.id_hash = epee::string_tools::pod_to_hex(txid);
-      txi.tx_blob = bd_pair->first;
-      txi.ptx_blob = bd_pair->second;
+      txi.tx_blob = *bd;
+      txi.ptx_blob = *ptx;
       transaction tx;
       if (!txi.tx_blob.empty()) {
-        if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
+        if (!parse_and_validate_tx_from_blob(*bd, tx))
         {
           MERROR("Failed to parse tx from txpool");
           // continue
@@ -1655,11 +1643,7 @@ namespace cryptonote
     }, false);
 
 
-    m_blockchain.for_all_ntzpool_txes([this, &ntzremove, tx_size_limit](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair) {
-      if (bd_pair == NULL) {
-        MERROR("Null value for bd_pair!");
-        return true;
-      }
+    m_blockchain.for_all_ntzpool_txes([this, &ntzremove, tx_size_limit](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx) {
       m_txpool_size += meta.blob_size;
       if (meta.blob_size > tx_size_limit) {
         LOG_PRINT_L1("Transaction " << txid << " is too big (" << meta.blob_size << " bytes), removing it from pool");
@@ -1796,14 +1780,10 @@ namespace cryptonote
       }
     }
     std::vector<crypto::hash> ntzremove;
-    bool R = m_blockchain.for_all_ntzpool_txes([this, &ntzremove](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, std::pair<cryptonote::blobdata,cryptonote::blobdata> const* bd_pair) {
+    bool R = m_blockchain.for_all_ntzpool_txes([this, &ntzremove](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx) {
       cryptonote::transaction tx;
-      if (bd_pair == NULL) {
-        MERROR("Null value for bd_pair!");
-        return true;
-      }
-        if (!bd_pair->first.empty()) {
-          if (!parse_and_validate_tx_from_blob(bd_pair->first, tx))
+        if (!bd->empty()) {
+          if (!parse_and_validate_tx_from_blob(*bd, tx))
           {
             MWARNING("Failed to parse tx from txpool, removing");
             ntzremove.push_back(txid);
