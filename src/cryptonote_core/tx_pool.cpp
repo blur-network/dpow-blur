@@ -857,7 +857,7 @@ namespace cryptonote
           if (m_blockchain.get_ntzpool_tx_meta(it->first, ntz_meta)) {
             ntz_meta.relayed = true;
             ntz_meta.last_relayed_time = now;
-            m_blockchain.update_ntzpool_tx(it->first, "", ntz_meta);
+            m_blockchain.update_ntzpool_tx(it->first, ntz_meta);
           }
         }
         catch (const std::exception &e)
@@ -1421,7 +1421,7 @@ namespace cryptonote
                 ntz_meta.double_spend_seen = true;
                 try
                 {
-                  m_blockchain.update_ntzpool_tx(txid,"", ntz_meta);
+                  m_blockchain.update_ntzpool_tx(txid, ntz_meta);
                  }
                  catch (std::exception& e)
                  {

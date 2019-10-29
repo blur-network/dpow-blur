@@ -263,7 +263,7 @@ public:
   virtual bool for_all_txpool_txes(std::function<bool(const crypto::hash&, const txpool_tx_meta_t&, const cryptonote::blobdata*)> f, bool include_blob = false, bool include_unrelayed_txes = true) const;
 
   virtual void add_ntzpool_tx(const transaction &tx, cryptonote::blobdata const& ptx_blob, const ntzpool_tx_meta_t& meta);
-  virtual void update_ntzpool_tx(const crypto::hash &txid, cryptonote::blobdata const& ptx_blob, const ntzpool_tx_meta_t& meta);
+  virtual void update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_meta_t& meta);
   virtual uint64_t get_ntzpool_tx_count(bool include_unrelayed_txes = true) const;
   virtual bool ntzpool_has_tx(const crypto::hash &txid) const;
   virtual void remove_ntzpool_tx(const crypto::hash& txid);

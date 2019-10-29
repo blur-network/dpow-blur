@@ -4603,9 +4603,9 @@ void Blockchain::add_ntzpool_tx(transaction &tx, cryptonote::blobdata const& ptx
   m_db->add_ntzpool_tx(tx, ptx_blob, meta);
 }
 
-void Blockchain::update_ntzpool_tx(const crypto::hash &txid, cryptonote::blobdata const& ptx_blob, const ntzpool_tx_meta_t &meta)
+void Blockchain::update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_meta_t &meta)
 {
-  m_db->update_ntzpool_tx(txid, ptx_blob, meta);
+  m_db->update_ntzpool_tx(txid, meta);
 }
 
 void Blockchain::remove_ntzpool_tx(const crypto::hash &txid)

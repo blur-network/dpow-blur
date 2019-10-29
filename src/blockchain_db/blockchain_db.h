@@ -1417,7 +1417,7 @@ public:
    * @param txid the txid of the transaction to update
    * @param details the details of the transaction to update
    */
-  virtual void update_ntzpool_tx(const crypto::hash &txid, cryptonote::blobdata const& ptx_blob, const ntzpool_tx_meta_t& details) = 0;
+  virtual void update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_meta_t& details) = 0;
 
   /**
    * @brief get the number of transactions in the ntzpool

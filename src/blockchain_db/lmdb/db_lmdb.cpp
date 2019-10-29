@@ -1808,15 +1808,13 @@ void BlockchainLMDB::add_ntzpool_tx(const transaction &tx, cryptonote::blobdata 
   }
 }
 
-void BlockchainLMDB::update_ntzpool_tx(const crypto::hash &txid, cryptonote::blobdata const& ptx_blob, const ntzpool_tx_meta_t &meta)
+void BlockchainLMDB::update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_meta_t &meta)
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
   mdb_txn_cursors *m_cursors = &m_wcursors;
 
   CURSOR(ntzpool_meta)
-  CURSOR(ntzpool_blob)
-  CURSOR(ntzpool_ptx_blob)
 
   MDB_val k = {sizeof(txid), (void *)&txid};
   MDB_val v;
