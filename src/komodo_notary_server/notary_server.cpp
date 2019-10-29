@@ -141,7 +141,7 @@ namespace tools
       }
       return true;
     }, 20000);
-    m_net_server.add_idle_handler([this, &num_calls](){
+    m_net_server.add_idle_handler([this, &num_calls, &sent_to_pool](){
      try
      {
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
@@ -150,33 +150,29 @@ namespace tools
         epee::json_rpc::error e;
         if (m_wallet)
         {
-            std::list<cryptonote::transaction> txs;
+          std::list<cryptonote::transaction> txs;
  //         bool notary = m_wallet->is_notary_node();
  //         if (notary)
  //         {
-            if (get_ntz_cache_count() < 1 && get_peer_ptx_cache_count() < 1)
-            {
-              bool r = on_create_ntz_transfer(req, res, e);
-              if(r) {
-                ++num_calls;
-                r = false;
+          if (get_ntz_cache_count() < 1 && get_peer_ptx_cache_count() < 1 && num_calls <= 1)
+          {
+            bool r = on_create_ntz_transfer(req, res, e);
+            if(r) {
+              ++num_calls;
+              r = false;
+              if (num_calls == 1) {
                 r = on_create_ntz_transfer(req, res, e);
                 if (r) {
                   ++num_calls;
                 }
               }
             }
-            if (m_wallet->get_ntzpool_count(true) < 1)
-            {  //TODO: clean this conditional up, and below it... looking ugly
-                bool last = on_create_ntz_transfer(req, res, e);
-                if (last)
-                  ++num_calls;
-            }
-            if (m_wallet->get_ntzpool_count(true) >= 1)
-            {
-              std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
-              std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
-              m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
+          }
+          if (num_calls == 2) {
+            std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
+            std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
+            m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
+            if (!ntzpool_txs.empty()) {
               std::vector<std::pair<int,int>> scounts;
 
               for (const auto& each : ntzpool_txs) {
@@ -187,19 +183,26 @@ namespace tools
                 scounts.push_back(tmp);
                 index++;
               }
-              int i = 0;
               std::pair<int,int> max_el = *std::max_element(scounts.begin(), scounts.end(), docheck);
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
               request.tx_blob = ntzpool_txs[max_el.second].tx_blob;
               request.ptx_blob = ntzpool_txs[max_el.second].ptx_blob;
+              request.signers_index = ntzpool_txs[max_el.second].signers_index;
       //        std::pair<std::string,std::string> cache_entry = get_cached_peer_ptx_pair();
       //        request.ptx_blob = cache_entry.first;
               request.signers_index = ntzpool_txs[max_el.second].signers_index;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
               epee::json_rpc::error err;
               bool R = on_append_ntz_sig(request, response ,err);
+            } else {
+              if (!sent_to_pool) {
+                bool r = on_create_ntz_transfer(req, res, e);
+                if (r) {
+                  num_calls++;
+                }
+              }
             }
-//        }
+          }
         }
       } catch (const std::exception& ex) {
         LOG_ERROR("Exception while populating ntz ptx caches, what=" << ex.what());
@@ -1258,13 +1261,9 @@ namespace tools
       return false;
     }
 
-    std::string tx_blob;
-    std::string ptx_blob;
-    std::string hex_blob = req.tx_blob;
-    if (!epee::string_tools::parse_hexstr_to_binbuff(hex_blob, tx_blob)) {
-        MERROR("Failed to parse ptx_blob from hexstr!");
-        return false;
-    }
+    std::string tx_blob = req.tx_blob;
+    std::string ptx_blob = req.ptx_blob;
+
     uint16_t pool_count = m_wallet->get_ntzpool_count(true);
     if (pool_count < 1) {
       er.code = NOTARY_RPC_ERROR_CODE_DENIED;
