@@ -165,13 +165,13 @@ namespace tools
           }
           if (get_ntz_cache_count() >= 2) {
             size_t count = m_wallet->get_ntzpool_count(true);
-            if (m_wallet->get_ntzpool_count(true) >= 1) {
+            if ((m_wallet->get_ntzpool_count(true) >= 1) && !sent_to_pool) {
               std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
               std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
               m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
 //              std::pair<cryptonote::blobdata,cryptonote::blobdata> blob_pair = m_wallet->get_ntz_pool_blobs();
-              if (ntzpool_txs.empty() || ntzpool_keys.empty()) {
-                MERROR("Failed to fetch transactions or key images from ntz pool!");
+              if (ntzpool_txs.empty()) {
+                MERROR("Failed to fetch transactions from ntz pool!");
                 return true;
               } else {
                 std::vector<std::pair<int,int>> scounts;
@@ -188,11 +188,12 @@ namespace tools
                 notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
                 request.tx_blob = ntzpool_txs[max_el.second].tx_blob;
                 request.ptx_blob = ntzpool_txs[max_el.second].ptx_blob;
+                request.sig_count = ntzpool_txs[max_el.second].sig_count;
                 request.signers_index = ntzpool_txs[max_el.second].signers_index;
                 notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
                 epee::json_rpc::error err;
                 MWARNING("Calling append_ntz_sig from idle handler with ptx_blob: " << request.ptx_blob << ", and tx_blob: " << request.tx_blob << std::endl);
-                bool R = on_append_ntz_sig(request, response ,err);
+                bool R = on_append_ntz_sig(request, response, err);
               }
             } else if ((m_wallet->get_ntzpool_count(true) < 1) && !sent_to_pool) {
               bool r = on_create_ntz_transfer(req, res, e);
