@@ -169,7 +169,11 @@ namespace tools
               std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
               std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
               m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
-              if (!ntzpool_txs.empty()) {
+//              std::pair<cryptonote::blobdata,cryptonote::blobdata> blob_pair = m_wallet->get_ntz_pool_blobs();
+              if (ntzpool_txs.empty() || ntzpool_keys.empty()) {
+                MERROR("Failed to fetch transactions or key images from ntz pool!");
+                return true;
+              } else {
                 std::vector<std::pair<int,int>> scounts;
 
                 for (const auto& each : ntzpool_txs) {
@@ -185,11 +189,9 @@ namespace tools
                 request.tx_blob = ntzpool_txs[max_el.second].tx_blob;
                 request.ptx_blob = ntzpool_txs[max_el.second].ptx_blob;
                 request.signers_index = ntzpool_txs[max_el.second].signers_index;
-      //        std::pair<std::string,std::string> cache_entry = get_cached_peer_ptx_pair();
-      //        request.ptx_blob = cache_entry.first;
-                request.signers_index = ntzpool_txs[max_el.second].signers_index;
                 notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
                 epee::json_rpc::error err;
+                MWARNING("Calling append_ntz_sig from idle handler with ptx_blob: " << request.ptx_blob << ", and tx_blob: " << request.tx_blob << std::endl);
                 bool R = on_append_ntz_sig(request, response ,err);
               }
             } else if ((m_wallet->get_ntzpool_count(true) < 1) && !sent_to_pool) {
@@ -1259,8 +1261,8 @@ namespace tools
 
     std::string tx_blob = req.tx_blob;
     std::string ptx_blob = req.ptx_blob;
-
-    uint16_t pool_count = m_wallet->get_ntzpool_count(true);
+/*
+    size_t pool_count = m_wallet->get_ntzpool_count(true);
     if (pool_count < 1) {
       er.code = NOTARY_RPC_ERROR_CODE_DENIED;
       er.message = "No pending transactions are in the ntzpool!";
@@ -1294,7 +1296,12 @@ namespace tools
       pool_indexes[0].pop_front();
       i++;
     }
-
+*/
+    std::list<int> signers_list = req.signers_index;
+    std::vector<int> signers_index;
+    for (const auto & each : signers_list) {
+      signers_index.push_back(each);
+    }
     std::vector<tools::wallet2::pending_tx> recv_ptx_vec;
       wallet2::pending_tx pen_tx;
       std::stringstream iss;
