@@ -434,7 +434,7 @@ namespace cryptonote
       *
       * @note see tx_memory_pool::get_transactions
       */
-     bool get_ntzpool_transactions(std::list<transaction>& txs, bool include_unrelayed_txes = true) const;
+     bool get_ntzpool_transactions(std::list<std::pair<transaction,blobdata>>& txs, bool include_unrelayed_txes = true) const;
 
      /**
       * @copydoc tx_memory_pool::get_txpool_backlog
@@ -511,7 +511,7 @@ namespace cryptonote
       *
       * @note see tx_memory_pool::get_transactions
       */
-     bool get_pending_ntz_pool_transactions(std::list<transaction>& txs, bool include_unrelayed_txes = true) const;
+     bool get_pending_ntz_pool_transactions(std::list<std::pair<transaction,blobdata>>& txs, bool include_unrelayed_txes = true) const;
 
      /**
       * @copydoc tx_memory_pool::get_pool_for_rpc

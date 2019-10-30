@@ -3526,8 +3526,9 @@ bool Blockchain::flush_txes_from_pool(const std::list<crypto::hash> &txids)
     bool relayed, do_not_relay, double_spend_seen;
     uint8_t sig_count;
     std::list<int> signers_index;
+    cryptonote::blobdata ptx_blob;
     MINFO("Removing txid " << txid << " from the pool");
-    if(m_tx_pool.have_tx(txid) && !m_tx_pool.take_tx(txid, tx, blob_size, fee, relayed, do_not_relay, double_spend_seen) && !m_tx_pool.take_ntzpool_tx(txid, tx, blob_size, fee, relayed, do_not_relay, double_spend_seen, sig_count, signers_index))
+    if(m_tx_pool.have_tx(txid) && !m_tx_pool.take_tx(txid, tx, blob_size, fee, relayed, do_not_relay, double_spend_seen) && !m_tx_pool.take_ntzpool_tx(txid, tx, blob_size, fee, relayed, do_not_relay, double_spend_seen, sig_count, signers_index, ptx_blob))
     {
       MERROR("Failed to remove txid " << txid << " from the pool");
       res = false;

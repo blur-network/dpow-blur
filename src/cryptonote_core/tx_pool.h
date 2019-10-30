@@ -157,7 +157,7 @@ namespace cryptonote
      *
      * @return true unless the transaction cannot be found in the pool
      */
-     bool take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& sig_count, std::list<int>& signers_index);
+     bool take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& sig_count, std::list<int>& signers_index, cryptonote::blobdata& ptx_string);
 
     /**
      * @brief checks if the pool has a transaction with the given hash
@@ -261,7 +261,7 @@ namespace cryptonote
      * @param include_unrelayed_txes include unrelayed txes in the result
      *
      */
-    void get_pending_ntz_pool_transactions(std::list<transaction>& txs, bool include_unrelayed_txes = true) const;
+    void get_pending_ntz_pool_transactions(std::list<std::pair<transaction,blobdata>>& txs, bool include_unrelayed_txes = true) const;
 
     /**
      * @brief get a list of all transaction hashes in the pool

@@ -586,7 +586,7 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------------------------
-  bool tx_memory_pool::take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& sig_count, std::list<int>& signers_index)
+  bool tx_memory_pool::take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& sig_count, std::list<int>& signers_index, cryptonote::blobdata& ptx_string)
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
@@ -611,6 +611,7 @@ namespace cryptonote
         return false;
       }
 
+      ptx_string = txblobs.second;
       blob_size = meta.blob_size;
       fee = meta.fee;
       relayed = meta.relayed;
@@ -936,24 +937,9 @@ namespace cryptonote
       txs.push_back(tx);
       return true;
     }, true, include_unrelayed_txes);
-
-    m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const ntzpool_tx_meta_t &meta, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx){
-      transaction tx;
-      if (!bd->empty())
-      {
-        if (!parse_and_validate_tx_from_blob(*bd, tx))
-        {
-          MERROR("Failed to parse tx from txpool");
-          // continue
-          return true;
-        }
-        txs.push_back(tx);
-      }
-      return true;
-    }, true, include_unrelayed_txes);
   }
   //------------------------------------------------------------------
-  void tx_memory_pool::get_pending_ntz_pool_transactions(std::list<transaction>& txs, bool include_unrelayed_txes) const
+  void tx_memory_pool::get_pending_ntz_pool_transactions(std::list<std::pair<transaction,cryptonote::blobdata>>& txs, bool include_unrelayed_txes) const
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
@@ -966,7 +952,12 @@ namespace cryptonote
           // continue
           return true;
         }
-        txs.push_back(tx);
+      }
+      if (!ptx->empty()) {
+        std::pair<transaction,blobdata> tx_and_ptx;
+        tx_and_ptx.first = tx;
+        tx_and_ptx.second = *ptx;
+        txs.push_back(tx_and_ptx);
       }
       return true;
     }, true, include_unrelayed_txes);

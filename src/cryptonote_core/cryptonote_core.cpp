@@ -1567,7 +1567,7 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::get_ntzpool_transactions(std::list<transaction>& txs, bool include_sensitive_data) const
+  bool core::get_ntzpool_transactions(std::list<std::pair<transaction,blobdata>>& txs, bool include_sensitive_data) const
   {
     m_mempool.get_pending_ntz_pool_transactions(txs, include_sensitive_data);
     return true;
@@ -1591,7 +1591,7 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::get_pending_ntz_pool_transactions(std::list<transaction>& txs, bool include_sensitive_data) const
+  bool core::get_pending_ntz_pool_transactions(std::list<std::pair<transaction,blobdata>>& txs, bool include_sensitive_data) const
   {
     m_mempool.get_pending_ntz_pool_transactions(txs, include_sensitive_data);
     return true;

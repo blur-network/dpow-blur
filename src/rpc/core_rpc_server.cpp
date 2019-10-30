@@ -2381,13 +2381,13 @@ namespace cryptonote
     if (req.txids.empty())
     {
       std::list<transaction> pool_txs;
-      std::list<transaction> ntzpool_txs;
+      std::list<std::pair<transaction,blobdata>> ntzpool_txs;
       bool r = m_core.get_pool_transactions(pool_txs);
       bool R = m_core.get_ntzpool_transactions(ntzpool_txs);
       if (!r && !R)
       {
         res.status = "Failed to get both txpool & ntzpool contents";
-        return true;
+        return false;
       }
       for (const auto &tx: pool_txs)
       {
@@ -2395,7 +2395,7 @@ namespace cryptonote
       }
       for (const auto &tx: ntzpool_txs)
       {
-        ntz_txids.push_back(cryptonote::get_transaction_hash(tx));
+        ntz_txids.push_back(cryptonote::get_transaction_hash(tx.first));
       }
     }
     else
