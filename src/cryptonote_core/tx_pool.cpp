@@ -869,12 +869,42 @@ namespace cryptonote
     }
   }
   //---------------------------------------------------------------------------------
-  void tx_memory_pool::req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata> &tx, int const& sig_count, std::string const& signers_index)
+  bool tx_memory_pool::req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata> &new_tx_hash_blob, crypto::hash const& prior_hash, cryptonote::blobdata const& ptx, int const& sig_count, std::string const& signers_index)
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
     const time_t now = time(NULL);
     LockedTXN lock(m_blockchain);
+    if (!m_blockchain.has_ntzpool_tx(prior_hash))
+    {
+      MERROR("Attempting to increment a pending notarization tx, but tx to update can't be found!");
+      return false;
+    }
+
+    cryptonote::blobdata prior_tx_blob;
+    cryptonote::blobdata prior_ptx_blob;
+    cryptonote::blobdata ptx_blob;
+    ntzpool_tx_meta_t ntz_meta = AUTO_VAL_INIT(ntz_meta);
+    ntzpool_tx_meta_t prior_ntz_meta;
+    if (m_blockchain.get_ntzpool_tx_meta(prior_hash, prior_ntz_meta))
+    {
+      MERROR("Failed to get ntz tx metadata from ntzpool in req_ntz_sig_inc!");
+      return false;
+    }
+    if (m_blockchain.get_ntzpool_tx_blob(prior_hash, prior_tx_blob, prior_ptx_blob))
+    {
+      MERROR("Failed to get ntz tx from ntzpool in req_ntz_sig_inc!");
+      return false;
+    }
+    cryptonote::transaction new_tx;
+    if (!parse_and_validate_tx_from_blob(new_tx_hash_blob.second, new_tx))
+    {
+      MERROR("Failed to parse new tx from blob in req_ntz_sig_inc!");
+      return false;
+    }
+    m_blockchain.remove_ntzpool_tx(prior_hash);
+    m_blockchain.add_ntzpool_tx(new_tx, ptx_blob, ntz_meta);
+    return true;
   }
   //---------------------------------------------------------------------------------
   size_t tx_memory_pool::get_transactions_count(bool include_unrelayed_txes) const
