@@ -1198,13 +1198,20 @@ namespace tools
       if (get_ntz_cache_count() >= 2) {
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
            res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
-      if (fill_res) {
-        std::string tx_metadata;
-        for (const auto& each : res.tx_metadata_list) {
-          tx_metadata = each;
+        cryptonote::blobdata meta_bin;
+        if (fill_res) {
+          std::string tx_metadata;
+          for (const auto& each : ptx_vector) {
+          tx_metadata = ptx_to_string(each);
+          if (!epee::string_tools::parse_hexstr_to_binbuff(tx_metadata, meta_bin)) {
+            MERROR("Failed to parse hexstr to binbuff for ptx!");
+            return false;
+          }
+          MWARNING("Ptx to string: " << tx_metadata);
+          MWARNING("Ptx hexstr to binbuff: " << meta_bin);
           break;
         }
-        m_wallet->request_ntz_sig(tx_metadata, ptx_vector, sig_count, payment_id, si_const);
+        m_wallet->request_ntz_sig(meta_bin, ptx_vector, sig_count, payment_id, si_const);
         MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
       }
 
@@ -1220,13 +1227,20 @@ namespace tools
           MERROR("Failed to add ptx to cache! Relaying instead");
           bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
              res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
+          cryptonote::blobdata meta_bin;
           if (fill_res) {
             std::string tx_metadata;
-            for (const auto& each : res.tx_metadata_list) {
-              tx_metadata = each;
+            for (const auto& each : ptx_vector) {
+              tx_metadata = ptx_to_string(each);
+              if (!epee::string_tools::parse_hexstr_to_binbuff(tx_metadata, meta_bin)) {
+                MERROR("Failed to parse hexstr to binbuff for ptx!");
+                return false;
+              }
+              MWARNING("Ptx to string: " << tx_metadata);
+              MWARNING("Ptx hexstr to binbuff: " << meta_bin);
               break;
             }
-            m_wallet->request_ntz_sig(tx_metadata, ptx_vector, sig_count, payment_id, si_const);
+            m_wallet->request_ntz_sig(meta_bin, ptx_vector, sig_count, payment_id, si_const);
             MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
           }
 

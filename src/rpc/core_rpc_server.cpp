@@ -1131,6 +1131,7 @@ namespace cryptonote
     tvc.m_signers_index = req.signers_index;
     tvc.m_sig_count = req.sig_count;
     const std::string signers_index = req.signers_index;
+    const cryptonote::blobdata ptx_string = req.ptx_string;
     std::list<int> signers_list;
 
     for (int i = 0; i < 13; i++) {
@@ -1148,7 +1149,7 @@ namespace cryptonote
       return false;
     }
 
-    rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, false, false, sig_count, signers_index, req.ptx_string);
+    rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, false, false, sig_count, signers_index, ptx_string);
       if (rs == false)
       {
         res.status = "Failed";

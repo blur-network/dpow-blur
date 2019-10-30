@@ -294,6 +294,23 @@ namespace tools
       std::vector<std::pair<crypto::key_image, std::vector<uint64_t>>> m_rings; // relative
     };
 
+    struct unconfirmed_ntz_transfer_details
+    {
+      cryptonote::transaction_prefix m_tx;
+      cryptonote::blobdata ptx_string;
+      uint64_t m_amount_in;
+      uint64_t m_amount_out;
+      uint64_t m_change;
+      time_t m_sent_time;
+      std::vector<cryptonote::tx_destination_entry> m_dests;
+      crypto::hash m_payment_id;
+      enum { pending, pending_not_in_pool, failed } m_state;
+      uint64_t m_timestamp;
+      uint32_t m_subaddr_account;   // subaddress account of your wallet to be used in this transfer
+      std::set<uint32_t> m_subaddr_indices;  // set of address indices used as inputs in this transfer
+      std::vector<std::pair<crypto::key_image, std::vector<uint64_t>>> m_rings; // relative
+    };
+
     struct confirmed_transfer_details
     {
       uint64_t m_amount_in;
@@ -820,6 +837,9 @@ namespace tools
       if(ver < 24)
         return;
       a & m_ring_history_saved;
+      if(ver < 25)
+        return;
+      a & m_unconfirmed_ntz_txs;
     }
 
     /*!
@@ -1091,6 +1111,7 @@ namespace tools
     void process_unconfirmed(const crypto::hash &txid, const cryptonote::transaction& tx, uint64_t height);
     void process_outgoing(const crypto::hash &txid, const cryptonote::transaction& tx, uint64_t height, uint64_t ts, uint64_t spent, uint64_t received, uint32_t subaddr_account, const std::set<uint32_t>& subaddr_indices);
     void add_unconfirmed_tx(const cryptonote::transaction& tx, uint64_t amount_in, const std::vector<cryptonote::tx_destination_entry> &dests, const crypto::hash &payment_id, uint64_t change_amount, uint32_t subaddr_account, const std::set<uint32_t>& subaddr_indices);
+    void add_unconfirmed_ntz_tx(const cryptonote::transaction& tx, cryptonote::blobdata const& ptx_string, uint64_t amount_in, const std::vector<cryptonote::tx_destination_entry> &dests, const crypto::hash &payment_id, uint64_t change_amount, uint32_t subaddr_account, const std::set<uint32_t>& subaddr_indices);
     void generate_genesis(cryptonote::block& b) const;
     void check_genesis(const crypto::hash& genesis_hash) const; //throws
     bool generate_chacha_key_from_secret_keys(crypto::chacha_key &key) const;
@@ -1135,6 +1156,7 @@ namespace tools
     hashchain m_blockchain;
     std::atomic<uint64_t> m_local_bc_height; //temporary workaround
     std::unordered_map<crypto::hash, unconfirmed_transfer_details> m_unconfirmed_txs;
+    std::unordered_map<crypto::hash, unconfirmed_ntz_transfer_details> m_unconfirmed_ntz_txs;
     std::unordered_map<crypto::hash, confirmed_transfer_details> m_confirmed_txs;
     std::unordered_multimap<crypto::hash, pool_payment_details> m_unconfirmed_payments;
     std::unordered_map<crypto::hash, crypto::secret_key> m_tx_keys;
@@ -1206,7 +1228,7 @@ namespace tools
     std::unique_ptr<ringdb> m_ringdb;
   };
 }
-BOOST_CLASS_VERSION(tools::wallet2, 24)
+BOOST_CLASS_VERSION(tools::wallet2, 25)
 BOOST_CLASS_VERSION(tools::wallet2::transfer_details, 9)
 BOOST_CLASS_VERSION(tools::wallet2::multisig_info, 1)
 BOOST_CLASS_VERSION(tools::wallet2::multisig_info::LR, 0)
@@ -1214,6 +1236,7 @@ BOOST_CLASS_VERSION(tools::wallet2::multisig_tx_set, 1)
 BOOST_CLASS_VERSION(tools::wallet2::payment_details, 3)
 BOOST_CLASS_VERSION(tools::wallet2::pool_payment_details, 1)
 BOOST_CLASS_VERSION(tools::wallet2::unconfirmed_transfer_details, 8)
+BOOST_CLASS_VERSION(tools::wallet2::unconfirmed_ntz_transfer_details, 9)
 BOOST_CLASS_VERSION(tools::wallet2::confirmed_transfer_details, 6)
 BOOST_CLASS_VERSION(tools::wallet2::address_book_row, 17)
 BOOST_CLASS_VERSION(tools::wallet2::reserve_proof_entry, 0)
@@ -1370,6 +1393,57 @@ namespace boost
       a & x.m_signers;
     }
 
+    template <class Archive>
+    inline void serialize(Archive &a, tools::wallet2::unconfirmed_ntz_transfer_details &x, const boost::serialization::version_type ver)
+    {
+      a & x.m_change;
+      a & x.m_sent_time;
+      if (ver < 5)
+      {
+        cryptonote::transaction tx;
+        a & tx;
+        x.m_tx = (const cryptonote::transaction_prefix&)tx;
+      }
+      else
+      {
+        a & x.m_tx;
+      }
+      if (ver < 1)
+        return;
+      a & x.m_dests;
+      a & x.m_payment_id;
+      if (ver < 2)
+        return;
+      a & x.m_state;
+      if (ver < 3)
+        return;
+      a & x.m_timestamp;
+      if (ver < 4)
+        return;
+      a & x.m_amount_in;
+      a & x.m_amount_out;
+      if (ver < 6)
+      {
+        // v<6 may not have change accumulated in m_amount_out, which is a pain,
+        // as it's readily understood to be sum of outputs.
+        // We convert it to include change from v6
+        if (!typename Archive::is_saving() && x.m_change != (uint64_t)-1)
+          x.m_amount_out += x.m_change;
+      }
+      if (ver < 7)
+      {
+        x.m_subaddr_account = 0;
+        return;
+      }
+      a & x.m_subaddr_account;
+      a & x.m_subaddr_indices;
+      if (ver < 8)
+        return;
+      a & x.m_rings;
+      if (ver < 9)
+        return;
+      a & x.ptx_string;
+    }
     template <class Archive>
     inline void serialize(Archive &a, tools::wallet2::unconfirmed_transfer_details &x, const boost::serialization::version_type ver)
     {

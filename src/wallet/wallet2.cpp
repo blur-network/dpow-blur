@@ -2101,23 +2101,23 @@ void wallet2::update_pool_state(bool refreshed)
 
   // remove any pending tx that's not in the pool
   std::unordered_map<crypto::hash, wallet2::unconfirmed_transfer_details>::iterator it = m_unconfirmed_txs.begin();
-  std::unordered_map<crypto::hash, wallet2::unconfirmed_transfer_details>::iterator it2 = m_unconfirmed_txs.begin();
-  while (it != m_unconfirmed_txs.end())
+  std::unordered_map<crypto::hash, wallet2::unconfirmed_ntz_transfer_details>::iterator it2 = m_unconfirmed_ntz_txs.begin();
+  while (it != m_unconfirmed_txs.end() && it2 != m_unconfirmed_ntz_txs.end())
   {
     const crypto::hash &txid = it->first;
     bool found = false;
     bool found2 = false;
-    for (const auto &it2: res.tx_hashes)
+    for (const auto &iter: res.tx_hashes)
     {
-      if (it2 == txid)
+      if (iter == txid)
       {
         found = true;
         break;
       }
     }
-    for (const auto &it2: nres.tx_hashes)
+    for (const auto &iter: nres.tx_hashes)
     {
-      if (it2 == txid)
+      if (iter == txid)
       {
         found2 = true;
         break;
@@ -2125,6 +2125,7 @@ void wallet2::update_pool_state(bool refreshed)
     }
     auto pit = it++;
     auto pit2 = it2++;
+    // TODO: Why is the above being done?
     if (!found || !found2)
     {
       // we want to avoid a false positive when we ask for the pool just after
@@ -2133,15 +2134,17 @@ void wallet2::update_pool_state(bool refreshed)
       // that the first time we don't see the tx, we set that boolean, and only
       // delete it the second time it is checked (but only when refreshed, so
       // we're sure we've seen the blockchain state first)
+
+      //TODO: large blocks of comments like above never bode well in this codebase
       if (pit->second.m_state == wallet2::unconfirmed_transfer_details::pending && found2)
       {
         LOG_PRINT_L1("Pending txid " << txid << " not in tx pool, marking as not in pool");
         pit->second.m_state = wallet2::unconfirmed_transfer_details::pending_not_in_pool;
       }
-      else if (pit2->second.m_state == wallet2::unconfirmed_transfer_details::pending && found)
+      else if (pit2->second.m_state == wallet2::unconfirmed_ntz_transfer_details::pending && found)
       {
         LOG_PRINT_L1("Pending txid " << txid << " not in tx pool, marking as not in pool");
-        pit2->second.m_state = wallet2::unconfirmed_transfer_details::pending_not_in_pool;
+        pit2->second.m_state = wallet2::unconfirmed_ntz_transfer_details::pending_not_in_pool;
       }
       if (pit->second.m_state == wallet2::unconfirmed_transfer_details::pending_not_in_pool && refreshed && !found2)
       {
@@ -2168,10 +2171,10 @@ void wallet2::update_pool_state(bool refreshed)
           }
         }
       }
-      else if (pit2->second.m_state == wallet2::unconfirmed_transfer_details::pending_not_in_pool && refreshed && !found)
+      else if (pit2->second.m_state == wallet2::unconfirmed_ntz_transfer_details::pending_not_in_pool && refreshed && !found)
       {
         LOG_PRINT_L1("Pending txid " << txid << " not in pool, marking as failed");
-        pit2->second.m_state = wallet2::unconfirmed_transfer_details::failed;
+        pit2->second.m_state = wallet2::unconfirmed_ntz_transfer_details::failed;
 
         // the inputs aren't spent anymore, since the tx failed
         remove_rings(pit2->second.m_tx);
@@ -2291,28 +2294,28 @@ void wallet2::update_pool_state(bool refreshed)
     if (!txid_found_in_up)
     {
       LOG_PRINT_L1("Found new pool tx: " << txid);
-      bool found = false;
-      for (const auto &i: m_unconfirmed_txs)
+      bool found2 = false;
+      for (const auto &i: m_unconfirmed_ntz_txs)
       {
         if (i.first == txid)
         {
-          found = true;
+          found2 = true;
           // if this is a payment to yourself at a different subaddress account, don't skip it
           // so that you can see the incoming pool tx with 'show_transfers' on that receiving subaddress account
-          const unconfirmed_transfer_details& utd = i.second;
+          const unconfirmed_ntz_transfer_details& utd = i.second;
           for (const auto& dst : utd.m_dests)
           {
             auto subaddr_index = m_subaddresses.find(dst.addr.m_spend_public_key);
             if (subaddr_index != m_subaddresses.end() && subaddr_index->second.major != utd.m_subaddr_account)
             {
-              found = false;
+              found2 = false;
               break;
             }
           }
           break;
         }
       }
-      if (!found)
+      if (!found2)
       {
         // not one of those we sent ourselves
         txids.push_back({txid, false});
@@ -4713,6 +4716,34 @@ void wallet2::add_unconfirmed_tx(const cryptonote::transaction& tx, uint64_t amo
 }
 
 //----------------------------------------------------------------------------------------------------
+void wallet2::add_unconfirmed_ntz_tx(const cryptonote::transaction& tx, cryptonote::blobdata const& ptx_string, uint64_t amount_in, const std::vector<cryptonote::tx_destination_entry> &dests, const crypto::hash &payment_id, uint64_t change_amount, uint32_t subaddr_account, const std::set<uint32_t>& subaddr_indices)
+{
+  unconfirmed_ntz_transfer_details& utd = m_unconfirmed_ntz_txs[cryptonote::get_transaction_hash(tx)];
+  utd.m_amount_in = amount_in;
+  utd.ptx_string = ptx_string;
+  utd.m_amount_out = 0;
+  for (const auto &d: dests)
+    utd.m_amount_out += d.amount;
+  utd.m_amount_out += change_amount; // dests does not contain change
+  utd.m_change = change_amount;
+  utd.m_sent_time = time(NULL);
+  utd.m_tx = (const cryptonote::transaction_prefix&)tx;
+  utd.m_dests = dests;
+  utd.m_payment_id = payment_id;
+  utd.m_state = wallet2::unconfirmed_ntz_transfer_details::pending;
+  utd.m_timestamp = time(NULL);
+  utd.m_subaddr_account = subaddr_account;
+  utd.m_subaddr_indices = subaddr_indices;
+  for (const auto &in: tx.vin)
+  {
+    if (in.type() != typeid(cryptonote::txin_to_key))
+      continue;
+    const auto &txin = boost::get<cryptonote::txin_to_key>(in);
+    utd.m_rings.push_back(std::make_pair(txin.k_image, txin.key_offsets));
+  }
+}
+
+//----------------------------------------------------------------------------------------------------
 void wallet2::transfer(const std::vector<cryptonote::tx_destination_entry>& dsts, const size_t fake_outs_count, const std::vector<size_t> &unused_transfers_indices,
                        uint64_t unlock_time, uint64_t fee, const std::vector<uint8_t>& extra, cryptonote::transaction& tx, pending_tx& ptx, bool trusted_daemon)
 {
@@ -4933,7 +4964,7 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, std::vector<pending
     for (const auto& each : ptxs) {
       blobdata blob = tx_to_blob(each.tx);
       tx_blobs.push_back(blob);
-      std::string blobhex = epee::string_tools::buff_to_hex_nodelimer(blob);
+ //     std::string blobhex = epee::string_tools::buff_to_hex_nodelimer(blob);
  //     MWARNING("trying to relay request ntz sig with tx blob: " << blobhex << ", sigs_count: " << std::to_string(sigs_count) << ", and payment id: " << payment_id);
     }
     request.tx_blob = tx_blobs[0];
@@ -4979,7 +5010,7 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, std::vector<pending
         amount_in += m_transfers[idx].amount();
       m_tx_keys.insert(std::make_pair(txid, ptx.tx_key));
 
-      add_unconfirmed_tx(ptx.tx, amount_in, dests, payment_id_hash, ptx.change_dts.amount, ptx.construction_data.subaddr_account, ptx.construction_data.subaddr_indices);
+      add_unconfirmed_ntz_tx(ptx.tx, ptx_string, amount_in, dests, payment_id_hash, ptx.change_dts.amount, ptx.construction_data.subaddr_account, ptx.construction_data.subaddr_indices);
 
       MWARNING("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
       //fee includes dust if dust policy specified it.
