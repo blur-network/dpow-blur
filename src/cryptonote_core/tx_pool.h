@@ -109,7 +109,7 @@ namespace cryptonote
      */
     bool add_tx(transaction &tx, const crypto::hash &id, size_t blob_size, tx_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version);
 
-    bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t const& version, uint8_t const& has_raw_ntz_data, int const& sig_count, std::list<int> const& signers_index, cryptonote::blobdata const& ptx_blob);
+    bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t const& version, uint8_t const& has_raw_ntz_data, int const& sig_count, std::list<int> const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash);
 
     /**
      * @brief add a transaction to the transaction pool
@@ -157,7 +157,7 @@ namespace cryptonote
      *
      * @return true unless the transaction cannot be found in the pool
      */
-     bool take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& sig_count, std::list<int>& signers_index, cryptonote::blobdata& ptx_string);
+     bool take_ntzpool_tx(const crypto::hash &id, transaction &tx, size_t& blob_size, uint64_t& fee, bool &relayed, bool &do_not_relay, bool &double_spend_seen, uint8_t& sig_count, std::list<int>& signers_index, cryptonote::blobdata& ptx_string, crypto::hash const& ptx_hash);
 
     /**
      * @brief checks if the pool has a transaction with the given hash
@@ -356,7 +356,7 @@ namespace cryptonote
      *
      * @return true if the transaction is found, otherwise false
      */
-    bool get_ntzpool_transaction(const crypto::hash& h, cryptonote::blobdata& txblob, cryptonote::blobdata& ptx_blob) const;
+    bool get_ntzpool_transaction(const crypto::hash& h, crypto::hash const& ptx_hash, cryptonote::blobdata& txblob, cryptonote::blobdata& ptx_blob) const;
 
     /**
      * @brief get a list of all relayable transactions and their hashes
@@ -401,7 +401,7 @@ namespace cryptonote
      * @param tx pair of hash, blob
      * @param sig_count signature count for the tx
      */
-    bool req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata>& new_tx, crypto::hash const& prior_hash, cryptonote::blobdata const& ptx, int const& sig_count, std::string const& signers_index);
+    bool req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata>& new_tx, crypto::hash const& prior_hash, cryptonote::blobdata const& ptx, crypto::hash const& ptx_hash, int const& sig_count, std::string const& signers_index);
 
     /**
      * @brief get the total number of transactions in the pool

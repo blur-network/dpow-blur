@@ -308,6 +308,7 @@ namespace cryptonote
     {
       int sig_count;
       blobdata ptx_string;
+      crypto::hash ptx_hash;
       blobdata tx_blob;
       crypto::hash tx_hash;
       std::string payment_id;
@@ -316,6 +317,7 @@ namespace cryptonote
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)
         KV_SERIALIZE(ptx_string)
+        KV_SERIALIZE_VAL_POD_AS_BLOB(ptx_hash)
         KV_SERIALIZE(tx_blob)
         KV_SERIALIZE_VAL_POD_AS_BLOB(tx_hash)
         KV_SERIALIZE(payment_id)
@@ -334,6 +336,7 @@ namespace cryptonote
     {
       int sig_count;
       blobdata ptx_string;
+      crypto::hash ptx_hash;
       blobdata tx_blob;
       crypto::hash tx_hash;
       std::string payment_id;
@@ -342,6 +345,7 @@ namespace cryptonote
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)
         KV_SERIALIZE(ptx_string)
+        KV_SERIALIZE_VAL_POD_AS_BLOB(ptx_hash)
         KV_SERIALIZE(tx_blob)
         KV_SERIALIZE_VAL_POD_AS_BLOB(tx_hash)
         KV_SERIALIZE(payment_id)

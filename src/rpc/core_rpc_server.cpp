@@ -1127,6 +1127,14 @@ namespace cryptonote
     ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
     const int sig_count = req.sig_count;
 
+    std::string hash_data;
+    if (!epee::string_tools::parse_hexstr_to_binbuff(req.ptx_hash, hash_data))
+    {
+      MERROR("Failed in converting hash to binbuff!");
+      return false;
+    }
+    const crypto::hash ptx_hash =  *reinterpret_cast<const crypto::hash*>(hash_data.data());
+
     bool rs = false;
     tvc.m_signers_index = req.signers_index;
     tvc.m_sig_count = req.sig_count;
@@ -1149,7 +1157,7 @@ namespace cryptonote
       return false;
     }
 
-    rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, false, false, sig_count, signers_index, ptx_string);
+    rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, false, false, sig_count, signers_index, ptx_string, ptx_hash);
       if (rs == false)
       {
         res.status = "Failed";
@@ -1187,6 +1195,7 @@ namespace cryptonote
     {
       NOTIFY_REQUEST_NTZ_SIG::request r;
       r.ptx_string = req.ptx_string;
+      r.ptx_hash = ptx_hash;
       r.tx_blob = req.tx_blob;
       r.sig_count = req.sig_count;
       r.payment_id = req.payment_id;

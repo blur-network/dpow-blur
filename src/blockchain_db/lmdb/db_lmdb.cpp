@@ -1772,7 +1772,7 @@ bool BlockchainLMDB::for_all_txpool_txes(std::function<bool(const crypto::hash&,
   return ret;
 }
 
-void BlockchainLMDB::add_ntzpool_tx(const transaction &tx, cryptonote::blobdata const& ptx_blob, const ntzpool_tx_meta_t &meta)
+void BlockchainLMDB::add_ntzpool_tx(const transaction &tx, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t &meta)
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -1785,6 +1785,7 @@ void BlockchainLMDB::add_ntzpool_tx(const transaction &tx, cryptonote::blobdata 
   const crypto::hash txid = get_transaction_hash(tx);
 
   MDB_val k = {sizeof(txid), (void *)&txid};
+  MDB_val ks = {sizeof(ptx_hash), (void *)&ptx_hash};
   MDB_val v = {sizeof(meta), (void *)&meta};
   if (auto result = mdb_cursor_put(m_cur_ntzpool_meta, &k, &v, MDB_NODUPDATA)) {
     if (result == MDB_KEYEXIST)
@@ -1800,7 +1801,7 @@ void BlockchainLMDB::add_ntzpool_tx(const transaction &tx, cryptonote::blobdata 
       throw1(DB_ERROR(lmdb_error("Error adding ntzpool tx blob to db transaction: ", result).c_str()));
   }
   MDB_val_copy<cryptonote::blobdata> ptxblob_val(ptx_blob);
-  if (auto result = mdb_cursor_put(m_cur_ntzpool_ptx_blob, &k, &ptxblob_val, MDB_NODUPDATA)) {
+  if (auto result = mdb_cursor_put(m_cur_ntzpool_ptx_blob, &ks, &ptxblob_val, MDB_NODUPDATA)) {
     if (result == MDB_KEYEXIST)
       throw1(DB_ERROR("Attempting to add ntzpool_ptx_blob that's already in the db"));
     else
@@ -1894,7 +1895,7 @@ bool BlockchainLMDB::ntzpool_has_tx(const crypto::hash& txid) const
   return result != MDB_NOTFOUND;
 }
 
-void BlockchainLMDB::remove_ntzpool_tx(const crypto::hash& txid)
+void BlockchainLMDB::remove_ntzpool_tx(const crypto::hash& txid, const crypto::hash& ptx_hash)
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -1905,6 +1906,7 @@ void BlockchainLMDB::remove_ntzpool_tx(const crypto::hash& txid)
   CURSOR(ntzpool_ptx_blob)
 
   MDB_val k = {sizeof(txid), (void *)&txid};
+  MDB_val ks = {sizeof(ptx_hash), (void *)&ptx_hash};
   auto result = mdb_cursor_get(m_cur_ntzpool_meta, &k, NULL, MDB_SET);
   if (result != 0 && result != MDB_NOTFOUND)
     throw1(DB_ERROR(lmdb_error("Error finding ntzpool tx meta to remove: ", result).c_str()));
@@ -1923,7 +1925,7 @@ void BlockchainLMDB::remove_ntzpool_tx(const crypto::hash& txid)
     if (result)
       throw1(DB_ERROR(lmdb_error("Error adding removal of ntzpool tx blob to db transaction: ", result).c_str()));
   }
-  result = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &k, NULL, MDB_SET);
+  result = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &ks, NULL, MDB_SET);
   if (result != 0 && result != MDB_NOTFOUND)
     throw1(DB_ERROR(lmdb_error("Error finding ntzpool_ptx_blob to remove: ", result).c_str()));
   if (!result)
@@ -1955,7 +1957,7 @@ bool BlockchainLMDB::get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_me
   return true;
 }
 
-bool BlockchainLMDB::get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata &ptx_blob) const
+bool BlockchainLMDB::get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata &ptx_blob, crypto::hash const& ptx_hash) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -1965,14 +1967,15 @@ bool BlockchainLMDB::get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::b
   RCURSOR(ntzpool_ptx_blob)
 
   MDB_val k = {sizeof(txid), (void *)&txid};
+  MDB_val ks = {sizeof(ptx_hash), (void *)&ptx_hash};
   MDB_val v;
   MDB_val w;
   auto result = mdb_cursor_get(m_cur_ntzpool_blob, &k, &v, MDB_SET);
   if (result == MDB_NOTFOUND)
     return false;
   if (result != 0)
-      throw1(DB_ERROR(lmdb_error("Error finding ntzpool_ptx_blob: ", result).c_str()));
-  auto ptxresult = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &k, &w, MDB_SET);
+      throw1(DB_ERROR(lmdb_error("Error finding ntzpool tx blob: ", result).c_str()));
+  auto ptxresult = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &ks, &w, MDB_SET);
   if (ptxresult == MDB_NOTFOUND)
     return false;
   if (ptxresult != 0)
@@ -1984,11 +1987,11 @@ bool BlockchainLMDB::get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::b
   return true;
 }
 
-std::pair<cryptonote::blobdata,cryptonote::blobdata> BlockchainLMDB::get_ntzpool_tx_blob(const crypto::hash& txid) const
+std::pair<cryptonote::blobdata,cryptonote::blobdata> BlockchainLMDB::get_ntzpool_tx_blob(const crypto::hash& txid, crypto::hash const& ptx_hash) const
 {
   cryptonote::blobdata bd;
   cryptonote::blobdata ptx_blob;
-  if (!get_ntzpool_tx_blob(txid, bd, ptx_blob))
+  if (!get_ntzpool_tx_blob(txid, bd, ptx_blob, ptx_hash))
     throw1(DB_ERROR("Tx not found in ntzpool: "));
   std::pair<cryptonote::blobdata,cryptonote::blobdata> blob_pair;
   blob_pair.first = bd;
@@ -1996,7 +1999,7 @@ std::pair<cryptonote::blobdata,cryptonote::blobdata> BlockchainLMDB::get_ntzpool
   return blob_pair;
 }
 
-bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)> f, bool include_blob, bool include_unrelayed_txes) const
+bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)> f, bool include_blob, bool include_unrelayed_txes) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -2007,6 +2010,7 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
   RCURSOR(ntzpool_ptx_blob);
 
   MDB_val k;
+  MDB_val ks;
   MDB_val v;
   MDB_val w;
   bool ret = true;
@@ -2022,6 +2026,8 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
       throw0(DB_ERROR(lmdb_error("Failed to enumerate ntzpool tx metadata: ", result).c_str()));
     const crypto::hash txid = *(const crypto::hash*)k.mv_data;
     const ntzpool_tx_meta_t &meta = *(const ntzpool_tx_meta_t*)v.mv_data;
+    const crypto::hash ptx_hash = meta.ptx_hash;
+    MDB_val ks = {sizeof(ptx_hash), (void *)&ptx_hash};
     if (!include_unrelayed_txes && meta.do_not_relay)
       // Skipping that tx
       continue;
@@ -2036,15 +2042,15 @@ bool BlockchainLMDB::for_all_ntzpool_txes(std::function<bool(const crypto::hash&
       if (result)
         throw0(DB_ERROR(lmdb_error("Failed to enumerate ntzpool tx blob: ", result).c_str()));
       bd.assign(reinterpret_cast<const char*>(b.mv_data), b.mv_size);
-    /*  MDB_val c;
-      auto ptxresult = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &k, &c, MDB_SET);
+      MDB_val c;
+      auto ptxresult = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &ks, &c, MDB_SET);
       if (ptxresult == MDB_NOTFOUND)
         throw0(DB_ERROR("Failed to find ntzpool ptx blob to match metadata"));
       if (ptxresult)
         throw0(DB_ERROR(lmdb_error("Failed to enumerate ntzpool tx blob: ", ptxresult).c_str()));
-      ptx_blob.assign(reinterpret_cast<const char*>(c.mv_data), c.mv_size);*/
+      ptx_blob.assign(reinterpret_cast<const char*>(c.mv_data), c.mv_size);
     }
-    if (!f(txid, meta, &bd, &ptx_blob)) {
+    if (!f(txid, ptx_hash, meta, &bd, &ptx_blob)) {
       ret = false;
       break;
     }

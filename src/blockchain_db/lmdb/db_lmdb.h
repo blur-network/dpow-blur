@@ -262,15 +262,15 @@ public:
   virtual cryptonote::blobdata get_txpool_tx_blob(const crypto::hash& txid) const;
   virtual bool for_all_txpool_txes(std::function<bool(const crypto::hash&, const txpool_tx_meta_t&, const cryptonote::blobdata*)> f, bool include_blob = false, bool include_unrelayed_txes = true) const;
 
-  virtual void add_ntzpool_tx(const transaction &tx, cryptonote::blobdata const& ptx_blob, const ntzpool_tx_meta_t& meta);
+  virtual void add_ntzpool_tx(const transaction &tx, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t& meta);
   virtual void update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_meta_t& meta);
   virtual uint64_t get_ntzpool_tx_count(bool include_unrelayed_txes = true) const;
   virtual bool ntzpool_has_tx(const crypto::hash &txid) const;
-  virtual void remove_ntzpool_tx(const crypto::hash& txid);
+  virtual void remove_ntzpool_tx(const crypto::hash& txid, const crypto::hash& ptx_hash);
   virtual bool get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_meta_t &meta) const;
-  virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata &ptx_blob) const;
-  virtual std::pair<cryptonote::blobdata,cryptonote::blobdata> get_ntzpool_tx_blob(const crypto::hash& txid) const;
-  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)> f, bool include_blob = true, bool include_unrelayed_txes = true) const;
+  virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata &ptx_blob, crypto::hash const& ptx_hash) const;
+  virtual std::pair<cryptonote::blobdata,cryptonote::blobdata> get_ntzpool_tx_blob(const crypto::hash& txid, crypto::hash const& ptx_hash) const;
+  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, crypto::hash const&, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)> f, bool include_blob = true, bool include_unrelayed_txes = true) const;
 
   virtual bool for_all_key_images(std::function<bool(const crypto::key_image&)>) const;
   virtual bool for_blocks_range(const uint64_t& h1, const uint64_t& h2, std::function<bool(uint64_t, const crypto::hash&, const cryptonote::block&)>) const;

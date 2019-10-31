@@ -158,24 +158,25 @@ struct ntzpool_tx_meta_t
 {
   crypto::hash max_used_block_id;     /* 32 */
   crypto::hash last_failed_id;        /* 32 */
+  crypto::hash ptx_hash;              /* 32 */
   uint64_t blob_size;                 /* 8  */
   uint64_t fee;                       /* 8  */
   uint64_t max_used_block_height;     /* 8  */
   uint64_t last_failed_height;        /* 8  */
   uint64_t receive_time;              /* 8  */
-  uint64_t last_relayed_time;         /* 8  *   = 64 + 48 = 112 */
+  uint64_t last_relayed_time;         /* 8  *   = 96 + 48 = 144 */
   uint8_t kept_by_block;              /* 1  */
   uint8_t relayed;                    /* 1  */
   uint8_t do_not_relay;               /* 1  */
   uint8_t double_spend_seen: 1;       /* 1  */
   uint8_t has_raw_ntz_data;           /* 1  */
 
-  uint8_t  sig_count;                 /* 1  *    = 118 */
-                                      /* (13)     = 131 */
+  uint8_t  sig_count;                 /* 1  *    = 150 */
+                                      /* (13)     = 163 */
   int signers_index[13] = {
                     -1, -1, -1, -1, -1, -1, -1,
                     -1, -1, -1, -1, -1, -1 };
-  uint8_t padding[61];                /* till 192 bytes */
+  uint8_t padding[29];                /* till 192 bytes */
 };
 
 #define DBF_SAFE       1
@@ -1409,7 +1410,7 @@ public:
    *
    * @param details the details of the transaction to add
    */
-  virtual void add_ntzpool_tx(const transaction &tx, cryptonote::blobdata const& ptx_blob, const ntzpool_tx_meta_t& details) = 0;
+  virtual void add_ntzpool_tx(const transaction &tx, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t& details) = 0;
 
   /**
    * @brief update a ntzpool transaction's metadata
@@ -1434,7 +1435,7 @@ public:
    *
    * @param txid the transaction id of the transation to remove
    */
-  virtual void remove_ntzpool_tx(const crypto::hash& txid) = 0;
+  virtual void remove_ntzpool_tx(const crypto::hash& txid, crypto::hash const& ptx_hash) = 0;
 
   /**
    * @brief get a ntzpool transaction's metadata
@@ -1455,7 +1456,7 @@ public:
    *
    * @return true if the txid was in the ntzpool, false otherwise
    */
-  virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata& ptx_blob) const = 0;
+  virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata& ptx_blob, crypto::hash const& ptx_hash) const = 0;
 
   /**
    * @brief get a ntzpool transaction's blob
@@ -1464,7 +1465,7 @@ public:
    *
    * @return the blob for that transaction
    */
-  virtual std::pair<cryptonote::blobdata,cryptonote::blobdata> get_ntzpool_tx_blob(const crypto::hash& txid) const = 0;
+  virtual std::pair<cryptonote::blobdata,cryptonote::blobdata> get_ntzpool_tx_blob(const crypto::hash& txid, crypto::hash const& ptx_hash) const = 0;
 
   /**
    * @brief runs a function over all ntzpool transactions
@@ -1479,7 +1480,7 @@ public:
    *
    * @return false if the function returns false for any transaction, otherwise true
    */
-  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, const ntzpool_tx_meta_t&, cryptonote::blobdata const*, cryptonote::blobdata const*)>, bool include_blob = true, bool include_unrelayed_txes = true) const = 0;
+  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t&, cryptonote::blobdata const*, cryptonote::blobdata const*)>, bool include_blob = true, bool include_unrelayed_txes = true) const = 0;
 
   /**
    * @brief runs a function over all key images stored
