@@ -1641,6 +1641,11 @@ namespace cryptonote
     return m_mempool.get_pool_for_rpc(tx_infos, key_image_infos);
   }
   //-----------------------------------------------------------------------------------------------
+  bool core::get_ntzpool_for_rpc(std::vector<cryptonote::rpc::tx_in_ntzpool>& tx_infos, cryptonote::rpc::key_images_with_tx_hashes& key_image_infos) const
+  {
+    return m_mempool.get_ntzpool_for_rpc(tx_infos, key_image_infos);
+  }
+  //-----------------------------------------------------------------------------------------------
   bool core::get_short_chain_history(std::list<crypto::hash>& ids) const
   {
     return m_blockchain_storage.get_short_chain_history(ids);

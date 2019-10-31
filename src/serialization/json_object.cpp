@@ -781,6 +781,58 @@ void fromJsonValue(const rapidjson::Value& val, cryptonote::rpc::tx_in_pool& tx)
   GET_FROM_JSON_OBJECT(val, tx.double_spend_seen, double_spend_seen);
 }
 
+void toJsonValue(rapidjson::Document& doc, const cryptonote::rpc::tx_in_ntzpool& tx, rapidjson::Value& val)
+{
+  val.SetObject();
+
+  INSERT_INTO_JSON_OBJECT(val, doc, tx, tx.tx);
+  INSERT_INTO_JSON_OBJECT(val, doc, tx_hash, tx.tx_hash);
+  INSERT_INTO_JSON_OBJECT(val, doc, blob_size, tx.blob_size);
+  INSERT_INTO_JSON_OBJECT(val, doc, fee, tx.fee);
+  INSERT_INTO_JSON_OBJECT(val, doc, ptx_blob, tx.ptx_blob);
+  INSERT_INTO_JSON_OBJECT(val, doc, ptx_hash, tx.ptx_hash);
+  INSERT_INTO_JSON_OBJECT(val, doc, max_used_block_hash, tx.max_used_block_hash);
+  INSERT_INTO_JSON_OBJECT(val, doc, max_used_block_height, tx.max_used_block_height);
+  INSERT_INTO_JSON_OBJECT(val, doc, kept_by_block, tx.kept_by_block);
+  INSERT_INTO_JSON_OBJECT(val, doc, last_failed_block_hash, tx.last_failed_block_hash);
+  INSERT_INTO_JSON_OBJECT(val, doc, last_failed_block_height, tx.last_failed_block_height);
+  INSERT_INTO_JSON_OBJECT(val, doc, receive_time, tx.receive_time);
+  INSERT_INTO_JSON_OBJECT(val, doc, last_relayed_time, tx.last_relayed_time);
+  INSERT_INTO_JSON_OBJECT(val, doc, relayed, tx.relayed);
+  INSERT_INTO_JSON_OBJECT(val, doc, do_not_relay, tx.do_not_relay);
+  INSERT_INTO_JSON_OBJECT(val, doc, double_spend_seen, tx.double_spend_seen);
+  INSERT_INTO_JSON_OBJECT(val, doc, has_ntz_data, tx.has_ntz_data);
+  INSERT_INTO_JSON_OBJECT(val, doc, sig_count, tx.sig_count);
+  INSERT_INTO_JSON_OBJECT(val, doc, signers_index, tx.signers_index);
+}
+
+void fromJsonValue(const rapidjson::Value& val, cryptonote::rpc::tx_in_ntzpool& tx)
+{
+  if (!val.IsObject())
+  {
+    throw WRONG_TYPE("json object");
+  }
+
+  GET_FROM_JSON_OBJECT(val, tx.tx, tx);
+  GET_FROM_JSON_OBJECT(val, tx.blob_size, blob_size);
+  GET_FROM_JSON_OBJECT(val, tx.fee, fee);
+  GET_FROM_JSON_OBJECT(val, tx.ptx_blob, ptx_blob);
+  GET_FROM_JSON_OBJECT(val, tx.ptx_hash, ptx_hash);
+  GET_FROM_JSON_OBJECT(val, tx.max_used_block_hash, max_used_block_hash);
+  GET_FROM_JSON_OBJECT(val, tx.max_used_block_height, max_used_block_height);
+  GET_FROM_JSON_OBJECT(val, tx.kept_by_block, kept_by_block);
+  GET_FROM_JSON_OBJECT(val, tx.last_failed_block_hash, last_failed_block_hash);
+  GET_FROM_JSON_OBJECT(val, tx.last_failed_block_height, last_failed_block_height);
+  GET_FROM_JSON_OBJECT(val, tx.receive_time, receive_time);
+  GET_FROM_JSON_OBJECT(val, tx.last_relayed_time, last_relayed_time);
+  GET_FROM_JSON_OBJECT(val, tx.relayed, relayed);
+  GET_FROM_JSON_OBJECT(val, tx.do_not_relay, do_not_relay);
+  GET_FROM_JSON_OBJECT(val, tx.double_spend_seen, double_spend_seen);
+  GET_FROM_JSON_OBJECT(val, tx.has_ntz_data, has_ntz_data);
+  GET_FROM_JSON_OBJECT(val, tx.sig_count, sig_count);
+  GET_FROM_JSON_OBJECT(val, tx.signers_index, signers_index);
+}
+
 void toJsonValue(rapidjson::Document& doc, const cryptonote::rpc::hard_fork_info& info, rapidjson::Value& val)
 {
   val.SetObject();

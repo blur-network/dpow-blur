@@ -1310,6 +1310,12 @@ namespace tools
     int sig_count = info_match.sig_count;
 
     MWARNING("Matched tx blob: " << tx_blob << ", matched ptx_blob: " << ptx_blob << ", matched sig_count: " << std::to_string(sig_count));
+/*    cryptonote::blobdata ptx_blob_bin;
+    if (!epee::string_tools::parse_hexstr_to_binbuff(ptx_blob, ptx_blob_bin))
+    {
+      MERROR("Failed to parse ptx_blob to binary buffer!");
+      return false;
+    }*/
     wallet2::pending_tx pen_tx;
     std::stringstream iss;
     iss << ptx_blob;

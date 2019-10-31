@@ -528,6 +528,13 @@ namespace cryptonote
      bool get_pool_for_rpc(std::vector<cryptonote::rpc::tx_in_pool>& tx_infos, cryptonote::rpc::key_images_with_tx_hashes& key_image_infos) const;
 
      /**
+      * @copydoc tx_memory_pool::get_pool_for_rpc
+      *
+      * @note see tx_memory_pool::get_pool_for_rpc
+      */
+     bool get_ntzpool_for_rpc(std::vector<cryptonote::rpc::tx_in_ntzpool>& tx_infos, cryptonote::rpc::key_images_with_tx_hashes& key_image_infos) const;
+
+     /**
       * @copydoc tx_memory_pool::get_transactions_count
       *
       * @note see tx_memory_pool::get_transactions_count

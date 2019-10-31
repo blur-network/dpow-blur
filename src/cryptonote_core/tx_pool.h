@@ -329,6 +329,18 @@ namespace cryptonote
     bool get_pool_for_rpc(std::vector<cryptonote::rpc::tx_in_pool>& tx_infos, cryptonote::rpc::key_images_with_tx_hashes& key_image_infos) const;
 
     /**
+     * @brief get information about all transactions and key images in the pool
+     *
+     * see documentation on tx_in_pool and key_images_with_tx_hashes for more details
+     *
+     * @param tx_infos [out] the transactions' information
+     * @param key_image_infos [out] the spent key images' information
+     *
+     * @return true
+     */
+    bool get_ntzpool_for_rpc(std::vector<cryptonote::rpc::tx_in_ntzpool>& tx_infos, cryptonote::rpc::key_images_with_tx_hashes& key_image_infos) const;
+
+    /**
      * @brief check for presence of key images in the pool
      *
      * @param key_images [in] vector of key images to check

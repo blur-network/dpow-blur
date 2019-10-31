@@ -98,6 +98,29 @@ namespace rpc
     bool double_spend_seen;
   };
 
+  struct tx_in_ntzpool
+  {
+    cryptonote::transaction tx;
+    crypto::hash tx_hash;
+    std::string ptx_blob;
+    crypto::hash ptx_hash;
+    uint64_t blob_size;
+    uint64_t fee;
+    crypto::hash max_used_block_hash;
+    uint64_t max_used_block_height;
+    bool kept_by_block;
+    crypto::hash last_failed_block_hash;
+    uint64_t last_failed_block_height;
+    uint64_t receive_time;
+    uint64_t last_relayed_time;
+    bool relayed;
+    bool do_not_relay;
+    bool double_spend_seen;
+    bool has_ntz_data;
+    int sig_count;
+    std::list<int> signers_index;
+  };
+
   typedef std::unordered_map<crypto::key_image, std::vector<crypto::hash> > key_images_with_tx_hashes;
 
   struct output_amount_count
