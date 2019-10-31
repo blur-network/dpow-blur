@@ -129,6 +129,17 @@ namespace tools
     return oss.str();
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  std::pair<crypto::hash,std::string> ptx_to_string_hash(const tools::wallet2::pending_tx &ptx)
+  {
+    std::string s = ptx_to_string(ptx);
+    crypto::hash h = crypto::null_hash;
+    crypto::cn_fast_hash(s.data(), s.size(), h);
+    std::pair<crypto::hash,std::string> hash_blob;
+    hash_blob.first = h;
+    hash_blob.second = s;
+    return hash_blob;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::run()
   {
     bool sent_to_pool = false;
@@ -141,6 +152,8 @@ namespace tools
       }
       return true;
     }, 20000);
+
+
     m_net_server.add_idle_handler([this, &sent_to_pool](){
      try
      {
@@ -187,10 +200,16 @@ namespace tools
                 std::pair<int,int> max_el = *std::max_element(scounts.begin(), scounts.end(), docheck);
                 notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
                 request.tx_hash = ntzpool_txs[max_el.second].id_hash;
-                notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response;
+                notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response = AUTO_VAL_INIT(response);
                 epee::json_rpc::error err;
                 MWARNING("Calling append_ntz_sig from idle_handler for ntzpool tx with hash: " << request.tx_hash << std::endl);
                 bool R = on_append_ntz_sig(request, response, err);
+                if (!R) {
+                  MERROR("Something went wrong when calling append_ntz_sig from idle handler!");
+                  return true;
+                } else {
+                  sent_to_pool = true;
+                }
               }
             } else if ((m_wallet->get_ntzpool_count(true) < 1) && !sent_to_pool) {
               bool r = on_create_ntz_transfer(req, res, e);
@@ -201,7 +220,7 @@ namespace tools
           }
         }
       } catch (const std::exception& ex) {
-        LOG_ERROR("Exception while populating ntz ptx caches, what=" << ex.what());
+        LOG_ERROR("Exception while executing notarization idle handler sequence, what=" << ex.what());
       }
       return true;
     }, 20000);
@@ -1199,8 +1218,10 @@ namespace tools
         if (fill_res) {
           std::string tx_metadata;
           for (const auto& each : ptx_vector) {
-            tx_metadata = ptx_to_string(each);
-            MWARNING("Ptx to string: " << tx_metadata);
+            std::pair<crypto::hash,std::string> hash_string = ptx_to_string_hash(each);
+            tx_metadata = hash_string.second;
+            crypto::hash ptx_hash = hash_string.first;
+            MWARNING("Ptx to string: " << tx_metadata << ", ptx hash: " << epee::string_tools::pod_to_hex(ptx_hash) << std::endl);
             break;
           }
           m_wallet->request_ntz_sig(tx_metadata, ptx_vector, sig_count, payment_id, si_const);
@@ -1240,6 +1261,7 @@ namespace tools
 //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::on_append_ntz_sig(const notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request& req, notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response& res, epee::json_rpc::error& er)
   {
+    MWARNING("append_ntz_sig called!");
 
     std::vector<cryptonote::tx_destination_entry> dsts;
     std::vector<uint8_t> extra;
@@ -1254,6 +1276,7 @@ namespace tools
     }
 
     size_t pool_count = m_wallet->get_ntzpool_count(true);
+    MWARNING("Pool count: " << std::to_string(pool_count));
     if (pool_count < 1) {
       er.code = NOTARY_RPC_ERROR_CODE_DENIED;
       er.message = "No pending transactions are in the ntzpool!";
@@ -1263,34 +1286,34 @@ namespace tools
     std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
     std::vector<cryptonote::spent_key_image_info> ntzpool_key_images;
     m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_key_images);
-    if (ntzpool_txs.empty() || ntzpool_key_images.empty()) {
+    if (ntzpool_txs.empty()) {
       er.code = NOTARY_RPC_ERROR_CODE_DENIED;
       er.message = "Error fetching txs and keys from ntzpool!";
       return false;
     }
     cryptonote::ntz_tx_info info_match;
     for (const auto& each : ntzpool_txs) {
-      if (each.id_hash == req.tx_hash)
+      if (each.id_hash == req.tx_hash) {
         info_match = each;
+        MWARNING("Match found in ntzpool for requested hash: " << each.id_hash);
+      }
     }
 
     cryptonote::blobdata tx_blob = info_match.tx_blob;
     cryptonote::blobdata ptx_blob = info_match.ptx_blob;
+
     std::vector<int> signers_index;
     for (const auto& each : info_match.signers_index) {
       signers_index.push_back(each);
     }
     int sig_count = info_match.sig_count;
 
-    std::vector<tools::wallet2::pending_tx> recv_ptx_vec;
-      wallet2::pending_tx pen_tx;
-      std::stringstream iss;
-      iss << ptx_blob;
-      boost::archive::portable_binary_iarchive ar(iss);
-      ar >> pen_tx;
-      recv_ptx_vec.push_back(pen_tx);
-
-    for (const auto& recv_ptx : recv_ptx_vec) {
+    MWARNING("Matched tx blob: " << tx_blob << ", matched ptx_blob: " << ptx_blob << ", matched sig_count: " << std::to_string(sig_count));
+    wallet2::pending_tx pen_tx;
+    std::stringstream iss;
+    iss << ptx_blob;
+    boost::archive::portable_binary_iarchive ar(iss);
+    ar >> pen_tx;
 
     const int neg = -1;
     const int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
@@ -1310,7 +1333,7 @@ namespace tools
     for (int j = 0; j < count; j++) {
       i = signers_index[count];
       crypto::secret_key viewkey = notary_viewkeys[i];
-      cryptonote::transaction tx = recv_ptx.tx;
+      cryptonote::transaction tx = pen_tx.tx;
       //crypto::public_key real_out_tx_key = get_tx_pub_key_from_extra(tx, 0);
 
       rct::rctSig &rv = tx.rct_signatures;
@@ -1331,7 +1354,7 @@ namespace tools
         recv_outkeys.push_back(each);
       }
 
-    size_t pk_index = 1;
+    size_t pk_index = 0;
     crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index);
     std::vector<crypto::key_derivation> recv_derivations;
     for (const auto& each : notary_viewkeys) {
@@ -1351,7 +1374,6 @@ namespace tools
       }
     }
   }
-
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
     std::vector<std::pair<crypto::public_key,crypto::public_key>> notaries_keys;
     bool z = get_notary_pubkeys(notaries_keys);
@@ -1456,7 +1478,7 @@ namespace tools
         }
 
         const std::vector<int> si_const = signers_index;
-        ptx_vector.push_back(recv_ptx);
+        ptx_vector.push_back(pen_tx);
 
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
@@ -1477,7 +1499,6 @@ namespace tools
       handle_rpc_exception(std::current_exception(), er, NOTARY_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);
       return false;
     }
-  }
     return true;
   }
 //------------------------------------------------------------------------------------------------------------------------------
