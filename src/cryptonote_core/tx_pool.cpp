@@ -1285,6 +1285,20 @@ namespace cryptonote
     }
   }
   //---------------------------------------------------------------------------------
+  bool tx_memory_pool::get_ntzpool_transaction(const crypto::hash& id, cryptonote::blobdata& txblob, cryptonote::blobdata& ptx_blob) const
+  {
+    CRITICAL_REGION_LOCAL(m_transactions_lock);
+    CRITICAL_REGION_LOCAL1(m_blockchain);
+    try
+    {
+      return m_blockchain.get_ntzpool_tx_blob(id, txblob, ptx_blob);
+    }
+    catch (const std::exception &e)
+    {
+      return false;
+    }
+  }
+  //---------------------------------------------------------------------------------
   bool tx_memory_pool::on_blockchain_inc(uint64_t new_block_height, const crypto::hash& top_block_id)
   {
     return true;

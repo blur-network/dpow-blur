@@ -1202,6 +1202,7 @@ namespace cryptonote
         std::string tmp = std::to_string(each);
         si += tmp;
       }
+      MWARNING("Ptx string in RPC: " << r.ptx_string);
       m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
       MWARNING("request ntz sig sent with sigs count: " << std::to_string(r.sig_count) << ", signers_index = " << si << ", and payment id: " << req.payment_id);
       res.status = CORE_RPC_STATUS_OK;
@@ -2377,14 +2378,11 @@ namespace cryptonote
 
     bool failed = false;
     std::list<crypto::hash> txids;
-    std::list<crypto::hash> ntz_txids;
     if (req.txids.empty())
     {
       std::list<transaction> pool_txs;
-      std::list<std::pair<transaction,blobdata>> ntzpool_txs;
       bool r = m_core.get_pool_transactions(pool_txs);
-      bool R = m_core.get_ntzpool_transactions(ntzpool_txs);
-      if (!r && !R)
+      if (!r)
       {
         res.status = "Failed to get both txpool & ntzpool contents";
         return false;
@@ -2392,10 +2390,6 @@ namespace cryptonote
       for (const auto &tx: pool_txs)
       {
         txids.push_back(cryptonote::get_transaction_hash(tx));
-      }
-      for (const auto &tx: ntzpool_txs)
-      {
-        ntz_txids.push_back(cryptonote::get_transaction_hash(tx.first));
       }
     }
     else
@@ -2413,6 +2407,46 @@ namespace cryptonote
           txids.push_back(txid);
         }
       }
+    }
+    if (!m_core.get_blockchain_storage().flush_txes_from_pool(txids))
+    {
+        res.status = "Failed to remove one or more tx(es)";
+        return false;
+    }
+
+    if (failed)
+    {
+      if (txids.empty())
+        res.status = "Failed to parse txid";
+      else
+        res.status = "Failed to parse some of the txids";
+      return false;
+    }
+
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_flush_ntzpool(const COMMAND_RPC_FLUSH_NTZ_POOL::request& req, COMMAND_RPC_FLUSH_NTZ_POOL::response& res, epee::json_rpc::error& error_resp)
+  {
+    bool failed = false;
+    std::list<crypto::hash> ntz_txids;
+    if (req.txids.empty())
+    {
+      std::list<std::pair<transaction,blobdata>> ntzpool_txs;
+      bool R = m_core.get_ntzpool_transactions(ntzpool_txs);
+      if (!R)
+      {
+        res.status = "Failed to get ntzpool contents";
+        return false;
+      }
+      for (const auto &tx: ntzpool_txs)
+      {
+        ntz_txids.push_back(cryptonote::get_transaction_hash(tx.first));
+      }
+    }
+    else
+    {
       for (const auto &str: req.txids)
       {
         cryptonote::blobdata ntz_txid_data;
@@ -2427,7 +2461,7 @@ namespace cryptonote
         }
       }
     }
-    if (!m_core.get_blockchain_storage().flush_txes_from_pool(txids))
+    if (!m_core.get_blockchain_storage().flush_ntz_txes_from_pool(ntz_txids))
     {
         res.status = "Failed to remove one or more tx(es)";
         return false;
@@ -2435,7 +2469,7 @@ namespace cryptonote
 
     if (failed)
     {
-      if (txids.empty() && ntz_txids.empty())
+      if (ntz_txids.empty())
         res.status = "Failed to parse txid";
       else
         res.status = "Failed to parse some of the txids";

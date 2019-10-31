@@ -1612,7 +1612,12 @@ namespace cryptonote
   bool core::get_pool_transaction(const crypto::hash &id, cryptonote::blobdata& tx) const
   {
     return m_mempool.get_transaction(id, tx);
-  }  
+  }
+  //-----------------------------------------------------------------------------------------------
+  bool core::get_ntzpool_transaction(const crypto::hash &id, cryptonote::blobdata& tx, cryptonote::blobdata& ptx_blob) const
+  {
+    return m_mempool.get_transaction(id, tx);
+  }
   //-----------------------------------------------------------------------------------------------
   bool core::pool_has_tx(const crypto::hash &id) const
   {

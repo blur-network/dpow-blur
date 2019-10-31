@@ -1700,6 +1700,7 @@ namespace cryptonote
       KV_SERIALIZE(do_not_relay)
       KV_SERIALIZE(double_spend_seen)
       KV_SERIALIZE(tx_blob)
+      KV_SERIALIZE(ptx_blob)
       KV_SERIALIZE(sig_count)
       KV_SERIALIZE(signers_index)
    END_KV_SERIALIZE_MAP()
@@ -2246,6 +2247,27 @@ namespace cryptonote
   };
 
   struct COMMAND_RPC_FLUSH_TRANSACTION_POOL
+  {
+    struct request
+    {
+      std::list<std::string> txids;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(txids)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_FLUSH_NTZ_POOL
   {
     struct request
     {

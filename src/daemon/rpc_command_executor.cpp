@@ -1598,7 +1598,37 @@ bool t_rpc_command_executor::flush_txpool(const std::string &txid)
         }
     }
 
-    tools::success_msg_writer() << "Pool successfully flushed";
+    tools::success_msg_writer() << "Tx pool successfully flushed";
+    return true;
+}
+
+bool t_rpc_command_executor::flush_ntzpool(const std::string &txid)
+{
+    cryptonote::COMMAND_RPC_FLUSH_NTZ_POOL::request req;
+    cryptonote::COMMAND_RPC_FLUSH_NTZ_POOL::response res;
+    std::string fail_message = "Unsuccessful";
+    epee::json_rpc::error error_resp;
+
+    if (!txid.empty())
+      req.txids.push_back(txid);
+
+    if (m_is_rpc)
+    {
+        if (!m_rpc_client->json_rpc_request(req, res, "flush_ntzpool", fail_message.c_str()))
+        {
+            return true;
+        }
+    }
+    else
+    {
+        if (!m_rpc_server->on_flush_ntzpool(req, res, error_resp) || res.status != CORE_RPC_STATUS_OK)
+        {
+            tools::fail_msg_writer() << make_error(fail_message, res.status);
+            return true;
+        }
+    }
+
+    tools::success_msg_writer() << "Pending notarization pool successfully flushed";
     return true;
 }
 

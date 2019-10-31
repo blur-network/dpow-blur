@@ -349,6 +349,16 @@ namespace cryptonote
     bool get_transaction(const crypto::hash& h, cryptonote::blobdata& txblob) const;
 
     /**
+     * @brief get a specific transaction from the pool
+     *
+     * @param h the hash of the transaction to get
+     * @param tx return-by-reference the transaction blob requested
+     *
+     * @return true if the transaction is found, otherwise false
+     */
+    bool get_ntzpool_transaction(const crypto::hash& h, cryptonote::blobdata& txblob, cryptonote::blobdata& ptx_blob) const;
+
+    /**
      * @brief get a list of all relayable transactions and their hashes
      *
      * "relayable" in this case means:

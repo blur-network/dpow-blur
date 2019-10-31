@@ -467,6 +467,13 @@ namespace cryptonote
      bool get_pool_transaction(const crypto::hash& id, cryptonote::blobdata& tx) const;
 
      /**
+      * @copydoc tx_memory_pool::get_transaction
+      *
+      * @note see tx_memory_pool::get_transaction
+      */
+     bool get_ntzpool_transaction(const crypto::hash& id, cryptonote::blobdata& tx, cryptonote::blobdata& ptx_blob) const;
+
+     /**
       * @copydoc tx_memory_pool::get_pool_transactions_and_spent_keys_info
       * @param include_unrelayed_txes include unrelayed txes in result
       *

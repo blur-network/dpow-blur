@@ -847,6 +847,7 @@ namespace cryptonote
      * @return false if any removals fail, otherwise true
      */
     bool flush_txes_from_pool(const std::list<crypto::hash> &txids);
+    bool flush_ntz_txes_from_pool(const std::list<crypto::hash> &txids);
 
     /**
      * @brief return a histogram of outputs on the blockchain
