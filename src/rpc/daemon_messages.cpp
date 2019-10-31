@@ -56,6 +56,7 @@ const char* const GetBlockHeadersByHeight::name = "get_block_headers_by_height";
 const char* const GetPeerList::name = "get_peer_list";
 const char* const SetLogLevel::name = "set_log_level";
 const char* const GetTransactionPool::name = "get_transaction_pool";
+const char* const GetNotarizationPool::name = "get_ntz_pool";
 const char* const HardForkInfo::name = "hard_fork_info";
 const char* const GetOutputHistogram::name = "get_output_histogram";
 const char* const GetOutputKeys::name = "get_output_keys";
@@ -729,6 +730,32 @@ void GetTransactionPool::Response::fromJson(rapidjson::Value& val)
   GET_FROM_JSON_OBJECT(val, key_images, key_images);
 }
 
+rapidjson::Value GetNotarizationPool::Request::toJson(rapidjson::Document& doc) const
+{
+  return Message::toJson(doc);
+}
+
+void GetNotarizationPool::Request::fromJson(rapidjson::Value& val)
+{
+}
+
+rapidjson::Value GetNotarizationPool::Response::toJson(rapidjson::Document& doc) const
+{
+  auto val = Message::toJson(doc);
+
+  auto& al = doc.GetAllocator();
+
+  INSERT_INTO_JSON_OBJECT(val, doc, transactions, transactions);
+  INSERT_INTO_JSON_OBJECT(val, doc, key_images, key_images);
+
+  return val;
+}
+
+void GetNotarizationPool::Response::fromJson(rapidjson::Value& val)
+{
+  GET_FROM_JSON_OBJECT(val, transactions, transactions);
+  GET_FROM_JSON_OBJECT(val, key_images, key_images);
+}
 
 rapidjson::Value HardForkInfo::Request::toJson(rapidjson::Document& doc) const
 {

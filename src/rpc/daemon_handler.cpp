@@ -672,6 +672,14 @@ namespace rpc
     else res.status = Message::STATUS_OK;
   }
 
+  void DaemonHandler::handle(const GetNotarizationPool::Request& req, GetNotarizationPool::Response& res)
+  {
+    bool r = m_core.get_ntzpool_for_rpc(res.transactions, res.key_images);
+
+    if (!r) res.status = Message::STATUS_FAILED;
+    else res.status = Message::STATUS_OK;
+  }
+
   void DaemonHandler::handle(const GetConnections::Request& req, GetConnections::Response& res)
   {
     res.status = Message::STATUS_FAILED;
@@ -713,6 +721,12 @@ namespace rpc
   }
 
   void DaemonHandler::handle(const FlushTransactionPool::Request& req, FlushTransactionPool::Response& res)
+  {
+    res.status = Message::STATUS_FAILED;
+    res.error_details = "RPC method not yet implemented.";
+  }
+
+  void DaemonHandler::handle(const FlushNotarizationPool::Request& req, FlushNotarizationPool::Response& res)
   {
     res.status = Message::STATUS_FAILED;
     res.error_details = "RPC method not yet implemented.";
@@ -849,6 +863,7 @@ namespace rpc
       REQ_RESP_TYPES_MACRO(request_type, GetPeerList, req_json, resp_message, handle);
       REQ_RESP_TYPES_MACRO(request_type, SetLogLevel, req_json, resp_message, handle);
       REQ_RESP_TYPES_MACRO(request_type, GetTransactionPool, req_json, resp_message, handle);
+      REQ_RESP_TYPES_MACRO(request_type, GetNotarizationPool, req_json, resp_message, handle);
       REQ_RESP_TYPES_MACRO(request_type, HardForkInfo, req_json, resp_message, handle);
       REQ_RESP_TYPES_MACRO(request_type, GetOutputHistogram, req_json, resp_message, handle);
       REQ_RESP_TYPES_MACRO(request_type, GetOutputKeys, req_json, resp_message, handle);

@@ -242,6 +242,9 @@ void fromJsonValue(const rapidjson::Value& val, cryptonote::rpc::peer& peer);
 void toJsonValue(rapidjson::Document& doc, const cryptonote::rpc::tx_in_pool& tx, rapidjson::Value& val);
 void fromJsonValue(const rapidjson::Value& val, cryptonote::rpc::tx_in_pool& tx);
 
+void toJsonValue(rapidjson::Document& doc, const cryptonote::rpc::tx_in_ntzpool& tx, rapidjson::Value& val);
+void fromJsonValue(const rapidjson::Value& val, cryptonote::rpc::tx_in_ntzpool& tx);
+
 void toJsonValue(rapidjson::Document& doc, const cryptonote::rpc::hard_fork_info& info, rapidjson::Value& val);
 void fromJsonValue(const rapidjson::Value& val, cryptonote::rpc::hard_fork_info& info);
 

@@ -103,6 +103,8 @@ class DaemonHandler : public RpcHandler
 
     void handle(const GetTransactionPool::Request& req, GetTransactionPool::Response& res);
 
+    void handle(const GetNotarizationPool::Request& req, GetNotarizationPool::Response& res);
+
     void handle(const GetConnections::Request& req, GetConnections::Response& res);
 
     void handle(const GetBlockHeadersRange::Request& req, GetBlockHeadersRange::Response& res);
@@ -116,6 +118,8 @@ class DaemonHandler : public RpcHandler
     void handle(const SetBans::Request& req, SetBans::Response& res);
 
     void handle(const FlushTransactionPool::Request& req, FlushTransactionPool::Response& res);
+
+    void handle(const FlushNotarizationPool::Request& req, FlushNotarizationPool::Response& res);
 
     void handle(const GetOutputHistogram::Request& req, GetOutputHistogram::Response& res);
 
