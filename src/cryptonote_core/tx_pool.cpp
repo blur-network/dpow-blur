@@ -373,6 +373,7 @@ namespace cryptonote
       meta.max_used_block_height = max_used_block_height;
       meta.last_failed_height = 0;
       meta.last_failed_id = null_hash;
+      meta.ptx_hash = ptx_hash;
       meta.receive_time = receive_time;
       meta.last_relayed_time = time(NULL);
       meta.relayed = relayed;
@@ -1145,6 +1146,7 @@ namespace cryptonote
       txi.id_hash = epee::string_tools::pod_to_hex(txid);
       txi.tx_blob = *bd;
       txi.ptx_blob = *ptx;
+      txi.ptx_hash = epee::string_tools::pod_to_hex(meta.ptx_hash);
       transaction tx;
       if (!txi.tx_blob.empty()) {
         if (!parse_and_validate_tx_from_blob(*bd, tx))

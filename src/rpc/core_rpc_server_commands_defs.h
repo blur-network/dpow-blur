@@ -1682,6 +1682,7 @@ namespace cryptonote
     bool double_spend_seen;
     std::string tx_blob;
     std::string ptx_blob;
+    std::string ptx_hash;
     int sig_count;
     std::list<int> signers_index;
 
@@ -1703,6 +1704,7 @@ namespace cryptonote
       KV_SERIALIZE(double_spend_seen)
       KV_SERIALIZE(tx_blob)
       KV_SERIALIZE(ptx_blob)
+      KV_SERIALIZE(ptx_hash)
       KV_SERIALIZE(sig_count)
       KV_SERIALIZE(signers_index)
    END_KV_SERIALIZE_MAP()

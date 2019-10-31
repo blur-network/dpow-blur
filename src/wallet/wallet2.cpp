@@ -2066,7 +2066,7 @@ void wallet2::get_ntzpool_txs_and_keys(std::vector<cryptonote::ntz_tx_info>& txs
   m_daemon_rpc_mutex.lock();
   bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool", nreq, nres, m_http_client, rpc_timeout);
 //  bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool", nreq, nres, m_http_client, rpc_timeout, "POST");
-//  m_daemon_rpc_mutex.unlock();
+  m_daemon_rpc_mutex.unlock();
   THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "get_pending_ntz_pool");
   THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "get_pending_ntz_pool");
   txs = nres.transactions;

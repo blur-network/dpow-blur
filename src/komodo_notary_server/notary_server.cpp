@@ -1285,6 +1285,7 @@ namespace tools
 
     std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
     std::vector<cryptonote::spent_key_image_info> ntzpool_key_images;
+    MWARNING("Fetching ntzpool txs and keys...");
     m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_key_images);
     if (ntzpool_txs.empty()) {
       er.code = NOTARY_RPC_ERROR_CODE_DENIED;
