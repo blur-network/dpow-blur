@@ -58,8 +58,8 @@ namespace cryptonote
     template <template <bool> class Archive>
     bool do_serialize(Archive<false>& ar)
     {
-      // size - 1 - because of variant tag
-      for (size = 1; size <= TX_EXTRA_NTZ_MAX_COUNT; ++size)
+      // size - 3 - because of variant tag
+      for (size = 3; size <= TX_EXTRA_NTZ_MAX_COUNT; size++)
       {
         std::ios_base::iostate state = ar.stream().rdstate();
         bool eof = EOF == ar.stream().peek();
@@ -86,8 +86,8 @@ namespace cryptonote
       if(TX_EXTRA_NTZ_MAX_COUNT < size)
         return false;
 
-      // i = 1 - because of variant tag
-      for (size_t i = 1; i < size; ++i)
+      // i = 3 - because of variant tag + 2 size bytes (interpreted as uint16_t)
+      for (size_t i = 3; i < size; i++)
       {
         uint8_t zero = 0;
         if (!::do_serialize(ar, zero))

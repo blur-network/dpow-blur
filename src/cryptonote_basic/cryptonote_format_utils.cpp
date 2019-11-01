@@ -440,12 +440,28 @@ namespace cryptonote
   //---------------------------------------------------------------
   bool add_ntz_txn_to_extra(std::vector<uint8_t>& tx_extra, std::string& ntzstr)
   {
-    tx_extra.resize(tx_extra.size() + 1 + sizeof(TX_EXTRA_NTZ_MAX_COUNT));
-    tx_extra[tx_extra.size() - 1 - sizeof(TX_EXTRA_NTZ_MAX_COUNT)] = TX_EXTRA_NTZ_TXN_TAG;
+    tx_extra.resize(tx_extra.size() + 3 + sizeof(TX_EXTRA_NTZ_MAX_COUNT));
+    tx_extra[tx_extra.size() - 3 - sizeof(TX_EXTRA_NTZ_MAX_COUNT)] = TX_EXTRA_NTZ_TXN_TAG;
     std::vector<uint8_t> ntz_data = hex_to_bytes4096(ntzstr);
+    uint16_t size = 1;
+    std::vector<uint8_t> temp_vec;
     for (const auto& character : ntz_data)
     {
-      tx_extra.push_back(character);
+      temp_vec.push_back(character);
+      size++;
+    }
+    std::stringstream ss;
+    ss << std::hex << size;
+    std::string two_byte_hex = ss.str();
+    std::string byte_one = two_byte_hex.substr(0,2);
+    std::string byte_two = two_byte_hex.substr(2,2);
+    MWARNING("Two byte hex value when adding ntz_txn to extra: " << two_byte_hex << ", byte one: " << byte_one << ", byte_two: " << byte_two);
+    uint8_t first_byte = stoi(byte_one, nullptr, 16);
+    uint8_t second_byte = stoi(byte_two, nullptr, 16);
+    tx_extra.push_back(first_byte);
+    tx_extra.push_back(second_byte);
+    for (const auto& each : temp_vec) {
+      tx_extra.push_back(each);
     }
     return true;
   }
