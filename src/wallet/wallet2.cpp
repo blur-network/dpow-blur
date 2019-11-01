@@ -4953,13 +4953,14 @@ void wallet2::get_ntzpool_tx(std::vector<pending_tx>& ptx_vector)
 
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::request_ntz_sig(std::string const& ptx_string, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const & signers_index)
+void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const& ptx_hash, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const & signers_index)
 {
   using namespace cryptonote;
     // Normal submit
     COMMAND_RPC_REQUEST_NTZ_SIG::request request = AUTO_VAL_INIT(request);
     request.sig_count = sigs_count;
     request.ptx_string = ptx_string;
+    request.ptx_hash = epee::string_tools::pod_to_hex(ptx_hash);
     std::vector<std::string> tx_blobs;
     for (const auto& each : ptxs) {
       blobdata blob = tx_to_blob(each.tx);
@@ -7273,7 +7274,7 @@ static uint32_t get_count_above(const std::vector<wallet2::transfer_details> &tr
   return count;
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon, int const& sig_count)
+std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon, int const& sig_count, std::vector<tools::wallet2::pending_tx>& pen_tx)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
@@ -7720,6 +7721,9 @@ skip_tx:
   }
 
   std::vector<wallet2::pending_tx> ptx_vector;
+  for (const auto& each: pen_tx) {
+    ptx_vector.push_back(each);
+  }
   for (std::vector<tx_struct>::iterator i = txes.begin(); i != txes.end(); ++i)
   {
     tx_struct &tx = *i;

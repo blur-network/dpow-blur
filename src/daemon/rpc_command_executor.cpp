@@ -905,7 +905,8 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
 
         tools::msg_writer() <<  "=======================================================" << std::endl
                           << "id: " << ntz_tx_info.id_hash << std::endl
-                          /*<< ntz_tx_info.tx_json << std::endl*/
+                         /* << ntz_tx_info.tx_json << std::endl*/
+                          << "ptx_hash: " << ntz_tx_info.ptx_hash << std::endl
                           << "sig_count: " << ntz_tx_info.sig_count << std::endl
                           << "signers_index: " << indexes << std::endl
                           << "blob_size: " << ntz_tx_info.blob_size << std::endl
