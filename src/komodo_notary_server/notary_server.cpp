@@ -191,7 +191,8 @@ namespace tools
                   sent_to_pool = true;
                 }
               }
-            } else if ((m_wallet->get_ntzpool_count(true) < 1) && !sent_to_pool) {
+            }
+            if ((m_wallet->get_ntzpool_count(true) < 1) && !sent_to_pool) {
               bool r = on_create_ntz_transfer(req, res, e);
               if (r) {
                 sent_to_pool = true;

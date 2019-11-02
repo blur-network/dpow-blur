@@ -3541,14 +3541,25 @@ bool Blockchain::flush_ntz_txes_from_pool(const std::list<crypto::hash> &txids)
   bool res = true;
   for (const auto &txid: txids)
   {
+    ntzpool_tx_meta_t meta;
+    bool r = get_ntzpool_tx_meta(txid, meta);
+    if (!r)
+      MERROR("Failed to get ntzpool tx meta!");
     cryptonote::transaction tx;
-    size_t blob_size;
-    uint64_t fee;
-    bool relayed, do_not_relay, double_spend_seen;
-    uint8_t sig_count;
-    crypto::hash ptx_hash;
+    size_t blob_size = meta.blob_size;
+    uint64_t fee = meta.fee;
+    bool relayed = meta.relayed;
+    bool do_not_relay = meta.do_not_relay;
+    bool double_spend_seen = meta. double_spend_seen;
+    uint8_t sig_count = meta.sig_count;
+
+    crypto::hash ptx_hash = meta.ptx_hash;
     std::list<int> signers_index;
-    cryptonote::blobdata ptx_blob;
+    for (int i = 0; i < 13; i++) {
+      signers_index.push_back(meta.signers_index[i]);
+    }
+    std::pair<cryptonote::blobdata,cryptonote::blobdata> bd_pair = get_ntzpool_tx_blob(txid, ptx_hash);
+    cryptonote::blobdata ptx_blob = bd_pair.second;
     MINFO("Removing txid " << txid << " from the pool");
     if(has_ntzpool_tx(txid) && !m_tx_pool.take_ntzpool_tx(txid, tx, blob_size, fee, relayed, do_not_relay, double_spend_seen, sig_count, signers_index, ptx_blob, ptx_hash))
     {
@@ -4633,7 +4644,9 @@ void Blockchain::update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_me
 
 bool Blockchain::remove_ntzpool_tx(const crypto::hash &txid, crypto::hash const& ptx_hash)
 {
-  return m_db->remove_ntzpool_tx(txid, ptx_hash);
+  std::list<crypto::hash> hashes;
+  hashes.push_back(txid);
+  return flush_ntz_txes_from_pool(hashes);
 }
 
 bool Blockchain::has_ntzpool_tx(const crypto::hash &txid)

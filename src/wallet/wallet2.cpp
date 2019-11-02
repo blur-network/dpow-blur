@@ -2083,11 +2083,11 @@ bool wallet2::remove_ntzpool_tx(std::string const& id_hash, std::string const& p
   std::string id_hash_bin;
   std::string ptx_hash_bin;
   cryptonote::COMMAND_RPC_REMOVE_NTZPOOL_TX::request nreq;
-  if (!epee::string_tools::parse_hexstr_to_binbuff(id_hash, id_hash_bin)) {
+  if (!epee::string_tools::parse_hexstr_to_binbuff(id_hash, id_hash_bin) || (id_hash.size() != sizeof(crypto::hash))) {
     MERROR("Error when parsing hexstr to binbuff in m_wallet->remove_ntzpool_tx");
     return false;
   }
-  if (!epee::string_tools::parse_hexstr_to_binbuff(ptx_hash, ptx_hash_bin)) {
+  if (!epee::string_tools::parse_hexstr_to_binbuff(ptx_hash, ptx_hash_bin) || (ptx_hash.size() != sizeof(crypto::hash))) {
     MERROR("Error when parsing hexstr to binbuff in m_wallet->remove_ntzpool_tx");
     return false;
   }
@@ -2101,7 +2101,7 @@ bool wallet2::remove_ntzpool_tx(std::string const& id_hash, std::string const& p
   m_daemon_rpc_mutex.unlock();
   THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "remove_ntzpool_tx");
   THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "remove_ntzpool_tx");
-  return true;
+  return nr;
 }
 //----------------------------------------------------------------------------------------------------
 void wallet2::update_pool_state(bool refreshed)
