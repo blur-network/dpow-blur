@@ -1424,6 +1424,15 @@ namespace cryptonote
     return r;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_remove_ntzpool_tx(const COMMAND_RPC_REMOVE_NTZPOOL_TX::request& req, COMMAND_RPC_REMOVE_NTZPOOL_TX::response& res, bool request_has_rpc_origin)
+  {
+    bool r = m_core.get_blockchain_storage().remove_ntzpool_tx(req.tx_hash, req.ptx_hash);
+    if (r) {
+      res.status = CORE_RPC_STATUS_OK;
+    }
+    return r;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_pending_ntz_pool(const COMMAND_RPC_GET_PENDING_NTZ_POOL::request& req, COMMAND_RPC_GET_PENDING_NTZ_POOL::response& res, bool request_has_rpc_origin)
   {
     PERF_TIMER(on_get_pending_ntz_pool);

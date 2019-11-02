@@ -4631,9 +4631,9 @@ void Blockchain::update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_me
   m_db->update_ntzpool_tx(txid, meta);
 }
 
-void Blockchain::remove_ntzpool_tx(const crypto::hash &txid, crypto::hash const& ptx_hash)
+bool Blockchain::remove_ntzpool_tx(const crypto::hash &txid, crypto::hash const& ptx_hash)
 {
-  m_db->remove_ntzpool_tx(txid, ptx_hash);
+  return m_db->remove_ntzpool_tx(txid, ptx_hash);
 }
 
 bool Blockchain::has_ntzpool_tx(const crypto::hash &txid)

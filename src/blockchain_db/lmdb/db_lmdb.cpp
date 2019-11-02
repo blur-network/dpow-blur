@@ -1895,7 +1895,7 @@ bool BlockchainLMDB::ntzpool_has_tx(const crypto::hash& txid) const
   return result != MDB_NOTFOUND;
 }
 
-void BlockchainLMDB::remove_ntzpool_tx(const crypto::hash& txid, const crypto::hash& ptx_hash)
+bool BlockchainLMDB::remove_ntzpool_tx(const crypto::hash& txid, const crypto::hash& ptx_hash)
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -1908,32 +1908,45 @@ void BlockchainLMDB::remove_ntzpool_tx(const crypto::hash& txid, const crypto::h
   MDB_val k = {sizeof(txid), (void *)&txid};
   MDB_val ks = {sizeof(ptx_hash), (void *)&ptx_hash};
   auto result = mdb_cursor_get(m_cur_ntzpool_meta, &k, NULL, MDB_SET);
-  if (result != 0 && result != MDB_NOTFOUND)
+  if (result != 0 && result != MDB_NOTFOUND) {
     throw1(DB_ERROR(lmdb_error("Error finding ntzpool tx meta to remove: ", result).c_str()));
+    return false;
+  }
   if (!result)
   {
     result = mdb_cursor_del(m_cur_ntzpool_meta, 0);
-    if (result)
+    if (result) {
       throw1(DB_ERROR(lmdb_error("Error adding removal of ntzpool tx metadata to db transaction: ", result).c_str()));
+      return false;
+    }
   }
   result = mdb_cursor_get(m_cur_ntzpool_blob, &k, NULL, MDB_SET);
-  if (result != 0 && result != MDB_NOTFOUND)
+  if (result != 0 && result != MDB_NOTFOUND) {
     throw1(DB_ERROR(lmdb_error("Error finding ntzpool tx blob to remove: ", result).c_str()));
+    return false;
+  }
   if (!result)
   {
     result = mdb_cursor_del(m_cur_ntzpool_blob, 0);
-    if (result)
+    if (result) {
       throw1(DB_ERROR(lmdb_error("Error adding removal of ntzpool tx blob to db transaction: ", result).c_str()));
+      return false;
+    }
   }
   result = mdb_cursor_get(m_cur_ntzpool_ptx_blob, &ks, NULL, MDB_SET);
-  if (result != 0 && result != MDB_NOTFOUND)
+  if (result != 0 && result != MDB_NOTFOUND) {
     throw1(DB_ERROR(lmdb_error("Error finding ntzpool_ptx_blob to remove: ", result).c_str()));
+    return false;
+  }
   if (!result)
   {
     result = mdb_cursor_del(m_cur_ntzpool_ptx_blob, 0);
-    if (result)
+    if (result) {
       throw1(DB_ERROR(lmdb_error("Error adding removal of ntzpool_ptx_blob to db transaction: ", result).c_str()));
+      return false;
+    }
   }
+  return true;
 }
 
 bool BlockchainLMDB::get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_meta_t &meta) const

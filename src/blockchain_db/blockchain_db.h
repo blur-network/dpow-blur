@@ -1435,7 +1435,7 @@ public:
    *
    * @param txid the transaction id of the transation to remove
    */
-  virtual void remove_ntzpool_tx(const crypto::hash& txid, crypto::hash const& ptx_hash) = 0;
+  virtual bool remove_ntzpool_tx(const crypto::hash& txid, crypto::hash const& ptx_hash) = 0;
 
   /**
    * @brief get a ntzpool transaction's metadata

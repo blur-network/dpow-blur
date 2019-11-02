@@ -980,7 +980,7 @@ namespace cryptonote
 
     void add_ntzpool_tx(transaction &tx, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t &meta);
     void update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_meta_t &meta);
-    void remove_ntzpool_tx(const crypto::hash &txid, crypto::hash const& ptx_hash);
+    bool remove_ntzpool_tx(const crypto::hash &txid, crypto::hash const& ptx_hash);
     bool has_ntzpool_tx(const crypto::hash &txid);
     uint64_t get_ntzpool_tx_count(bool include_unrelayed_txes = true) const;
     bool get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_meta_t &meta) const;
