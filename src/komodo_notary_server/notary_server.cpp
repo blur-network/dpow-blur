@@ -86,9 +86,9 @@ namespace
 namespace tools
 {
 
-  bool check_for_index (std::vector<std::pair<int,int>>& vec, std::pair<int,int>& which)
+  bool check_for_index (std::vector<std::pair<int,size_t>>& vec, std::pair<int,size_t>& which)
   {
-    which = *std::max_element(vec.begin(), vec.end(), [](const std::pair<int,int> uno, const std::pair<int,int> dos) { return std::max(uno.first,dos.first); });
+    which = *std::max_element(vec.begin(), vec.end(), [](const std::pair<int,int> uno, const std::pair<int,int> dos) { return uno.first < dos.first; });
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -1269,17 +1269,15 @@ namespace tools
       MERROR("Failed to fetch transactions from ntz pool!");
       return false;
     } else {
-      std::vector<std::pair<int,int>> scounts;
+      std::vector<std::pair<int,size_t>> scounts;
 
-      for (const auto& each : ntzpool_txs) {
-        int index = 0;
-        std::pair<int,int> tmp;
-        tmp.first = each.sig_count;
-        tmp.second = index;
+      for (size_t i = 0; i < ntzpool_txs.size(); i++) {
+        std::pair<int,size_t> tmp;
+        tmp.first = ntzpool_txs[i].sig_count;
+        tmp.second = i;
         scounts.push_back(tmp);
-        index++;
       }
-      std::pair<int,int> best = AUTO_VAL_INIT(best);
+      std::pair<int,size_t> best = AUTO_VAL_INIT(best);
       bool check = check_for_index(scounts, best);
       tx_hash = ntzpool_txs[best.second].id_hash;
       tx_blob = ntzpool_txs[best.second].tx_blob;

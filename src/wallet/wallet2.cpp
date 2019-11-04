@@ -5014,7 +5014,7 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
     m_daemon_rpc_mutex.lock();
     bool r = epee::net_utils::invoke_http_json("/requestntzsig", request, daemon_send_resp, m_http_client);
     m_daemon_rpc_mutex.unlock();
-//    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig failed with status: " + daemon_send_resp.status + " and reason: " + daemon_send_resp.reason);
+    THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig failed with status: " + daemon_send_resp.status + " and reason: " + daemon_send_resp.reason);
     THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "request_ntz_sig");
     for (const auto& ptx : ptxs)
     {
@@ -5022,6 +5022,10 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
       // sanity checks
       for (size_t idx: ptx.selected_transfers)
       {
+        transfer_details &td = m_transfers[idx];
+        // notary wallet will not know about other notarizers' key images
+        if (!td.m_key_image_known || td.m_key_image_partial)
+          continue;
         THROW_WALLET_EXCEPTION_IF(idx >= m_transfers.size(), error::wallet_internal_error,
            "Bad output index in selected transfers: " + boost::lexical_cast<std::string>(idx));
       }
