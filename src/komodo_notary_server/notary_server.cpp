@@ -45,6 +45,7 @@ using namespace epee;
 #include "cryptonote_config.h"
 #include "cryptonote_core/tx_pool.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
+#include "cryptonote_protocol/cryptonote_protocol_defs.h"
 #include "cryptonote_basic/account.h"
 #include "komodo/komodo_validation.h"
 #include "multisig/multisig.h"
@@ -1200,7 +1201,7 @@ namespace tools
             break;
           }
           m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const);
-          MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", new_signers_index =  " << index_vec << ", and payment id: " << payment_id);
+          MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
         return fill_res;
       } else {
@@ -1221,7 +1222,7 @@ namespace tools
               break;
             }
             m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const);
-            MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", new_signers_index =  " << index_vec << ", and payment id: " << payment_id);
+            MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
           }
           return fill_res;
         } else {
@@ -1283,9 +1284,11 @@ namespace tools
       tx_hash = ntzpool_txs[best.second].id_hash;
       tx_blob = ntzpool_txs[best.second].tx_blob;
       ptx_blob = ntzpool_txs[best.second].ptx_blob;
-
-      for (const auto& each : ntzpool_txs[best.second].signers_index) {
+      for (int i = 0; i < 13; i++) {
+        int each = -1;
+        each = ntzpool_txs[best.second].signers_index.front();
         signers_index.push_back(each);
+        ntzpool_txs[best.second].signers_index.pop_front();
       }
       sig_count = ntzpool_txs[best.second].sig_count;
     }
@@ -1431,7 +1434,6 @@ namespace tools
     if (payment_id.empty()) {
       MERROR("Unable to find payment ID!");
     }
-    std::vector<int> new_signers_index;
     if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
     {
       MERROR("Transfer failed validation in validate_ntz_transfer!");
@@ -1439,7 +1441,7 @@ namespace tools
     }
 
     std::string index_str;
-    for (const auto& each : new_signers_index) {
+    for (const auto& each : signers_index) {
       std::string tmp = std::to_string(each) + " ";
       index_str += tmp;
     }
@@ -1489,7 +1491,7 @@ namespace tools
           index_vec += tmp;
         }
 
-        const std::vector<int> si_const = new_signers_index;
+        const std::vector<int> si_const = signers_index;
         ptx_vector.push_back(pen_tx);
         crypto::hash ptx_hash;
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,

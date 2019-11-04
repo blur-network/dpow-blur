@@ -4979,7 +4979,7 @@ void wallet2::get_ntzpool_tx(std::vector<pending_tx>& ptx_vector)
 
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const& ptx_hash, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const & signers_index)
+void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const& ptx_hash, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const& signers_index)
 {
   using namespace cryptonote;
     // Normal submit
@@ -5005,7 +5005,7 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
         std::string each_lten = "0" + std::to_string(each);
         temp += each_lten;
       } else {
-        temp += "-1";
+        temp += std::to_string(each);
       }
     }
     MWARNING("Indexes string created using get_index template:" << temp);

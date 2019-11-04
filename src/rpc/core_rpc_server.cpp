@@ -1431,7 +1431,9 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_remove_ntzpool_tx(const COMMAND_RPC_REMOVE_NTZPOOL_TX::request& req, COMMAND_RPC_REMOVE_NTZPOOL_TX::response& res, bool request_has_rpc_origin)
   {
-    bool r = m_core.get_blockchain_storage().flush_ntz_txes_from_pool(req.tx_hash);
+    std::list<crypto::hash> hashes;
+    hashes.push_back(req.tx_hash);
+    bool r = m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hashes);
     if (r) {
       res.status = CORE_RPC_STATUS_OK;
     }
