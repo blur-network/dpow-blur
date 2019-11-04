@@ -453,8 +453,17 @@ namespace cryptonote
     std::stringstream ss;
     ss << std::hex << size;
     std::string two_byte_hex = ss.str();
-    std::string byte_one = two_byte_hex.substr(0,2);
-    std::string byte_two = two_byte_hex.substr(2,2);
+    std::string byte_one, byte_two;
+    if (two_byte_hex.length() < 3) {
+      byte_one = "00";
+      byte_two = two_byte_hex;
+    } else if (two_byte_hex.length() < 4) {
+      byte_one = two_byte_hex.substr(0, 1);
+      byte_two = two_byte_hex.substr(1, 2);
+    } else {
+      byte_one = two_byte_hex.substr(0,2);
+      byte_two = two_byte_hex.substr(2,2);
+    }
     MWARNING("Two byte hex value when adding ntz_txn to extra: " << two_byte_hex << ", byte one: " << byte_one << ", byte_two: " << byte_two);
     uint8_t first_byte = stoi(byte_one, nullptr, 16);
     uint8_t second_byte = stoi(byte_two, nullptr, 16);

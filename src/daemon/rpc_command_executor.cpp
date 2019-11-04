@@ -900,8 +900,14 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
       tools::msg_writer() << "Pending Notarization Transactions: ";
       for (auto & ntz_tx_info : nres.transactions)
       {
-      std::string indexes = " ";
-      for (int i = 0; i < 13; i++) { std::string index_string = (std::to_string(ntz_tx_info.signers_index.front()) + " "); indexes += index_string; ntz_tx_info.signers_index.pop_front(); }
+        std::string indexes = " ";
+        for (int i = 0; i < 13; i++) {
+          bool z = (ntz_tx_info.signers_index.front() < 10) && (ntz_tx_info.signers_index.front() > (-1));
+          std::string index_string = ((z ? "0" + std::to_string(ntz_tx_info.signers_index.front())
+             : std::to_string(ntz_tx_info.signers_index.front())) + " ");
+          indexes += index_string;
+          ntz_tx_info.signers_index.pop_front();
+        }
 
         tools::msg_writer() <<  "=======================================================" << std::endl
                           << "id: " << ntz_tx_info.id_hash << std::endl

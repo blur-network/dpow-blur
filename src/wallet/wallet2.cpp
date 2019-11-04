@@ -2083,11 +2083,11 @@ bool wallet2::remove_ntzpool_tx(std::string const& id_hash, std::string const& p
   std::string id_hash_bin;
   std::string ptx_hash_bin;
   cryptonote::COMMAND_RPC_REMOVE_NTZPOOL_TX::request nreq;
-  if (!epee::string_tools::parse_hexstr_to_binbuff(id_hash, id_hash_bin) || (id_hash.size() != sizeof(crypto::hash))) {
+  if (!epee::string_tools::parse_hexstr_to_binbuff(id_hash, id_hash_bin) || ((id_hash.length()/2) != sizeof(crypto::hash))) {
     MERROR("Error when parsing hexstr to binbuff in m_wallet->remove_ntzpool_tx");
     return false;
   }
-  if (!epee::string_tools::parse_hexstr_to_binbuff(ptx_hash, ptx_hash_bin) || (ptx_hash.size() != sizeof(crypto::hash))) {
+  if (!epee::string_tools::parse_hexstr_to_binbuff(ptx_hash, ptx_hash_bin) || ((ptx_hash.length()/2) != sizeof(crypto::hash))) {
     MERROR("Error when parsing hexstr to binbuff in m_wallet->remove_ntzpool_tx");
     return false;
   }
@@ -4996,15 +4996,16 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
     }
     request.tx_blob = tx_blobs[0];
     request.payment_id = payment_id;
+    const int neg = -1;
     std::string temp;
     int i = 0;
-    for (int i = 0; i < 13; i++) {
-      int each = get_index<int>(i, signers_index);
-      if ((each < 10) && (each != (-1))) {
+    for (i = 0; i < 13; i++) {
+      int each = signers_index[i];
+      if ((each < 10) && (each > neg)) {
         std::string each_lten = "0" + std::to_string(each);
         temp += each_lten;
       } else {
-        temp += std::to_string(each);
+        temp += "-1";
       }
     }
     MWARNING("Indexes string created using get_index template:" << temp);

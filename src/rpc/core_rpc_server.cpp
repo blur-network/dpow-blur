@@ -1206,9 +1206,14 @@ namespace cryptonote
         r.signers_index.push_back(tmp);
       }
 
-      std::string si = " ";
+      std::string si = "";
       for (const auto& each : r.signers_index) {
-        std::string tmp = std::to_string(each);
+        std::string tmp;
+        if ((each < 10) && (each > -1)) {
+          tmp = "0" + std::to_string(each);
+        } else {
+          tmp = std::to_string(each);
+        }
         si += tmp;
       }
       MWARNING("Ptx string in RPC: " << r.ptx_string);
@@ -1426,7 +1431,7 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_remove_ntzpool_tx(const COMMAND_RPC_REMOVE_NTZPOOL_TX::request& req, COMMAND_RPC_REMOVE_NTZPOOL_TX::response& res, bool request_has_rpc_origin)
   {
-    bool r = m_core.get_blockchain_storage().remove_ntzpool_tx(req.tx_hash, req.ptx_hash);
+    bool r = m_core.get_blockchain_storage().flush_ntz_txes_from_pool(req.tx_hash);
     if (r) {
       res.status = CORE_RPC_STATUS_OK;
     }

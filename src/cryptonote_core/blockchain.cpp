@@ -3550,7 +3550,7 @@ bool Blockchain::flush_ntz_txes_from_pool(const std::list<crypto::hash> &txids)
     uint64_t fee = meta.fee;
     bool relayed = meta.relayed;
     bool do_not_relay = meta.do_not_relay;
-    bool double_spend_seen = meta. double_spend_seen;
+    bool double_spend_seen = meta.double_spend_seen;
     uint8_t sig_count = meta.sig_count;
 
     crypto::hash ptx_hash = meta.ptx_hash;
@@ -4644,9 +4644,7 @@ void Blockchain::update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_me
 
 bool Blockchain::remove_ntzpool_tx(const crypto::hash &txid, crypto::hash const& ptx_hash)
 {
-  std::list<crypto::hash> hashes;
-  hashes.push_back(txid);
-  return flush_ntz_txes_from_pool(hashes);
+  return m_db->remove_ntzpool_tx(txid, ptx_hash);
 }
 
 bool Blockchain::has_ntzpool_tx(const crypto::hash &txid)
