@@ -215,25 +215,25 @@ User input:
 print_pool
 ```
 
-Example output of a transaction that has 5 notarization signatures:
+Output of a pending ntz tx with 9 signatures:
 
 ```
 Pending Notarization Transactions: 
 =======================================================
-id: 17580a0301cdc9a144ec2e1b64c5abaa037a661f72e433c3ffe4ccaab68278e6
-ptx_hash: ba1a75d844176a11399b9cc2794667c00e6058c11121fcdd3c492c788232e082
-sig_count: 5
-signers_index:  21 00 47 51 63 -1 -1 -1 -1 -1 -1 -1 -1 
-blob_size: 53339
-fee: 0.059609100000
-fee/byte: 0.000001117551
-receive_time: 1572826688 (21 seconds ago)
+id: e5f38b36e7efd4275e32ad90d578dd36acbeae86301b7033df963f6416937419
+ptx_hash: 8c152cb5b997b6f2f299f3d625808feaa6d2aefa0a9478b8842858aa3e53eb37
+sig_count: 9
+signers_index:  16 36 60 10 21 63 47 51 00 -1 -1 -1 -1 
+blob_size: 53602
+fee: 0.059570940000
+fee/byte: 0.000001111356
+receive_time: 1572956332 (33 minutes ago)
 relayed: no
 do_not_relay: F
 kept_by_block: F
 double_spend_seen: F
-max_used_block_height: 1685
-max_used_block_id: f2baa5004efe3d983dc167d3d25d113acfaf4625ac93403011a09d53d94ae8ad
+max_used_block_height: 2546
+max_used_block_id: b56701d1d774e070aebd8366489cc63ec75e8c4bac4e37475f090f253a01e304
 last_failed_height: 0
 last_failed_id: 0000000000000000000000000000000000000000000000000000000000000000
 ```
