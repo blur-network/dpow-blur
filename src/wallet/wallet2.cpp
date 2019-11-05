@@ -4994,7 +4994,7 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
  //     std::string blobhex = epee::string_tools::buff_to_hex_nodelimer(blob);
  //     MWARNING("trying to relay request ntz sig with tx blob: " << blobhex << ", sigs_count: " << std::to_string(sigs_count) << ", and payment id: " << payment_id);
     }
-    request.tx_blob = tx_blobs[0];
+    request.tx_blobs = tx_blobs;
     request.payment_id = payment_id;
     const int neg = -1;
     std::string temp;

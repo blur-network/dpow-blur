@@ -116,7 +116,7 @@ bool req_ntz_sig_to_cache(cryptonote::NOTIFY_REQUEST_NTZ_SIG::request& arg, std:
   std::vector<int> signers_index = arg.signers_index;
   std::string signers_index_s;
   std::string payment_id = arg.payment_id;
-  std::string tx_blob = arg.tx_blob;
+  std::vector<std::string> tx_blobs = arg.tx_blobs;
 
   int const neg = -1;
   int const count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);

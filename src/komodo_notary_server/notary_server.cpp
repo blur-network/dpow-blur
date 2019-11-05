@@ -1490,7 +1490,6 @@ namespace tools
         }
 
         const std::vector<int> si_const = signers_index;
-        ptx_vector.push_back(pen_tx);
         crypto::hash ptx_hash;
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);

@@ -876,8 +876,8 @@ namespace cryptonote
     NOTIFY_REQUEST_NTZ_SIG::request ag;
     cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
 
-
-      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index_s, arg.ptx_string, arg.ptx_hash);
+    for (const auto& each : arg.tx_blobs) {
+      m_core.handle_incoming_ntz_sig(each, tvc, false, true, false, s_count, signers_index_s, arg.ptx_string, arg.ptx_hash);
       if(tvc.m_verifivation_failed)
       {
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
@@ -890,12 +890,14 @@ namespace cryptonote
           return 1;
         }
       }
+    }
     ag.ptx_string = arg.ptx_string;
     ag.ptx_hash = arg.ptx_hash;
     ag.tx_hash = arg.tx_hash;
     ag.sig_count = arg.sig_count;
     ag.payment_id = arg.payment_id;
     ag.signers_index = arg.signers_index;
+    ag.tx_blobs = arg.tx_blobs;
     return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(ag, context);
 
    return 1;
@@ -1851,8 +1853,10 @@ skip:
     // no check for success, so tell core they're relayed unconditionally
     if (arg.sig_count >= 13) {
       NOTIFY_NEW_TRANSACTIONS::request r;
-        m_core.on_transaction_relayed(arg.tx_blob);
-        r.txs.push_back(arg.tx_blob);
+      for (const auto& each: arg.tx_blobs) {
+        m_core.on_transaction_relayed(each);
+        r.txs.push_back(each);
+      }
         return relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(r, exclude_context);
     }
     else if (arg.sig_count > 0 && arg.sig_count < 13) {

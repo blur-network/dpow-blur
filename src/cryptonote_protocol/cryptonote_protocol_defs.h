@@ -309,7 +309,7 @@ namespace cryptonote
       int sig_count;
       blobdata ptx_string;
       crypto::hash ptx_hash;
-      blobdata tx_blob;
+      std::vector<blobdata> tx_blobs;
       crypto::hash tx_hash;
       std::string payment_id;
       std::vector<int> signers_index;
@@ -318,7 +318,7 @@ namespace cryptonote
         KV_SERIALIZE(sig_count)
         KV_SERIALIZE(ptx_string)
         KV_SERIALIZE_VAL_POD_AS_BLOB(ptx_hash)
-        KV_SERIALIZE(tx_blob)
+        KV_SERIALIZE_CONTAINER_POD_AS_BLOB(tx_blobs)
         KV_SERIALIZE_VAL_POD_AS_BLOB(tx_hash)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(signers_index)
