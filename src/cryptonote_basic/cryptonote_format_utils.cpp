@@ -370,13 +370,46 @@ namespace cryptonote
     return r;
   }
   //---------------------------------------------------------------
-  bool parse_tx_extra(const std::vector<uint8_t>& tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
+  bool remove_ntz_data_from_tx_extra(std::vector<uint8_t> const& tx_extra, std::vector<uint8_t>& new_extra, std::vector<uint8_t>& ntz_data, blobdata& ntz_str)
+  {
+    size_t pos = 0;
+    size_t pkp_pos = 0;
+    size_t pka_pos = 0;
+    size_t ntz_data_size, ex_nonce_size;
+    std::string byte_one, byte_two, bytes;
+    std::vector<tx_extra_field> fields;
+    tx_extra_nonce ex_nonce;
+    tx_extra_pub_key pk_primary;
+    tx_extra_additional_pub_keys pk_additional;
+    bool has_ex_nonce = find_tx_extra_field_by_type(fields, ex_nonce, pos);
+    bool has_pubkey = find_tx_extra_field_by_type(fields, pk_primary, pkp_pos);
+    bool has_additional = find_tx_extra_field_by_type(fields, pk_additional, pka_pos);
+    if (has_ex_nonce) {
+      std::string ex_n_string = epee::string_tools::buff_to_hex_nodelimer(ex_nonce.nonce);
+      MWARNING("Found extra nonce: " << ex_n_string << ", at position: " << std::to_string(pos));
+      for (size_t i = 0; i <= pos; i++) {
+        new_extra.push_back(tx_extra[i]);
+     }
+   }
+  return true;
+  }
+  //---------------------------------------------------------------
+  bool parse_tx_extra(const std::vector<uint8_t>& full_tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
   {
     tx_extra_fields.clear();
 
-    if(tx_extra.empty())
+    if(full_tx_extra.empty())
       return true;
 
+    std::vector<uint8_t> new_tx_extra;
+    std::vector<uint8_t> ntz_tx_data;
+    std::string ntz_str;
+      tx_extra_field field;
+      if (field.type() == typeid(tx_extra_ntz_txn)) {
+        bool removed = remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
+        MWARNING("Ntz_txn_data string: " << ntz_str);
+      }
+    std::vector<uint8_t> const tx_extra = new_tx_extra;
     std::string extra_str(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size());
     std::istringstream iss(extra_str);
     binary_archive<false> ar(iss);
@@ -384,14 +417,13 @@ namespace cryptonote
     bool eof = false;
     while (!eof)
     {
-      tx_extra_field field;
-      bool r = ::do_serialize(ar, field);
-      CHECK_AND_NO_ASSERT_MES_L1(r, false, "failed to deserialize extra field. extra = " << string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())));
-      tx_extra_fields.push_back(field);
+        bool r = ::do_serialize(ar, field);
+        CHECK_AND_NO_ASSERT_MES_L1(r, false, "failed to deserialize extra field. extra = " << string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())));
+        tx_extra_fields.push_back(field);
 
-      std::ios_base::iostate state = iss.rdstate();
-      eof = (EOF == iss.peek());
-      iss.clear(state);
+        std::ios_base::iostate state = iss.rdstate();
+        eof = (EOF == iss.peek());
+        iss.clear(state);
     }
     CHECK_AND_NO_ASSERT_MES_L1(::serialization::check_stream_state(ar), false, "failed to deserialize extra field. extra = " << string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())));
 

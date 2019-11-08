@@ -218,21 +218,6 @@ list(INSERT CMAKE_MODULE_PATH 0
 
 find_package(Backward)
 
-if (NOT DEFINED ENV{DEVELOPER_LOCAL_TOOLS})
-  message(STATUS "Could not find DEVELOPER_LOCAL_TOOLS in env (not required)")
-  set(BOOST_IGNORE_SYSTEM_PATHS_DEFAULT OFF)
-elseif ("$ENV{DEVELOPER_LOCAL_TOOLS}" EQUAL 1)
-  message(STATUS "Found: env DEVELOPER_LOCAL_TOOLS = 1")
-  set(BOOST_IGNORE_SYSTEM_PATHS_DEFAULT ON)
-else()
-  message(STATUS "Found: env DEVELOPER_LOCAL_TOOLS = 0")
-  set(BOOST_IGNORE_SYSTEM_PATHS_DEFAULT OFF)
-endif()
-
-message(STATUS "BOOST_IGNORE_SYSTEM_PATHS defaults to ${BOOST_IGNORE_SYSTEM_PATHS_DEFAULT}")
-option(BOOST_IGNORE_SYSTEM_PATHS "Ignore boost system paths for local boost installation" ${BOOST_IGNORE_SYSTEM_PATHS_DEFAULT})
-
-
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 enable_testing()
 
@@ -357,24 +342,6 @@ add_definitions("-DBLOCKCHAIN_DB=${BLOCKCHAIN_DB}")
 # Can't install hook in static build on OSX, because OSX linker does not support --wrap
 # On ARM, having libunwind package (with .so's only) installed breaks static link.
 # When possible, avoid stack tracing using libunwind in favor of using easylogging++.
-if (APPLE)
-  set(LIBUNWIND_LIBRARIES "")
-elseif (DEPENDS AND NOT LINUX)
-  set(LIBUNWIND_LIBRARIES "")
-elseif (ARM AND STATIC)
-  set(LIBUNWIND_LIBRARIES "")
-else()
-  find_library(UNWIND_LIBRARY unwind)
-  if(UNWIND_LIBRARY)
-    set(UNWIND_LIBRARY ${UNWIND_LIBRARY})
-    message(STATUS "Found UNWIND_LIBRARY located at: ${UNWIND_LIBRARY}.")
-  else()
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-      message(FATAL_ERROR "Could not find required unwind library, when building debug type. Please recompile for release build, or install libunwind.")
-    endif()
-  endif()
-endif()
-
 if (UNIX AND NOT APPLE)
   # Note that at the time of this writing the -Wstrict-prototypes flag added below will make this fail
   set(THREADS_PREFER_PTHREAD_FLAG ON)
@@ -472,8 +439,15 @@ if (BERKELEY_DB)
   include_directories(${BDB_INCLUDE})
 endif()
 
+find_package(Libunwind)
+if(Libunwind_FOUND)
+  message(STATUS "Using Libunwind located at: ${LIBUNWIND_LIBRARIES}.")
+else()
+    message(FATAL_ERROR "Could not find required unwind library, when building debug type. Please recompile for release build, or install libunwind.")
+endif()
+
 # Final setup for libunwind
-include_directories(${LIBUNWIND_INCLUDE})
+include_directories(${LIBUNWIND_INCLUDE_DIR})
 link_directories(${LIBUNWIND_LIBRARY_DIRS})
 
 if(MSVC)
@@ -824,24 +798,20 @@ else()
   endif()
 endif()
 
-if (${BOOST_IGNORE_SYSTEM_PATHS} STREQUAL "ON")
-  set(Boost_NO_SYSTEM_PATHS TRUE)
-endif()
-
 set(OLD_LIB_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 if(STATIC)
   if(MINGW)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
   endif()
-
   set(Boost_USE_STATIC_LIBS ON)
   set(Boost_USE_STATIC_RUNTIME ON)
 endif()
-find_package(Boost 1.58 QUIET REQUIRED COMPONENTS system filesystem thread date_time chrono regex serialization program_options locale)
+find_package(Boost REQUIRED COMPONENTS system filesystem thread date_time chrono regex serialization program_options locale)
+set(BOOST_INCLUDE_DIR /usr/lib/boost)
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES ${OLD_LIB_SUFFIXES})
 if(NOT Boost_FOUND)
-  die("Could not find Boost libraries, please make sure you have installed Boost or libboost-all-dev (1.58) or the equivalent")
+  message(FATAL_ERROR "Could not find Boost libraries, please make sure you have installed Boost or libboost-all-dev (1.58) or the equivalent")
 elseif(Boost_FOUND)
   message(STATUS "Found Boost Version: ${Boost_VERSION}")
   if (Boost_VERSION VERSION_LESS 10 AND Boost_VERSION VERSION_LESS 1.62.0 AND NOT (OPENSSL_VERSION VERSION_LESS 1.1))
