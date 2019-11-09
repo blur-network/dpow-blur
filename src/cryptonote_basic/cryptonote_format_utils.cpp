@@ -377,20 +377,28 @@ namespace cryptonote
     size_t pka_pos = 0;
     size_t ntz_data_size, ex_nonce_size;
     std::string byte_one, byte_two, bytes;
+    std::list<uint8_t> tmp;
+    for (const auto& each : tx_extra) {
+      tmp.push_back(each);
+    }
     std::vector<tx_extra_field> fields;
     tx_extra_nonce ex_nonce;
     tx_extra_pub_key pk_primary;
     tx_extra_additional_pub_keys pk_additional;
-    bool has_ex_nonce = find_tx_extra_field_by_type(fields, ex_nonce, pos);
-    bool has_pubkey = find_tx_extra_field_by_type(fields, pk_primary, pkp_pos);
-    bool has_additional = find_tx_extra_field_by_type(fields, pk_additional, pka_pos);
+    std::ostringstream ss;
+    bool has_ex_nonce = (tx_extra[0] == 2);
     if (has_ex_nonce) {
-      std::string ex_n_string = epee::string_tools::buff_to_hex_nodelimer(ex_nonce.nonce);
-      MWARNING("Found extra nonce: " << ex_n_string << ", at position: " << std::to_string(pos));
-      for (size_t i = 0; i <= pos; i++) {
+      ex_nonce_size = tx_extra[1];
+      for (size_t i = 0; i <= ex_nonce_size; i++) {
         new_extra.push_back(tx_extra[i]);
-     }
-   }
+        tmp.pop_front();
+      }
+      for (const auto& each: tmp) {
+        std::string tmp_string = std::to_string(each);
+        ss << std::hex << tmp_string;
+      }
+        MWARNING("Remainder of tx_extra after popping fronts: " << ss.str());
+    }
   return true;
   }
   //---------------------------------------------------------------
@@ -409,7 +417,7 @@ namespace cryptonote
         bool removed = remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
         MWARNING("Ntz_txn_data string: " << ntz_str);
       }
-    std::vector<uint8_t> const tx_extra = new_tx_extra;
+    std::vector<uint8_t> const tx_extra = full_tx_extra;
     std::string extra_str(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size());
     std::istringstream iss(extra_str);
     binary_archive<false> ar(iss);
@@ -470,11 +478,18 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  bool add_ntz_txn_to_extra(std::vector<uint8_t>& tx_extra, std::string& ntzstr)
+  bool add_ntz_txn_to_extra(std::vector<uint8_t>& tx_extra, std::string const& ntzstr)
   {
     tx_extra.resize(tx_extra.size() + 3 + sizeof(TX_EXTRA_NTZ_MAX_COUNT));
     tx_extra[tx_extra.size() - 3 - sizeof(TX_EXTRA_NTZ_MAX_COUNT)] = TX_EXTRA_NTZ_TXN_TAG;
-    std::vector<uint8_t> ntz_data = hex_to_bytes4096(ntzstr);
+    std::vector<uint8_t> ntz_data;
+    std::string ntzbin;
+    epee::string_tools::parse_hexstr_to_binbuff(ntzstr,ntzbin);
+    const char* x = ntzbin.data();
+    for (size_t i = 0; i < ntzbin.size(); i++) {
+      uint8_t each = x[i];
+      ntz_data.push_back(each);
+    }
     uint16_t size = 1;
     std::vector<uint8_t> temp_vec;
     for (const auto& character : ntz_data)
@@ -487,7 +502,7 @@ namespace cryptonote
     std::string two_byte_hex = ss.str();
     std::string byte_one, byte_two;
     if (two_byte_hex.length() < 3) {
-      byte_one = "00";
+      byte_one = "0";
       byte_two = two_byte_hex;
     } else if (two_byte_hex.length() < 4) {
       byte_one = two_byte_hex.substr(0, 1);

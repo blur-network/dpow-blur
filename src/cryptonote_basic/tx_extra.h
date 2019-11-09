@@ -86,8 +86,8 @@ namespace cryptonote
       if(TX_EXTRA_NTZ_MAX_COUNT < size)
         return false;
 
-      // i = 3 - because of variant tag + 2 size bytes (interpreted as uint16_t)
-      for (size_t i = 3; i < size; i++)
+      // looks like i = 1 was incorrect, here... which means it also is above.
+      for (size_t i = 0; i < size; i++)
       {
         uint8_t zero = 0;
         if (!::do_serialize(ar, zero))
