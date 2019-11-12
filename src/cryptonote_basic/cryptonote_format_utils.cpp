@@ -430,6 +430,7 @@ namespace cryptonote
       for (size_t j = o; j <= (o + ntz_size); j++) {
         if (j >= i) {
           ntz_data.push_back(tx_extra[j]);
+          ntz_str += epee::string_tools::pod_to_hex(tx_extra[j]);
         }
         tmp.pop_front();
         i++;
@@ -438,12 +439,6 @@ namespace cryptonote
         std::string tmp_string = epee::string_tools::pod_to_hex(each);
         oss << std::hex << tmp_string;
       }
-      for (const auto& each: ntz_data) {
-        std::string tmp_string = epee::string_tools::pod_to_hex(each);
-        n_ss << tmp_string;
-        ntz_str += n_ss.str();
-      }
-
       MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
     }
     if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) {
