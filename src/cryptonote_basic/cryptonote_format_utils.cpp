@@ -372,33 +372,97 @@ namespace cryptonote
   //---------------------------------------------------------------
   bool remove_ntz_data_from_tx_extra(std::vector<uint8_t> const& tx_extra, std::vector<uint8_t>& new_extra, std::vector<uint8_t>& ntz_data, blobdata& ntz_str)
   {
-    size_t pos = 0;
-    size_t pkp_pos = 0;
-    size_t pka_pos = 0;
-    size_t ntz_data_size, ex_nonce_size;
-    std::string byte_one, byte_two, bytes;
+    size_t ntz_data_size;
+    uint8_t ex_nonce_size;
+    std::string byte_one, byte_two, byte_one_bin, byte_two_bin, extra;
     std::list<uint8_t> tmp;
     for (const auto& each : tx_extra) {
       tmp.push_back(each);
+      extra += epee::string_tools::pod_to_hex(each);
     }
+    MWARNING("Full extra field: " << extra);
     std::vector<tx_extra_field> fields;
     tx_extra_nonce ex_nonce;
     tx_extra_pub_key pk_primary;
     tx_extra_additional_pub_keys pk_additional;
-    std::ostringstream ss;
-    bool has_ex_nonce = (tx_extra[0] == 2);
+    std::ostringstream ss, ntz_ss;
+    bool has_ex_nonce = (tx_extra[0] == TX_EXTRA_NONCE);
+    size_t i = 0;
     if (has_ex_nonce) {
       ex_nonce_size = tx_extra[1];
-      for (size_t i = 0; i <= ex_nonce_size; i++) {
-        new_extra.push_back(tx_extra[i]);
+      std::string ex_nonce_string;
+      for (size_t j = 0; j < (size_t)(ex_nonce_size+2); j++) {
+        ex_nonce_string += epee::string_tools::pod_to_hex(tx_extra[j]);
+      }
+      MWARNING("Found extra nonce with size = " << std::to_string(ex_nonce_size) << ", Full Extra nonce = " << ex_nonce_string);
+      for (size_t j = 0; j < (size_t)(ex_nonce_size + 2); j++) {
+        new_extra.push_back(tx_extra[j]);
+        ++i;
+      }
+      for (size_t j = 0; j < (size_t)(ex_nonce_size + 2); j++) {
         tmp.pop_front();
       }
       for (const auto& each: tmp) {
-        std::string tmp_string = std::to_string(each);
-        ss << std::hex << tmp_string;
+        std::string tmp_string = epee::string_tools::pod_to_hex(each);
+        ss << tmp_string;
       }
-        MWARNING("Remainder of tx_extra after popping fronts: " << ss.str());
+      MWARNING("Remainder of tx_extra after popping fronts: " << ss.str());
     }
+    if (tmp.front() == TX_EXTRA_NTZ_TXN_TAG) {
+      size_t o = i;
+      tmp.pop_front();
+      ntz_data.push_back(tx_extra[i]);
+      i++;
+      while (tmp.front() == 0) {
+        ntz_data.push_back(tx_extra[i]);
+        tmp.pop_front();
+        i++;
+      }
+      ntz_data.push_back(tx_extra[i]);
+      byte_one = epee::string_tools::pod_to_hex(tx_extra[i++]);
+      ntz_data.push_back(tx_extra[i]);
+      byte_two = epee::string_tools::pod_to_hex(tx_extra[i++]);
+      std::ostringstream oss, n_ss;
+      ntz_ss << std::hex << byte_one;
+      ntz_ss << std::hex << byte_two;
+      size_t ntz_size = stoi(ntz_ss.str(), nullptr, 16);
+      MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
+      for (size_t j = o; j <= (o + ntz_size); j++) {
+        if (j >= i) {
+          ntz_data.push_back(tx_extra[j]);
+        }
+        tmp.pop_front();
+        i++;
+      }
+      for (const auto& each: tmp) {
+        std::string tmp_string = epee::string_tools::pod_to_hex(each);
+        oss << std::hex << tmp_string;
+      }
+      for (const auto& each: ntz_data) {
+        std::string tmp_string = epee::string_tools::pod_to_hex(each);
+        n_ss << tmp_string;
+        ntz_str += n_ss.str();
+      }
+
+      MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
+    }
+    if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) {
+      MWARNING("Found pubkey or additional!");
+      std::ostringstream oss;
+      size_t o = i;
+      for (size_t j = o; j < (o + 33); j++) {
+         new_extra.push_back(tx_extra[j]);
+         tmp.pop_front();
+         i++;
+      }
+      for (const auto& each: tmp) {
+        std::string tmp_string = epee::string_tools::pod_to_hex(each);
+        oss << tmp_string;
+      }
+
+      MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
+    }
+
   return true;
   }
   //---------------------------------------------------------------
@@ -412,12 +476,11 @@ namespace cryptonote
     std::vector<uint8_t> new_tx_extra;
     std::vector<uint8_t> ntz_tx_data;
     std::string ntz_str;
-      tx_extra_field field;
-      if (field.type() == typeid(tx_extra_ntz_txn)) {
-        bool removed = remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
-        MWARNING("Ntz_txn_data string: " << ntz_str);
-      }
-    std::vector<uint8_t> const tx_extra = full_tx_extra;
+    tx_extra_field field;
+    if (remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str)) {
+ //     MWARNING("Ntz_txn_data string: " << ntz_str);
+    }
+    std::vector<uint8_t> const tx_extra = new_tx_extra;
     std::string extra_str(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size());
     std::istringstream iss(extra_str);
     binary_archive<false> ar(iss);
@@ -582,15 +645,22 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  bool remove_field_from_tx_extra(std::vector<uint8_t>& tx_extra, const std::type_info &type)
+  bool remove_field_from_tx_extra(std::vector<uint8_t>& full_tx_extra, const std::type_info &type)
   {
-    if (tx_extra.empty())
+    if (full_tx_extra.empty())
       return true;
-    std::string extra_str(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size());
+    std::string extra_str(reinterpret_cast<const char*>(full_tx_extra.data()), full_tx_extra.size());
     std::istringstream iss(extra_str);
     binary_archive<false> ar(iss);
     std::ostringstream oss;
     binary_archive<true> newar(oss);
+    std::string ntz_str;
+    std::vector<uint8_t> new_tx_extra;
+    std::vector<uint8_t> ntz_tx_data;
+    if (remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str)) {
+ //     MWARNING("Ntz_txn_data string: " << ntz_str);
+    }
+    std::vector<uint8_t> const tx_extra = new_tx_extra;
 
     bool eof = false;
     while (!eof)
@@ -606,10 +676,25 @@ namespace cryptonote
       iss.clear(state);
     }
     CHECK_AND_NO_ASSERT_MES_L1(::serialization::check_stream_state(ar), false, "failed to deserialize extra field. extra = " << string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())));
-    tx_extra.clear();
+    std::string ntz_bin;
+    if (type != typeid(tx_extra_ntz_txn)) {
+      for (const auto& each : ntz_tx_data) {
+        std::string ntz_each;
+        std::string ntz_each_bin;
+        ntz_each = epee::string_tools::pod_to_hex(each);
+        if (!epee::string_tools::parse_hexstr_to_binbuff(ntz_each, ntz_each_bin)) {
+          MERROR("Failed to parse hex_str to binbuff in remove_field_from_tx_extra!");
+          return false;
+        } else {
+          ntz_bin += ntz_each_bin;
+        }
+      }
+      oss << ntz_bin;
+    }
+    full_tx_extra.clear();
     std::string s = oss.str();
-    tx_extra.reserve(s.size());
-    std::copy(s.begin(), s.end(), std::back_inserter(tx_extra));
+    full_tx_extra.reserve(s.size());
+    std::copy(s.begin(), s.end(), std::back_inserter(full_tx_extra));
     return true;
   }
   //---------------------------------------------------------------

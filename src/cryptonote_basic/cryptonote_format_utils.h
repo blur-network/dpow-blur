@@ -73,7 +73,7 @@ namespace cryptonote
   bool add_tx_pub_key_to_extra(std::vector<uint8_t>& tx_extra, const crypto::public_key& tx_pub_key);
   bool add_ntz_txn_to_extra(std::vector<uint8_t>& tx_extra, const std::string& input);
   std::vector<uint8_t> get_ntz_data_from_extra(const std::vector<uint8_t>& tx_extra);
-  bool remove_ntz_data_from_tx_extra(std::vector<uint8_t>& tx_extra, std::vector<uint8_t>& ntz_data, blobdata& ntz_str);
+  bool remove_ntz_data_from_tx_extra(std::vector<uint8_t> const& tx_extra, std::vector<uint8_t>& new_extra, std::vector<uint8_t>& ntz_data, blobdata& ntz_str);
   std::vector<crypto::public_key> get_additional_tx_pub_keys_from_extra(const std::vector<uint8_t>& tx_extra);
   std::vector<crypto::public_key> get_additional_tx_pub_keys_from_extra(const transaction_prefix& tx);
   bool add_additional_tx_pub_keys_to_extra(std::vector<uint8_t>& tx_extra, const std::vector<crypto::public_key>& additional_pub_keys);
