@@ -9,8 +9,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-      with:
-        submodule: recursive
+    - name: submodules
+      run: git submodule update --init
     - name: make release-cross-linux-x86_64
       run: make
     - name: make check
