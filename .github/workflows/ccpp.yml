@@ -11,9 +11,5 @@ jobs:
     - uses: actions/checkout@v1
     - name: submodules
       run: git submodule update --init
-    - name: make release-cross-linux-x86_64
-      run: make
-    - name: make check
-      run: make check
-    - name: make distcheck
-      run: make distcheck
+    - name: make
+      run: make release-cross-linux-x86_64
