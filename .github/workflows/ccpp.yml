@@ -9,7 +9,8 @@ jobs:
     
     steps:
     - uses: actions/checkout@v1
-    - uses: actions/submodules-init@v1
+      with:
+        submodule: true
     - name: make release-cross-linux-x86_64
       run: make
     - name: make check
