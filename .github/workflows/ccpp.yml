@@ -10,7 +10,7 @@ jobs:
     steps:
     - uses: actions/checkout@v1
       with:
-        submodule: true
+        submodule: recursive
     - name: make release-cross-linux-x86_64
       run: make
     - name: make check
