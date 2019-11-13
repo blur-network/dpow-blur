@@ -42,6 +42,9 @@ Fedora One-Liner:
 `sudo dnf install cmake boost-devel openssl-devel sodium-devel libunwind-devel binutils-devel libevent-devel`
 
 
+---
+
+
 <h2 id="create-wallet"> Creating a Notarization Wallet for Notarization Tx's on BLUR</h2>
 
 
@@ -90,7 +93,9 @@ Double check that the values in red match each other! If they do not, then the w
 
 Your wallet should now be running.  Skip the `Starting the Notary Server Wallet` heading if you don't plan to shut down your notary node between this point and testing.
 
-<br><br>
+
+---
+
 
 <h2 id="start-wallet">Starting the Notary Server Wallet</h2>
 
@@ -113,7 +118,7 @@ After your wallet is generated, you can reopen this existing file with the follo
 The RPC interface will prompt you for the wallet password.  Enter the password you entered into `btc.json` on creation.
 
 
-<br><br>
+---
 
 
 <h2 id="create-tx">Creating a Notarization Transaction</h2>
@@ -153,7 +158,7 @@ Destinations for the transaction are automatically populated, using the BTC & Cr
 **TL;DR: The above is performed automatically, upon launching a wallet with pubkeys matching one of the 64 hardcoded keypairs.  The method `create_ntz_sig` is called twice before the wallet will check the notarization pool for pending ntz's.  These two calls cache the tx blob and data, and the cache serves to speed up the addition of new signatures to pending ntz's, when found in the ntzpool. Each call takes about 15 seconds to complete.**
 
 
-<br><br>
+---
 
 
 <h2 id="append-sig">Appending signatures to a pending notarization</h2>
@@ -170,16 +175,24 @@ This command will check the notarization pool for pending tx's, and fetch the on
 
 The called function will return false for any keypair that is not hardcoded in `src/komodo/komodo_notaries.h`
 
-This function will automatically pull in all necessary tx data, as well as cleaning all transactions from the ntzpool, except two pending txs.
+This function will automatically pull in all necessary tx data, as well as cleaning all transactions from the ntzpool, **except two pending txs**.
 
-These two transactions are:
+**These two transactions are:**
 
-1.) The transaction which has just been signed  
-2.) The transaction itself, prior to signing.
+**1.)** The transaction which has just been signed  
+**2.)** The transaction itself, prior to signing.
 
 #2 is left in pool in the event that after leaving the wallet side, the transaction becomes invalid.  This transaction will be cleaned after the next notary node appends its signatures.
 
-<br><br>
+Once your signatures have been addded, you will see the following message displayed from the RPC interface: 
+
+```
+Signatures added. 4 more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <<b77744d4ea61435a35df95a40d218aa643b8a13bc72204c61a70b91cb448f1a5>>
+```
+
+
+---
+
 
 <h2 id="relay-tx">Relaying a request for Notarization Signatures from other Notary Nodes:</h2>
 
@@ -195,9 +208,10 @@ Using the `tx_blob` from terminal output, issue the following `curl` command to 
 curl -X POST http://localhost:21111/json_rpc -d '{"method":"request_ntz_sig","params":{"tx_blob":"long hex here","sig_count":1,"signers_index:[51,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],"payment_id":"0c9a0f1fc513e0aa5d70cccb0b00e9ff924ce9c4b0e2ec373060fbde1c5cc4e0"}}'
 ```
 
-*This protocol command will not relay an actual transaction unless `sig_count` is greater than 13.* 
+*This protocol command will not relay an actual transaction unless `sig_count` is greater than 12.* 
 
-<br><br>
+
+---
 
 
 <h2 id="view-pending">Viewing Pending Notarizations</h2>
@@ -246,18 +260,17 @@ last_failed_id: 0000000000000000000000000000000000000000000000000000000000000000
 
 `signers_index` is an array with 13 values, each of which corresponds to a Notary Node, and their row number in the hardcoded pubkeys.
 
-If the value is not a default `-1`, the number should correspond to a notary node that has already signed and appended their transactions to the pending request, in time-sequential
-order.
 
+If a value in the `signers_index` field is not a default `-1`, the number should correspond to a notary node that has already signed and appended their transactions to the pending request. Indices are added in time-sequential order.
 
-Because these notarization transactions use a completely separate validation structure (located in `src/cryptonote_basic/verification_context.h`), they will not validate
-as normal transactions until `sig_count` reaches a point of being greater than `13`.
+**Regarding Validation**: Because these notarization transactions use a completely separate validation structure (located in `src/cryptonote_basic/verification_context.h`), they will not validate
+as normal transactions until `sig_count` reaches a point of being greater than `12`.
 
 At that point, the `ntz_tx_verification_context` will be converted to the standard
-`tx_verification_context`, and relayed to the network as a normal transcation.  Prior to this point, the separate context will prevent a transaction from being treated as a normal transaction, or validated as such by other nodes.
+`tx_verification_context`, and relayed to the network as a normal transcation.  Prior to this point, the separate context will prevent a pending notarization from being handled as a normal transaction, or validated as such by other nodes.
 
 
-<br><br>
+---
 
 
 <h2 id="rpc-calls"> RPC Calls for KMD-BLUR Data </h2>

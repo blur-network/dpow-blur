@@ -444,20 +444,21 @@ namespace cryptonote
 //      MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
     }
     if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) {
+      do {
 //      MWARNING("Found pubkey or additional!");
-      std::ostringstream oss;
-      size_t o = i;
-      for (size_t j = o; j < (o + 33); j++) {
-         new_extra.push_back(tx_extra[j]);
-         tmp.pop_front();
-         i++;
-      }
-      for (const auto& each: tmp) {
-        std::string tmp_string = epee::string_tools::pod_to_hex(each);
-        oss << tmp_string;
-      }
-
+        std::ostringstream oss;
+        size_t o = i;
+        for (size_t j = o; j < (o + 33); j++) {
+           new_extra.push_back(tx_extra[j]);
+           tmp.pop_front();
+           i++;
+        }
+        for (const auto& each: tmp) {
+          std::string tmp_string = epee::string_tools::pod_to_hex(each);
+          oss << tmp_string;
+        }
 //      MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
+      } while ((tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) && !tmp.empty());
     }
 
   return true;
