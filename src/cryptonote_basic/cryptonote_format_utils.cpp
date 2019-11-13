@@ -408,8 +408,8 @@ namespace cryptonote
       }
 //      MWARNING("Remainder of tx_extra after popping fronts: " << ss.str());
     }
+    size_t ii = 0;
     if (tmp.front() == TX_EXTRA_NTZ_TXN_TAG) {
-      size_t o = i;
       tmp.pop_front();
       ntz_data.push_back(tx_extra[i]);
       i++;
@@ -421,20 +421,22 @@ namespace cryptonote
       ntz_data.push_back(tx_extra[i]);
       byte_one = epee::string_tools::pod_to_hex(tx_extra[i++]);
       ntz_data.push_back(tx_extra[i]);
-      byte_two = epee::string_tools::pod_to_hex(tx_extra[i++]);
+      byte_two = epee::string_tools::pod_to_hex(tx_extra[i]);
       std::ostringstream oss, n_ss;
       ntz_ss << std::hex << byte_one;
       ntz_ss << std::hex << byte_two;
+      size_t ii = i++;
       size_t ntz_size = stoi(ntz_ss.str(), nullptr, 16);
 //      MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
-      for (size_t j = o; j <= (o + ntz_size); j++) {
-        if (j >= i) {
-          ntz_data.push_back(tx_extra[j]);
-          ntz_str += epee::string_tools::pod_to_hex(tx_extra[j]);
+      for (size_t j = i; j < (size_t)(i + ntz_size - 1); j++) {
+        ntz_data.push_back(tx_extra[j]);
+        ntz_str += epee::string_tools::pod_to_hex(tx_extra[j]);
+        if (!tmp.empty()) {
+          tmp.pop_front();
         }
-        tmp.pop_front();
-        i++;
+        ii++;
       }
+      i = ii;
       for (const auto& each: tmp) {
         std::string tmp_string = epee::string_tools::pod_to_hex(each);
         oss << std::hex << tmp_string;
@@ -472,9 +474,8 @@ namespace cryptonote
     std::vector<uint8_t> ntz_tx_data;
     std::string ntz_str;
     tx_extra_field field;
-    if (remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str)) {
- //     MWARNING("Ntz_txn_data string: " << ntz_str);
-    }
+    remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
+//      MWARNING("Ntz_txn_data string: " << ntz_str);
     std::vector<uint8_t> const tx_extra = new_tx_extra;
     std::string extra_str(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size());
     std::istringstream iss(extra_str);
@@ -652,9 +653,9 @@ namespace cryptonote
     std::string ntz_str;
     std::vector<uint8_t> new_tx_extra;
     std::vector<uint8_t> ntz_tx_data;
-    if (remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str)) {
- //     MWARNING("Ntz_txn_data string: " << ntz_str);
-    }
+    remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
+//      MWARNING("Ntz_txn_data string: " << ntz_str);
+
     std::vector<uint8_t> const tx_extra = new_tx_extra;
 
     bool eof = false;
