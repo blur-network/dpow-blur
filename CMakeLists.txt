@@ -135,7 +135,9 @@ if (ARM_TEST STREQUAL "arm")
   endif()
 endif()
 
-find_package(Backward)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  find_package(Backward)
+endif()
 
 if (ARM_ID STREQUAL "aarch64" OR ARM_ID STREQUAL "arm64" OR ARM_ID STREQUAL "armv8-a")
   set(ARM 1)
@@ -216,8 +218,6 @@ endif()
 list(INSERT CMAKE_MODULE_PATH 0
   "${CMAKE_SOURCE_DIR}/cmake")
 
-find_package(Backward)
-
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 enable_testing()
 
@@ -258,7 +258,11 @@ endif()
 # elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
 #   set(BSDI TRUE)
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/backward)
+else()
+include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external)
+endif()
 
 if(APPLE)
   include_directories(SYSTEM /usr/include/malloc)
@@ -393,17 +397,19 @@ ExternalProject_Add(generate_translations_header
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/translations")
 add_subdirectory(external)
 
-include(ExternalProject)
-ExternalProject_Add(libbtc
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
-  CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static -DLD_FLAGS+=-lsecp256k1
-  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no
-  BUILD_COMMAND make
-  INSTALL_COMMAND make install
-  BUILD_IN_SOURCE 1
-)
+if(DEPENDS)
+  set(EVENT_LIBRARY contrib/depends/x86_64-linux-gnu/usr/lib/libevent.a)
+else()
+  find_library(EVENT_LIBRARY event)
+endif()
 
-set(BTC_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/.libs/libbtc.a)
+if(EVENT_LIBRARY)
+  set(EVENT_LIBRARY "${EVENT_LIBRARY}")
+  message(STATUS "Found EVENT_LIBRARY located at ${EVENT_LIBRARY}")
+else()
+  message(FATAL_ERROR "Could not find required libevent.")
+endif()
+
 
 include(ExternalProject)
 ExternalProject_Add(secp256k1
@@ -417,6 +423,18 @@ ExternalProject_Add(secp256k1
 
 set(SECP256K1_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/.libs/libsecp256k1.a)
 
+include(ExternalProject)
+ExternalProject_Add(libbtc
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
+  CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static -DLD_FLAGS+="-lsecp256k1" -DLD_FLAGS+="-levent" -DCPP_FLAGS+="-I ${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/include"
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure CPP_FLAGS="-I ${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/include"  --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no --with-net=no
+  BUILD_COMMAND make
+  INSTALL_COMMAND make install
+  BUILD_IN_SOURCE 1
+)
+
+set(BTC_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/.libs/libbtc.a)
+
 
 # Final setup for easylogging++
 include_directories(${EASYLOGGING_INCLUDE})
@@ -428,8 +446,10 @@ link_directories(${BITCOIN_LIBRARY})
 include_directories(${HYDROGEN_INCLUDE})
 include_directories(${HYDROGEN_LIBRARY_DIR})
 
-include_directories(${BACKWARD_INCLUDE})
-include_directories(${BACKWARD_LIBRARY_DIR})
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  include_directories(${BACKWARD_INCLUDE})
+  include_directories(${BACKWARD_LIBRARY_DIR})
+endif()
 
 # Final setup for liblmdb
 include_directories(${LMDB_INCLUDE})
@@ -449,6 +469,11 @@ if (CMAKE_BUILD_TYPE STREQUAL Debug)
 
   include_directories(${LIBUNWIND_INCLUDE_DIR})
   link_directories(${LIBUNWIND_LIBRARY_DIRS})
+endif()
+
+
+if(NOT SECP256K1_LIBRARY)
+  message(FATAL_ERROR "Could not find required secp256k1 library.")
 endif()
 
 if(MSVC)
@@ -877,13 +902,6 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS AN
   endif()
 endif()
 
-find_library(EVENT_LIBRARY event)
-
-if(EVENT_LIBRARY)
-  set(EVENT_LIBRARY "${EVENT_LIBRARY}")
-  message(STATUS "Found EVENT_LIBRARY located at ${EVENT_LIBRARY}")
-endif()
-
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 #  find_library(DWARF_LIBRARY dwarf)
 #  if(DWARF_LIBRARY)
@@ -909,14 +927,6 @@ endif()
 
 if(NOT BTC_LIBRARY)
   message(FATAL_ERROR "Could not find required libbtc.")
-endif()
-
-if(NOT EVENT_LIBRARY)
-  message(FATAL_ERROR "Could not find required libevent.")
-endif()
-
-if(NOT SECP256K1_LIBRARY)
-  message(FATAL_ERROR "Could not find required secp256k1 library.")
 endif()
 
 find_library(SODIUM_LIBRARY sodium)
