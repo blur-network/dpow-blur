@@ -160,8 +160,8 @@ int32_t komodo_importaddress(char* addr)
 
     for (int i =0; i < 64; i++) {
         std::pair<const char*,const char*> seed_and_pubkey_pair;
-        seed_and_pubkey_pair = std::make_pair(Notaries_elected1[i][1], Notaries_elected1[i][3]);
-        //MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[i][3]);
+        seed_and_pubkey_pair = std::make_pair(Notaries_elected[i][1], Notaries_elected[i][2]);
+        //MWARNING("First: " << Notaries_elected[i][1] << ", Second: " << Notaries_elected[i][2]);
         notaries_keys.push_back(seed_and_pubkey_pair);
     }
 
@@ -206,8 +206,8 @@ int32_t komodo_importaddress(char* addr)
     std::vector<std::string> notary_seed_strings;
 
     for (int i =0; i < 64; i++) {
-        const char* seed = Notaries_elected1[i][1];
-   //     MWARNING("First: " << Notaries_elected1[i][1] << ", Second: " << Notaries_elected1[i][3]);
+        const char* seed = Notaries_elected[i][1];
+   //     MWARNING("First: " << Notaries_elected[i][1] << ", Second: " << Notaries_elected[i][3]);
         notary_seed_strings.push_back(seed);
     }
 
@@ -479,15 +479,15 @@ namespace komodo {
   {
     int32_t i,n,j,m,offset = 1,val,dispflag = 0; char *pubkey;
 
-    n = (int32_t)(sizeof(Notaries_elected1)/sizeof(*Notaries_elected1));
+    n = (int32_t)(sizeof(Notaries_elected)/sizeof(*Notaries_elected));
 
     for (i=0; i<n; i++) // each year add new notaries too
     {
-        if ( Notaries_elected1[i][offset] == 0 )
+        if ( Notaries_elected[i][offset] == 0 )
           continue;
-        if ( (m= (int32_t)strlen((char *)Notaries_elected1[i][offset])) > 0 )
+        if ( (m= (int32_t)strlen((char *)Notaries_elected[i][offset])) > 0 )
         {
-      pubkey = (char*) Notaries_elected1[i][offset];
+      pubkey = (char*) Notaries_elected[i][offset];
       //fprintf(stderr,"pubkey=%s\n", pubkey );
 
       std::vector<unsigned char> vPubkey(pubkey, pubkey + m);
@@ -518,7 +518,7 @@ namespace komodo {
     return *m_komodo_core;
   }
   //------------------------------------------------------------------
-  int32_t komodo_core::komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp)
+ /* int32_t komodo_core::komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp)
   {
     static uint8_t elected_pubkeys0[64][33],elected_pubkeys1[64][33],did0,did1; static int32_t n0,n1;
     int32_t i;
@@ -546,9 +546,9 @@ namespace komodo {
         {
           if ( did1 == 0 )
           {
-            n1 = (int32_t)(sizeof(Notaries_elected1)/sizeof(*Notaries_elected1));
+            n1 = (int32_t)(sizeof(Notaries_elected)/sizeof(*Notaries_elected));
             for (i=0; i<n1; i++)
-                decode_hex(elected_pubkeys1[i],33,(char *)Notaries_elected1[i][1]);
+                decode_hex(elected_pubkeys1[i],33,(char *)Notaries_elected[i][1]);
             if ( 0 && ASSETCHAINS_SYMBOL[0] != 0 )
                 fprintf(stderr,"%s height.%lu t.%lu elected.%d notaries2\n",ASSETCHAINS_SYMBOL,height,timestamp,n1);
             did1 = 1;
@@ -558,7 +558,7 @@ namespace komodo {
         }
     }
     return(-1);
-  }
+  }*/
   //------------------------------------------------------------------
   bits256 iguana_merkle(bits256 *tree, int& txn_count)
   {
