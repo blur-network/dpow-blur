@@ -1,0 +1,18 @@
+name: DPoW Default Branch
+
+on:
+  push:
+    branches:
+      - dpow
+
+jobs:
+  build:
+
+    runs-on: ubuntu-18.04
+    
+    steps:
+    - uses: actions/checkout@v1
+    - name: submodules
+      run: git submodule update --init
+    - name: make
+      run: make release-cross-linux-x86_64
