@@ -80,10 +80,7 @@ monero_add_executable(daemon
   ${daemon_sources}
   ${daemon_headers}
   ${daemon_private_headers}
-  ${blocksdat}
-  ${BACKWARD_ENABLE})
-
-add_backward(daemon)
+  ${blocksdat})
 
 target_link_libraries(daemon
   PRIVATE
@@ -112,9 +109,7 @@ target_link_libraries(daemon
     ${CMAKE_THREAD_LIBS_INIT}
     ${GNU_READLINE_LIBRARY}
     ${SODIUM_LIBRARY}
-    ${EXTRA_LIBRARIES}
-  PUBLIC
-    Backward::Backward)
+    ${EXTRA_LIBRARIES})
 set_property(TARGET daemon
   PROPERTY
     OUTPUT_NAME "blurd")

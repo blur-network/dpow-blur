@@ -56,10 +56,14 @@ function (monero_add_executable name)
       ${ARGN})
 
   add_executable("${name}"
-    ${ARGN})
+    ${ARGN}
+    ${BACKWARD_ENABLE})
+  add_backward("${name}")
   target_link_libraries("${name}"
     PRIVATE
-      ${EXTRA_LIBRARIES})
+      ${EXTRA_LIBRARIES}
+    PUBLIC
+      Backward::Backward)
   set_property(TARGET "${name}"
     PROPERTY
       FOLDER "prog")

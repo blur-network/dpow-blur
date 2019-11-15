@@ -386,7 +386,7 @@ namespace cryptonote
     tx_extra_pub_key pk_primary;
     tx_extra_additional_pub_keys pk_additional;
     std::ostringstream ss, ntz_ss;
-    bool has_ex_nonce = (tx_extra[0] == TX_EXTRA_NONCE);
+    bool has_ex_nonce = tmp.empty() ? 0 : (tx_extra[0] == TX_EXTRA_NONCE);
     size_t i = 0;
     if (has_ex_nonce) {
       ex_nonce_size = tx_extra[1];
@@ -442,6 +442,8 @@ namespace cryptonote
         oss << std::hex << tmp_string;
       }
 //      MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
+    } else {
+      return false;
     }
     if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) {
       do {
@@ -475,9 +477,9 @@ namespace cryptonote
     std::vector<uint8_t> ntz_tx_data;
     std::string ntz_str;
     tx_extra_field field;
-    remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
+    bool ntz = remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
 //      MWARNING("Ntz_txn_data string: " << ntz_str);
-    std::vector<uint8_t> const tx_extra = new_tx_extra;
+    std::vector<uint8_t> const tx_extra = ntz ? new_tx_extra : full_tx_extra;
     std::string extra_str(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size());
     std::istringstream iss(extra_str);
     binary_archive<false> ar(iss);
