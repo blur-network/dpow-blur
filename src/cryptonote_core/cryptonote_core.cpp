@@ -849,7 +849,7 @@ namespace cryptonote
     return r;
   }
   //-----------------------------------------------------------------------------------------------
-  std::vector<bool> core::handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<ntz_req_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, std::vector<int> const& sig_counts, std::vector<std::string> const& signers_indexes, std::vector<cryptonote::blobdata>& ptx_blobs, std::vector<crypto::hash>& ptx_hashes)
+  std::vector<bool> core::handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<ntz_req_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count, std::string const& signers_index, std::vector<cryptonote::blobdata>& ptx_blobs, std::vector<crypto::hash>& ptx_hashes)
   {
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
 /*    if (tx_blobs.size() !=  (sig_counts.size() != signers_indexes.size())) {
@@ -862,6 +862,14 @@ namespace cryptonote
       return rets;
     }
 */
+
+    std::vector<std::string> si_clones;
+    std::vector<int> count_vec;
+    for (size_t i = 0; i < tx_blobs.size(); i++)
+    {
+      count_vec.push_back(sig_count);
+      si_clones.push_back(signers_index);
+    }
     struct result { bool res; cryptonote::transaction tx; crypto::hash hash; crypto::hash prefix_hash; bool in_txpool; bool in_blockchain; };
     std::vector<result> results(tx_blobs.size());
 
@@ -872,7 +880,7 @@ namespace cryptonote
       m_threadpool.submit(&waiter, [&, i, it] {
         try
         {
-          results[i].res = handle_incoming_ntz_sig_pre(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, sig_counts[i]);
+          results[i].res = handle_incoming_ntz_sig_pre(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, count_vec[i]);
         }
         catch (const std::exception &e)
         {
@@ -899,11 +907,11 @@ namespace cryptonote
       }
       else
       {
-        if (sig_counts[i] >= 13) {
+        if (sig_count >= 13) {
           m_threadpool.submit(&waiter, [&, i, it] {
             try
             {
-              results[i].res = handle_incoming_ntz_sig_post(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, sig_counts[i], ptx_blobs[i]);
+              results[i].res = handle_incoming_ntz_sig_post(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, count_vec[i], ptx_blobs[i]);
             }
             catch (const std::exception &e)
             {
@@ -931,7 +939,7 @@ namespace cryptonote
       if (already_have[i]) {
         continue; }
 
-        ok &= add_new_tx(results[i].tx, results[i].hash, results[i].prefix_hash, it->size(), tvc[i], keeped_by_block, relayed, do_not_relay, sig_counts[i], signers_indexes[i], ptx_blobs[i], ptx_hashes[i]);
+        ok &= add_new_tx(results[i].tx, results[i].hash, results[i].prefix_hash, it->size(), tvc[i], keeped_by_block, relayed, do_not_relay, count_vec[i], si_clones[i], ptx_blobs[i], ptx_hashes[i]);
         oks.push_back(ok);
         if(tvc[i].m_verifivation_failed)
         {MERROR_VER("Transaction verification failed: " << results[i].hash);}
@@ -948,15 +956,11 @@ namespace cryptonote
     std::list<cryptonote::blobdata> tx_blobs;
     std::vector<cryptonote::blobdata> ptx_blobs;
     std::vector<crypto::hash> ptx_hashes;
-    std::vector<ntz_req_verification_context> tvcv(1);
-    std::vector<int> sig_counts(1);
-    std::vector<std::string> signers_indexes(1);
     tx_blobs.push_back(tx_blob);
     ptx_blobs.push_back(ptx_blob);
     ptx_hashes.push_back(ptx_hash);
-    sig_counts.push_back(sig_count);
-    signers_indexes.push_back(signers_index);
-    std::vector<bool> rs = handle_incoming_ntz_sig(tx_blobs, tvcv, keeped_by_block, relayed, do_not_relay, sig_counts, signers_indexes, ptx_blobs, ptx_hashes);
+    std::vector<ntz_req_verification_context> tvcv(1);
+    std::vector<bool> rs = handle_incoming_ntz_sig(tx_blobs, tvcv, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blobs, ptx_hashes);
     bool r = false;
     for (const auto& each : rs)
     {
