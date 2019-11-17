@@ -852,7 +852,7 @@ namespace cryptonote
   std::vector<bool> core::handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<ntz_req_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, std::vector<int> const& sig_counts, std::vector<std::string> const& signers_indexes, std::vector<cryptonote::blobdata>& ptx_blobs, std::vector<crypto::hash>& ptx_hashes)
   {
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
-    if (tx_blobs.size() != ( sig_counts.size() || signers_indexes.size() || ptx_blobs.size() || ptx_hashes.size())) {
+/*    if (tx_blobs.size() !=  (sig_counts.size() != signers_indexes.size())) {
       MERROR("Error: inconsistent counts in handle_incoming_ntz_sig! rejecting request...");
       std::vector<bool> rets(tx_blobs.size());
       for (size_t i = 0; i < tx_blobs.size(); i++) {
@@ -861,7 +861,7 @@ namespace cryptonote
       }
       return rets;
     }
-
+*/
     struct result { bool res; cryptonote::transaction tx; crypto::hash hash; crypto::hash prefix_hash; bool in_txpool; bool in_blockchain; };
     std::vector<result> results(tx_blobs.size());
 

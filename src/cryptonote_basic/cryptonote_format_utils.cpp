@@ -654,13 +654,14 @@ namespace cryptonote
     std::ostringstream oss;
     binary_archive<true> newar(oss);
     std::string ntz_str;
-    std::vector<uint8_t> new_tx_extra;
-    std::vector<uint8_t> ntz_tx_data;
-    remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
+    std::vector<uint8_t> new_tx_extra, ntz_tx_data, tx_extra;
+
+    if (!remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str)) {
 //      MWARNING("Ntz_txn_data string: " << ntz_str);
-
-    std::vector<uint8_t> const tx_extra = new_tx_extra;
-
+      tx_extra = full_tx_extra;
+    } else {
+      tx_extra = new_tx_extra;
+    }
     bool eof = false;
     while (!eof)
     {
@@ -669,7 +670,6 @@ namespace cryptonote
       CHECK_AND_NO_ASSERT_MES_L1(r, false, "failed to deserialize extra field. extra = " << string_tools::buff_to_hex_nodelimer(std::string(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size())));
       if (field.type() != type)
         ::do_serialize(newar, field);
-
       std::ios_base::iostate state = iss.rdstate();
       eof = (EOF == iss.peek());
       iss.clear(state);
