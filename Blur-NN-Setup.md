@@ -25,9 +25,9 @@ In the following steps, you will create a json-formatted file with your secp256k
 
 *Note: As long as you do not lose your private spendkey, you will be able to recover the wallet file, and set a new password*
 
-## Download Binaries
+## Download Binaries/Compile Source
 
-First, download the binaries located here: https://github.com/blur-network/dpow-blur/releases. After you've done that, extract them from their archive, and cd into the extracted folder.
+First, download the binaries located here: https://github.com/blur-network/dpow-blur/releases, or compile from source. After you've done that, cd into the extracted folder, or if you're building from source, into `blur/build/release/bin`.
 
 
 ## Creating a JSON-Formatted Wallet File
