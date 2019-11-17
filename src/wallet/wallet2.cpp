@@ -509,27 +509,21 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
       cryptonote::blobdata btc_pubkey_data;
       if(!epee::string_tools::parse_hexstr_to_binbuff(field_btc_pubkey, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
       {
-        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse view key secret key"));
+        THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse secp256k1 public key"));
       }
       const crypto::secret_key btc_pubkey_secret = *reinterpret_cast<const crypto::secret_key*>(btc_pubkey_data.data());
-      LOG_PRINT_L0("Cast btc pubkey to secret key: " << epee::string_tools::pod_to_hex(btc_pubkey_secret));
       crypto::public_key viewkey_pub;
       crypto::secret_key viewkey_sec;
       crypto::secret_key rngview = crypto::generate_keys(viewkey_pub, viewkey_sec, btc_pubkey_secret, true);
-      MCLOG_CYAN(el::Level::Info, "global", "Generated viewkey_pub with btc_pubkey seed: " << epee::string_tools::pod_to_hex(viewkey_pub));
-      LOG_PRINT_L0("Generated viewkey_sec with btc_pubkey seed: " << epee::string_tools::pod_to_hex(viewkey_sec));
 
       if (hydro_init() < 0) {
         MERROR("Libhydrogen not initialized!");
       }
       crypto::secret_key recovkey = m_account->generate_secret();
-      LOG_PRINT_L0("Generated seed key with libhydro: " << epee::string_tools::pod_to_hex(recovkey));
 
       crypto::public_key spendkey_pub;
       crypto::secret_key spendkey_sec;
       crypto::secret_key rngspend = crypto::generate_keys(spendkey_pub, spendkey_sec, recovkey, true);
-      MCLOG_CYAN(el::Level::Info, "global", "Generated spendkey_pub with libhydro seed: " << epee::string_tools::pod_to_hex(spendkey_pub));
-      LOG_PRINT_L0("Generated spendkey_sec with libhydro seed: " << epee::string_tools::pod_to_hex(spendkey_sec));
 
       wallet.reset(make_basic(vm, opts, password_prompter).release());
       wallet->set_refresh_from_block_height(field_scan_from_height);
@@ -541,13 +535,15 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
       bool generated =  m_account->create_from_btc(viewkey_sec, spendkey_sec, viewkey_pubtwo, spendkey_pubtwo, address);
       std::string addr_string = cryptonote::get_account_address_as_str(nettype, false, address);
       LOG_PRINT_L0("Generated account with address: " << addr_string );
-      MCLOG_CYAN(el::Level::Info, "global", "Generated viewkey_pub: " << epee::string_tools::pod_to_hex(viewkey_pubtwo));
-      MCLOG_CYAN(el::Level::Info, "global", "Generated spendkey_pub: " << epee::string_tools::pod_to_hex(spendkey_pubtwo));
+      MCLOG_CYAN(el::Level::Info, "global", "Generated public viewkey: " << epee::string_tools::pod_to_hex(viewkey_pubtwo));
+      MCLOG_CYAN(el::Level::Info, "global", "Generated public spendkey: " << epee::string_tools::pod_to_hex(spendkey_pubtwo));
+      LOG_PRINT_L0("Be sure to open your wallet with blur-wallet-cli, and record your secret spendkey!");
       if (!generated)
       {
         THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to generate address from privkeys"));
       }
       wallet->generate(field_filename, field_password, address, spendkey_sec, viewkey_sec, true);
+      // zero sensitive info
       hydro_memzero(&viewkey_sec, sizeof(viewkey_sec));
       hydro_memzero(&spendkey_sec, sizeof(spendkey_sec));
       hydro_memzero(&recovkey, sizeof(recovkey));
