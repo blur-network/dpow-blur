@@ -572,8 +572,7 @@ bool simple_wallet::print_seed(bool encrypted)
   }
   else if (!m_wallet->is_deterministic())
   {
-    fail_msg_writer() << tr("wallet is non-deterministic and has no seed");
-    return true;
+    fail_msg_writer() << tr("wallet is non-deterministic, returning seed for spendkey");
   }
 
   epee::wipeable_string seed_pass;

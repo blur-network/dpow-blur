@@ -1,3 +1,4 @@
+
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 // 
@@ -120,6 +121,12 @@ using namespace cryptonote;
 #define STAGENET_SEGREGATION_FORK_HEIGHT 99999999999
 #define SEGREGATION_FORK_VICINITY 1500 /* blocks */
 
+#define CONTEXT "zero"
+#define OPSLIMIT 10000
+#define MEMLIMIT 0
+#define THREADS  1
+#define PASSWORD "0000"
+#define PASSWORD_LEN 32
 
 namespace
 {
@@ -874,10 +881,14 @@ bool wallet2::is_deterministic() const
 bool wallet2::get_seed(std::string& electrum_words, const epee::wipeable_string &passphrase) const
 {
   bool keys_deterministic = is_deterministic();
-  if (!keys_deterministic)
-  {
-    std::cout << "This is not a deterministic wallet" << std::endl;
-    return false;
+//  bool keys_notary = is_notary();
+
+  if (!keys_deterministic) {
+//    if (keys_notary) {
+//      LOG_PRINT_L0("Notary keypair detected. Mnemonic will only be representative of spend key. Recompute viewey from notary node table.");
+//    } else {
+      std::cout << "Separate keypairs detected. Seed will only represent recovery of spendkey." << std::endl;
+//    }
   }
   if (seed_language.empty())
   {
@@ -886,9 +897,39 @@ bool wallet2::get_seed(std::string& electrum_words, const epee::wipeable_string 
   }
 
   crypto::secret_key key = get_account().get_keys().m_spend_secret_key;
-  if (!passphrase.empty())
-    key = cryptonote::encrypt_key(key, passphrase);
-  if (!crypto::ElectrumWords::bytes_to_words(key, electrum_words, seed_language))
+  uint8_t* key_pod;
+  uint8_t master_key[32];
+  hydro_pwhash_keygen(master_key);
+  uint8_t derived_key[32];
+  char const* pass_char;
+  uint8_t pass[32];
+  if (!passphrase.empty()) {
+    if (!keys_deterministic) {
+      pass_char = passphrase.data();
+      memcpy(&pass, pass_char, sizeof(pass));
+      if (hydro_pad(pass, sizeof(pass), sizeof(key), sizeof(key)) != 0) {
+        MERROR("Error when padding passphrase! Stopping process to prevent issues!");
+        hydro_memzero(pass, sizeof(key));
+        return false;
+      }
+
+      key = cryptonote::encrypt_key(key, passphrase);
+      memcpy(key_pod, &unwrap(key), sizeof(key));
+      if (hydro_pwhash_derive_static_key(derived_key, sizeof(derived_key), master_key, passphrase.data(), passphrase.size(), CONTEXT, master_key, OPSLIMIT, MEMLIMIT, THREADS) != 0) {
+      {
+        MERROR("Failed to derive static key!");
+        return false;
+      }
+    }
+  /* incorrect password */
+  }
+} else {
+  /* password verification passed; derived_key contains a derived key */
+}
+  bool z = keys_deterministic;
+  key = cryptonote::encrypt_key(key, passphrase);
+  crypto::secret_key dkey = *reinterpret_cast<const crypto::secret_key*>(derived_key);
+  if (!crypto::ElectrumWords::bytes_to_words((z ? dkey : key), electrum_words, seed_language))
   {
     std::cout << "Failed to create seed from key for language: " << seed_language << std::endl;
     return false;
