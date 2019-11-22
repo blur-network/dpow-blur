@@ -1003,6 +1003,7 @@ namespace cryptonote
      * Used for handling txes from historical blocks in a fast way
      */
     void on_new_tx_from_block(const cryptonote::transaction &tx);
+    bool check_ntz_req_inputs(transaction& tx, ntz_req_verification_context &tvc, uint64_t* pmax_used_block_height = NULL);
 
   private:
 
@@ -1164,7 +1165,6 @@ namespace cryptonote
      *
      * @return false if any validation step fails, otherwise true
      */
-    bool check_ntz_req_inputs(transaction& tx, ntz_req_verification_context &tvc, uint64_t* pmax_used_block_height = NULL);
 
     /**
      * @brief performs a blockchain reorganization according to the longest chain rule

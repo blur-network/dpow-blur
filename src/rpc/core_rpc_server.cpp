@@ -1157,7 +1157,7 @@ namespace cryptonote
       return false;
     }
     for (const auto& each : req.tx_blobs) {
-    rs = m_core.handle_incoming_ntz_sig(each, tvc, false, false, false, sig_count, signers_index, ptx_string, ptx_hash);
+    rs = m_core.handle_incoming_ntz_sig(each, tvc, false, true, false, sig_count, signers_index, ptx_string, ptx_hash);
       if (rs == false)
       {
         res.status = "Failed";
