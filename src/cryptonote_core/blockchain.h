@@ -1003,6 +1003,27 @@ namespace cryptonote
      * Used for handling txes from historical blocks in a fast way
      */
     void on_new_tx_from_block(const cryptonote::transaction &tx);
+
+    /**
+     * @brief validate a transaction's inputs and their keys
+     *
+     * This function validates transaction inputs and their keys.  Previously
+     * it also performed double spend checking, but that has been moved to its
+     * own function.
+     * The transaction's rct signatures, if any, are expanded.
+     *
+     * If pmax_related_block_height is not NULL, its value is set to the height
+     * of the most recent block which contains an output used in any input set
+     *
+     * Currently this function calls ring signature validation for each
+     * transaction.
+     *
+     * @param tx the transaction to validate
+     * @param tvc returned information about ntz_req verification
+     * @param pmax_related_block_height return-by-pointer the height of the most recent block in the input set
+     *
+     * @return false if any validation step fails, otherwise true
+     */
     bool check_ntz_req_inputs(transaction& tx, ntz_req_verification_context &tvc, uint64_t* pmax_used_block_height = NULL);
 
   private:
@@ -1144,27 +1165,6 @@ namespace cryptonote
      * @return false if any validation step fails, otherwise true
      */
     bool check_tx_inputs(transaction& tx, tx_verification_context &tvc, uint64_t* pmax_used_block_height = NULL);
-
-    /**
-     * @brief validate a transaction's inputs and their keys
-     *
-     * This function validates transaction inputs and their keys.  Previously
-     * it also performed double spend checking, but that has been moved to its
-     * own function.
-     * The transaction's rct signatures, if any, are expanded.
-     *
-     * If pmax_related_block_height is not NULL, its value is set to the height
-     * of the most recent block which contains an output used in any input set
-     *
-     * Currently this function calls ring signature validation for each
-     * transaction.
-     *
-     * @param tx the transaction to validate
-     * @param tvc returned information about ntz_req verification
-     * @param pmax_related_block_height return-by-pointer the height of the most recent block in the input set
-     *
-     * @return false if any validation step fails, otherwise true
-     */
 
     /**
      * @brief performs a blockchain reorganization according to the longest chain rule
