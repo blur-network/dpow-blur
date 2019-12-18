@@ -31,15 +31,15 @@ Once that is extracted from the archive, building and installing is as simple as
 
 Ubuntu/Debian One-Liner:
 
-`sudo apt install build-essential cmake pkg-config libssl-dev libunwind-dev libevent-dev libsodium-dev binutils-dev libboost-all-dev`
+`sudo apt install build-essential cmake pkg-config libssl-dev libunwind-dev libevent-dev libsodium-dev binutils-dev libboost-all-dev autoconf`
 
 Arch Linux One-Liner: 
 
-`sudo pacman -S base-devel cmake boost openssl libsodium libunwind binutils-devel libevent`
+`sudo pacman -S base-devel cmake boost openssl libsodium libunwind binutils-devel libevent autoconf`
 
 Fedora One-Liner: 
 
-`sudo dnf install cmake boost-devel openssl-devel sodium-devel libunwind-devel binutils-devel libevent-devel`
+`sudo dnf install cmake boost-devel openssl-devel sodium-devel libunwind-devel binutils-devel libevent-devel autoconf`
 
 After installing the dependencies, clone this repo with: 
 
