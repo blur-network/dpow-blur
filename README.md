@@ -41,6 +41,14 @@ Fedora One-Liner:
 
 `sudo dnf install cmake boost-devel openssl-devel sodium-devel libunwind-devel binutils-devel libevent-devel`
 
+After installing the dependencies, clone this repo with: 
+
+> `git clone https://github.com/blur-network/dpow-blur.git`
+
+Cd into the proper directory, and then compile with:
+
+`cd dpow-blur && make release-static`
+
 
 ---
 
