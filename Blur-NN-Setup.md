@@ -27,7 +27,21 @@ In the following steps, you will create a json-formatted file with your secp256k
 
 ## Download Binaries/Compile Source
 
-First, clone this repo with `git clone https://github.com/blur-network/dpow-blur.git` and compile from source with `make release-static`. After you've done that, cd into the extracted folder, or if you're building from source, into `dpow-blur/build/release/bin`.
+Download the binaries, and extract them from the archive using:
+
+`wget https://github.com/blur-network/dpow-blur/releases/download/notary-keys/dpow-blur-linux-x86_64.tar.gz && tar xvzf dpow-blur-linux-x86_64.tar.gz`
+
+Or compile from source with:
+
+`git clone https://github.com/blur-network/dpow-blur && cd dpow-blur && git submodule update --init && make release-static`
+
+The resulting binaries will be located in `dpow-blur/build/release/bin`.
+
+
+*If you get an error about packages, install whichever of the packages you are missing from here:*
+
+`sudo apt install build-essential cmake pkg-config libssl-dev libunwind-dev libevent-dev libsodium-dev binutils-dev libboost-all-dev autoconf`
+
 
 
 ## Creating a JSON-Formatted Wallet File
