@@ -50,6 +50,8 @@ function (monero_install_headers subdir)
     COMPONENT   development)
 endfunction ()
 
+
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 function (monero_add_executable name)
   source_group("${name}"
     FILES
@@ -71,6 +73,25 @@ function (monero_add_executable name)
     PROPERTY
       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
 endfunction ()
+else()
+function (monero_add_executable name)
+  source_group("${name}"
+    FILES
+      ${ARGN})
+
+  add_executable("${name}"
+    ${ARGN})
+  target_link_libraries("${name}"
+    PRIVATE
+      ${EXTRA_LIBRARIES})
+  set_property(TARGET "${name}"
+    PROPERTY
+      FOLDER "prog")
+  set_property(TARGET "${name}"
+    PROPERTY
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+endfunction ()
+endif()
 
 function (monero_add_library name)
     monero_add_library_with_deps(NAME "${name}" SOURCES ${ARGN})
