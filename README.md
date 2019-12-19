@@ -5,7 +5,8 @@ There are files in here from many different projects, including but not limited 
 # Contents:
 
 
-- <a href="https://github.com/blur-network/dpow-blur#deps">Dependencies</a>
+- <a href="https://github.com/blur-network/dpow-blur#compile">Compile From Source with Dependencies</a>
+- <a href="https://github.com/blur-network/dpow-blur#deps">Dependencies (Package Manager)</a>
 - <a href="https://github.com/blur-network/dpow-blur#create-wallet">Create a notary wallet</a>
 - <a href="https://github.com/blur-network/dpow-blur#start-wallet">Launching a notary wallet</a>
 
@@ -19,6 +20,20 @@ There are files in here from many different projects, including but not limited 
 ### Manually performed operations
 - <a href="https://github.com/blur-network/dpow-blur#view-pending">Viewing pending notarization txs</a>
 - <a href="https://github.com/blur-network/dpow-blur#rpc-calls">Other RPC calls</a>
+
+
+<h2 id="compile"> Compile from Source and Chain Build with Dependencies </h2>
+
+
+Libhydrogen requires CMake 3.14+ to compile.  If your distribution does not include this in the package manager, you can download the latest release's source from here: <a href="https://github.com/Kitware/CMake/releases/download/v3.15.2/cmake-3.15.2.tar.gz">CMake 3.15.2 from Kitware's github</a>
+
+Once Downloaded, run `./configure` or `./bootstrap`, then `make && sudo make install`
+
+Minimal Dependencies: `sudo apt-get install autotools-dev curl cmake build-essential`
+
+**The following will chain build dependencies and then all binaries in source:**
+
+`make release-cross-linux-x86_64`
 
 
 <h2 id="deps"> Dependencies </h2>
