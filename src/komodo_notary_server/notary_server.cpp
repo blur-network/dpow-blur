@@ -1183,7 +1183,11 @@ namespace tools
 
       std::string index_vec;
       for (int i = 0; i < 13; i++) {
-        std::string tmp = std::to_string(signers_index[i]);
+        std::string tmp;
+        if ((signers_index[i] < 10) && (signers_index[i] > (-1)))
+          tmp = "0" + std::to_string(signers_index[i]);
+        else
+          tmp = std::to_string(signers_index[i]);
         index_vec += tmp;
       }
       const std::vector<int> si_const = signers_index;
