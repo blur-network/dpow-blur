@@ -1156,8 +1156,7 @@ namespace cryptonote
       tvc.m_verifivation_failed = true;
       return false;
     }
-    for (const auto& each : req.tx_blobs) {
-    rs = m_core.handle_incoming_ntz_sig(each, tvc, false, true, false, sig_count, signers_index, ptx_string, ptx_hash);
+      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, true, false, sig_count, signers_index, ptx_string, ptx_hash);
       if (rs == false)
       {
         res.status = "Failed";
@@ -1190,13 +1189,13 @@ namespace cryptonote
           return false;
         }
       }
-    }
+
     if ((req.sig_count < 13) && (req.sig_count > 0))
     {
       NOTIFY_REQUEST_NTZ_SIG::request r;
       r.ptx_string = req.ptx_string;
       r.ptx_hash = ptx_hash;
-      r.tx_blobs = req.tx_blobs;
+      r.tx_blob = req.tx_blob;
       r.sig_count = req.sig_count;
       r.payment_id = req.payment_id;
       for (int i = 0; i < 13; i++) {
@@ -1226,9 +1225,7 @@ namespace cryptonote
     {
       NOTIFY_NEW_TRANSACTIONS::request r;
       std::list<blobdata> verified_tx_blobs;
-      for (const auto each : req.tx_blobs) {
-        verified_tx_blobs.push_back(each);
-      }
+      verified_tx_blobs.push_back(req.tx_blob);
       r.txs = verified_tx_blobs;
       m_core.get_protocol()->relay_transactions(r, fake_context);
       res.status = CORE_RPC_STATUS_OK;
