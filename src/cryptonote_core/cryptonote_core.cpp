@@ -655,17 +655,17 @@ namespace cryptonote
   {
     // TODO: this is a placeholder for verification
 
-    tvc = boost::value_initialized<ntz_req_verification_context>();
-    cryptonote::transaction tx_input_check;
-    crypto::hash hone,htwo;
-    parse_tx_from_blob(tx_input_check, hone, htwo, tx_blob);
-    uint64_t* pmax = NULL;
-    bool check_in = m_blockchain_storage.check_ntz_req_inputs(tx_input_check, tvc, pmax);
+  //  tvc = boost::value_initialized<ntz_req_verification_context>();
+  //  cryptonote::transaction tx_input_check;
+  //  crypto::hash hone,htwo;
+  //  parse_tx_from_blob(tx_input_check, hone, htwo, tx_blob);
+  //  uint64_t* pmax = NULL;
+/*    bool check_in = m_blockchain_storage.check_ntz_req_inputs(tx_input_check, tvc, pmax);
     bool check_out = m_blockchain_storage.check_ntz_req_outputs(tx, tvc);
     if (!check_in || !check_out) {
       MERROR("Input/output check failed!");
       return false;
-    }
+    }*/
     if(tx_blob.size() > get_max_tx_size())
     {
       LOG_PRINT_L1("WRONG TRANSACTION BLOB, too big size " << tx_blob.size() << ", rejected");
