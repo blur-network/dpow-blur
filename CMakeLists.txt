@@ -135,10 +135,6 @@ if (ARM_TEST STREQUAL "arm")
   endif()
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  find_package(Backward)
-endif()
-
 if (ARM_ID STREQUAL "aarch64" OR ARM_ID STREQUAL "arm64" OR ARM_ID STREQUAL "armv8-a")
   set(ARM 1)
   set(ARM8 1)
@@ -258,7 +254,7 @@ endif()
 # elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
 #   set(BSDI TRUE)
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
 include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/backward)
 else()
 include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external)
@@ -279,7 +275,7 @@ endif()
 option(STATIC "Link libraries statically" ${DEFAULT_STATIC})
 
 # This is a CMake built-in switch that concerns internal libraries
-if (NOT DEFINED BUILD_SHARED_LIBS AND NOT STATIC AND CMAKE_BUILD_TYPE_LOWER STREQUAL "debug")
+if (NOT DEFINED BUILD_SHARED_LIBS AND NOT STATIC AND CMAKE_BUILD_TYPE_LOWER STREQUAL Debug)
     set(BUILD_SHARED_LIBS ON)
 endif()
 
@@ -378,9 +374,9 @@ if(STATIC AND NOT IOS)
   endif()
 endif()
 
-add_definition_if_library_exists(c memset_s "string.h" HAVE_MEMSET_S)
-add_definition_if_library_exists(c explicit_bzero "strings.h" HAVE_EXPLICIT_BZERO)
-add_definition_if_function_found(strptime HAVE_STRPTIME)
+#add_definition_if_library_exists(c memset_s "string.h" HAVE_MEMSET_S)
+#add_definition_if_library_exists(c explicit_bzero "strings.h" HAVE_EXPLICIT_BZERO)
+#add_definition_if_function_found(strptime HAVE_STRPTIME)
 
 add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
 
@@ -393,8 +389,8 @@ ExternalProject_Add(generate_translations_header
   BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/translations"
   STAMP_DIR ${LRELEASE_PATH}
   CMAKE_ARGS -DLRELEASE_PATH=${LRELEASE_PATH}
-  INSTALL_COMMAND cmake -E echo "")
-include_directories("${CMAKE_CURRENT_BINARY_DIR}/translations")
+  INSTALL_COMMAND cmake -E echo "") 
+include_directories("${CMAKE_CURRENT_BINARY_DIR}/translations") 
 add_subdirectory(external)
 
 if(DEPENDS)
@@ -444,12 +440,10 @@ include_directories(${BITCOIN_INCLUDE})
 link_directories(${BITCOIN_LIBRARY})
 
 include_directories(${HYDROGEN_INCLUDE})
-include_directories(${HYDROGEN_LIBRARY_DIR})
+link_directories(${HYDROGEN_LIBRARY_DIR})
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-  include_directories(${BACKWARD_INCLUDE})
-  include_directories(${BACKWARD_LIBRARY_DIR})
-endif()
+include_directories(${BACKWARD_INCLUDE})
+link_directories(${BACKWARD_LIBRARY_DIR})
 
 # Final setup for liblmdb
 include_directories(${LMDB_INCLUDE})
@@ -764,11 +758,11 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default -DGTEST_HAS_TR1_TUPLE=0")
   endif()
 
-  set(DEBUG_FLAGS "-g3")
+  set(DEBUG_FLAGS "-g")
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND NOT (CMAKE_C_COMPILER_VERSION VERSION_LESS 4.8))
-    set(DEBUG_FLAGS "${DEBUG_FLAGS} -Og ")
+    set(DEBUG_FLAGS "${DEBUG_FLAGS} -g")
   else()
-    set(DEBUG_FLAGS "${DEBUG_FLAGS} -O0 ")
+    set(DEBUG_FLAGS "${DEBUG_FLAGS} -g")
   endif()
 
   # At least some CLANGs default to not enough for monero
@@ -881,7 +875,7 @@ list(APPEND EXTRA_LIBRARIES ${CMAKE_DL_LIBS})
 option(USE_READLINE "Build with GNU readline support." ON)
 if(USE_READLINE)
   find_package(Readline)
-  if(READLINE_FOUND AND GNU_READLINE_FOUND)
+  if(READLINE_FOUND)
     add_definitions(-DHAVE_READLINE)
     include_directories(${Readline_INCLUDE_DIR})
     message(STATUS "Found readline library at: ${Readline_ROOT_DIR}")
@@ -902,16 +896,16 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS AN
   endif()
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-#  find_library(DWARF_LIBRARY dwarf)
-#  if(DWARF_LIBRARY)
-#    set(DWARF_LIBRARY "${DWARF_LIBRARY}")
-#    message(STATUS "Found DWARF_LIBRARY located at ${DWARF_LIBRARY}")
-#    include_directories(DWARF_INCLUDE_DIR /usr/include/libdwarf)
-#  endif()
-#  if(NOT DWARF_LIBRARY)
-#    message(FATAL_ERROR "Could not find required libdwarf.")
-#  endif()
+if(CMAKE_BUILD_TYPE STREQUAL Debug)
+  find_library(DWARF_LIBRARY dwarf)
+  if(DWARF_LIBRARY)
+    set(DWARF_LIBRARY "${DWARF_LIBRARY}")
+    message(STATUS "Found DWARF_LIBRARY located at ${DWARF_LIBRARY}")
+    include_directories(DWARF_INCLUDE_DIR /usr/include/libdwarf)
+  endif()
+  if(NOT DWARF_LIBRARY)
+    message(FATAL_ERROR "Could not find required libdwarf.")
+  endif()
 
   find_library(BFD_LIBRARY bfd)
   if(BFD_LIBRARY)

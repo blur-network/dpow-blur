@@ -1,7 +1,3 @@
-/// @file
-/// @author rfree (current maintainer/user in monero.cc project - most of code is from CryptoNote)
-/// @brief This is the original cryptonote protocol network-events handler, modified by us
-
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 //
@@ -846,21 +842,9 @@ namespace cryptonote
   {
 
       int const& s_count = arg.sig_count;
-      std::string signers_index_s;
-      for (int i = 0; i < 13; i++)
-      {
-        int const neg = -1;
-        std::string each_ind = std::to_string(neg);
+      std::string signers_index = arg.signers_index;
 
-        int tmp = get_index<int>(i, arg.signers_index);
-        if ((tmp < 10) && (tmp != neg))
-          each_ind = "0" + std::to_string(tmp);
-        else
-          each_ind = std::to_string(tmp);
-        signers_index_s += each_ind;
-      }
-
-    MERROR("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index_s << ", payment id: " << arg.payment_id);
+    MERROR("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index << ", payment id: " << arg.payment_id);
     //error solely for visibility
 
     if(context.m_state != cryptonote_connection_context::state_normal)
@@ -876,14 +860,14 @@ namespace cryptonote
     NOTIFY_REQUEST_NTZ_SIG::request ag;
     cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
 
-      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index_s, arg.ptx_string, arg.ptx_hash);
+      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index, arg.ptx_string, arg.ptx_hash);
       if(tvc.m_verifivation_failed)
       {
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
         drop_connection(context, false, false);
         return 1;
       } else {
-        bool cached = req_ntz_sig_to_cache(arg, signers_index_s);
+        bool cached = req_ntz_sig_to_cache(arg, signers_index);
         if (!cached) {
           LOG_ERROR_CCONTEXT("Error adding data from req_ntz_sig to cache!");
           return 1;
@@ -905,20 +889,17 @@ namespace cryptonote
   template<class t_core>
   int t_cryptonote_protocol_handler<t_core>::handle_response_ntz_sig(int command, NOTIFY_RESPONSE_NTZ_SIG::request& arg, cryptonote_connection_context& context)
   {
-      int const& s_count = arg.sig_count;
-      std::string signers_index_s;
-      for (int i = 0; i < 13; i++)
-      {
-        std::string each_ind = "-1";
-        int tmp = get_index<int>(i, arg.signers_index);
-        if ((tmp < 10) && (tmp != (-1)))
-          each_ind = "0" + std::to_string(tmp);
-        else
-          each_ind = std::to_string(tmp);
-        signers_index_s += each_ind;
+    int const s_count = arg.sig_count;
+    std::string signers_index;
+    int const neg = -1;
+    for (const auto& each : arg.signers_index) {
+      if ((each > neg) && (each < 10)) {
+        signers_index += "0" + std::to_string(each);
+      } else {
+        signers_index += std::to_string(each);
       }
-
-    MLOG_P2P_MESSAGE("Received NOTIFY_RESPONSE_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index_s << ", payment id: " << arg.payment_id);
+    }
+    MLOG_P2P_MESSAGE("Received NOTIFY_RESPONSE_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index << ", payment id: " << arg.payment_id);
 
     if(context.m_state != cryptonote_connection_context::state_normal)
       return 1;

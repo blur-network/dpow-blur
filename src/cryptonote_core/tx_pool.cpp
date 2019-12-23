@@ -286,7 +286,7 @@ namespace cryptonote
   {
     // locking here will screw things up, since handle_incoming can't lock,
     // if anything in it has taken a tx_pool lock in the past
-    // CRITICAL_REGION_LOCAL(m_transactions_lock);
+    CRITICAL_REGION_LOCAL(m_transactions_lock);
 
     if (tx.version == 0)
     {

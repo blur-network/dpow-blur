@@ -176,7 +176,7 @@ namespace cryptonote
 
      bool handle_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, NOTIFY_RESPONSE_GET_OBJECTS::request& rsp, cryptonote_connection_context& context);
 
-     std::vector<bool> handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<ntz_req_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_index, std::vector<cryptonote::blobdata>& ptx_blobs, std::vector<crypto::hash>& ptx_hashes);
+     bool handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_index, cryptonote::blobdata& ptx_blob, crypto::hash& ptx_hash);
 
      bool handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash);
 
