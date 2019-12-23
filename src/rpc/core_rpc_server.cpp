@@ -1141,13 +1141,9 @@ namespace cryptonote
     const std::string signers_index = req.signers_index;
     const cryptonote::blobdata ptx_string = req.ptx_string;
     std::list<int> signers_list;
-
-    for (int i = 0; i < 13; i++) {
-      std::string tmp = signers_index.substr(i*2, 2);
-      int each_ind  = std::stoi(tmp, nullptr, 10);
-      signers_list.push_back(each_ind);
+    for (size_t i = 0; i < 13; i++) {
+      signers_list.push_back(std::stoi(signers_index.substr(i*2, 2), nullptr, 10));
     }
-
     int neg = -1;
     int count = 13 - std::count(signers_list.begin(), signers_list.end(), neg);
 
@@ -1156,7 +1152,7 @@ namespace cryptonote
       tvc.m_verifivation_failed = true;
       return false;
     }
-      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, true, false, sig_count, signers_index, ptx_string, ptx_hash);
+      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, true, false, sig_count, req.signers_index, ptx_string, ptx_hash);
       if (rs == false)
       {
         res.status = "Failed";
@@ -1256,21 +1252,12 @@ namespace cryptonote
       return true;
     }
 
-    unsigned int concurrency_count = boost::thread::hardware_concurrency() * 4;
+    unsigned int concurrency_count = boost::thread::hardware_concurrency() * 2;
 
     // if we couldn't detect threads, set it to a ridiculously high number
     if(concurrency_count == 0)
     {
-      concurrency_count = 257;
-    }
-
-    // if there are more threads requested than the hardware supports
-    // then we fail and log that.
-    if(req.threads_count > concurrency_count)
-    {
-      res.status = "Failed, too many threads relative to CPU cores.";
-      LOG_PRINT_L0(res.status);
-      return true;
+      concurrency_count = 1;
     }
 
     boost::thread::attributes attrs;

@@ -312,7 +312,7 @@ namespace cryptonote
       blobdata tx_blob;
       crypto::hash tx_hash;
       std::string payment_id;
-      std::vector<int> signers_index;
+      std::string signers_index;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)

@@ -113,25 +113,19 @@ bool req_ntz_sig_to_cache(cryptonote::NOTIFY_REQUEST_NTZ_SIG::request& arg, std:
 {
   std::string ptx_string = arg.ptx_string;
   int const sig_count = arg.sig_count;
-  std::vector<int> signers_index = arg.signers_index;
-  std::string signers_index_s;
+  std::string signers_index_s = arg.signers_index;
+  std::vector<int> signers_index;
+  for (size_t i = 0; i < 13; i++) {
+    int tmp = 0;
+    tmp = std::stoi(signers_index_s.substr(i*2, 2), nullptr, 10);
+    signers_index.push_back(tmp);
+  }
   std::string payment_id = arg.payment_id;
   std::string tx_blob = arg.tx_blob;
 
   int const neg = -1;
   int const count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
-  for (int i = 0; i < 13; i++)
-  {
-    std::string each_ind = std::to_string(neg);
-    int tmp = cryptonote::get_index<int>(i, arg.signers_index);
-    if ((tmp < 10) && (tmp != neg)) {
-      each_ind = "0" + std::to_string(tmp);
-    } else {
-      each_ind = std::to_string(tmp);
-    }
-    signers_index_s += each_ind;
-  }
-    return add_peer_ptx_to_cache(ptx_string, signers_index_str);
+  return add_peer_ptx_to_cache(ptx_string, signers_index_s);
 }
 
 size_t get_ntz_cache_count()

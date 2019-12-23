@@ -658,12 +658,19 @@ namespace cryptonote
     tvc = boost::value_initialized<ntz_req_verification_context>();
     cryptonote::transaction tx_input_check;
     crypto::hash hone,htwo;
-    parse_tx_from_blob(tx_input_check, hone, htwo, tx_blob);
+    if (!parse_tx_from_blob(tx_input_check, hone, htwo, tx_blob))
+    {
+      MERROR("Failed to parse tx from blob in handle_incoming_ntz_sig_pre!");
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+    cryptonote::transaction const tx_output_check = tx_input_check;
     uint64_t* pmax = NULL;
     bool check_in = m_blockchain_storage.check_ntz_req_inputs(tx_input_check, tvc, pmax);
-    bool check_out = m_blockchain_storage.check_ntz_req_outputs(tx, tvc);
+    bool check_out = m_blockchain_storage.check_ntz_req_outputs(tx_output_check, tvc);
     if (!check_in || !check_out) {
-      MERROR("Input/output check failed!");
+      MERROR("Input/output check failed in handle_incoming_ntz_sig_pre!");
+      tvc.m_verifivation_failed = true;
       return false;
     }
     if(tx_blob.size() > get_max_tx_size())
@@ -685,7 +692,7 @@ namespace cryptonote
     }
     //std::cout << "!"<< tx.vin.size() << std::endl;
 
-    bad_semantics_txes_lock.lock();
+/*    bad_semantics_txes_lock.lock();
     for (int idx = 0; idx < 2; ++idx)
     {
       if (bad_semantics_txes[idx].find(tx_hash) != bad_semantics_txes[idx].end())
@@ -697,7 +704,7 @@ namespace cryptonote
       }
     }
     bad_semantics_txes_lock.unlock();
-
+*/
     // TODO-TK: need to consider tx versioning standard.
     const size_t max_tx_version = CURRENT_TRANSACTION_VERSION;
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
@@ -749,7 +756,7 @@ namespace cryptonote
       }
     }
 
-    if (keeped_by_block && get_blockchain_storage().is_within_compiled_block_hash_area())
+/*    if (keeped_by_block && get_blockchain_storage().is_within_compiled_block_hash_area())
     {
       MTRACE("Asked to skip semantics check for tx kept by block in embedded hash area");
     }
@@ -759,7 +766,7 @@ namespace cryptonote
       tvc.m_verifivation_failed = true;
       return false;
     }
-
+*/
     return true;
   }
   //-----------------------------------------------------------------------------------------------
@@ -858,126 +865,57 @@ namespace cryptonote
     return r;
   }
   //-----------------------------------------------------------------------------------------------
-  std::vector<bool> core::handle_incoming_ntz_sig(const std::list<blobdata>& tx_blobs, std::vector<ntz_req_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count, std::string const& signers_index, std::vector<cryptonote::blobdata>& ptx_blobs, std::vector<crypto::hash>& ptx_hashes)
+  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash)
   {
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
-/*    if (tx_blobs.size() !=  (sig_counts.size() != signers_indexes.size())) {
-      MERROR("Error: inconsistent counts in handle_incoming_ntz_sig! rejecting request...");
-      std::vector<bool> rets(tx_blobs.size());
-      for (size_t i = 0; i < tx_blobs.size(); i++) {
-        tvc[i].m_verifivation_failed = true;
-        rets[i] = false;
-      }
-      return rets;
-    }
-*/
 
-    std::vector<std::string> si_clones;
-    std::vector<int> count_vec;
-    for (size_t i = 0; i < tx_blobs.size(); i++)
-    {
-      count_vec.push_back(sig_count);
-      si_clones.push_back(signers_index);
-    }
     struct result { bool res; cryptonote::transaction tx; crypto::hash hash; crypto::hash prefix_hash; bool in_txpool; bool in_blockchain; };
-    std::vector<result> results(tx_blobs.size());
-
-    tvc.resize(tx_blobs.size());
-    tools::threadpool::waiter waiter;
-    std::list<blobdata>::const_iterator it = tx_blobs.begin();
-    for (size_t i = 0; i < tx_blobs.size(); i++, ++it) {
-      m_threadpool.submit(&waiter, [&, i, it] {
-        try
+    result res_var;
+    res_var.res = handle_incoming_ntz_sig_pre(tx_blob, tvc, res_var.tx, res_var.hash, res_var.prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count);
+    bool already_have = false;
+      if (res_var.res)
+      {
+        if(m_mempool.have_tx(res_var.hash))
         {
-          results[i].res = handle_incoming_ntz_sig_pre(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, count_vec[i]);
+          LOG_PRINT_L2("tx " << res_var.hash << "already have transaction in tx_pool");
+          already_have = true;
         }
-        catch (const std::exception &e)
+        else if(m_blockchain_storage.have_tx(res_var.hash))
         {
-          MERROR_VER("Exception in handle_incoming_tx_pre: " << e.what());
-          results[i].res = false;
+          LOG_PRINT_L2("tx " << res_var.hash << " already have transaction in blockchain");
+          already_have = true;
         }
-      });
-    }
-    waiter.wait();
-    it = tx_blobs.begin();
-    std::vector<bool> already_have(tx_blobs.size(), false);
-    for (size_t i = 0; i < tx_blobs.size(); i++, ++it) {
-      if (!results[i].res)
-        continue;
-      if(m_mempool.have_tx(results[i].hash))
-      {
-        LOG_PRINT_L2("tx " << results[i].hash << "already have transaction in tx_pool");
-        already_have[i] = true;
-      }
-      else if(m_blockchain_storage.have_tx(results[i].hash))
-      {
-        LOG_PRINT_L2("tx " << results[i].hash << " already have transaction in blockchain");
-        already_have[i] = true;
-      }
-      else
-      {
-        if (sig_count >= 13) {
-          m_threadpool.submit(&waiter, [&, i, it] {
-            try
-            {
-              results[i].res = handle_incoming_ntz_sig_post(*it, tvc[i], results[i].tx, results[i].hash, results[i].prefix_hash, keeped_by_block, relayed, do_not_relay, count_vec[i], ptx_blobs[i]);
+        else
+        {
+          if (sig_count >= 13) {
+            try {
+              res_var.res = handle_incoming_ntz_sig_post(tx_blob, tvc, res_var.tx, res_var.hash, res_var.prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count, ptx_blob);
+            } catch (std::exception& e) {
+              MERROR("Error in handle_incoming_ntz_sig_post! Exception: " << e.what());
+              res_var.res = false;
             }
-            catch (const std::exception &e)
-            {
-              MERROR_VER("Exception in handle_incoming_tx_post: " << e.what());
-              results[i].res = false;
-            }
-          });
+          }
         }
+    }
+    bool ok = false;
+    if (!res_var.res) {
+      ok = false;
+    }
+    if (keeped_by_block) {
+      get_blockchain_storage().on_new_tx_from_block(res_var.tx);
+    }
+    if (!already_have) {
+      ok = add_new_tx(res_var.tx, res_var.hash, res_var.prefix_hash, tx_blob.size(), tvc, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blob, ptx_hash);
+      if(tvc.m_verifivation_failed) {
+        MERROR_VER("Transaction verification failed: " << res_var.hash);
+      } else if(tvc.m_verifivation_impossible) {
+        MERROR_VER("Transaction verification impossible: " << res_var.hash);
+      }
+      if(tvc.m_added_to_pool) {
+        MDEBUG("tx added: " << res_var.hash);
       }
     }
-    waiter.wait();
-
-    std::vector<bool> oks;
-    it = tx_blobs.begin();
-    for (size_t i = 0; i < tx_blobs.size(); i++, ++it) {
-      bool ok = true;
-      if (!results[i].res) {
-        ok = false;
-        oks.push_back(ok);
-        continue; }
-
-      if (keeped_by_block) {
-        get_blockchain_storage().on_new_tx_from_block(results[i].tx); }
-
-      if (already_have[i]) {
-        continue; }
-
-        ok &= add_new_tx(results[i].tx, results[i].hash, results[i].prefix_hash, it->size(), tvc[i], keeped_by_block, relayed, do_not_relay, count_vec[i], si_clones[i], ptx_blobs[i], ptx_hashes[i]);
-        oks.push_back(ok);
-        if(tvc[i].m_verifivation_failed)
-        {MERROR_VER("Transaction verification failed: " << results[i].hash);}
-        else if(tvc[i].m_verifivation_impossible)
-        {MERROR_VER("Transaction verification impossible: " << results[i].hash);}
-        if(tvc[i].m_added_to_pool)
-          MDEBUG("tx added: " << results[i].hash);
-    }
-    return oks;
-  }
-  //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count, std::string const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash)
-  {
-    std::list<cryptonote::blobdata> tx_blobs;
-    std::vector<cryptonote::blobdata> ptx_blobs;
-    std::vector<crypto::hash> ptx_hashes;
-    tx_blobs.push_back(tx_blob);
-    ptx_blobs.push_back(ptx_blob);
-    ptx_hashes.push_back(ptx_hash);
-    std::vector<ntz_req_verification_context> tvcv(1);
-    std::vector<bool> rs = handle_incoming_ntz_sig(tx_blobs, tvcv, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blobs, ptx_hashes);
-    bool r = false;
-    for (const auto& each : rs)
-    {
-      if (each == false)
-        return false;
-    }
-    tvc = tvcv[0];
-    return true;
+    return ok;
   }
   //-----------------------------------------------------------------------------------------------
   bool core::get_stat_info(core_stat_info& st_inf) const
