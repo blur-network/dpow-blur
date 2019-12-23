@@ -865,7 +865,7 @@ namespace cryptonote
     return r;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count, std::string const& signers_index, cryptonote::blobdata& ptx_blob, crypto::hash& ptx_hash)
+  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash)
   {
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
 
@@ -917,7 +917,6 @@ namespace cryptonote
     }
     return ok;
   }
-  //-----------------------------------------------------------------------------------------------
   //-----------------------------------------------------------------------------------------------
   bool core::get_stat_info(core_stat_info& st_inf) const
   {
