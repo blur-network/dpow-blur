@@ -910,6 +910,7 @@ namespace cryptonote
         MDEBUG("tx added: " << res_var.hash);
       }
     }
+    relay_ntzpool_transactions();
     return ok;
   }
   //-----------------------------------------------------------------------------------------------
