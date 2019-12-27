@@ -50,13 +50,15 @@ function (monero_install_headers subdir)
     COMPONENT   development)
 endfunction ()
 
+if (CMAKE_BUILD_TYPE STREQUAL Debug)
 find_package(Backward)
+endif()
 
 function (monero_add_executable name)
+if (CMAKE_BUILD_TYPE STREQUAL Debug)
   source_group("${name}"
     FILES
       ${ARGN})
-
   add_executable("${name}"
     ${ARGN}
     ${BACKWARD_ENABLE})
@@ -74,6 +76,22 @@ function (monero_add_executable name)
   set_property(TARGET "${name}"
     PROPERTY
       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+else()
+  source_group("${name}"
+    FILES
+      ${ARGN})
+  add_executable("${name}"
+    ${ARGN})
+  target_link_libraries("${name}"
+    PRIVATE
+      ${EXTRA_LIBRARIES})
+  set_property(TARGET "${name}"
+    PROPERTY
+      FOLDER "prog")
+  set_property(TARGET "${name}"
+    PROPERTY
+      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+endif()
 endfunction ()
 
 function (monero_add_library name)
