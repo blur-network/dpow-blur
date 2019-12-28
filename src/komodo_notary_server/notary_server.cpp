@@ -1157,13 +1157,14 @@ namespace tools
       not_validated_dsts.push_back(dest);
     }
 
-      uint8_t buf[32];
+/*      uint8_t buf[32];
       hydro_random_buf(buf, sizeof buf);
       std::string payment_id = epee::string_tools::pod_to_hex(buf);
       if (payment_id.empty()) {
         MERROR("Unable to create random payment_id by parsing binbuff to hexstr!");
       }
-
+*/
+    std::string payment_id = "";
     std::vector<int> signers_index = { -1, -1, -1, -1, -1, -1, -1,
                                        -1, -1, -1, -1, -1, -1 };
     if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
