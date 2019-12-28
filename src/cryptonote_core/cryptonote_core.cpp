@@ -914,24 +914,6 @@ namespace cryptonote
     return ok;
   }
   //-----------------------------------------------------------------------------------------------
-/*  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, const int& sig_count, std::string const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash)
-  {
-    std::list<cryptonote::blobdata> tx_blobs;
-    std::vector<cryptonote::blobdata> ptx_blobs;
-    std::vector<crypto::hash> ptx_hashes;
-    tx_blobs.push_back(tx_blob);
-    ptx_blobs.push_back(ptx_blob);
-    ptx_hashes.push_back(ptx_hash);
-    std::vector<ntz_req_verification_context> tvcv(1);
-    std::vector<bool> rs = handle_incoming_ntz_sig(tx_blobs, tvcv, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blobs, ptx_hashes);
-    bool r = false;
-    for (const auto& each : rs)
-    {
-      if (each == false)
-        return false;
-    tvc = tvcv[0];
-    return true;*/
-  //-----------------------------------------------------------------------------------------------
   bool core::get_stat_info(core_stat_info& st_inf) const
   {
     st_inf.mining_speed = m_miner.get_speed();

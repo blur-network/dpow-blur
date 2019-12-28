@@ -1194,26 +1194,11 @@ namespace cryptonote
       r.tx_blob = req.tx_blob;
       r.sig_count = req.sig_count;
       r.payment_id = req.payment_id;
-      for (int i = 0; i < 13; i++) {
-        std::string sub = req.signers_index.substr(i*2, 2);
-        int tmp = -1;
-        tmp = std::stoi(sub, nullptr, 10);
-        r.signers_index.push_back(tmp);
-      }
+      r.signers_index = req.signers_index;
 
-      std::string si = "";
-      for (const auto& each : r.signers_index) {
-        std::string tmp;
-        if ((each < 10) && (each > -1)) {
-          tmp = "0" + std::to_string(each);
-        } else {
-          tmp = std::to_string(each);
-        }
-        si += tmp;
-      }
       MWARNING("Ptx string in RPC: " << r.ptx_string);
       m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
-      MWARNING("request ntz sig sent with sigs count: " << std::to_string(r.sig_count) << ", signers_index = " << si << ", and payment id: " << req.payment_id);
+      MWARNING("request ntz sig sent with sigs count: " << std::to_string(r.sig_count) << ", signers_index = " << signers_index << ", and payment id: " << req.payment_id);
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }
