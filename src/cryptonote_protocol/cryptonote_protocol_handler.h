@@ -1,7 +1,3 @@
-/// @file
-/// @author rfree (current maintainer/user in monero.cc project - most of code is from CryptoNote)
-/// @brief This is the original cryptonote protocol network-events handler, modified by us
-
 // Copyright (c) 2014-2018, The Monero Project
 // 
 // All rights reserved.
@@ -51,8 +47,6 @@
 PUSH_WARNINGS
 DISABLE_VS_WARNINGS(4355)
 
-#define LOCALHOST_INT 2130706433
-
 namespace cryptonote
 {
 
@@ -66,7 +60,7 @@ namespace cryptonote
 			virtual ~cryptonote_protocol_handler_base();
 			void handler_request_blocks_history(std::list<crypto::hash>& ids); // before asking for list of objects, we can change the list still
 			void handler_response_blocks_now(size_t packet_size);
-			
+
 			virtual double get_avg_block_size() = 0;
 			virtual double estimate_one_block_size() noexcept; // for estimating size of blocks to download
 	};

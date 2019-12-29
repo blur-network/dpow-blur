@@ -55,28 +55,6 @@ find_package(Backward)
 endif()
 
 function (monero_add_executable name)
-if (CMAKE_BUILD_TYPE STREQUAL Debug)
-  source_group("${name}"
-    FILES
-      ${ARGN})
-  add_executable("${name}"
-    ${ARGN}
-    ${BACKWARD_ENABLE})
-  add_backward("${name}")
-  target_link_libraries("${name}"
-    PRIVATE
-      ${EXTRA_LIBRARIES}
-    PUBLIC
-      Backward::Backward
-      ${BFD_LIBARY}
-      ${DWARF_LIBRARY})
-  set_property(TARGET "${name}"
-    PROPERTY
-      FOLDER "prog")
-  set_property(TARGET "${name}"
-    PROPERTY
-      RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-else()
   source_group("${name}"
     FILES
       ${ARGN})
@@ -91,7 +69,6 @@ else()
   set_property(TARGET "${name}"
     PROPERTY
       RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-endif()
 endfunction ()
 
 function (monero_add_library name)

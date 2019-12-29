@@ -1193,7 +1193,7 @@ namespace tools
       }
       const std::vector<int> si_const = signers_index;
       crypto::hash ptx_hash;
-      if (get_ntz_cache_count() >= 2) {
+ //     if (get_ntz_cache_count() >= 0) {
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
            res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
         if (fill_res) {
@@ -1209,7 +1209,7 @@ namespace tools
           MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
         return fill_res;
-      } else {
+/*      } else {
         bool added = false;
         added = add_ptx_to_cache(ptx_vector);
         MWARNING("Pending ntz transaction added to cache! Cache count: " << std::to_string(get_ntz_cache_count()));
@@ -1233,7 +1233,7 @@ namespace tools
         } else {
           return true;
         }
-      }
+      }*/
     }
     catch (const std::exception& e)
     {
