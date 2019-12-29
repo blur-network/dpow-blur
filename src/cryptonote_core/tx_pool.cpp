@@ -1533,18 +1533,21 @@ namespace cryptonote
               }
             }
           }
-          if (!meta.double_spend_seen)
+          else
           {
-            MDEBUG("Marking " << txid << " as double spending " << itk.k_image);
-            meta.double_spend_seen = true;
-            try
+            if (!meta.double_spend_seen)
             {
-              m_blockchain.update_txpool_tx(txid, meta);
-            }
-            catch (const std::exception &e)
-            {
-              MERROR("Failed to update tx meta: " << e.what());
-              // continue, not fatal
+              MDEBUG("Marking " << txid << " as double spending " << itk.k_image);
+              meta.double_spend_seen = true;
+              try
+              {
+                m_blockchain.update_txpool_tx(txid, meta);
+              }
+              catch (const std::exception &e)
+              {
+                MERROR("Failed to update tx meta: " << e.what());
+                // continue, not fatal
+              }
             }
           }
         }
