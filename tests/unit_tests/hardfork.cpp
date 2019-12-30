@@ -115,14 +115,26 @@ public:
   virtual std::map<uint64_t, std::tuple<uint64_t, uint64_t, uint64_t>> get_output_histogram(const std::vector<uint64_t> &amounts, bool unlocked, uint64_t recent_cutoff) const { return std::map<uint64_t, std::tuple<uint64_t, uint64_t, uint64_t>>(); }
 
   virtual void add_txpool_tx(const transaction &tx, const txpool_tx_meta_t& details) {}
+  virtual void add_ntzpool_tx(const transaction &tx, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t& details) {}
   virtual void update_txpool_tx(const crypto::hash &txid, const txpool_tx_meta_t& details) {}
+  virtual void update_ntzpool_tx(const crypto::hash &txid, const ntzpool_tx_meta_t& details) {}
   virtual uint64_t get_txpool_tx_count(bool include_unrelayed_txes = true) const { return 0; }
+  virtual uint64_t get_ntzpool_tx_count(bool include_unrelayed_txes = true) const { return 0; }
+
   virtual bool txpool_has_tx(const crypto::hash &txid) const { return false; }
+  virtual bool ntzpool_has_tx(const crypto::hash &txid) const { return false; }
   virtual void remove_txpool_tx(const crypto::hash& txid) {}
+  virtual bool remove_ntzpool_tx(const crypto::hash& txid, crypto::hash const& ptx_hash) { return false; }
+
   virtual bool get_txpool_tx_meta(const crypto::hash& txid, txpool_tx_meta_t &meta) const { return false; }
+  virtual bool get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_meta_t &meta) const { return false; }
   virtual bool get_txpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd) const { return false; }
+  virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata& ptx_blob, crypto::hash const& ptx_hash) const { return false; }
   virtual cryptonote::blobdata get_txpool_tx_blob(const crypto::hash& txid) const { return ""; }
+  virtual std::pair<cryptonote::blobdata,cryptonote::blobdata> get_ntzpool_tx_blob(const crypto::hash& txid, crypto::hash const& ptx_hash) const { std::pair<cryptonote::blobdata,cryptonote::blobdata> bd_pair;  bd_pair.first = ""; bd_pair.second = ""; return bd_pair; }
   virtual bool for_all_txpool_txes(std::function<bool(const crypto::hash&, const txpool_tx_meta_t&, const cryptonote::blobdata*)>, bool include_blob = false, bool include_unrelayed_txes = false) const { return false; }
+  virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t&, cryptonote::blobdata const*, cryptonote::blobdata const*)>, bool include_blob = true, bool include_unrelayed_txes = true) const { return false; }
+
 
   virtual void add_block( const block& blk
                         , const size_t& block_size

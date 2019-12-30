@@ -79,6 +79,7 @@ namespace tests
     bool handle_incoming_tx(const cryptonote::blobdata& tx_blob, cryptonote::tx_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay);
     bool handle_incoming_txs(const std::list<cryptonote::blobdata>& tx_blobs, std::vector<cryptonote::tx_verification_context>& tvc, bool keeped_by_block, bool relayed, bool do_not_relay);
     bool handle_incoming_block(const cryptonote::blobdata& block_blob, cryptonote::block_verification_context& bvc, bool update_miner_blocktemplate = true);
+    bool handle_incoming_ntz_sig(std::string tx_blob, cryptonote::ntz_req_verification_context tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const sig_count, std::string const signers_index, std::string const ptx_string, crypto::hash const ptx_hash) { return true; }
     void pause_mine(){}
     void resume_mine(){}
     bool on_idle(){return true;}
