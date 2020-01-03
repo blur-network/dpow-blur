@@ -1267,6 +1267,7 @@ namespace tools
     cryptonote::blobdata ptx_blob, tx_blob;
     std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
     std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
+    std::string prior_tx_hash, prior_ptx_hash;
     m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
     if (ntzpool_txs.empty()) {
       MERROR("Failed to fetch transactions from ntz pool!");
@@ -1282,10 +1283,10 @@ namespace tools
       }
       std::pair<int,size_t> best = AUTO_VAL_INIT(best);
       bool check = check_for_index(scounts, best);
-      std::string const& prior_tx_hash = ntzpool_txs[best.second].id_hash;
+      prior_tx_hash = ntzpool_txs[best.second].id_hash;
       tx_blob = ntzpool_txs[best.second].tx_blob;
       ptx_blob = ntzpool_txs[best.second].ptx_blob;
-      std::string const& prior_ptx_hash = ntzpool_txs[best.second].ptx_hash;
+      prior_ptx_hash = ntzpool_txs[best.second].ptx_hash;
       for (int i = 0; i < 13; i++) {
         int each = -1;
         each = ntzpool_txs[best.second].signers_index.front();
