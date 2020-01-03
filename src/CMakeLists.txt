@@ -50,19 +50,21 @@ function (monero_install_headers subdir)
     COMPONENT   development)
 endfunction ()
 
-if (CMAKE_BUILD_TYPE STREQUAL Debug)
 find_package(Backward)
-endif()
-
 function (monero_add_executable name)
   source_group("${name}"
     FILES
-      ${ARGN})
+      ${ARGN}
+      ${BACKWARD_ENABLE})
   add_executable("${name}"
     ${ARGN})
+  add_backward("${name}")
   target_link_libraries("${name}"
     PRIVATE
-      ${EXTRA_LIBRARIES})
+      ${EXTRA_LIBRARIES}
+      ${BACKWARD_LIBRARIES}
+    PUBLIC
+      Backward::Backward)
   set_property(TARGET "${name}"
     PROPERTY
       FOLDER "prog")

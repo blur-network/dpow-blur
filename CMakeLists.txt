@@ -100,7 +100,7 @@ function (add_definition_if_library_exists library function header var)
   endif()
 endfunction()
 
-if(NOT CMAKE_BUILD_TYPE STREQUAL Debug)
+if(NOT CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
   message(STATUS "Setting build type: ${CMAKE_BUILD_TYPE}")
 else()
@@ -201,11 +201,11 @@ if(NOT MANUAL_SUBMODULES)
   endif()
 endif()
 
-set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
-set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
+#set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
+#set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
 
 # set this to 0 if per-block checkpoint needs to be disabled
-set(PER_BLOCK_CHECKPOINT 1)
+set(PER_BLOCK_CHECKPOINT 0)
 
 if(PER_BLOCK_CHECKPOINT)
   add_definitions("-DPER_BLOCK_CHECKPOINT")
@@ -257,11 +257,7 @@ endif()
 # elseif(CMAKE_SYSTEM_NAME MATCHES ".*BSDI.*")
 #   set(BSDI TRUE)
 
-if(CMAKE_BUILD_TYPE STREQUAL Debug)
-include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external external/backward)
-else()
 include_directories(external/rapidjson/include external/easylogging++ src contrib/epee/include external)
-endif()
 
 if(APPLE)
   include_directories(SYSTEM /usr/include/malloc)
@@ -278,17 +274,17 @@ endif()
 option(STATIC "Link libraries statically" ${DEFAULT_STATIC})
 
 # This is a CMake built-in switch that concerns internal libraries
-if (NOT DEFINED BUILD_SHARED_LIBS AND NOT STATIC AND CMAKE_BUILD_TYPE_LOWER STREQUAL Debug)
-    set(BUILD_SHARED_LIBS ON)
-endif()
+#if (NOT DEFINED BUILD_SHARED_LIBS AND NOT STATIC AND CMAKE_BUILD_TYPE_LOWER STREQUAL "Debug")
+#    set(BUILD_SHARED_LIBS ON)
+#endif()
 
-if (BUILD_SHARED_LIBS)
-  message(STATUS "Building internal libraries with position independent code")
-  add_definitions("-DBUILD_SHARED_LIBS")
-else()
-  message(STATUS "Building internal libraries as static")
-endif()
-set(PIC_FLAG "-fPIC")
+#if (BUILD_SHARED_LIBS)
+#  message(STATUS "Building internal libraries with position independent code")
+#  add_definitions("-DBUILD_SHARED_LIBS")
+#else()
+#  message(STATUS "Building internal libraries as static")
+#endif()
+#set(PIC_FLAG "-fPIC")
 
 if(MINGW)
   string(REGEX MATCH "^[^/]:/[^/]*" msys2_install_path "${CMAKE_C_COMPILER}")
@@ -353,6 +349,8 @@ if (UNIX AND NOT APPLE)
   add_cxx_flag_if_supported(-pthread CMAKE_CXX_FLAGS)
 endif()
 
+find_package(Backward)
+
 # Handle OpenSSL, used for sha256sum on binary updates and light wallet ssl http
 if (CMAKE_SYSTEM_NAME MATCHES "(SunOS|Solaris)")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthreads")
@@ -370,16 +368,12 @@ endif()
 
 find_package(OpenSSL REQUIRED)
 message(STATUS "Using OpenSSL include dir at ${OPENSSL_INCLUDE_DIR}")
-include_directories(${OPENSSL_INCLUDE_DIR})
-if(STATIC AND NOT IOS)
-  if(UNIX)
-    set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARIES};${CMAKE_DL_LIBS};${CMAKE_THREAD_LIBS_INIT}")
-  endif()
-endif()
+include_directories(OPENSSL_INCLUDE_DIR ${OPENSSL_INCLUDE_DIR})
+set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARIES};${CMAKE_DL_LIBS};${CMAKE_THREAD_LIBS_INIT}")
 
-#add_definition_if_library_exists(c memset_s "string.h" HAVE_MEMSET_S)
-#add_definition_if_library_exists(c explicit_bzero "strings.h" HAVE_EXPLICIT_BZERO)
-#add_definition_if_function_found(strptime HAVE_STRPTIME)
+add_definition_if_library_exists(c memset_s "string.h" HAVE_MEMSET_S)
+add_definition_if_library_exists(c explicit_bzero "strings.h" HAVE_EXPLICIT_BZERO)
+add_definition_if_function_found(strptime HAVE_STRPTIME)
 
 add_definitions(-DAUTO_INITIALIZE_EASYLOGGINGPP)
 
@@ -425,6 +419,7 @@ set(SECP256K1_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/
 include(ExternalProject)
 ExternalProject_Add(libbtc
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
+  DEPENDS secp256k1
   CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static -DLD_FLAGS+="-lsecp256k1" -DLD_FLAGS+="-levent" -DCPP_FLAGS+="-I ${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/include"
   CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure CPP_FLAGS="-I ${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/include"  --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no --with-net=no
   BUILD_COMMAND make
@@ -445,8 +440,6 @@ link_directories(${BITCOIN_LIBRARY})
 include_directories(${HYDROGEN_INCLUDE})
 link_directories(${HYDROGEN_LIBRARY_DIR})
 
-include_directories(${BACKWARD_INCLUDE})
-link_directories(${BACKWARD_LIBRARY_DIR})
 
 # Final setup for liblmdb
 include_directories(${LMDB_INCLUDE})
@@ -456,7 +449,7 @@ if (BERKELEY_DB)
   include_directories(${BDB_INCLUDE})
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL Debug)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
   find_package(Libunwind)
   if(Libunwind_FOUND)
     message(STATUS "Using Libunwind located at: ${LIBUNWIND_LIBRARIES}.")
@@ -761,11 +754,11 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default -DGTEST_HAS_TR1_TUPLE=0")
   endif()
 
-  set(DEBUG_FLAGS "-g3")
+  set(DEBUG_FLAGS "-g")
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND NOT (CMAKE_C_COMPILER_VERSION VERSION_LESS 4.8))
-    set(DEBUG_FLAGS "${DEBUG_FLAGS} -g3")
+    set(DEBUG_FLAGS "${DEBUG_FLAGS} -Og ")
   else()
-    set(DEBUG_FLAGS "${DEBUG_FLAGS} -g3")
+    set(DEBUG_FLAGS "${DEBUG_FLAGS} -O0 ")
   endif()
 
   # At least some CLANGs default to not enough for monero
@@ -899,27 +892,37 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS AN
   endif()
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL Debug)
-  find_library(DWARF_LIBRARY dwarf)
-  if(DWARF_LIBRARY)
-    set(DWARF_LIBRARY "${DWARF_LIBRARY}")
-    message(STATUS "Found DWARF_LIBRARY located at ${DWARF_LIBRARY}")
-    include_directories(DWARF_INCLUDE_DIR /usr/include/libdwarf)
-  endif()
-  if(NOT DWARF_LIBRARY)
-    message(FATAL_ERROR "Could not find required libdwarf.")
+  if(LIBDWARF_LIBRARIES AND BACKWARD_HAS_DWARF)
+    set(LIBDWARF_LIBRARIES "${LIBDWARF_LIBRARIES}")
+    message(STATUS "Using LIBDWARF_LIBRARIES located at ${LIBDWARF_LIBRARIES}")
+    include_directories(DWARF_INCLUDE_DIRS ${LIBDWARF_INCLUDE_DIRS})
   endif()
 
-  find_library(BFD_LIBRARY bfd)
-  if(BFD_LIBRARY)
-    set(BFD_LIBRARY "${BFD_LIBRARY}")
-    message(STATUS "Found BFD_LIBRARY located at ${BFD_LIBRARY}")
-    include_directories(BFD_INCLUDE_DIR /usr/include)
+  if(LIBBFD_LIBRARIES AND BACKWARD_HAS_BFD)
+    set(LIBBFD_LIBRARIES "${LIBBFD_LIBRARIES}")
+    message(STATUS "Found LIBBFD_LIBRARIES located at ${LIBBFD_LIBRARIES}")
+    include_directories(LIBBFD_INCLUDE_DIRS ${LIBBFD_INCLUDE_DIRS})
   endif()
-  if(NOT BFD_LIBRARY)
-    message(FATAL_ERROR "Could not find required libbfd from binutils package.")
+
+  if(LIBBFD_LIBRARIES AND LIBDWARF_LIBRARIES AND BACKWARD_HAS_BFD AND BACKWARD_HAS_DWARF)
+    set(BACKWARD_LIBRARIES "${LIBDWARF_LIBRARIES} ${LIBBFD_LIBRARIES} ${BACKWARD_LIBRARIES}")
   endif()
-endif()
+  if(LIBDWARF_LIBRARIES AND NOT LIBBFD_LIBRARIES AND BACKWARD_HAS_DWARF)
+    set(BACKWARD_LIBRARIES "${LIBDWARF_LIBRARIES} ${BACKWARD_LIBRARIES}")
+  endif()
+  if(LIBBFD_LIBRARIES AND NOT LIBDWARF_LIBRARIES AND BACKWARD_HAS_BFD)
+    set(BACKWARD_LIBRARIES "${LIBBFD_LIBRARIES} ${BACKWARD_LIBRARIES}")
+  endif()
+  if(LIBDW_LIBRARIES AND BACKWARD_HAS_BFD)
+    set(LIBDW_LIBRARIES "${LIBDW_LIBRARIES}")
+    message(STATUS "Using LIBDW_LIBRARIES located at ${LIBDW_LIBRARIES}")
+    include_directories(LIBDW_INCLUDE_DIRS ${LIBDW_INCLUDE_DIRS})
+    set(BACKWARD_LIBRARIES "${BACKWARD_LIBRARIES} ${LIBDW_LIBRARIES}")
+  endif()
+
+
+include_directories(BACKWARD_INCLUDE_DIRS ${BACKWARD_INCLUDE_DIRS})
+link_directories(BACKWARD_LIBRARIES ${BACKWARD_LIBRARIES})
 
 
 if(NOT BTC_LIBRARY)
