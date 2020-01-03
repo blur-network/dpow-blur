@@ -902,12 +902,12 @@ namespace cryptonote
     if (res_var.res) {
       ok = add_new_tx(res_var.tx, res_var.hash, res_var.prefix_hash, tx_blob.size(), tvc, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blob, ptx_hash);
       if(tvc.m_verifivation_failed) {
-        MERROR("Transaction verification failed: " << res_var.hash);
+        MERROR("Notarization verification failed: " << res_var.hash);
       } else if(tvc.m_verifivation_impossible) {
-        MERROR("Transaction verification impossible: " << res_var.hash);
+        MERROR("Notarization verification impossible: " << res_var.hash);
       }
       if(tvc.m_added_to_pool) {
-        MDEBUG("tx added: " << res_var.hash);
+        MDEBUG("Notarization request added: " << res_var.hash);
       }
     }
     relay_ntzpool_transactions();
@@ -1251,6 +1251,7 @@ namespace cryptonote
     std::list<std::pair<crypto::hash,cryptonote::blobdata>> ntz_txs_list;
     if ((m_mempool.get_relayable_ntz_transactions(ntz_txs_list)) && (!ntz_txs_list.empty()))
     {
+      MWARNING("Called relay_ntzpool_transactions()!");
       std::vector<std::pair<crypto::hash,cryptonote::blobdata>> ntz_txs;
       for (const auto& each : ntz_txs_list) {
         ntz_txs.push_back(each);
@@ -1263,6 +1264,7 @@ namespace cryptonote
         NOTIFY_REQUEST_NTZ_SIG::request r = AUTO_VAL_INIT(r);
         ntzpool_tx_meta_t meta;
         crypto::hash ntz_hash = ntz_txs[i].first;
+        MWARNING("Prior to calling get ntzpool tx meta....");
         if (!m_blockchain_storage.get_ntzpool_tx_meta(ntz_hash, meta)) {
           MERROR("Error fetching ntzpool meta in relay_ntzpool_transactions()!");
           return false;
@@ -1288,7 +1290,8 @@ namespace cryptonote
         get_protocol()->relay_request_ntz_sig(r, fake_context);
       }
     }
-    m_mempool.set_relayed(ntz_txs_list);
+    MWARNING("Prior to set relayed...");
+//    m_mempool.set_relayed(ntz_txs_list);
     return true;
   }
   //-----------------------------------------------------------------------------------------------

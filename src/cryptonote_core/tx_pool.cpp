@@ -866,20 +866,6 @@ namespace cryptonote
       {
         MWARNING("Failed to update txpool transaction metadata: " << e.what() << ", trying ntzpool...");
         // continue
-        try
-        {
-          ntzpool_tx_meta_t ntz_meta;
-          if (m_blockchain.get_ntzpool_tx_meta(it->first, ntz_meta)) {
-            ntz_meta.relayed = true;
-            ntz_meta.last_relayed_time = now;
-            m_blockchain.update_ntzpool_tx(it->first, ntz_meta);
-          }
-        }
-        catch (const std::exception &e)
-        {
-          MERROR("Failed to update transaction metadata, in both txpool and ntzpool: " << e.what());
-          // continue
-        }
       }
     }
   }
