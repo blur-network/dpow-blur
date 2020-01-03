@@ -547,8 +547,13 @@ namespace notary_rpc
     struct request
     {
       std::string payment_id;
+      std::string prior_tx_hash;
+      std::string prior_ptx_hash;
+
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(payment_id)
+        KV_SERIALIZE(prior_tx_hash)
+        KV_SERIALIZE(prior_ptx_hash)
       END_KV_SERIALIZE_MAP()
     };
 

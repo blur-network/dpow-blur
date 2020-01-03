@@ -311,15 +311,19 @@ namespace cryptonote
       crypto::hash ptx_hash;
       blobdata tx_blob;
       crypto::hash tx_hash;
+      crypto::hash prior_tx_hash;
+      crypto::hash prior_ptx_hash;
       std::string payment_id;
       std::string signers_index;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)
         KV_SERIALIZE(ptx_string)
-        KV_SERIALIZE_VAL_POD_AS_BLOB(ptx_hash)
         KV_SERIALIZE(tx_blob)
         KV_SERIALIZE_VAL_POD_AS_BLOB(tx_hash)
+        KV_SERIALIZE_VAL_POD_AS_BLOB(ptx_hash)
+        KV_SERIALIZE_VAL_POD_AS_BLOB(prior_tx_hash)
+        KV_SERIALIZE_VAL_POD_AS_BLOB(prior_ptx_hash)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(signers_index)
       END_KV_SERIALIZE_MAP()

@@ -972,6 +972,8 @@ namespace cryptonote
       int sig_count;
       std::string ptx_string;
       std::string ptx_hash;
+      std::string prior_tx_hash;
+      std::string prior_ptx_hash;
       std::string tx_blob;
       std::string payment_id;
       std::string signers_index/* = "-1-1-1-1-1-1-1-1-1-1-1-1-1"*/;
@@ -980,6 +982,8 @@ namespace cryptonote
         KV_SERIALIZE(sig_count)
         KV_SERIALIZE(ptx_string)
         KV_SERIALIZE(ptx_hash)
+        KV_SERIALIZE(prior_tx_hash)
+        KV_SERIALIZE(prior_ptx_hash)
         KV_SERIALIZE(tx_blob)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(signers_index)

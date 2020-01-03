@@ -860,7 +860,26 @@ namespace cryptonote
     NOTIFY_REQUEST_NTZ_SIG::request ag;
     cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
 
-      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index, arg.ptx_string, arg.ptx_hash);
+    std::string prior_tx_hash_data;
+    std::string prior_tx_hex = epee::string_tools::pod_to_hex(arg.prior_tx_hash);
+    std::string prior_ptx_hex = epee::string_tools::pod_to_hex(arg.prior_ptx_hash);
+    if (!epee::string_tools::parse_hexstr_to_binbuff(prior_tx_hex, prior_tx_hash_data))
+    {
+      MERROR("Failed in converting prior tx hash to binbuff!");
+      return false;
+    }
+    const crypto::hash prior_tx_hash = *reinterpret_cast<const crypto::hash*>(prior_tx_hash_data.data());
+
+    std::string prior_ptx_hash_data;
+    if (!epee::string_tools::parse_hexstr_to_binbuff(prior_ptx_hex, prior_ptx_hash_data))
+    {
+      MERROR("Failed in converting prior ptx hash to binbuff!");
+      return false;
+    }
+    const crypto::hash prior_ptx_hash = *reinterpret_cast<const crypto::hash*>(prior_ptx_hash_data.data());
+
+
+      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index, arg.ptx_string, arg.ptx_hash, prior_tx_hash, prior_ptx_hash);
       if(tvc.m_verifivation_failed)
       {
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
@@ -876,6 +895,8 @@ namespace cryptonote
 
     ag.ptx_string = arg.ptx_string;
     ag.ptx_hash = arg.ptx_hash;
+    ag.prior_tx_hash = arg.prior_tx_hash;
+    ag.prior_ptx_hash = arg.prior_ptx_hash;
     ag.tx_hash = arg.tx_hash;
     ag.sig_count = arg.sig_count;
     ag.payment_id = arg.payment_id;

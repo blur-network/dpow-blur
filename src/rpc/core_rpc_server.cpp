@@ -1130,7 +1130,7 @@ namespace cryptonote
     std::string hash_data;
     if (!epee::string_tools::parse_hexstr_to_binbuff(req.ptx_hash, hash_data))
     {
-      MERROR("Failed in converting hash to binbuff!");
+      MERROR("Failed in converting current ptx hash to binbuff!");
       return false;
     }
     const crypto::hash ptx_hash =  *reinterpret_cast<const crypto::hash*>(hash_data.data());
@@ -1152,7 +1152,24 @@ namespace cryptonote
       tvc.m_verifivation_failed = true;
       return false;
     }
-      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, true, false, sig_count, req.signers_index, ptx_string, ptx_hash);
+
+    std::string prior_tx_hash_data;
+    if (!epee::string_tools::parse_hexstr_to_binbuff(req.prior_tx_hash, prior_tx_hash_data))
+    {
+      MERROR("Failed in converting prior tx hash to binbuff!");
+      return false;
+    }
+    const crypto::hash prior_tx_hash = *reinterpret_cast<const crypto::hash*>(prior_tx_hash_data.data());
+
+    std::string prior_ptx_hash_data;
+    if (!epee::string_tools::parse_hexstr_to_binbuff(req.prior_ptx_hash, prior_ptx_hash_data))
+    {
+      MERROR("Failed in converting prior ptx hash to binbuff!");
+      return false;
+    }
+    const crypto::hash prior_ptx_hash =  *reinterpret_cast<const crypto::hash*>(prior_ptx_hash_data.data());
+
+      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, true, false, sig_count, req.signers_index, ptx_string, ptx_hash, prior_tx_hash, prior_ptx_hash);
       if (rs == false)
       {
         res.status = "Failed";

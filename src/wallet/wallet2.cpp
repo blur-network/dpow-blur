@@ -4975,7 +4975,7 @@ void wallet2::get_ntzpool_tx(std::vector<pending_tx>& ptx_vector)
 
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const& ptx_hash, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const& signers_index)
+void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const& ptx_hash, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const& signers_index, std::string const& prior_tx_hash, std::string const& prior_ptx_hash)
 {
   using namespace cryptonote;
     // Normal submit
@@ -5006,6 +5006,8 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
     }
     MWARNING("Indexes string created using get_index template:" << temp);
     request.signers_index = temp;
+    request.prior_tx_hash = prior_tx_hash;
+    request.prior_ptx_hash = prior_ptx_hash;
     COMMAND_RPC_REQUEST_NTZ_SIG::response daemon_send_resp = AUTO_VAL_INIT(daemon_send_resp);
     m_daemon_rpc_mutex.lock();
     bool r = epee::net_utils::invoke_http_json("/requestntzsig", request, daemon_send_resp, m_http_client);
