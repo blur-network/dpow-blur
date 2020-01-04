@@ -1267,10 +1267,11 @@ namespace cryptonote
         r.ptx_hash = ptx_hash;
         get_protocol()->relay_request_ntz_sig(r, fake_context);
         MWARNING("New incoming_ntz_sig relayed!");
+        m_mempool.set_relayed(ntz_txs_list);
+        return true;
       }
     }
-//    m_mempool.set_relayed(ntz_txs_list);
-    return true;
+    return false;
   }
   //-----------------------------------------------------------------------------------------------
   void core::on_transaction_relayed(const cryptonote::blobdata& tx_blob)

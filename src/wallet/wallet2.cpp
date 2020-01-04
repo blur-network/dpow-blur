@@ -5022,10 +5022,10 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
       {
         transfer_details &td = m_transfers[idx];
         // notary wallet will not know about other notarizers' key images
-        if (!td.m_key_image_known || td.m_key_image_partial)
-          continue;
-        THROW_WALLET_EXCEPTION_IF(idx >= m_transfers.size(), error::wallet_internal_error,
-           "Bad output index in selected transfers: " + boost::lexical_cast<std::string>(idx));
+  //      if (!td.m_key_image_known || td.m_key_image_partial)
+  //        continue;
+//        THROW_WALLET_EXCEPTION_IF(idx >= m_transfers.size(), error::wallet_internal_error,
+ //          "Bad output index in selected transfers: " + boost::lexical_cast<std::string>(idx));
       }
       crypto::hash txid;
 

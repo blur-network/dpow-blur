@@ -855,16 +855,23 @@ namespace cryptonote
       try
       {
         txpool_tx_meta_t meta;
+        ntzpool_tx_meta_t ntz_meta;
         if (m_blockchain.get_txpool_tx_meta(it->first, meta))
         {
           meta.relayed = true;
           meta.last_relayed_time = now;
           m_blockchain.update_txpool_tx(it->first, meta);
         }
+        if (m_blockchain.get_ntzpool_tx_meta(it->first, ntz_meta))
+        {
+          ntz_meta.relayed = true;
+          ntz_meta.last_relayed_time = now;
+          m_blockchain.update_ntzpool_tx(it->first, ntz_meta);
+        }
       }
       catch (std::exception& e)
       {
-        MWARNING("Failed to update txpool transaction metadata: " << e.what() << ", trying ntzpool...");
+        MWARNING("Failed to update txpool or ntzpool transaction metadata: " << e.what());
         // continue
       }
     }
