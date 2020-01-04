@@ -1290,7 +1290,7 @@ namespace cryptonote
         get_protocol()->relay_request_ntz_sig(r, fake_context);
       }
     }
-    MWARNING("Prior to set relayed...");
+    MWARNING("Received new incoming request for ntz signatures!");
 //    m_mempool.set_relayed(ntz_txs_list);
     return true;
   }
