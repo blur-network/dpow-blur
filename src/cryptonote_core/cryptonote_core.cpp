@@ -656,7 +656,8 @@ namespace cryptonote
 
     tvc = boost::value_initialized<ntz_req_verification_context>();
     cryptonote::transaction tx_input_check;
-    crypto::hash hone,htwo;
+    crypto::hash hone = crypto::null_hash;
+    crypto::hash htwo = crypto::null_hash;
     if (!parse_tx_from_blob(tx_input_check, hone, htwo, tx_blob))
     {
       MERROR("Failed to parse tx from blob in handle_incoming_ntz_sig_pre!");
@@ -665,7 +666,9 @@ namespace cryptonote
     }
 
     tx_hash = hone;
+    MWARNING("tx hash = " << epee::string_tools::pod_to_hex(hone));
     tx_prefixt_hash = htwo;
+    MWARNING("tx prefix hash = " << epee::string_tools::pod_to_hex(htwo));
 
     cryptonote::transaction const tx_output_check = tx_input_check;
     uint64_t* pmax = NULL;
@@ -847,27 +850,24 @@ namespace cryptonote
   {
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
 
-    struct result { bool res; cryptonote::transaction tx; crypto::hash hash; crypto::hash prefix_hash; bool in_txpool; bool in_blockchain; };
-    result res_var;
-    res_var.res = handle_incoming_ntz_sig_pre(tx_blob, tvc, res_var.tx, res_var.hash, res_var.prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count);
+    bool res = false; cryptonote::transaction tx; crypto::hash hash = crypto::null_hash; crypto::hash prefix_hash = crypto::null_hash; bool in_txpool = false; bool in_blockchain = false;
+    res = handle_incoming_ntz_sig_pre(tx_blob, tvc, tx, hash, prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count);
     bool already_have = false;
-    if(m_mempool.have_tx(res_var.hash))
+    if(m_mempool.have_tx(hash))
     {
-      LOG_PRINT_L2("tx " << res_var.hash << "already have transaction in tx_pool");
+      LOG_PRINT_L2("tx " << hash << "already have transaction in tx_pool");
       already_have = true;
     }
-    else if(m_blockchain_storage.have_tx(res_var.hash))
+    else if(m_blockchain_storage.have_tx(hash))
     {
-      LOG_PRINT_L2("tx " << res_var.hash << " already have transaction in blockchain");
+      LOG_PRINT_L2("tx " << hash << " already have transaction in blockchain");
       already_have = true;
     }
 
     if ((sig_count < 13) && (!already_have)) {
-      try {
-        res_var.res = handle_incoming_ntz_sig_post(tx_blob, tvc, res_var.tx, res_var.hash, res_var.prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count, ptx_blob);
-      } catch (std::exception& e) {
-        MERROR("Error in handle_incoming_ntz_sig_post! Exception: " << e.what());
-        res_var.res = false;
+        res = handle_incoming_ntz_sig_post(tx_blob, tvc, tx, hash, prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count, ptx_blob);
+      if (!res) {
+        MERROR("Error in handle_incoming_ntz_sig_post! handle_incoming_post failed!");
         tvc.m_verifivation_failed = true;
       }
     }
@@ -875,17 +875,17 @@ namespace cryptonote
     bool ok = false;
 
     if (keeped_by_block) {
-      get_blockchain_storage().on_new_tx_from_block(res_var.tx);
+      get_blockchain_storage().on_new_tx_from_block(tx);
     }
-    if (res_var.res) {
-      ok = add_new_tx(res_var.tx, res_var.hash, res_var.prefix_hash, tx_blob.size(), tvc, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blob, ptx_hash);
+    if (res) {
+      ok = add_new_tx(tx, hash, prefix_hash, tx_blob.size(), tvc, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blob, ptx_hash);
       if(tvc.m_verifivation_failed) {
-        MERROR("Notarization verification failed: " << res_var.hash);
+        MERROR("Notarization verification failed: " << hash);
       } else if(tvc.m_verifivation_impossible) {
-        MERROR("Notarization verification impossible: " << res_var.hash);
+        MERROR("Notarization verification impossible: " << hash);
       }
       if(tvc.m_added_to_pool) {
-        MDEBUG("Notarization request added: " << res_var.hash);
+        MDEBUG("Notarization request added: " << hash);
       }
     }
     relay_ntzpool_transactions();
