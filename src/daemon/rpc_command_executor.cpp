@@ -884,7 +884,7 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
                           << "fee: " << cryptonote::print_money(tx_info.fee) << std::endl
                           << "fee/byte: " << cryptonote::print_money(tx_info.fee / (double)tx_info.blob_size) << std::endl
                           << "receive_time: " << tx_info.receive_time << " (" << get_human_time_ago(tx_info.receive_time, now) << ")" << std::endl
-                          << "relayed: " << [&](const cryptonote::tx_info &tx_info)->std::string { if (!tx_info.relayed) return "no"; return boost::lexical_cast<std::string>(tx_info.last_relayed_time) + " (" + get_human_time_ago(tx_info.last_relayed_time, now) + ")"; } (tx_info) << std::endl
+                          << "relayed: " << boost::lexical_cast<std::string>(tx_info.last_relayed_time) + " (" + get_human_time_ago(tx_info.last_relayed_time, now) + ")" << std::endl
                           << "do_not_relay: " << (tx_info.do_not_relay ? 'T' : 'F')  << std::endl
                           << "kept_by_block: " << (tx_info.kept_by_block ? 'T' : 'F') << std::endl
                           << "double_spend_seen: " << (tx_info.double_spend_seen ? 'T' : 'F')  << std::endl
@@ -919,7 +919,7 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
                           << "fee: " << cryptonote::print_money(ntz_tx_info.fee) << std::endl
                           << "fee/byte: " << cryptonote::print_money(ntz_tx_info.fee / (double)ntz_tx_info.blob_size) << std::endl
                           << "receive_time: " << ntz_tx_info.receive_time << " (" << get_human_time_ago(ntz_tx_info.receive_time, now) << ")" << std::endl
-                          << "relayed: " << [&](const cryptonote::ntz_tx_info &ntz_tx_info)->std::string { if (!ntz_tx_info.relayed) return "no"; return boost::lexical_cast<std::string>(ntz_tx_info.last_relayed_time) + " (" + get_human_time_ago(ntz_tx_info.last_relayed_time, now) + ")"; } (ntz_tx_info) << std::endl
+                          << "relayed: " << boost::lexical_cast<std::string>(ntz_tx_info.last_relayed_time) + " (" + get_human_time_ago(ntz_tx_info.last_relayed_time, now) + ")" << std::endl
                           << "do_not_relay: " << (ntz_tx_info.do_not_relay ? 'T' : 'F')  << std::endl
                           << "kept_by_block: " << (ntz_tx_info.kept_by_block ? 'T' : 'F') << std::endl
                           << "double_spend_seen: " << (ntz_tx_info.double_spend_seen ? 'T' : 'F')  << std::endl
