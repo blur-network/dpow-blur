@@ -286,7 +286,7 @@ namespace cryptonote
   {
     // locking here will screw things up, since handle_incoming can't lock,
     // if anything in it has taken a tx_pool lock in the past
-    CRITICAL_REGION_LOCAL(m_transactions_lock);
+//    CRITICAL_REGION_LOCAL(m_transactions_lock);
 
     if (tx.version == 0)
     {
@@ -305,22 +305,15 @@ namespace cryptonote
       return false;
     }
 
-    if(!check_inputs_types_supported(tx))
-    {
-      tvc.m_verifivation_failed = true;
-      tvc.m_invalid_input = true;
-      return false;
-    }
-
     // fee per kilobyte, size rounded up.
     uint64_t fee = tx.rct_signatures.txnFee;
 
-/*    if (!m_blockchain.check_fee(blob_size, fee))
+    if (!m_blockchain.check_fee(blob_size, fee))
     {
       tvc.m_verifivation_failed = true;
       tvc.m_fee_too_low = true;
       return false;
-    }*/
+    }
 
     size_t tx_size_limit = get_transaction_size_limit(version);
     if (blob_size > tx_size_limit)
@@ -356,7 +349,7 @@ namespace cryptonote
     crypto::hash max_used_block_id = null_hash;
     uint64_t max_used_block_height = 0;
     cryptonote::ntzpool_tx_meta_t meta;
-/*    bool ch_inp_res = m_blockchain.check_ntz_req_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
+    bool ch_inp_res = m_blockchain.check_ntz_req_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
     if(!ch_inp_res)
     {
         LOG_PRINT_L1("tx used wrong inputs, rejected");
@@ -364,7 +357,7 @@ namespace cryptonote
         tvc.m_invalid_input = true;
         return false;
     }
-*/
+
       //update transactions container
       meta.blob_size = blob_size;
       meta.kept_by_block = kept_by_block;
