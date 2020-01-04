@@ -449,16 +449,13 @@ if (BERKELEY_DB)
   include_directories(${BDB_INCLUDE})
 endif()
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-  find_package(Libunwind)
-  if(Libunwind_FOUND)
-    message(STATUS "Using Libunwind located at: ${LIBUNWIND_LIBRARIES}.")
-  else()
-    message(FATAL_ERROR "Could not find required unwind library, when building debug type. Please recompile for release build, or install libunwind.")
-  endif()
-
-  include_directories(${LIBUNWIND_INCLUDE_DIR})
-  link_directories(${LIBUNWIND_LIBRARY_DIRS})
+find_package(Libunwind)
+if(Libunwind_FOUND)
+  message(STATUS "Using Libunwind located at: ${LIBUNWIND_LIBRARIES}.")
+  include_directories(LIBUNWIND_INCLUDE_DIRS ${LIBUNWIND_INCLUDE_DIRS})
+  link_directories(LIBUNWIND_LIBRARIES ${LIBUNWIND_LIBRARIES})
+else()
+  message(FATAL_ERROR "Could not find required unwind library, when building debug type. Please recompile for release build, or install libunwind.")
 endif()
 
 
