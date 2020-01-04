@@ -1507,11 +1507,13 @@ namespace tools
             hs_list.push_back(hash_string);
           }
           for (const auto& hash_string : hs_list) {
+             if (epee::string_tools::pod_to_hex(hash_string.first) != prior_ptx_hash) {
               tx_metadata = hash_string.second;
               ptx_hash = hash_string.first;
               MWARNING("Ptx to string: " << tx_metadata << ", ptx hash: " << epee::string_tools::pod_to_hex(ptx_hash) << std::endl);
               m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
               MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+            }
           }
         }
        return fill_res;
