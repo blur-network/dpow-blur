@@ -397,7 +397,7 @@ namespace cryptonote
       MWARNING("Found extra nonce with size = " << std::to_string(ex_nonce_size) << ", Full Extra nonce = " << ex_nonce_string);
       for (size_t j = 0; j < (size_t)(ex_nonce_size + 2); j++) {
         new_extra.push_back(tx_extra[j]);
-        ++i;
+        i++;
       }
       for (size_t j = 0; j < (size_t)(ex_nonce_size + 2); j++) {
         tmp.pop_front();
@@ -425,7 +425,7 @@ namespace cryptonote
       std::ostringstream oss, n_ss;
       ntz_ss << std::hex << byte_one;
       ntz_ss << std::hex << byte_two;
-      size_t ii = i++;
+      size_t ii = ++i;
       size_t ntz_size = stoi(ntz_ss.str(), nullptr, 16);
       MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
       for (size_t j = i; j < (size_t)(i + ntz_size + 1); j++) {
@@ -445,23 +445,27 @@ namespace cryptonote
     } else {
       return false;
     }
-    if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) {
-      do {
-      MWARNING("Found pubkey or additional!");
+      uint8_t front = tmp.front();
+    do {
+      if ((front == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) && !tmp.empty()) {
+        MWARNING("Found pubkey or additional!");
         std::ostringstream oss;
-        size_t o = i;
+        size_t o = i - 1;
+        new_extra.push_back(front);
         for (size_t j = o; j < (o + 33); j++) {
            new_extra.push_back(tx_extra[j]);
            tmp.pop_front();
            i++;
         }
+        new_extra.pop_back();
         for (const auto& each: tmp) {
           std::string tmp_string = epee::string_tools::pod_to_hex(each);
           oss << tmp_string;
         }
-      MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
-      } while ((tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) && !tmp.empty());
-    }
+        MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
+      }
+      front = tmp.front();
+    } while ((front == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) && !tmp.empty());
 
   return true;
   }
