@@ -370,7 +370,7 @@ namespace cryptonote
       }
     }
     // folder might not be a directory, etc, etc
-    catch (std::exception& e) { MERROR("Exception in boost::filesystem::exists check in core: " << e.what()); }
+    catch (...) {  }
 
     std::unique_ptr<BlockchainDB> db(new_db(db_type));
     if (db == NULL)

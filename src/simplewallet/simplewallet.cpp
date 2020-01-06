@@ -63,6 +63,10 @@
 #include "multisig/multisig.h"
 #include "wallet/wallet_args.h"
 #include <stdexcept>
+#include <openssl/sha.h>
+#include <openssl/ssl.h>
+#include <openssl/opensslv.h>
+
 
 #ifdef WIN32
 #include <boost/locale.hpp>

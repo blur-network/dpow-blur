@@ -46,6 +46,9 @@
 #include "common/scoped_message_writer.h"
 #include "wallet/wallet_args.h"
 #include "wallet/wallet2.h"
+#include <openssl/sha.h>
+#include <openssl/ssl.h>
+#include <openssl/opensslv.h>
 
 using namespace std;
 using namespace epee;

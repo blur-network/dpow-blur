@@ -86,5 +86,5 @@ target_link_libraries(common
     ${OPENSSL_LIBRARIES}
     ${EXTRA_LIBRARIES})
 
-#monero_install_headers(common
-#  ${common_headers})
+monero_install_headers(common
+  ${common_headers})
