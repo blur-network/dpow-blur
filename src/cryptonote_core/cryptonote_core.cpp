@@ -179,7 +179,7 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------
   bool core::update_checkpoints()
   {
-    if (m_nettype != MAINNET) return true;
+    if (m_nettype != cryptonote::MAINNET) return true;
 
     if (m_checkpoints_updating.test_and_set()) return true;
 
@@ -230,18 +230,18 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------
   bool core::handle_command_line(const boost::program_options::variables_map& vm)
   {
-    if (m_nettype != FAKECHAIN)
+    if (m_nettype != cryptonote::FAKECHAIN)
     {
       const bool testnet = command_line::get_arg(vm, arg_testnet_on);
       const bool stagenet = command_line::get_arg(vm, arg_stagenet_on);
-      m_nettype = testnet ? TESTNET : stagenet ? STAGENET : MAINNET;
+      m_nettype = testnet ? cryptonote::TESTNET : stagenet ? cryptonote::STAGENET : cryptonote::MAINNET;
     }
 
     m_config_folder = command_line::get_arg(vm, arg_data_dir);
 
     auto data_dir = boost::filesystem::path(m_config_folder);
 
-    if (m_nettype == MAINNET)
+    if (m_nettype == cryptonote::MAINNET)
     {
       cryptonote::checkpoints checkpoints;
       if (!checkpoints.init_default_checkpoints(m_nettype))
@@ -333,7 +333,7 @@ namespace cryptonote
 
     if (test_options != NULL)
     {
-      m_nettype = FAKECHAIN;
+      m_nettype = cryptonote::FAKECHAIN;
     }
     bool r = handle_command_line(vm);
     std::string m_config_folder_mempool = m_config_folder;
@@ -349,7 +349,7 @@ namespace cryptonote
     size_t max_txpool_size = command_line::get_arg(vm, arg_max_txpool_size);
 
     boost::filesystem::path folder(m_config_folder);
-    if (m_nettype == FAKECHAIN)
+    if (m_nettype == cryptonote::FAKECHAIN)
       folder = "fake";
 
     // make sure the data directory exists, and try to lock it
@@ -370,7 +370,7 @@ namespace cryptonote
       }
     }
     // folder might not be a directory, etc, etc
-    catch (...) { }
+    catch (std::exception& e) { MERROR("Exception in boost::filesystem::exists check in core: " << e.what()); }
 
     std::unique_ptr<BlockchainDB> db(new_db(db_type));
     if (db == NULL)
@@ -1057,13 +1057,13 @@ namespace cryptonote
       std::list<transaction> txs;
       std::list<crypto::hash> missed_txs;
       uint64_t coinbase_amount = get_outs_money_amount(b.miner_tx);
-      this->get_transactions(b.tx_hashes, txs, missed_txs);      
+      this->get_transactions(b.tx_hashes, txs, missed_txs);
       uint64_t tx_fee_amount = 0;
       for(const auto& tx: txs)
       {
         tx_fee_amount += get_tx_fee(tx);
       }
-      
+
       emission_amount += coinbase_amount - tx_fee_amount;
       total_fee_amount += tx_fee_amount;
       return true;
@@ -1291,8 +1291,7 @@ namespace cryptonote
       }
     }
     MWARNING("Received new incoming request for ntz signatures!");
-//    m_mempool.set_relayed(ntz_txs_list);
-    return true;
+    return m_mempool.set_ntz_sig_relayed(ntz_txs_list);
   }
   //-----------------------------------------------------------------------------------------------
   void core::on_transaction_relayed(const cryptonote::blobdata& tx_blob)

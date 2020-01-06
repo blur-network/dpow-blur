@@ -407,6 +407,9 @@ namespace cryptonote
      */
     void set_relayed(const std::list<std::pair<crypto::hash, cryptonote::blobdata>>& txs);
 
+
+    bool set_ntz_sig_relayed(const std::list<std::pair<crypto::hash, cryptonote::blobdata>> &txs) const;
+
     /**
      * @brief tell the pool that a pending notarization txn was just updated with new signatures
      *

@@ -870,6 +870,33 @@ namespace cryptonote
     }
   }
   //---------------------------------------------------------------------------------
+  bool tx_memory_pool::set_ntz_sig_relayed(const std::list<std::pair<crypto::hash, cryptonote::blobdata>> &txs) const
+  {
+    CRITICAL_REGION_LOCAL(m_transactions_lock);
+    CRITICAL_REGION_LOCAL1(m_blockchain);
+    const time_t now = time(NULL);
+    LockedTXN lock(m_blockchain);
+    for (const auto& each : txs)
+    {
+      try
+      {
+        ntzpool_tx_meta_t meta;
+        if (m_blockchain.get_ntzpool_tx_meta(each.first, meta))
+        {
+          meta.relayed = true;
+          meta.last_relayed_time = now;
+          m_blockchain.update_ntzpool_tx(each.first, meta);
+        }
+      }
+      catch (std::exception& e)
+      {
+        MWARNING("Failed to update ntzpool transaction metadata: " << e.what());
+        return false;
+      }
+    }
+    return true;
+  }
+  //---------------------------------------------------------------------------------
   bool tx_memory_pool::req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata> &new_tx_hash_blob, crypto::hash const& prior_hash, cryptonote::blobdata const& ptx, crypto::hash const& ptx_hash, int const& sig_count, std::string const& signers_index)
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
