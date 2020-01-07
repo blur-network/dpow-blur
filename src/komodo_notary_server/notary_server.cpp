@@ -1266,9 +1266,13 @@ namespace tools
     int sig_count = 0;
     std::vector<int> signers_index;
     cryptonote::blobdata tx_blob;
-    cryptonote::blobdata ptx_blob;
+    cryptonote::blobdata ptx_blob, ptx_id;
     std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
     std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
+
+pool_recheck:
+    ntzpool_txs.clear();
+    ntzpool_keys.clear();
     m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
     if (ntzpool_txs.empty()) {
       MERROR("Failed to fetch transactions from ntz pool!");
@@ -1287,6 +1291,7 @@ namespace tools
       tx_hash = ntzpool_txs[best.second].id_hash;
       tx_blob = ntzpool_txs[best.second].tx_blob;
       ptx_blob = ntzpool_txs[best.second].ptx_blob;
+      ptx_id = ntzpool_txs[best.second].ptx_hash;
       for (int i = 0; i < 13; i++) {
         int each = -1;
         each = ntzpool_txs[best.second].signers_index.front();
@@ -1448,7 +1453,12 @@ namespace tools
     if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
     {
       MERROR("Transfer failed validation in validate_ntz_transfer!");
-      return false;
+      if (!m_wallet->remove_ntzpool_tx(tx_hash, ptx_id)) {
+        MERROR("Error removing the tx that failed validation from ntz_pool!");
+        return false;
+      } else {
+        goto pool_recheck;
+      }
     }
 
     std::string index_str;
