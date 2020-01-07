@@ -1269,24 +1269,28 @@ namespace tools
     cryptonote::blobdata ptx_blob, ptx_id;
     std::vector<cryptonote::ntz_tx_info> ntzpool_txs;
     std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
+    m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
+    std::pair<int,size_t> best; best.first = 0; best.second = 0;
 
 pool_recheck:
-    ntzpool_txs.clear();
-    ntzpool_keys.clear();
-    m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
-    if (ntzpool_txs.empty()) {
-      MERROR("Failed to fetch transactions from ntz pool!");
-      return false;
-    } else {
-      std::vector<std::pair<int,size_t>> scounts;
 
-      for (size_t i = 0; i < ntzpool_txs.size(); i++) {
-        std::pair<int,size_t> tmp;
-        tmp.first = ntzpool_txs[i].sig_count;
-        tmp.second = i;
-        scounts.push_back(tmp);
-      }
-      std::pair<int,size_t> best = AUTO_VAL_INIT(best);
+    if (ntzpool_txs.empty()) {
+      MERROR("Failed to fetch transactions from ntz pool, or no txs left in pool!");
+      return false;
+    }
+
+    if (!ntzpool_txs.empty() && (best.first > 0))
+      ntzpool_txs.erase(ntzpool_txs.begin() + best.second, ntzpool_txs.end() - best.second);
+
+    std::vector<std::pair<int,size_t>> scounts;
+
+    for (size_t i = 0; i < ntzpool_txs.size(); i++) {
+      std::pair<int,size_t> tmp;
+      tmp.first = ntzpool_txs[i].sig_count;
+      tmp.second = i;
+      scounts.push_back(tmp);
+    }
+
       bool check = check_for_index(scounts, best);
       tx_hash = ntzpool_txs[best.second].id_hash;
       tx_blob = ntzpool_txs[best.second].tx_blob;
@@ -1299,7 +1303,6 @@ pool_recheck:
         ntzpool_txs[best.second].signers_index.pop_front();
       }
       sig_count = ntzpool_txs[best.second].sig_count;
-    }
       std::vector<std::pair<std::string,std::string>> removals;
       for (const auto each : ntzpool_txs) {
         if (tx_hash != each.id_hash) {
