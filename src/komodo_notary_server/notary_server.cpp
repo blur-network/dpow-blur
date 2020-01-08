@@ -1193,7 +1193,7 @@ namespace tools
       }
       const std::vector<int> si_const = signers_index;
       crypto::hash ptx_hash;
-      if (get_ntz_cache_count() >= 2) {
+      if ((get_ntz_cache_count() >= 2) && (m_wallet->get_ntzpool_count(true) < 1)) {
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
            res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
         if (fill_res) {
@@ -1217,7 +1217,7 @@ namespace tools
           MERROR("Failed to add ptx to cache! Relaying instead");
           bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
              res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
-          if (fill_res) {
+          if (fill_res && (m_wallet->get_ntzpool_count(true) < 1)) {
             std::string tx_metadata;
             for (const auto& each : ptx_vector) {
               std::pair<crypto::hash,std::string> hash_string = ptx_to_string_hash(each);
