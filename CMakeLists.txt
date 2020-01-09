@@ -752,11 +752,10 @@ else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=default -DGTEST_HAS_TR1_TUPLE=0")
   endif()
 
-  set(DEBUG_FLAGS "-g")
   if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND NOT (CMAKE_C_COMPILER_VERSION VERSION_LESS 4.8))
     set(DEBUG_FLAGS "${DEBUG_FLAGS} -Og ")
   else()
-    set(DEBUG_FLAGS "${DEBUG_FLAGS} -O0 ")
+    set(DEBUG_FLAGS "${DEBUG_FLAGS} -Og ")
   endif()
 
   # At least some CLANGs default to not enough for monero

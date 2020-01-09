@@ -416,7 +416,7 @@ namespace cryptonote
      * @param tx pair of hash, blob
      * @param sig_count signature count for the tx
      */
-    bool req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata>& new_tx, crypto::hash const& prior_hash, cryptonote::blobdata const& ptx, crypto::hash const& ptx_hash, int const& sig_count, std::string const& signers_index);
+    bool req_ntz_sig_inc(const std::pair<crypto::hash, cryptonote::blobdata>& new_tx, crypto::hash const& prior_hash, cryptonote::blobdata const& ptx, crypto::hash const& ptx_hash, int const& sig_count, std::string const& signers_index/*, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash*/);
 
     /**
      * @brief get the total number of transactions in the pool

@@ -286,7 +286,7 @@ namespace cryptonote
   {
     // locking here will screw things up, since handle_incoming can't lock,
     // if anything in it has taken a tx_pool lock in the past
-    CRITICAL_REGION_LOCAL(m_transactions_lock);
+//    CRITICAL_REGION_LOCAL(m_transactions_lock);
 
     if (tx.version == 0)
     {
@@ -875,7 +875,6 @@ namespace cryptonote
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
     const time_t now = time(NULL);
-    LockedTXN lock(m_blockchain);
     for (const auto& each : txs)
     {
       try

@@ -58,10 +58,6 @@ target_link_libraries(wallet
     cryptonote_core
     mnemonics
     multisig
-    komodo
-    ${BTC_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${EVENT_LIBRARY}
     ${LMDB_LIBRARY}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_SERIALIZATION_LIBRARY}

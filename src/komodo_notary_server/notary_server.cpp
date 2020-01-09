@@ -1193,6 +1193,8 @@ namespace tools
       }
       const std::vector<int> si_const = signers_index;
       crypto::hash ptx_hash;
+      std::string const prior_tx_hash = epee::string_tools::pod_to_hex(crypto::null_hash);
+      std::string const prior_ptx_hash = epee::string_tools::pod_to_hex(crypto::null_hash);
       if ((get_ntz_cache_count() >= 2) && (m_wallet->get_ntzpool_count(true) < 1)) {
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
            res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
@@ -1205,7 +1207,7 @@ namespace tools
             MWARNING("Ptx to string: " << tx_metadata << ", ptx hash: " << epee::string_tools::pod_to_hex(ptx_hash) << std::endl);
             break;
           }
-          m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const);
+          m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
           MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
         return fill_res;
@@ -1226,7 +1228,7 @@ namespace tools
               MWARNING("Ptx to string: " << tx_metadata << ", ptx hash: " << epee::string_tools::pod_to_hex(ptx_hash) << std::endl);
               break;
             }
-            m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const);
+            m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
             MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
           }
           return fill_res;
@@ -1292,10 +1294,10 @@ pool_recheck:
     }
 
       bool check = check_for_index(scounts, best);
-      tx_hash = ntzpool_txs[best.second].id_hash;
+      prior_tx_hash = ntzpool_txs[best.second].id_hash;
       tx_blob = ntzpool_txs[best.second].tx_blob;
       ptx_blob = ntzpool_txs[best.second].ptx_blob;
-      ptx_id = ntzpool_txs[best.second].ptx_hash;
+      prior_ptx_hash = ntzpool_txs[best.second].ptx_hash;
       for (int i = 0; i < 13; i++) {
         int each = -1;
         each = ntzpool_txs[best.second].signers_index.front();
@@ -1305,13 +1307,14 @@ pool_recheck:
       sig_count = ntzpool_txs[best.second].sig_count;
       std::vector<std::pair<std::string,std::string>> removals;
       for (const auto each : ntzpool_txs) {
-        if (tx_hash != each.id_hash) {
+        if (prior_tx_hash != each.id_hash) {
           std::pair<std::string,std::string> hash_pr;
           hash_pr.first = each.id_hash;
           hash_pr.second = each.ptx_hash;
           removals.push_back(hash_pr);
         }
       }
+
       std::vector<cryptonote::tx_destination_entry> dsts;
       std::vector<uint8_t> extra;
       int signer_index = -1;

@@ -17,12 +17,12 @@ monero_add_library(komodo
 
 target_link_libraries(komodo
   PRIVATE
-    wallet
     epee
     rpc_base
     cryptonote_core
     cryptonote_protocol
     cncrypto
+    wallet
     rpc
     common
     version
