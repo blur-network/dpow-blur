@@ -63,9 +63,6 @@
 #include "multisig/multisig.h"
 #include "wallet/wallet_args.h"
 #include <stdexcept>
-#include <openssl/sha.h>
-#include <openssl/ssl.h>
-#include <openssl/opensslv.h>
 
 
 #ifdef WIN32
@@ -77,7 +74,6 @@
 #include "readline_buffer.h"
 #endif
 
-using namespace std;
 using namespace epee;
 using namespace cryptonote;
 using boost::lexical_cast;
@@ -4312,7 +4308,7 @@ bool simple_wallet::transfer_main(int transfer_type, const std::vector<std::stri
     local_args.pop_back();
   }
 
-  vector<cryptonote::tx_destination_entry> dsts;
+  std::vector<cryptonote::tx_destination_entry> dsts;
   for (size_t i = 0; i < local_args.size(); i += 2)
   {
     cryptonote::address_parse_info info;
@@ -5256,7 +5252,7 @@ bool simple_wallet::get_tx_key(const std::vector<std::string> &args_)
   std::vector<crypto::secret_key> additional_tx_keys;
   if (m_wallet->get_tx_key(txid, tx_key, additional_tx_keys))
   {
-    ostringstream oss;
+    std::ostringstream oss;
     oss << epee::string_tools::pod_to_hex(tx_key);
     for (size_t i = 0; i < additional_tx_keys.size(); ++i)
       oss << epee::string_tools::pod_to_hex(additional_tx_keys[i]);
@@ -5814,7 +5810,7 @@ bool simple_wallet::show_transfers(const std::vector<std::string> &args_)
 
   auto print_subaddr_indices = [](const std::set<uint32_t>& indices)
   {
-    stringstream ss;
+    std::stringstream ss;
     bool first = true;
     for (uint32_t i : indices)
     {
@@ -6024,7 +6020,7 @@ bool simple_wallet::unspent_outputs(const std::vector<std::string> &args_)
   success_msg_writer()
     << tr("\nBin size: ") << bin_size
     << tr("\nOutputs per *: ") << count_per_star;
-  ostringstream histogram_str;
+  std::ostringstream histogram_str;
   histogram_str << tr("count\n  ^\n");
   for (size_t y = histogram_height; y > 0; --y)
     histogram_str << tr("  |") << histogram_line[y - 1] << tr("|\n");

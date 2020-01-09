@@ -40,8 +40,7 @@ target_link_libraries(komodo_notary_server
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${EXTRA_LIBRARIES}
-    ${OPENSSL_LIBRARIES})
+    ${EXTRA_LIBRARIES})
 
 set_property(TARGET komodo_notary_server
   PROPERTY

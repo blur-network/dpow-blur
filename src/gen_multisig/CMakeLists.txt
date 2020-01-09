@@ -49,7 +49,6 @@ target_link_libraries(gen_multisig
     ${Boost_THREAD_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
     ${GNU_READLINE_LIBRARY}
-    ${OPENSSL_CRYPTO_LIBRARIES}
     ${EXTRA_LIBRARIES})
 add_dependencies(gen_multisig
   version)

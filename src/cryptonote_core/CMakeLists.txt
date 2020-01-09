@@ -62,10 +62,6 @@ target_link_libraries(cryptonote_core
     multisig
     ringct
     device
-    komodo
-    ${BTC_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${EVENT_LIBRARY}
     ${Boost_DATE_TIME_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_SERIALIZATION_LIBRARY}
