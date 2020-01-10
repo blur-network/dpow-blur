@@ -160,6 +160,7 @@ target_link_libraries(blockchain_blackball
     version
     epee
     cryptonote_protocol
+    wallet
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
