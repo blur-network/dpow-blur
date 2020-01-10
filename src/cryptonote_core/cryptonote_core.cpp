@@ -1199,7 +1199,11 @@ namespace cryptonote
           std::pair<crypto::hash,cryptonote::blobdata> hash_blob;
           hash_blob.first = tx_hash;
           hash_blob.second = tx_to_blob(tx);
-          return m_mempool.req_ntz_sig_inc(hash_blob, prior_tx_hash, ptx_blob, ptx_hash, sig_count, signers_str/*, prior_ptx_hash*/);
+          if (!m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, has_raw_ntz_data, sig_count, signers_index, ptx_blob, ptx_hash)){
+            bool inc = m_mempool.req_ntz_sig_inc(hash_blob, prior_tx_hash, ptx_blob, ptx_hash, sig_count, signers_str);
+            return true;
+          }
+          return false;
         }
       }
     }
