@@ -106,7 +106,6 @@ target_link_libraries(blockchain_import
     cryptonote_protocol
     cryptonote_core
     komodo
-    wallet
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
@@ -135,7 +134,6 @@ target_link_libraries(blockchain_export
     komodo
     version
     epee
-    wallet
     cryptonote_protocol
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
@@ -162,7 +160,6 @@ target_link_libraries(blockchain_blackball
     version
     epee
     cryptonote_protocol
-    wallet
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
@@ -187,7 +184,6 @@ target_link_libraries(blockchain_usage
     komodo
     version
     epee
-    wallet
     cryptonote_protocol
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
