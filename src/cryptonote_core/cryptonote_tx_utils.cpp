@@ -45,6 +45,7 @@ using namespace epee;
 #include "ringct/rctSigs.h"
 #include "multisig/multisig.h"
 #include "libhydrogen/hydrogen.h"
+#include "komodo_notaries.h"
 #include "common/hex_str.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 

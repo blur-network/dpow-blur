@@ -51,6 +51,7 @@ using namespace epee;
 #include "komodo_notary_server/notary_server_commands_defs.h"
 #include "misc_language.h"
 #include "cryptonote_basic/cryptonote_basic_impl.h"
+#include "cryptonote_core/komodo_notaries.h"
 #include "multisig/multisig.h"
 #include "common/boost_serialization_helper.h"
 #include "common/command_line.h"

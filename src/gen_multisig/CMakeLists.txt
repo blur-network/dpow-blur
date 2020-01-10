@@ -35,21 +35,20 @@ target_link_libraries(gen_multisig
   PRIVATE
     wallet
     cryptonote_core
+    cryptonote_protocol
     cncrypto
     common
     epee
     komodo
-    ${EVENT_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${BTC_LIBRARY}
     ${EPEE_READLINE}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${GNU_READLINE_LIBRARY}
-    ${EXTRA_LIBRARIES})
+    ${READLINE_LIBRARIES}
+    ${EXTRA_LIBRARIES}
+    ${OPENSSL_LIBRARIES})
 add_dependencies(gen_multisig
   version)
 set_property(TARGET gen_multisig

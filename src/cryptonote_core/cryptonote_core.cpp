@@ -51,7 +51,7 @@ using namespace epee;
 #include "checkpoints/checkpoints.h"
 #include "ringct/rctTypes.h"
 #include "blockchain_db/blockchain_db.h"
-#include "komodo/komodo_validation.h"
+#include "komodo_notaries.h"
 #include "ringct/rctSigs.h"
 #include "version.h"
 
@@ -461,10 +461,10 @@ namespace cryptonote
     }
 
 
-    std::unique_ptr<komodo::komodo_core> k_core;
-
     m_blockchain_storage.set_user_options(blocks_threads,
         blocks_per_sync, sync_mode, fast_sync);
+
+    std::unique_ptr<komodo::komodo_core> k_core;
 
     r = m_blockchain_storage.init(db.release(), k_core, m_nettype, m_offline, test_options);
 

@@ -30,7 +30,9 @@ set(cryptonote_core_sources
   blockchain.cpp
   cryptonote_core.cpp
   tx_pool.cpp
-  cryptonote_tx_utils.cpp)
+  cryptonote_tx_utils.cpp
+  komodo_notaries.cpp
+  core_instanciations.cpp)
 
 set(cryptonote_core_headers)
 
@@ -39,13 +41,8 @@ set(cryptonote_core_private_headers
   blockchain.h
   cryptonote_core.h
   tx_pool.h
-  cryptonote_tx_utils.h)
-
-if(PER_BLOCK_CHECKPOINT)
-  set(Blocks "blocks")
-else()
-  set(Blocks "")
-endif()
+  cryptonote_tx_utils.h
+  komodo_notaries.h)
 
 monero_private_headers(cryptonote_core
   ${cryptonote_core_private_headers})
@@ -68,7 +65,9 @@ target_link_libraries(cryptonote_core
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
+    ${OPENSSL_LIBRARIES}
   PRIVATE
-    ${Blocks}
+    p2p
+    cryptonote_protocol
     ${EXTRA_LIBRARIES})
 

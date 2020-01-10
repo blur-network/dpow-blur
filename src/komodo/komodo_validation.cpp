@@ -53,8 +53,9 @@
 #include "p2p/net_node.h"
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "cryptonote_core/cryptonote_core.h"
+#include "cryptonote_core/komodo_notaries.h"
 #include "blockchain_db/lmdb/db_lmdb.h"
-#include "komodo_notaries.h"
+#include "cryptonote_core/komodo_notaries.h"
 #include "komodo_notary_server/notary_server.h"
 #include "bitcoin/bitcoin.h"
 #include "libbtc/include/btc/btc.h"
@@ -153,7 +154,7 @@ int32_t komodo_importaddress(char* addr)
     return(-1);
 }
 
-  bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys)
+/*  bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys)
   {
 
     std::vector<std::pair<std::string,std::string>> notaries_keys;
@@ -234,17 +235,17 @@ int32_t komodo_importaddress(char* addr)
     }
     return true;
   }
-
+*/
 
 namespace cryptonote {
 
 namespace komodo {
 
-  std::string NOTARY_PUBKEY;
+/*  std::string NOTARY_PUBKEY;
  uint8_t NOTARY_PUBKEY33[33];
   portable_mutex_t komodo_mutex;
  int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS;
- uint256 NOTARIZED_HASH, NOTARIZED_MOM, NOTARIZED_DESTTXID;
+ uint256 NOTARIZED_HASH, NOTARIZED_MOM, NOTARIZED_DESTTXID;*/
   //------------------------------------------------------------------
   void vcalc_sha256(char deprecated[(256 >> 3) * 2 + 1],uint8_t hash[256 >> 3],uint8_t *src,int32_t len)
   {
@@ -373,7 +374,7 @@ namespace komodo {
     return((int32_t)len*2+1);
   }
   //------------------------------------------------------------------
-  komodo_core::komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p) : m_core(cr), m_p2p(p2p) {};
+/*  komodo_core::komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p) : m_core(cr), m_p2p(p2p) {};
   //------------------------------------------------------------------
   bool komodo_core::check_core_ready()
   {
@@ -383,7 +384,7 @@ namespace komodo {
     }
     return true;
   }
-  #define CHECK_CORE_READY() do { if(!check_core_ready()){res.status =  CORE_RPC_STATUS_BUSY;return true;} } while(0)
+  #define CHECK_CORE_READY() do { if(!check_core_ready()){res.status =  CORE_RPC_STATUS_BUSY;return true;} } while(0)*/
   //------------------------------------------------------------------
   int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp)
   {
@@ -436,7 +437,7 @@ namespace komodo {
     return(len);
   }
   //------------------------------------------------------------------
-  int32_t komodo_core::komodo_chainactive_timestamp()
+ /* int32_t komodo_core::komodo_chainactive_timestamp()
   {
      cryptonote::block b;
     if ( m_core.get_current_blockchain_height() != 0 ) {
@@ -477,9 +478,9 @@ namespace komodo {
   //------------------------------------------------------------------
   void komodo_importpubkeys()
   {
-    int32_t i,n,j,m,offset = 1,val,dispflag = 0; char *pubkey;
+    size_t i,n,j,m,offset = 1,val,dispflag = 0; char *pubkey;
 
-    n = (int32_t)(sizeof(Notaries_elected)/sizeof(*Notaries_elected));
+    n = (sizeof(Notaries_elected)/sizeof(*Notaries_elected));
 
     for (i=0; i<n; i++) // each year add new notaries too
     {
@@ -501,8 +502,8 @@ namespace komodo {
             dispflag++;
         }
     }
-    if ( dispflag != 0 )
-        fprintf(stderr,"%d Notary pubkeys imported\n",dispflag);
+    if ( dispflag != (size_t)0 )
+        fprintf(stderr,"%lu Notary pubkeys imported\n",dispflag);
   }
   //------------------------------------------------------------------
   int32_t komodo_core::komodo_init(BlockchainDB* db)
@@ -518,7 +519,7 @@ namespace komodo {
     return *m_komodo_core;
   }
   //------------------------------------------------------------------
- /* int32_t komodo_core::komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp)
+  int32_t komodo_core::komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp)
   {
     static uint8_t elected_pubkeys0[64][33],elected_pubkeys1[64][33],did0,did1; static int32_t n0,n1;
     int32_t i;
@@ -590,7 +591,7 @@ namespace komodo {
     return(tree[n]);
   }
   //------------------------------------------------------------------
-  void komodo_clearstate()
+/*  void komodo_clearstate()
   {
     portable_mutex_lock(&komodo_mutex);
     memset(&NOTARIZED_HEIGHT,0,sizeof(NOTARIZED_HEIGHT));
@@ -657,7 +658,7 @@ namespace komodo {
     for (i=NUM_NPOINTS-1; i>=0; i--)
     {
         np = &NPOINTS[i];
-        if ( /*np->MoMdepth > 0 &&  height > np->notarized_height-np->MoMdepth &&*/ height <= notar_height )
+        if ( np->MoMdepth > 0 &&  height > np->notarized_height-np->MoMdepth && height <= notar_height )
           return(np);
     }
     return(0);
@@ -794,7 +795,6 @@ namespace komodo {
         fprintf(stderr,"komodo_notarized_update REJECT notarized_height %lu > %lu nHeight\n",notarized_height,nHeight);
         return;
     }
-  //------------------------------------------------------------------
     bool active = komodo_chainactive(notarized_height, *pindex);
   //    crypto::hash db_hash = m_core.get_block_hash_from_height(m_core.height());
   //    uint256 hash;
@@ -872,7 +872,7 @@ namespace komodo {
     return(0);
   }
   //------------------------------------------------------------------
-/*
+
   void komodo_voutupdate(int32_t txi,int32_t vout,uint8_t *scriptbuf,int32_t scriptlen,int32_t height,int32_t *specialtxp,int32_t *notarizedheightp,uint64_t value,int32_t notarized,uint64_t signedmask)
   {
 
@@ -929,12 +929,12 @@ namespace komodo {
         }
     }
   }
-  */
+
   //------------------------------------------------------------------
   void komodo_core::komodo_connectblock(uint64_t& height,cryptonote::block& b)
   {
     static uint64_t hwmheight;
-    uint64_t signedmask; uint8_t scriptbuf[4096],pubkeys[64][33],scriptPubKey[35]; crypto::hash zero; int i,j,k,/*numnotaries,*/notarized,scriptlen,numvalid,specialtx,notarizedheight,len,numvouts,numvins;
+    uint64_t signedmask; uint8_t scriptbuf[4096],pubkeys[64][33],scriptPubKey[35]; crypto::hash zero; int i,j,k,numnotaries,notarized,scriptlen,numvalid,specialtx,notarizedheight,len,numvouts,numvins;
     size_t txn_count = 0;
 
     uint64_t nHeight = height;
@@ -945,7 +945,7 @@ namespace komodo {
         KOMODO_NEEDPUBKEYS = 0;
     }
     memset(&zero,0,sizeof(zero));
-/*    komodo_notarized_update(0,0,zero,zero,zero,0);
+    komodo_notarized_update(0,0,zero,zero,zero,0);
     numnotaries = komodo_notaries(pubkeys, nHeight, b.timestamp);
 
     if ( nHeight > hwmheight )
@@ -1011,7 +1011,7 @@ namespace komodo {
           LogPrintf("dpow: [%s] ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d notarized.%d special.%d\n",ASSETCHAINS_SYMBOL,height,i,(long long)signedmask,numvins,numvouts,notarized,specialtx);
         }
     } else fprintf(stderr,"komodo_connectblock: unexpected null pindex\n");
-  */
+
     }
 
   int32_t komodo_init(BlockchainDB* db)
@@ -1029,7 +1029,7 @@ namespace komodo {
     struct notarized_checkpoint *np = 0;
     if ( (np= komodo_npptr(height)) != 0 )
     {
-        *notarized_htp = np->notarized_height;
+//        *notarized_htp = np->notarized_height;
   //      memcpy(*MoMp,np->MoM,32);
   //      memcpy(*kmdtxidp,np->notarized_desttxid,32);
   //      memcpy(*MoMoMp,np->MoMoM,32);
@@ -1049,7 +1049,7 @@ namespace komodo {
     return(0);
   }
   //------------------------------------------------------------------
-  /*int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,int32_t nHeight,uint256 *MoMoMp,int32_t *MoMoMoffsetp,int32_t *MoMoMdepthp,int32_t *kmdstartip,int32_t *kmdendip)
+  int32_t komodo_MoM(int32_t *notarized_heightp,uint256 *MoMp,uint256 *kmdtxidp,int32_t nHeight,uint256 *MoMoMp,int32_t *MoMoMoffsetp,int32_t *MoMoMdepthp,int32_t *kmdstartip,int32_t *kmdendip)
   {
     int32_t depth;
     int32_t notarized_ht;

@@ -28,6 +28,7 @@ target_link_libraries(komodo_notary_server
     cryptonote_core
     cryptonote_protocol
     cncrypto
+    p2p
     rpc
     komodo
     common

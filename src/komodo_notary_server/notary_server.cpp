@@ -44,6 +44,7 @@ using namespace epee;
 #include "common/i18n.h"
 #include "cryptonote_config.h"
 #include "cryptonote_core/tx_pool.h"
+#include "cryptonote_core/komodo_notaries.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_protocol/cryptonote_protocol_defs.h"
 #include "cryptonote_basic/account.h"
@@ -1124,7 +1125,7 @@ namespace tools
 
     std::vector<std::pair<crypto::public_key, crypto::public_key>> notaries_keys;
     bool r = false;
-    r = get_notary_pubkeys(notaries_keys);
+    r = cryptonote::get_notary_pubkeys(notaries_keys);
 
     if (!r)
     {
@@ -1273,6 +1274,7 @@ namespace tools
     std::vector<cryptonote::spent_key_image_info> ntzpool_keys;
     m_wallet->get_ntzpool_txs_and_keys(ntzpool_txs, ntzpool_keys);
     std::pair<int,size_t> best; best.first = 0; best.second = 0;
+    std::string prior_tx_hash, prior_ptx_hash;
 
 pool_recheck:
 
@@ -1322,7 +1324,7 @@ pool_recheck:
 
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
     std::vector<std::pair<crypto::public_key,crypto::public_key>> notaries_keys;
-    bool z = get_notary_pubkeys(notaries_keys);
+    bool z = cryptonote::get_notary_pubkeys(notaries_keys);
 //    std::vector<crypto::public_key> out_eph_keys;
 
     cryptonote::blobdata ptx_blob_bin = ptx_blob;
@@ -1338,7 +1340,7 @@ pool_recheck:
     MWARNING("Count = " << std::to_string(count));
     std::vector<crypto::secret_key> notary_viewkeys;
     bool r = false;
-    r = get_notary_secret_viewkeys(notary_viewkeys);
+    r = cryptonote::get_notary_secret_viewkeys(notary_viewkeys);
 
     if (!r)
     {
@@ -1528,7 +1530,7 @@ pool_recheck:
           tx_metadata = hash_string.second;
           ptx_hash = hash_string.first;
           MWARNING("Ptx to string: " << tx_metadata << ", ptx hash: " << epee::string_tools::pod_to_hex(ptx_hash) << std::endl);
-          m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const);
+          m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
           MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
        return fill_res;

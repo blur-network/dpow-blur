@@ -114,14 +114,11 @@ struct rmd160_vstate { uint64_t length; uint8_t buf[64]; uint32_t curlen, state[
 extern void ImportAddress(btc_wallet* pwallet, const char* p2pkh_address, const std::string& strLabel, const char* pubkey_hex);
 extern int32_t komodo_importaddress(const char* addr);
 
-bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys);
-bool get_notary_secret_viewkeys(std::vector<crypto::secret_key>& notary_viewkeys);
-
 namespace cryptonote {
 
 namespace komodo {
 
-class komodo_core
+/*class komodo_core
 {
   public:
 
@@ -145,17 +142,16 @@ class komodo_core
     bool check_core_ready();
     bool check_core_busy();
 
-};
+};*/
 
   const char ASSETCHAINS_SYMBOL[5] = { "BLUR" };
 
-  struct notarized_checkpoint *komodo_npptr(uint64_t height);
   int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp);
   int32_t iguana_rwbignum(int32_t rwflag,uint8_t *serialized,int32_t len,uint8_t *endianedp);
   bits256 iguana_merkle(bits256 *root_hash, int& txn_count);
-  void komodo_importpubkeys();
+//  void komodo_importpubkeys();
   void komodo_clearstate();
-  int32_t komodo_init(BlockchainDB* db);
+//  int32_t komodo_init(BlockchainDB* db);
   int32_t komodo_importaddress(std::string addr);
 
   int32_t komodo_MoMdata(int32_t *notarized_htp,uint256 *MoMp,uint256 *kmdtxidp,int32_t height,uint256 *MoMoMp, int32_t *MoMoMoffsetp, 

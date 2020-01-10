@@ -55,7 +55,6 @@ monero_add_library(wallet
 target_link_libraries(wallet
   PUBLIC
     common
-    cryptonote_core
     mnemonics
     multisig
     ${LMDB_LIBRARY}
@@ -66,6 +65,7 @@ target_link_libraries(wallet
     ${Boost_THREAD_LIBRARY}
     ${Boost_REGEX_LIBRARY}
   PRIVATE
+    cryptonote_core
     ${EXTRA_LIBRARIES})
 
 set(wallet_rpc_sources
@@ -91,17 +91,17 @@ target_link_libraries(wallet_rpc_server
     cryptonote_core
     cncrypto
     common
-    komodo
     version
-    ${BTC_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${EVENT_LIBRARY}
+    cryptonote_protocol
+    komodo
+    ${READLINE_LIBRARIES}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${EXTRA_LIBRARIES})
+    ${EXTRA_LIBRARIES}
+    ${OPENSSL_LIBRARIES})
 set_property(TARGET wallet_rpc_server
   PROPERTY
     OUTPUT_NAME "blur-wallet-rpc")

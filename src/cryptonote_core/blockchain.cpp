@@ -55,6 +55,7 @@
 #include "crypto/hash.h"
 #include "cryptonote_core.h"
 #include "komodo/komodo_validation.h"
+#include "komodo_notaries.h"
 #include "ringct/rctSigs.h"
 #include "common/perf_timer.h"
 #include "libhydrogen/hydrogen.h"

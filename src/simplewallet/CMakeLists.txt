@@ -45,14 +45,11 @@ target_link_libraries(simplewallet
   PRIVATE
     wallet
     rpc_base
+    komodo
     cryptonote_core
     cncrypto
     common
     mnemonics
-    komodo
-    ${EVENT_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${BTC_LIBRARY}
     ${EPEE_READLINE}
     version
     ${Boost_CHRONO_LIBRARY}
@@ -62,7 +59,7 @@ target_link_libraries(simplewallet
     ${ICU_LIBRARIES}
     ${Boost_THREAD_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${GNU_READLINE_LIBRARY}
+    ${READLINE_LIBRARIES}
     ${EXTRA_LIBRARIES})
 set_property(TARGET simplewallet
   PROPERTY

@@ -32,6 +32,7 @@
 #include "common/command_line.h"
 #include "common/varint.h"
 #include "cryptonote_core/tx_pool.h"
+#include "cryptonote_core/komodo_notaries.h"
 #include "cryptonote_core/cryptonote_core.h"
 #include "cryptonote_core/blockchain.h"
 #include "blockchain_db/blockchain_db.h"

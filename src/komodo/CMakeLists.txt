@@ -1,12 +1,10 @@
 set(komodo_sources
-  komodo_validation.cpp
-  core_instanciations.cpp)
+  komodo_validation.cpp)
 
 set(komodo_headers)
 
 set(komodo_private_headers
-  komodo_validation.h
-  komodo_notaries.h)
+  komodo_validation.h)
 
 monero_private_headers(komodo
   ${komodo_private_headers})
@@ -18,14 +16,10 @@ monero_add_library(komodo
 target_link_libraries(komodo
   PRIVATE
     epee
-    rpc_base
-    cryptonote_core
-    cryptonote_protocol
     cncrypto
-    wallet
-    rpc
     common
     version
+    multisig
     ${BTC_LIBRARY}
     ${SECP256K1_LIBRARY}
     ${EVENT_LIBRARY}

@@ -27,15 +27,15 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-set(blocksdat "")
-if(PER_BLOCK_CHECKPOINT)
-  if(APPLE)
-    add_custom_command(OUTPUT blocksdat.o MAIN_DEPENDENCY ../blocks/checkpoints.dat COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && touch stub.c && ${CMAKE_C_COMPILER} -o stub.o -c stub.c COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${CMAKE_LINKER} ${LD_RAW_FLAGS} -r -sectcreate __DATA __blocks_dat ../blocks/checkpoints.dat -o ${CMAKE_CURRENT_BINARY_DIR}/blocksdat.o stub.o && rm -f stub.*)
-  else()
-    add_custom_command(OUTPUT blocksdat.o MAIN_DEPENDENCY ../blocks/checkpoints.dat COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && cp ../blocks/checkpoints.dat blocks.dat && ${CMAKE_LINKER} ${LD_RAW_FLAGS} -r -b binary -o ${CMAKE_CURRENT_BINARY_DIR}/blocksdat.o blocks.dat && rm -f blocks.dat)
-  endif()
-  set(blocksdat "blocksdat.o")
-endif()
+#set(blocksdat "")
+#if(PER_BLOCK_CHECKPOINT)
+#  if(APPLE)
+#    add_custom_command(OUTPUT blocksdat.o MAIN_DEPENDENCY ../blocks/checkpoints.dat COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && touch stub.c && ${CMAKE_C_COMPILER} -o stub.o -c stub.c COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && ${CMAKE_LINKER} ${LD_RAW_FLAGS} -r -sectcreate __DATA __blocks_dat ../blocks/checkpoints.dat -o ${CMAKE_CURRENT_BINARY_DIR}/blocksdat.o stub.o && rm -f stub.*)
+#  else()
+#    add_custom_command(OUTPUT blocksdat.o MAIN_DEPENDENCY ../blocks/checkpoints.dat COMMAND cd ${CMAKE_CURRENT_SOURCE_DIR} && cp ../blocks/checkpoints.dat blocks.dat && ${CMAKE_LINKER} ${LD_RAW_FLAGS} -r -b binary -o ${CMAKE_CURRENT_BINARY_DIR}/blocksdat.o blocks.dat && rm -f blocks.dat)
+#  endif()
+#  set(blocksdat "blocksdat.o")
+#endif()
 
 set(blockchain_import_sources
   blockchain_import.cpp
@@ -99,15 +99,14 @@ monero_add_executable(blockchain_import
 
 target_link_libraries(blockchain_import
   PRIVATE
-    cryptonote_core
     blockchain_db
     p2p
     version
     epee
+    cryptonote_protocol
+    cryptonote_core
     komodo
-    ${EVENT_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${BTC_LIBRARY}
+    wallet
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
@@ -130,15 +129,14 @@ monero_add_executable(blockchain_export
 
 target_link_libraries(blockchain_export
   PRIVATE
-    cryptonote_core
     blockchain_db
     p2p
+    cryptonote_core
+    komodo
     version
     epee
-    komodo
-    ${EVENT_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${BTC_LIBRARY}
+    wallet
+    cryptonote_protocol
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
@@ -156,16 +154,15 @@ monero_add_executable(blockchain_blackball
 
 target_link_libraries(blockchain_blackball
   PRIVATE
-    wallet
-    cryptonote_core
     blockchain_db
+    cryptonote_core
     p2p
+    cryptonote_core
+    komodo
     version
     epee
-    komodo
-    ${EVENT_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${BTC_LIBRARY}
+    cryptonote_protocol
+    wallet
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
@@ -184,15 +181,14 @@ monero_add_executable(blockchain_usage
 
 target_link_libraries(blockchain_usage
   PRIVATE
-    cryptonote_core
     blockchain_db
+    cryptonote_core
     p2p
+    komodo
     version
     epee
-    komodo
-    ${EVENT_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${BTC_LIBRARY}
+    wallet
+    cryptonote_protocol
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
