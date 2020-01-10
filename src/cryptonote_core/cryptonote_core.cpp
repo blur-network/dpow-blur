@@ -886,7 +886,7 @@ namespace cryptonote
         MDEBUG("Notarization request added: " << hash);
       }
     }
-    relay_ntzpool_transactions();
+    //relay_ntzpool_transactions();
     return ok;
   }
   //-----------------------------------------------------------------------------------------------
