@@ -847,16 +847,6 @@ namespace cryptonote
     MERROR("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index << ", payment id: " << arg.payment_id);
     //error solely for visibility
 
-    if(context.m_state != cryptonote_connection_context::state_normal)
-      return 1;
-    // while syncing, core will lock for a long time, so we ignore
-    // those txes as they aren't really needed anyway, and avoid a
-    // long block before replying
-    if(!is_synchronized())
-    {
-      LOG_DEBUG_CC(context, "Received new tx while syncing, ignored");
-      return 1;
-    }
     NOTIFY_REQUEST_NTZ_SIG::request ag;
     cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
 
