@@ -261,12 +261,6 @@ namespace cryptonote
   template<class t_core>
   bool t_cryptonote_protocol_handler<t_core>::process_payload_sync_data(const CORE_SYNC_DATA& hshd, cryptonote_connection_context& context, bool is_inital)
   {
-    if(context.m_state == cryptonote_connection_context::state_before_handshake && !is_inital)
-      return true;
-
-    if(context.m_state == cryptonote_connection_context::state_synchronizing)
-      return true;
-
     // from v6, if the peer advertises a top block version, reject if it's not what it should be (will only work if no voting)
     if (hshd.current_height > 0)
     {
@@ -1345,22 +1339,6 @@ skip:
   {
     MTRACE("Checking for idle peers...");
     std::vector<boost::uuids::uuid> kick_connections;
-    m_p2p->for_each_connection([&](cryptonote_connection_context& context, nodetool::peerid_type peer_id, uint32_t support_flags)->bool
-    {
-      if (context.m_state == cryptonote_connection_context::state_synchronizing || context.m_state == cryptonote_connection_context::state_before_handshake)
-      {
-        const bool passive = context.m_state == cryptonote_connection_context::state_before_handshake;
-        const boost::posix_time::ptime now = boost::posix_time::microsec_clock::universal_time();
-        const boost::posix_time::time_duration dt = now - context.m_last_request_time;
-        const int64_t threshold = passive ? PASSIVE_PEER_KICK_TIME : IDLE_PEER_KICK_TIME;
-        if (dt.total_microseconds() > threshold)
-        {
-          MINFO(context << " kicking " << (passive ? "passive" : "idle") << " peer");
-          kick_connections.push_back(context.m_connection_id);
-        }
-      }
-      return true;
-    });
     for (const boost::uuids::uuid &conn_id: kick_connections)
     {
       m_p2p->for_connection(conn_id, [this](cryptonote_connection_context& context, nodetool::peerid_type peer_id, uint32_t support_flags) {
