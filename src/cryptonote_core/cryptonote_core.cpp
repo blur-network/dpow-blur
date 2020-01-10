@@ -658,13 +658,13 @@ namespace cryptonote
     tvc = boost::value_initialized<ntz_req_verification_context>();
     cryptonote::transaction tx_input_check;
     crypto::hash hone,htwo;
-    MWARNING("Tx blob in sig_pre: " << tx_blob);
     if (!parse_and_validate_tx_from_blob(tx_blob, tx_input_check, hone, htwo))
     {
       MERROR("Failed to parse tx from blob in handle_incoming_ntz_sig_pre!");
       tvc.m_verifivation_failed = true;
       return false;
     }
+    MWARNING("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(hone));
     cryptonote::transaction const tx_output_check = tx_input_check;
     uint64_t* pmax = NULL;
     bool check_in = m_blockchain_storage.check_ntz_req_inputs(tx_input_check, tvc, pmax);
