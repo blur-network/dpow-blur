@@ -284,7 +284,7 @@ option(STATIC "Link libraries statically" ${DEFAULT_STATIC})
 #else()
 #  message(STATUS "Building internal libraries as static")
 #endif()
-#set(PIC_FLAG "-fPIC")
+set(PIC_FLAG "-fPIC")
 
 if(MINGW)
   string(REGEX MATCH "^[^/]:/[^/]*" msys2_install_path "${CMAKE_C_COMPILER}")

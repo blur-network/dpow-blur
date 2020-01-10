@@ -651,14 +651,15 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig_pre(const blobdata& tx_blob, ntz_req_verification_context& tvc, cryptonote::transaction &tx, crypto::hash &tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count)
+  bool core::handle_incoming_ntz_sig_pre(const blobdata& tx_blob, ntz_req_verification_context& tvc, cryptonote::transaction &tx, crypto::hash&tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count)
   {
     // TODO: this is a placeholder for verification
 
     tvc = boost::value_initialized<ntz_req_verification_context>();
     cryptonote::transaction tx_input_check;
     crypto::hash hone,htwo;
-    if (!parse_tx_from_blob(tx_input_check, hone, htwo, tx_blob))
+    MWARNING("Tx blob in sig_pre: " << tx_blob);
+    if (!parse_and_validate_tx_from_blob(tx_blob, tx_input_check, hone, htwo))
     {
       MERROR("Failed to parse tx from blob in handle_incoming_ntz_sig_pre!");
       tvc.m_verifivation_failed = true;
@@ -680,6 +681,9 @@ namespace cryptonote
       tvc.m_too_big = true;
       return false;
     }
+    tx = tx_input_check;
+    tx_hash = hone;
+    tx_prefixt_hash = htwo;
 
     const size_t max_tx_version = CURRENT_TRANSACTION_VERSION;
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
@@ -840,7 +844,7 @@ namespace cryptonote
     return r;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash)
+  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, crypto::hash const& tx_hash, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash)
   {
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
 

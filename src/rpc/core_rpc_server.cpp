@@ -1126,6 +1126,13 @@ namespace cryptonote
     cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
     ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
     const int sig_count = req.sig_count;
+    cryptonote::transaction tx;
+    crypto::hash tx_hash, tx_prefix_hash;
+
+    if (!parse_and_validate_tx_from_blob(req.tx_blob, tx, tx_hash, tx_prefix_hash)) {
+      MERROR("In rpc: Error parsing tx from blob!");
+      return false;
+    }
 
     std::string hash_data;
     if (!epee::string_tools::parse_hexstr_to_binbuff(req.ptx_hash, hash_data))
@@ -1134,6 +1141,11 @@ namespace cryptonote
       return false;
     }
     const crypto::hash ptx_hash =  *reinterpret_cast<const crypto::hash*>(hash_data.data());
+
+    MWARNING("In rpc: req.ptx_hash = " << req.ptx_hash);
+    MWARNING("In rpc: req.tx_blob = " << req.tx_blob);
+    MWARNING("In rpc: req.ptx_string = " << req.ptx_string);
+
 
     bool rs = false;
     tvc.m_signers_index = req.signers_index;
@@ -1169,7 +1181,7 @@ namespace cryptonote
     }
     const crypto::hash prior_ptx_hash =  *reinterpret_cast<const crypto::hash*>(prior_ptx_hash_data.data());
 
-      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tvc, false, true, false, sig_count, req.signers_index, ptx_string, ptx_hash, prior_tx_hash, prior_ptx_hash);
+      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tx_hash, tvc, false, true, false, sig_count, req.signers_index, ptx_string, ptx_hash, prior_tx_hash, prior_ptx_hash);
       if (rs == false)
       {
         res.status = "Failed";

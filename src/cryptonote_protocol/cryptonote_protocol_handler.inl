@@ -878,8 +878,13 @@ namespace cryptonote
     }
     const crypto::hash prior_ptx_hash = *reinterpret_cast<const crypto::hash*>(prior_ptx_hash_data.data());
 
+    crypto::hash hone; crypto::hash htwo; cryptonote::transaction tx;
+    if (!parse_and_validate_tx_from_blob(arg.tx_blob, tx, hone, htwo)) {
+      MERROR("Failed to parse and validate tx in protocol!");
+      return false;
+    }
 
-      m_core.handle_incoming_ntz_sig(arg.tx_blob, tvc, false, true, false, s_count, signers_index, arg.ptx_string, arg.ptx_hash, prior_tx_hash, prior_ptx_hash);
+      m_core.handle_incoming_ntz_sig(arg.tx_blob, hone, tvc, false, true, false, s_count, signers_index, arg.ptx_string, arg.ptx_hash, prior_tx_hash, prior_ptx_hash);
       if(tvc.m_verifivation_failed)
       {
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
