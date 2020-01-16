@@ -1377,6 +1377,7 @@ pool_recheck:
 
     size_t pk_index = 0;
     crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index++);
+    bool R_two = false;
     for (const auto& each : notary_viewkeys) {
       crypto::key_derivation recv_derivation;
       bool R = generate_key_derivation(recv_tx_key, each, recv_derivation);
@@ -1391,10 +1392,6 @@ pool_recheck:
           bool R_two = generate_key_derivation(recv_tx_key, each, recv_derivation);
           if (!R_two) {
             MERROR("Validation failed at first two pk_indexes! (zero and one)");
-            if (!m_wallet->remove_ntzpool_tx(epee::string_tools::pod_to_hex(get_transaction_hash(tx)), ptx_to_string_hash(pen_tx).second)) {
-              MERROR("Error when removing ntzpool tx:" << epee::string_tools::pod_to_hex(get_transaction_hash(tx)) << "!");
-              return false;
-            }
           }
         } else {
           recv_derivations.push_back(recv_derivation);

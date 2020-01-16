@@ -931,7 +931,7 @@ namespace cryptonote
     }
     bool r = m_blockchain.remove_ntzpool_tx(prior_hash, ptx_hash);
     if (!r)
-      return false;
+      MWARNING("Failed to remove ntzpool tx with hash: " << epee::string_tools::pod_to_hex(prior_hash));
     m_blockchain.add_ntzpool_tx(new_tx, ptx_blob, ptx_hash, ntz_meta);
     return true;
   }

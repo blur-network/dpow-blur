@@ -1431,15 +1431,10 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_remove_ntzpool_tx(const COMMAND_RPC_REMOVE_NTZPOOL_TX::request& req, COMMAND_RPC_REMOVE_NTZPOOL_TX::response& res, bool request_has_rpc_origin)
   {
-    bool has = m_core.get_blockchain_storage().has_ntzpool_tx(req.tx_hash);
-    if (has) {
-      bool r = m_core.get_blockchain_storage().remove_ntzpool_tx(req.tx_hash, req.ptx_hash);
-      if (r) {
-        res.status = CORE_RPC_STATUS_OK;
-      }
-      return r;
-    }
-    return has;
+    std::list<crypto::hash> hashes;
+    hashes.push_back(req.tx_hash);
+    bool rem = m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hashes);
+    return rem;
   }
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_pending_ntz_pool(const COMMAND_RPC_GET_PENDING_NTZ_POOL::request& req, COMMAND_RPC_GET_PENDING_NTZ_POOL::response& res, bool request_has_rpc_origin)
@@ -1451,14 +1446,6 @@ namespace cryptonote
 
     m_core.get_pending_ntz_pool_and_spent_keys_info(res.transactions, res.spent_key_images, !request_has_rpc_origin || !m_restricted);
 
-    if (req.json_only)
-    {
-      for(auto& tx: res.transactions)
-      {
-        tx.blob_size = 0;
-        tx.tx_blob = "";
-      }
-    }
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
