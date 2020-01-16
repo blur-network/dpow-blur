@@ -261,6 +261,9 @@ namespace cryptonote
   template<class t_core>
   bool t_cryptonote_protocol_handler<t_core>::process_payload_sync_data(const CORE_SYNC_DATA& hshd, cryptonote_connection_context& context, bool is_inital)
   {
+    if(context.m_state == cryptonote_connection_context::state_synchronizing)
+      return true;
+
     // from v6, if the peer advertises a top block version, reject if it's not what it should be (will only work if no voting)
     if (hshd.current_height > 0)
     {
@@ -302,6 +305,8 @@ namespace cryptonote
       << " [Your node is " << abs_diff << " blocks (" << (abs(diff) / (24 * 60 * 60 / DIFFICULTY_TARGET))  << " days) "
       << (0 <= diff ? std::string("behind") : std::string("ahead"))
       << "] " << ENDL << "SYNCHRONIZATION started");
+      if (hshd.current_height >= m_core.get_current_blockchain_height() + 5) // don't switch to unsafe mode just for a few blocks
+        m_core.safesyncmode(false);
     }
     LOG_PRINT_L1("Remote blockchain height: " << hshd.current_height << ", id: " << hshd.top_id);
     context.m_state = cryptonote_connection_context::state_synchronizing;
@@ -1628,6 +1633,7 @@ skip:
         << "**********************************************************************");
       m_core.on_synchronized();
     }
+    m_core.safesyncmode(true);
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------
