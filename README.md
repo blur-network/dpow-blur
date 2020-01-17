@@ -212,7 +212,16 @@ This function will automatically pull in all necessary tx data, as well as clean
 Once your signatures have been addded, you will see the following message displayed from the RPC interface: 
 
 ```
-Signatures added. 4 more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <<b77744d4ea61435a35df95a40d218aa643b8a13bc72204c61a70b91cb448f1a5>>
+   [RPC0]    WARN     wallet.wallet2    src/wallet/wallet2.cpp:5046    transaction <45f1e4c9c48da583e294d0fb5f225ee4c5999b7f3f067b2bb753100e31ced9b0> generated ok and sent to request ntz sigs, key_images: [<3d1bd440676b6a32cf1b6b7b21fb6b25ca13038a18f4456c7165cff91a66c5aa> ]
+
+    [RPC0]    WARN     wallet.wallet2    src/wallet/wallet2.cpp:5052    Signatures added. 4 more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <<45f1e4c9c48da583e294d0fb5f225ee4c5999b7f3f067b2bb753100e31ced9b0>>
+
+Signatures count: 9, Commission: 0.058350240000
+Balance: 400.000000000000
+Unlocked: 400.000000000000
+Please, wait for further signatures
+
+    [RPC0]    WARN     notary_server.rpc    src/komodo_notary_server/notary_server.cpp:1534    Signatures < 13: [request_ntz_sig] sent with sig_count: 9, signers_index =  12 35 5 61 55 47 21 20 26 -1 -1 -1 -1
 ```
 
 
