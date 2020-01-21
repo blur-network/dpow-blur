@@ -1375,8 +1375,8 @@ pool_recheck:
         recv_outkeys.push_back(each);
       }
 
-    size_t pk_index = sig_count;
-    crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index);
+    size_t pk_index = 0;
+    crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index++);
     bool R_two = false;
     for (const auto& each : notary_viewkeys) {
       crypto::key_derivation recv_derivation;
@@ -1388,11 +1388,11 @@ pool_recheck:
         MWARNING("Recv derivation = " << recv_derivation);
         if (epee::string_tools::pod_to_hex(recv_derivation) != "0100000000000000000000000000000000000000000000000000000000000000") {
           MERROR("Recv derivation does not equal rct identity element! Validation failed!");
-          std::list<std::string> tx_strings;
+/*          std::list<std::string> tx_strings;
           std::string tx_hash_string = epee::string_tools::pod_to_hex(get_transaction_hash(tx));
           tx_strings.push_back(tx_hash_string);
           m_wallet->remove_ntzpool_txs(tx_strings);
-          break;
+          break;*/
         } else {
           recv_derivations.push_back(recv_derivation);
         }
