@@ -27,7 +27,7 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 #include <boost/format.hpp>
 #include <boost/asio/ip/address.hpp>
@@ -1209,7 +1209,7 @@ namespace tools
             break;
           }
           m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
-          MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+          MWARNING("Signatures < 10: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
         return fill_res;
       } else {
@@ -1230,7 +1230,7 @@ namespace tools
               break;
             }
             m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
-            MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+            MWARNING("Signatures < 10: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
           }
           return fill_res;
         } else {
@@ -1507,13 +1507,13 @@ pool_recheck:
         }
       }
       bool ready_to_send = false;
-      if (sig_count >= 13) {
+      if (sig_count >= 10) {
         ready_to_send = true;
       }
 
       if (ready_to_send) {
         m_wallet->commit_tx(ptx_vector);
-        MWARNING("Signatures >= 13: [commit_tx] sent with sig_count: " << std::to_string(sig_count) << " and payment id: " << payment_id);
+        MWARNING("Signatures >= 10: [commit_tx] sent with sig_count: " << std::to_string(sig_count) << " and payment id: " << payment_id);
       } else {
         std::string index_vec;
         for (int i = 0; i < 13; i++) {
@@ -1532,7 +1532,7 @@ pool_recheck:
           ptx_hash = hash_string.first;
           MWARNING("Ptx to string: " << tx_metadata << ", ptx hash: " << epee::string_tools::pod_to_hex(ptx_hash) << std::endl);
           m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
-          MWARNING("Signatures < 13: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+          MWARNING("Signatures < 10: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
        return fill_res;
       }

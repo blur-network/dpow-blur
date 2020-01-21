@@ -5032,8 +5032,8 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
 
       MWARNING("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
       //fee includes dust if dust policy specified it.
-      MWARNING("Signatures added. " << std::to_string(13 - sigs_count) << " more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <" << txid << ">" << ENDL
-            << "Signatures count: " << std::to_string(sigs_count) << "Commission: " << print_money(ptx.fee) << ENDL
+      MWARNING("Signatures added. " << std::to_string(10 - sigs_count) << " more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <" << txid << ">" << ENDL
+            << "Signatures count: " << std::to_string(sigs_count) << ", Commission: " << print_money(ptx.fee) << ENDL
             << "Balance: " << print_money(balance(ptx.construction_data.subaddr_account)) << ENDL
             << "Unlocked: " << print_money(unlocked_balance(ptx.construction_data.subaddr_account)) << ENDL
             << "Please, wait for further signatures");

@@ -1212,7 +1212,7 @@ namespace cryptonote
         }
       }
 
-    if ((req.sig_count < 13) && (req.sig_count > 0))
+    if ((req.sig_count < 10) && (req.sig_count > 0))
     {
       NOTIFY_REQUEST_NTZ_SIG::request r;
       r.ptx_string = req.ptx_string;
@@ -1228,7 +1228,7 @@ namespace cryptonote
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }
-    else if (req.sig_count >= 13)
+    else if (req.sig_count >= 10)
     {
       NOTIFY_NEW_TRANSACTIONS::request r;
       std::list<blobdata> verified_tx_blobs;

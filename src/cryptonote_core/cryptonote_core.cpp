@@ -862,7 +862,7 @@ namespace cryptonote
       already_have = true;
     }
 
-    if ((sig_count < 13) && (!already_have)) {
+    if ((sig_count < 10) && (!already_have)) {
         res = handle_incoming_ntz_sig_post(tx_blob, tvc, tx, hash, prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count, ptx_blob);
       if (!res) {
         MERROR("Error in handle_incoming_ntz_sig_post! handle_incoming_post failed!");
@@ -1147,7 +1147,7 @@ namespace cryptonote
     bool ready = false;
     bool count_check = false;
 
-    ready = (sig_count >= 13);
+    ready = (sig_count >= 10);
     count_check = (count == sig_count);
 
     if (ready) {
