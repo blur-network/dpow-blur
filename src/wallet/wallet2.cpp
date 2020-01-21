@@ -2075,29 +2075,16 @@ void wallet2::get_ntzpool_txs_and_keys(std::vector<cryptonote::ntz_tx_info>& txs
   return;
 }
 //----------------------------------------------------------------------------------------------------
-bool wallet2::remove_ntzpool_tx(std::string const& id_hash, std::string const& ptx_hash)
+bool wallet2::remove_ntzpool_txs(std::list<std::string> const& txids)
 {
-  std::string id_hash_bin;
-  std::string ptx_hash_bin;
-  cryptonote::COMMAND_RPC_REMOVE_NTZPOOL_TX::request nreq;
-  if (!epee::string_tools::parse_hexstr_to_binbuff(id_hash, id_hash_bin) || ((id_hash.length()/2) != sizeof(crypto::hash))) {
-    MERROR("Error when parsing hexstr to binbuff in m_wallet->remove_ntzpool_tx");
-    return false;
-  }
-  if (!epee::string_tools::parse_hexstr_to_binbuff(ptx_hash, ptx_hash_bin) || ((ptx_hash.length()/2) != sizeof(crypto::hash))) {
-    MERROR("Error when parsing hexstr to binbuff in m_wallet->remove_ntzpool_tx");
-    return false;
-  }
-  crypto::hash const tx_hash = *reinterpret_cast<const crypto::hash*>(id_hash_bin.data());
-  crypto::hash const hash_ptx = *reinterpret_cast<const crypto::hash*>(ptx_hash_bin.data());
-  nreq.tx_hash = tx_hash;
-  nreq.ptx_hash = hash_ptx;
-  cryptonote::COMMAND_RPC_REMOVE_NTZPOOL_TX::response nres;
+  cryptonote::COMMAND_RPC_FLUSH_NTZ_POOL::request nreq;
+  nreq.txids = txids;
+  cryptonote::COMMAND_RPC_FLUSH_NTZ_POOL::response nres;
   m_daemon_rpc_mutex.lock();
-  bool nr = epee::net_utils::invoke_http_json("/remove_ntzpool_tx", nreq, nres, m_http_client, rpc_timeout);
+  bool nr = net_utils::invoke_http_json_rpc("/json_rpc", "flush_ntzpool", nreq, nres, m_http_client, rpc_timeout);
   m_daemon_rpc_mutex.unlock();
-  THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "remove_ntzpool_tx");
-  THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "remove_ntzpool_tx");
+  THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "flush_ntzpool");
+  THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "flush_ntzpool");
   return nr;
 }
 //----------------------------------------------------------------------------------------------------

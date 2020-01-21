@@ -894,8 +894,7 @@ namespace cryptonote
     ag.payment_id = arg.payment_id;
     ag.signers_index = arg.signers_index;
     ag.tx_blob = arg.tx_blob;
-    cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
-    return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(ag, fake_context);
+    return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(ag, context);
 
    return 1;
   }
@@ -1772,8 +1771,7 @@ skip:
         return relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(r, exclude_context);
     }
     else if (arg.sig_count > 0 && arg.sig_count < 13) {
-      cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
-      return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(arg, fake_context);
+      return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(arg, exclude_context);
     }
     else {
       MERROR("Could not relay_request_ntz_sig!  Sig count must be within range of 0-13");

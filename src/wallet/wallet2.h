@@ -1000,7 +1000,7 @@ namespace tools
 
     void update_pool_state(bool refreshed = false);
     size_t get_ntzpool_count(bool include_unrelayed);
-    bool remove_ntzpool_tx(std::string const& id_hash, std::string const& ptx_hash);
+    bool remove_ntzpool_txs(std::list<std::string> const& txids);
 
     void remove_obsolete_pool_txs(const std::vector<crypto::hash> &tx_hashes);
 

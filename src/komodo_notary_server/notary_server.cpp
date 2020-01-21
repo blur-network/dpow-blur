@@ -1458,7 +1458,9 @@ pool_recheck:
     if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
     {
       MERROR("Transfer failed validation in validate_ntz_transfer!");
-      if (!m_wallet->remove_ntzpool_tx(tx_hash, ptx_id)) {
+      std::list<std::string> tx_hashes;
+      tx_hashes.push_back(tx_hash);
+      if (!m_wallet->remove_ntzpool_txs(tx_hashes)) {
         MERROR("Error removing the tx that failed validation from ntz_pool!");
         return false;
       } else {
@@ -1494,12 +1496,14 @@ pool_recheck:
         ptx_vector.push_back(pen_tx);
       }
       if (m_wallet->get_ntzpool_count(true) > 1) {
+        std::list<std::string> hashes;
         for (const auto& each : removals) {
-          bool remove = m_wallet->remove_ntzpool_tx(each.first, each.second);
-          if (!remove) {
-            MWARNING("Failed to remove ntzpool tx with hash: " << each.first);
+          hashes.push_back(each.first);
+        }
+        bool remove = m_wallet->remove_ntzpool_txs(hashes);
+        if (!remove) {
+          MWARNING("Failed to remove ntzpool txs!");
             //Not fatal
-          }
         }
       }
       bool ready_to_send = false;
