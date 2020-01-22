@@ -1475,16 +1475,16 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       bvc.m_verifivation_failed = true;
       return false;
     }
-/*
+
   int32_t notarized_height = komodo::NOTARIZED_HEIGHT;
   uint64_t nHeight = bei.height;
   crypto::hash hash = m_db->get_block_hash_from_height(nHeight);
 
   if ( m_komodo_core->komodo_checkpoint(&notarized_height, nHeight, hash) < 0 )
   {
-    if ( bei.height != 0 && m_db->get_block_hash_from_height(m_db->height()-1) == hash )
+    if ( (b.major_version >= 11) /*switch at v11 hardfork height */ && m_db->get_block_hash_from_height(m_db->height()-1) == hash )
     {
-     //fprintf(stderr,"got a pre notarization block that matches height.%d\n",(int32_t)nHeight);
+       MERROR("Encountered pre-notarization block that matches height: " << std::to_string(notarized_height));
        return true;
     } else {
       // we need to add the logic back here that skips the first seen notarization, and looks for a second one to confirm failure
@@ -1492,7 +1492,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       bvc.m_verifivation_failed = true;
       return false;
     }
-  } */   // TODO: Removed until we can sort out the thread-related crash thats happening
+  }     // TODO: Removed until we can sort out the thread-related crash thats happening
          // whenever mining is started with > 1 thread
 
     // Check the block's hash against the difficulty target for its alt chain
