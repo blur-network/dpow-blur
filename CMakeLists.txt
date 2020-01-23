@@ -889,6 +889,14 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS AN
   endif()
 endif()
 
+find_library(ELF_LIBRARY elf)
+if(ELF_LIBRARY)
+  set(ELF_LIBRARY ${ELF_LIBRARY})
+  message(STATUS "Using libelf located at: ${ELF_LIBRARY}")
+endif()
+
+find_package(DWARF)
+
   if(LIBDWARF_LIBRARIES AND BACKWARD_HAS_DWARF)
     set(LIBDWARF_LIBRARIES "${LIBDWARF_LIBRARIES}")
     message(STATUS "Using LIBDWARF_LIBRARIES located at ${LIBDWARF_LIBRARIES}")

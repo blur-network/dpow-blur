@@ -43,8 +43,8 @@
 
 // - apt-get install binutils-dev ...
 // - g++/clang++ -lbfd ...
-#ifndef BACKWARD_HAS_BFD
-#define BACKWARD_HAS_BFD 1
+#ifndef BACKWARD_HAS_DWARF
+#define BACKWARD_HAS_DWARF 1
 #endif
 
 #include "backward.hpp"

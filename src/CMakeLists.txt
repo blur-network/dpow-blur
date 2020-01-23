@@ -64,7 +64,11 @@ function (monero_add_executable name)
       ${EXTRA_LIBRARIES}
     PUBLIC
       ${BACKWARD_LIBRARIES}
-      Backward::Backward)
+      ${LIBDWARF_LIBRARIES}
+      ${LIBDW_LIBRARIES}
+      ${EBL_LIBRARY}
+      ${ELF_LIBRARY}
+     )
   set_property(TARGET "${name}"
     PROPERTY
       FOLDER "prog")
