@@ -172,11 +172,10 @@ struct ntzpool_tx_meta_t
   uint8_t has_raw_ntz_data;           /* 1  */
 
   uint8_t  sig_count;                 /* 1  *    = 150 */
-                                      /* (13)     = 163 */
-  int signers_index[13] = {
-                    -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, -1, -1, -1, -1 };
-  uint8_t padding[29];                /* till 192 bytes */
+                                      /* (10)     = 160 */
+  int signers_index[10] = {  -1, -1, -1, -1, -1,
+                             -1, -1, -1, -1, -1 };
+  crypto::hash notarized_block;                /* 32 =  192 bytes */
 };
 
 #define DBF_SAFE       1

@@ -209,6 +209,8 @@ namespace cryptonote
         meta.do_not_relay = do_not_relay;
         meta.double_spend_seen = have_tx_keyimges_as_spent(tx);
         memset(meta.padding, 0, sizeof(meta.padding));
+
+  /*      meta.notarized_block = get_block_hash(m_blockchain.get_current_blockchain_height()-15);*/
         try
         {
           CRITICAL_REGION_LOCAL1(m_blockchain);
@@ -388,7 +390,7 @@ namespace cryptonote
         }
         i++;
       }
-      memset(meta.padding, 0, sizeof(meta.padding));
+      meta.notarized_block = m_blockchain.get_db().get_block_hash_from_height(m_blockchain.get_current_blockchain_height()-15);
 
 
         try
@@ -622,7 +624,7 @@ namespace cryptonote
       do_not_relay = meta.do_not_relay;
       double_spend_seen = meta.double_spend_seen;
       sig_count = meta.sig_count;
-      for (int i = 0; i < 13; i++) {
+      for (int i = 0; i < 10; i++) {
         signers_index.push_back(get_index<int>(i, meta.signers_index));
       }
 
@@ -1197,7 +1199,7 @@ namespace cryptonote
       txi.do_not_relay = meta.do_not_relay;
       txi.double_spend_seen = meta.double_spend_seen;
       txi.sig_count = meta.sig_count;
-      for (int i = 0; i < 13; i++) {
+      for (int i = 0; i < 10; i++) {
         txi.signers_index.push_back(meta.signers_index[i]);
       }
       tx_infos.push_back(txi);
@@ -1304,7 +1306,7 @@ namespace cryptonote
       txi.ptx_blob = *ptx;
       txi.ptx_hash = meta.ptx_hash;
       txi.sig_count = meta.sig_count;
-      for (int i = 0; i < 13; i++) {
+      for (int i = 0; i < 10; i++) {
         txi.signers_index.push_back(meta.signers_index[i]);
       }
       txi.fee = meta.fee;

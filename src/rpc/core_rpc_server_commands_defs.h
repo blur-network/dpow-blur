@@ -976,7 +976,7 @@ namespace cryptonote
       std::string prior_ptx_hash;
       std::string tx_blob;
       std::string payment_id;
-      std::string signers_index/* = "-1-1-1-1-1-1-1-1-1-1-1-1-1"*/;
+      std::string signers_index/* = "-1-1-1-1-1-1-1-1-1-1"*/;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(sig_count)

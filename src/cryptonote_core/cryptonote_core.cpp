@@ -1130,7 +1130,7 @@ namespace cryptonote
     }
 
     std::list<int> signers_index;
-    for (int i = 0; i < 13; i++) {
+    for (int i = 0; i < 10; i++) {
       std::string si_tmp = signers_str.substr(i*2, 2);
       int s_ind = std::stoi(si_tmp, nullptr, 10);
       if ((s_ind >= 64) || (s_ind < -1)) {
@@ -1143,7 +1143,7 @@ namespace cryptonote
     uint8_t has_raw_ntz_data = 1;
 
     int neg = -1;
-    int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
+    int count = 10 - std::count(signers_index.begin(), signers_index.end(), neg);
     bool ready = false;
     bool count_check = false;
 
@@ -1263,7 +1263,7 @@ namespace cryptonote
         r.ptx_string = bd_pair.second;
         std::string signers_index;
         const int neg = -1;
-        for (size_t i = 0; i < 13; i++) {
+        for (size_t i = 0; i < 10; i++) {
           std::string tmp;
           int each_ind = meta.signers_index[i];
           if ((each_ind < 10) && (each_ind > neg)) {

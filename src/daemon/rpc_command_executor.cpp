@@ -901,7 +901,7 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
       for (auto & ntz_tx_info : nres.transactions)
       {
         std::string indexes = " ";
-        for (int i = 0; i < 13; i++) {
+        for (int i = 0; i < 10; i++) {
           bool z = (ntz_tx_info.signers_index.front() < 10) && (ntz_tx_info.signers_index.front() > (-1));
           std::string index_string = ((z ? "0" + std::to_string(ntz_tx_info.signers_index.front())
              : std::to_string(ntz_tx_info.signers_index.front())) + " ");

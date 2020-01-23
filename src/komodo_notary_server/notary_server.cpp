@@ -855,10 +855,10 @@ namespace tools
       bool once = false;
       int loc = -1;
       const int neg = -1;
-      const size_t count = 13 - std::count(signers_index_vec.begin(), signers_index_vec.end(), neg);
+      const size_t count = 10 - std::count(signers_index_vec.begin(), signers_index_vec.end(), neg);
       MWARNING("Non-negative values in signers_index (count): " << std::to_string(count));
       std::vector<int> vec_ret;
-      for (size_t i = 0; i < 13; i++) {
+      for (size_t i = 0; i < 10; i++) {
         if (signer_index == signers_index_vec[i]) {
           MERROR("Found our index value in signers_index at: " << std::to_string(i) << ", we must have already signed this one!");
           return false;
@@ -1184,7 +1184,7 @@ namespace tools
       MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(sig_count));
 
       std::string index_vec;
-      for (int i = 0; i < 13; i++) {
+      for (int i = 0; i < 10; i++) {
         std::string tmp;
         if ((signers_index[i] < 10) && (signers_index[i] > (-1)))
           tmp = "0" + std::to_string(signers_index[i]);
@@ -1300,7 +1300,7 @@ pool_recheck:
       tx_blob = ntzpool_txs[best.second].tx_blob;
       ptx_blob = ntzpool_txs[best.second].ptx_blob;
       prior_ptx_hash = ntzpool_txs[best.second].ptx_hash;
-      for (int i = 0; i < 13; i++) {
+      for (int i = 0; i < 10; i++) {
         int each = -1;
         each = ntzpool_txs[best.second].signers_index.front();
         signers_index.push_back(each);
@@ -1336,7 +1336,7 @@ pool_recheck:
     ar >> pen_tx;
 
     const int neg = -1;
-    const int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
+    const int count = 10 - std::count(signers_index.begin(), signers_index.end(), neg);
     MWARNING("Count = " << std::to_string(count));
     std::vector<crypto::secret_key> notary_viewkeys;
     bool r = false;
@@ -1516,7 +1516,7 @@ pool_recheck:
         MWARNING("Signatures >= 10: [commit_tx] sent with sig_count: " << std::to_string(sig_count) << " and payment id: " << payment_id);
       } else {
         std::string index_vec;
-        for (int i = 0; i < 13; i++) {
+        for (int i = 0; i < 10; i++) {
           std::string tmp = std::to_string(cryptonote::get_index<int>(i, signers_index)) + " ";
           index_vec += tmp;
         }
