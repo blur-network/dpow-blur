@@ -1689,6 +1689,7 @@ namespace cryptonote
     std::string ptx_hash;
     int sig_count;
     std::list<int> signers_index;
+    std::string notarized_block;
 
 
     BEGIN_KV_SERIALIZE_MAP()
@@ -1711,6 +1712,7 @@ namespace cryptonote
       KV_SERIALIZE(ptx_hash)
       KV_SERIALIZE(sig_count)
       KV_SERIALIZE(signers_index)
+      KV_SERIALIZE(notarized_block)
    END_KV_SERIALIZE_MAP()
   };
 

@@ -926,7 +926,8 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
                           << "max_used_block_height: " << ntz_tx_info.max_used_block_height << std::endl
                           << "max_used_block_id: " << ntz_tx_info.max_used_block_id_hash << std::endl
                           << "last_failed_height: " << ntz_tx_info.last_failed_height << std::endl
-                          << "last_failed_id: " << ntz_tx_info.last_failed_id_hash << std::endl;
+                          << "last_failed_id: " << ntz_tx_info.last_failed_id_hash << std::endl
+                          << "notarized_block_hash: " << ntz_tx_info.notarized_block << std::endl;
       }
       if (nres.spent_key_images.empty())
       {
