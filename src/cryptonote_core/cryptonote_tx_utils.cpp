@@ -316,11 +316,11 @@ namespace cryptonote
     for(const tx_source_entry& src_entr:  sources)
     {
       ++idx;
-      if(src_entr.real_output >= src_entr.outputs.size())
+/*      if(src_entr.real_output >= src_entr.outputs.size())
       {
         LOG_ERROR("real_output index (" << src_entr.real_output << ")bigger than output_keys.size()=" << src_entr.outputs.size());
         return false;
-      }
+      }*/
       summary_inputs_money += src_entr.amount;
 
       //key_derivation recv_derivation;

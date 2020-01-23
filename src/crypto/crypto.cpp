@@ -188,9 +188,9 @@ namespace crypto {
     return true;
   }
 
-  void crypto_ops::derivation_to_scalar(const key_derivation &derivation, size_t output_index, ec_scalar &res) {
+  void crypto_ops::derivation_to_scalar(boost::optional<key_derivation> const& derivation, size_t output_index, ec_scalar &res) {
     struct {
-      key_derivation derivation;
+      boost::optional<key_derivation> derivation;
       char output_index[(sizeof(size_t) * 8 + 6) / 7];
     } buf;
     char *end = buf.output_index;
@@ -200,7 +200,7 @@ namespace crypto {
     hash_to_scalar(&buf, end - reinterpret_cast<char *>(&buf), res);
   }
 
-  bool crypto_ops::derive_public_key(const key_derivation &derivation, size_t output_index,
+  bool crypto_ops::derive_public_key(boost::optional<key_derivation> const &derivation, size_t output_index,
     const public_key &base, public_key &derived_key) {
     ec_scalar scalar;
     ge_p3 point1;
@@ -220,7 +220,7 @@ namespace crypto {
     return true;
   }
 
-  void crypto_ops::derive_secret_key(const key_derivation &derivation, size_t output_index,
+  void crypto_ops::derive_secret_key(boost::optional<key_derivation> const &derivation, size_t output_index,
     const secret_key &base, secret_key &derived_key) {
     ec_scalar scalar;
     assert(sc_check(&base) == 0);
@@ -228,7 +228,7 @@ namespace crypto {
     sc_add(&unwrap(derived_key), &unwrap(base), &scalar);
   }
 
-  bool crypto_ops::derive_subaddress_public_key(const public_key &out_key, const key_derivation &derivation, std::size_t output_index, public_key &derived_key) {
+  bool crypto_ops::derive_subaddress_public_key(const public_key &out_key, boost::optional<key_derivation> const &derivation, std::size_t output_index, public_key &derived_key) {
     ec_scalar scalar;
     ge_p3 point1;
     ge_p3 point2;

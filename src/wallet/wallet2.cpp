@@ -6576,7 +6576,7 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
     THROW_WALLET_EXCEPTION_IF(subaddr_account != m_transfers[*i].m_subaddr_index.major, error::wallet_internal_error, "the tx uses funds from multiple accounts");
 
 
-  if (outs.empty())
+/*  if (outs.empty())
   {
     try {
       get_outs(outs, selected_transfers, fake_outputs_count); // may throw
@@ -6584,7 +6584,7 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
       MERROR("Error at transfer_ntz_selected: exception caught when calling get_outs!");
       return;
     }
-  }
+  }*/
   //prepare inputs
   LOG_PRINT_L2("preparing outputs");
   typedef cryptonote::tx_source_entry::output_entry tx_output_entry;
@@ -6771,7 +6771,7 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
   for (auto i = ++selected_transfers.begin(); i != selected_transfers.end(); ++i)
     THROW_WALLET_EXCEPTION_IF(subaddr_account != m_transfers[*i].m_subaddr_index.major, error::wallet_internal_error, "the tx uses funds from multiple accounts");
 
-  try {
+/*  try {
     if (outs.empty())
     {
       get_outs(outs, selected_transfers, sig_count); // may throw
@@ -6779,7 +6779,7 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
   } catch (std::exception& e) {
     MERROR("Error at transfer_ntz_selected: exception caught when calling get_outs!");
     return;
-  }
+  }*/
   //prepare inputs
   LOG_PRINT_L2("preparing outputs");
   size_t i = 0, out_index = 0;
@@ -6798,13 +6798,15 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
 //    THROW_WALLET_EXCEPTION_IF(outs[out_index].size() < fake_outputs_count ,  error::wallet_internal_error, "fake_outputs_count > random outputs found");
 
     typedef cryptonote::tx_source_entry::output_entry tx_output_entry;
-    for (size_t n = 0; n < (sig_count + 1); ++n)
-    {
-      tx_output_entry oe;
-      oe.first = std::get<0>(outs[out_index][n]);
-      oe.second.dest = rct::pk2rct(std::get<1>(outs[out_index][n]));
-      oe.second.mask = std::get<2>(outs[out_index][n]);
-      src.outputs.push_back(oe);
+    if (!outs.empty()) {
+      for (size_t n = 0; n < (sig_count); n++)
+      {
+        tx_output_entry oe;
+        oe.first = std::get<0>(outs[out_index][n]);
+        oe.second.dest = rct::pk2rct(std::get<1>(outs[out_index][n]));
+        oe.second.mask = std::get<2>(outs[out_index][n]);
+        src.outputs.push_back(oe);
+      }
     }
     ++i;
 
@@ -6820,7 +6822,7 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
     real_oe.first = td.m_global_output_index;
     real_oe.second.dest = rct::pk2rct(td.get_public_key());
     real_oe.second.mask = rct::commit(td.amount(), td.m_mask);
-    *it_to_replace = real_oe;
+//    *it_to_replace = real_oe;
     src.real_out_tx_key = get_tx_pub_key_from_extra(td.m_tx, td.m_pk_index);
     src.real_out_additional_tx_keys = get_additional_tx_pub_keys_from_extra(td.m_tx);
     src.real_output = it_to_replace - src.outputs.begin();
