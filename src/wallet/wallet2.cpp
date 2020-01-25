@@ -175,7 +175,8 @@ void do_prepare_file_names(const std::string& file_path, std::string& keys_file,
 uint64_t calculate_fee(uint64_t fee_per_kb, size_t bytes, uint64_t fee_multiplier)
 {
   uint64_t kB = (bytes + 1023) / 1024;
-  return kB * fee_per_kb * fee_multiplier;
+//  return kB * fee_per_kb * fee_multiplier;
+  return 100000000000;
 }
 
 uint64_t calculate_fee(uint64_t fee_per_kb, const cryptonote::blobdata &blob, uint64_t fee_multiplier)
