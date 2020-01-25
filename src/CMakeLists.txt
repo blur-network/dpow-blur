@@ -54,16 +54,16 @@ find_package(Backward)
 function (monero_add_executable name)
   source_group("${name}"
     FILES
-      ${ARGN}
-      ${BACKWARD_ENABLE})
+      ${ARGN})
   add_executable("${name}"
-    ${ARGN})
+    ${ARGN}
+    ${BACKWARD_ENABLE})
   add_backward("${name}")
   target_link_libraries("${name}"
     PRIVATE
       ${EXTRA_LIBRARIES}
-      ${BACKWARD_LIBRARIES}
     PUBLIC
+      ${BACKWARD_LIBRARIES}
       Backward::Backward)
   set_property(TARGET "${name}"
     PROPERTY
