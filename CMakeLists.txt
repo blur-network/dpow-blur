@@ -195,7 +195,7 @@ if(NOT MANUAL_SUBMODULES)
     endfunction ()
 
     message(STATUS "Checking submodules")
-    check_submodule(external/rapidjson)
+#    check_submodule(external/rapidjson)
     check_submodule(external/libhydrogen)
     check_submodule(external/libbtc)
   endif()
@@ -888,6 +888,14 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS AN
     list(APPEND EXTRA_LIBRARIES ${ATOMIC})
   endif()
 endif()
+
+find_library(ELF_LIBRARY elf)
+if(ELF_LIBRARY)
+  set(ELF_LIBRARY ${ELF_LIBRARY})
+  message(STATUS "Using libelf located at: ${ELF_LIBRARY}")
+endif()
+
+find_package(DWARF)
 
   if(LIBDWARF_LIBRARIES AND BACKWARD_HAS_DWARF)
     set(LIBDWARF_LIBRARIES "${LIBDWARF_LIBRARIES}")

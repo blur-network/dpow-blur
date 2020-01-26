@@ -31,6 +31,7 @@
 
 add_subdirectory(db_drivers)
 add_subdirectory(easylogging++)
+add_subdirectory(rapidjson)
 add_subdirectory(backward)
 add_subdirectory(bitcoin)
 add_subdirectory(libhydrogen)

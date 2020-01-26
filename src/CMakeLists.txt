@@ -55,6 +55,7 @@ function (monero_add_executable name)
   source_group("${name}"
     FILES
       ${ARGN})
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND BUILD_SHARED_LIBRARIES)
   add_executable("${name}"
     ${ARGN}
     ${BACKWARD_ENABLE})
@@ -64,7 +65,18 @@ function (monero_add_executable name)
       ${EXTRA_LIBRARIES}
     PUBLIC
       ${BACKWARD_LIBRARIES}
-      Backward::Backward)
+      ${LIBDWARF_LIBRARIES}
+      ${LIBDW_LIBRARIES}
+      ${EBL_LIBRARY}
+      ${ELF_LIBRARY}
+     )
+else()
+  add_executable("${name}"
+    ${ARGN})
+  target_link_libraries("${name}"
+    PRIVATE
+      ${EXTRA_LIBRARIES})
+endif()
   set_property(TARGET "${name}"
     PROPERTY
       FOLDER "prog")

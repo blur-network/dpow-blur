@@ -82,8 +82,6 @@ monero_add_executable(daemon
   ${daemon_private_headers}
   ${blocksdat})
 
-add_backward(daemon)
-
 target_link_libraries(daemon
   PRIVATE
     rpc
