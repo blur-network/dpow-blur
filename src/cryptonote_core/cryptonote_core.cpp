@@ -876,7 +876,7 @@ namespace cryptonote
       get_blockchain_storage().on_new_tx_from_block(tx);
     }
     if (res) {
-      ok = add_new_tx(tx, hash, prefix_hash, tx_blob.size(), tvc, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blob, ptx_hash, prior_tx_hash, prior_ptx_hash);
+      ok = add_new_notarization(tx, hash, prefix_hash, tx_blob.size(), tvc, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blob, ptx_hash, prior_tx_hash, prior_ptx_hash);
       if(tvc.m_verifivation_failed) {
         MERROR("Notarization verification failed: " << hash);
       } else if(tvc.m_verifivation_impossible) {
@@ -1033,13 +1033,13 @@ namespace cryptonote
       std::list<transaction> txs;
       std::list<crypto::hash> missed_txs;
       uint64_t coinbase_amount = get_outs_money_amount(b.miner_tx);
-      this->get_transactions(b.tx_hashes, txs, missed_txs);      
+      this->get_transactions(b.tx_hashes, txs, missed_txs);
       uint64_t tx_fee_amount = 0;
       for(const auto& tx: txs)
       {
         tx_fee_amount += get_tx_fee(tx);
       }
-      
+
       emission_amount += coinbase_amount - tx_fee_amount;
       total_fee_amount += tx_fee_amount;
       return true;
@@ -1121,7 +1121,7 @@ namespace cryptonote
     return m_mempool.add_tx(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version);
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::add_new_tx(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_str, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash)
+  bool core::add_new_notarization(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_str, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash)
   {
     if(m_mempool.have_tx(tx_hash))
     {

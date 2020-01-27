@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2020, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 //
@@ -812,8 +813,22 @@ namespace cryptonote
       return 1;
     }
 
+    NOTIFY_NEW_NOTARIZATION::request ag;
+    const int neg = -1;
+
+    for (const auto& each : arg.signers_index) {
+      if (each == neg) {
+        MERROR("ERROR: Notarization received with less than required amount of signatures!");
+        return 1;
+      } else {
+        ag.signers_index.push_back(each);
+      }
+    }
+
+    /* insert notarized hash and merkle hash check here */
+
     std::list<cryptonote::blobdata> tx_blobs;
-    NOTIFY_NEW_TRANSACTIONS::request ag;
+    
     for (const auto& tx : arg.txs)
     {
       cryptonote::tx_verification_context tvc = AUTO_VAL_INIT(tvc);
@@ -829,7 +844,7 @@ namespace cryptonote
     }
     ag.txs = tx_blobs;
 
-    relay_transactions(ag, context);
+    relay_notarization(ag, context);
 
     return 1;
   }
