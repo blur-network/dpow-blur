@@ -1482,7 +1482,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
 
   if ( m_komodo_core->komodo_checkpoint(&notarized_height, nHeight, hash) < 0 )
   {
-    if ( (b.major_version >= 11) /*switch at v11 hardfork height */ && m_db->get_block_hash_from_height(m_db->height()-1) == hash )
+    if ( (b.major_version >= 11) && (epee::string_tools::pod_to_hex(m_db->get_block_hash_from_height(m_db->height()-1)) == epee::string_tools::pod_to_hex(hash)))
     {
        MERROR("Encountered pre-notarization block that matches height: " << std::to_string(notarized_height));
        return true;
@@ -1492,8 +1492,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       bvc.m_verifivation_failed = true;
       return false;
     }
-  }     // TODO: Removed until we can sort out the thread-related crash thats happening
-         // whenever mining is started with > 1 thread
+  }
 
     // Check the block's hash against the difficulty target for its alt chain
     difficulty_type current_diff = get_next_difficulty_for_alternative_chain(alt_chain, bei);
