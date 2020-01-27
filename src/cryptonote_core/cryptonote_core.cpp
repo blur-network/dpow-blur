@@ -1297,6 +1297,20 @@ namespace cryptonote
     m_mempool.set_relayed(txs);
   }
   //-----------------------------------------------------------------------------------------------
+  void core::on_notarization_relayed(const cryptonote::blobdata& tx_blob)
+  {
+    std::list<std::pair<crypto::hash, cryptonote::blobdata>> txs;
+    cryptonote::transaction tx;
+    crypto::hash tx_hash, tx_prefix_hash;
+    if (!parse_and_validate_tx_from_blob(tx_blob, tx, tx_hash, tx_prefix_hash))
+    {
+      LOG_ERROR("Failed to parse relayed notarization transaction");
+      return;
+    }
+    txs.push_back(std::make_pair(tx_hash, std::move(tx_blob)));
+    m_mempool.set_relayed(txs);
+  }
+  //-----------------------------------------------------------------------------------------------
   void core::on_ntz_sig_relayed(const cryptonote::blobdata& tx_blob)
   {
     std::list<std::pair<crypto::hash, cryptonote::blobdata>> txs;
@@ -1304,7 +1318,7 @@ namespace cryptonote
     crypto::hash tx_hash, tx_prefix_hash;
     if (!parse_and_validate_tx_from_blob(tx_blob, tx, tx_hash, tx_prefix_hash))
     {
-      LOG_ERROR("Failed to parse relayed transaction");
+      LOG_ERROR("Failed to parse relayed req_ntz_sig transaction");
       return;
     }
     txs.push_back(std::make_pair(tx_hash, std::move(tx_blob)));

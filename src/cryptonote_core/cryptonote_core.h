@@ -215,7 +215,12 @@ namespace cryptonote
      virtual void on_transaction_relayed(const cryptonote::blobdata& tx);
 
      /**
-      * @brief called when a transaction is relayed
+      * @brief called when a notarization is relayed
+      */
+     virtual void on_notarization_relayed(const cryptonote::blobdata& tx);
+
+     /**
+      * @brief called when a req_ntz_sig message is relayed
       */
      virtual void on_ntz_sig_relayed(const cryptonote::blobdata& tx);
 
