@@ -60,6 +60,10 @@ namespace cryptonote
     {
       return false;
     }
+    virtual bool relay_notarization(NOTIFY_NEW_NOTARIZATION::request& arg, cryptonote_connection_context& exclude_context)
+    {
+      return false;
+    }
     virtual bool relay_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context)
     {
       return false;

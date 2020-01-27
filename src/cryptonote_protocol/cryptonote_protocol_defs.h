@@ -357,4 +357,26 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
   };
+  /************************************************************************/
+  /*                                                                      */
+  /************************************************************************/
+  struct NOTIFY_NEW_NOTARIZATION
+  {
+    const static int ID = BC_COMMANDS_POOL_BASE + 12;
+
+    struct request
+    {
+      std::list<blobdata>   txs;
+      crypto::hash tx_hash;
+      std::string payment_id;
+      std::vector<int> signers_index;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(txs)
+        KV_SERIALIZE_VAL_POD_AS_BLOB(tx_hash)
+        KV_SERIALIZE(payment_id)
+        KV_SERIALIZE(signers_index)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
 }

@@ -797,7 +797,7 @@ namespace cryptonote
   }
   //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>
-  int t_cryptonote_protocol_handler<t_core>::handle_notify_new_notarization(int command, NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& context)
+  int t_cryptonote_protocol_handler<t_core>::handle_notify_new_notarization(int command, NOTIFY_NEW_NOTARIZATION::request& arg, cryptonote_connection_context& context)
   {
     MLOG_P2P_MESSAGE("Received NOTIFY_NEW_NOTARIZATION (" << arg.txs.size() << " notarization tx)");
     if(context.m_state != cryptonote_connection_context::state_normal)
