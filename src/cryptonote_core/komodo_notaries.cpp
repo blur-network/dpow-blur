@@ -527,22 +527,25 @@ namespace komodo {
     }
     if ( notarized_height >= 0 && temp_height <= activeheight && (notary= m_core.get_blockchain_storage().get_db().get_block_height(hash) != 0 ))
     {
-        printf("activeheight.%lu -> (%d %s)\n",activeheight,notarized_height,s_notarized_hash.c_str());
+        LOG_PRINT_L2("activeheight = " << std::to_string(activeheight) << ", notarized_height = " << std::to_string(notarized_height) << ", notarized_hash = " << s_notarized_hash);
         if ( notary == temp_height ) // if notarized_hash not in chain, reorg
         {
           if ( activeheight < temp_height )
           {
-            fprintf(stderr,"activeheight.%lu < NOTARIZED_HEIGHT.%d\n",activeheight,notarized_height);
+            MERROR("activeheight = " << std::to_string(activeheight) << " less than " << std::to_string(NOTARIZED_HEIGHT));
             return(-1);
           }
           else if ( activeheight == temp_height && memcmp(&hash,&notarized_hash,sizeof(hash)) != 0 )
           {
-            fprintf(stderr,"nHeight.%lu == NOTARIZED_HEIGHT.%d, diff hash\n",activeheight,notarized_height);
+            MERROR("nHeight == NOTARIZED_HEIGHT, but different hash!");
+            /* Could probably use slightly more informative logging here */
             return(-1);
           }
-        } else fprintf(stderr,"unexpected error notary_hash %s ht.%d at ht.%lu\n",s_notarized_hash.c_str(),notarized_height,notary);
+        } else {
+           MERROR("Unexpected error notary_hash! " << s_notarized_hash << ", notarized_height = " << std::to_string(notarized_height) << ", notary = " << std::to_string(notary));
+        }
     } else if ( notarized_height > 0 )
-        fprintf(stderr,"%s couldnt find notarized.(%s %d) ht.\n",ASSETCHAINS_SYMBOL,s_notarized_hash.c_str(),notarized_height);
+        MERROR("BLUR couldnt find notarized. " << ASSETCHAINS_SYMBOL << ", " << s_notarized_hash << ", notarized_height = " << std::to_string(notarized_height));
     return(0);
   }
   //------------------------------------------------------------------
