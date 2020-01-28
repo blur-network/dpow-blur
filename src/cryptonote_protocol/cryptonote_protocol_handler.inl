@@ -1782,7 +1782,8 @@ skip:
     for(const auto& each : arg.signers_index) {
       signers_index += std::to_string(each) + " ";
     }
-    MWARNING("Relaying notarization with signers_index = " << signers_index);
+    std::string notarized_hash = epee::string_tools::pod_to_hex(arg.notarized_hash);
+    MWARNING("Relaying notarization with signers_index = " << signers_index << "For notarized hash: " << notarized_hash);
     // no check for success, so tell core they're relayed unconditionally
     for(const auto& each : arg.txs)
       m_core.on_transaction_relayed(each);
