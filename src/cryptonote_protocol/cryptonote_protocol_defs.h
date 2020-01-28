@@ -367,13 +367,13 @@ namespace cryptonote
     struct request
     {
       std::list<blobdata>   txs;
-      crypto::hash tx_hash;
+      crypto::hash notarized_hash;
       std::string payment_id;
       std::vector<int> signers_index;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(txs)
-        KV_SERIALIZE_VAL_POD_AS_BLOB(tx_hash)
+        KV_SERIALIZE_VAL_POD_AS_BLOB(notarized_hash)
         KV_SERIALIZE(payment_id)
         KV_SERIALIZE(signers_index)
       END_KV_SERIALIZE_MAP()

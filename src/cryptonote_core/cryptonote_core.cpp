@@ -1307,6 +1307,7 @@ namespace cryptonote
       LOG_ERROR("Failed to parse relayed notarization transaction");
       return;
     }
+    MWARNING("Notarization set to relayed!");
     txs.push_back(std::make_pair(tx_hash, std::move(tx_blob)));
     m_mempool.set_relayed(txs);
   }

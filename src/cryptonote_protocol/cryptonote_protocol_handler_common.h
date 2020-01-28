@@ -42,6 +42,7 @@ namespace cryptonote
   {
     virtual bool relay_block(NOTIFY_NEW_BLOCK::request& arg, cryptonote_connection_context& exclude_context)=0;
     virtual bool relay_transactions(NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& exclude_context)=0;
+    virtual bool relay_notarization(NOTIFY_NEW_NOTARIZATION::request& arg, cryptonote_connection_context& exclude_context)=0;
     virtual bool relay_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context)=0;
     virtual bool relay_response_ntz_sig(NOTIFY_RESPONSE_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context)=0;
     //virtual bool request_objects(NOTIFY_REQUEST_GET_OBJECTS::request& arg, cryptonote_connection_context& context)=0;

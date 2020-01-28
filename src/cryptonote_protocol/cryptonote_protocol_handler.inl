@@ -1778,6 +1778,11 @@ skip:
   template<class t_core>
   bool t_cryptonote_protocol_handler<t_core>::relay_notarization(NOTIFY_NEW_NOTARIZATION::request& arg, cryptonote_connection_context& exclude_context)
   {
+    std::string signers_index = "";
+    for(const auto& each : arg.signers_index) {
+      signers_index += std::to_string(each) + " ";
+    }
+    MWARNING("Relaying notarization with signers_index = " << signers_index);
     // no check for success, so tell core they're relayed unconditionally
     for(const auto& each : arg.txs)
       m_core.on_transaction_relayed(each);

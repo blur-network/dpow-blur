@@ -1230,11 +1230,17 @@ namespace cryptonote
     }
     else if (req.sig_count >= 10)
     {
-      NOTIFY_NEW_TRANSACTIONS::request r;
+      NOTIFY_NEW_NOTARIZATION::request r;
       std::list<blobdata> verified_tx_blobs;
       verified_tx_blobs.push_back(req.tx_blob);
       r.txs = verified_tx_blobs;
-      m_core.get_protocol()->relay_transactions(r, fake_context);
+      for (const auto& each: signers_list) {
+        r.signers_index.push_back(each);
+      }
+      r.notarized_hash = m_core.get_block_id_by_height(m_core.get_blockchain_storage().get_db().height() - 16);
+      m_core.get_protocol()->relay_notarization(r, fake_context);
+      std::list<crypto::hash> hash_list;
+      m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }
