@@ -202,6 +202,9 @@ namespace cryptonote
      */
     crypto::hash get_block_id_by_height(uint64_t height) const;
 
+
+    bool set_last_notarized_hash(crypto::hash const& notarized_hash) const;
+
     /**
      * @brief gets the block with a given hash
      *

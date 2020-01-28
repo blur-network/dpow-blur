@@ -1238,6 +1238,10 @@ namespace cryptonote
         r.signers_index.push_back(each);
       }
       r.notarized_hash = m_core.get_block_id_by_height(m_core.get_blockchain_storage().get_db().height() - 16);
+      if (!m_core.get_blockchain_storage().set_last_notarized_hash(r.notarized_hash)) {
+        MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(r.notarized_hash));
+        return false;
+      }
       m_core.get_protocol()->relay_notarization(r, fake_context);
       std::list<crypto::hash> hash_list;
       m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list

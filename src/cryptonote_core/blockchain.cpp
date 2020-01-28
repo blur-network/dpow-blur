@@ -95,6 +95,7 @@ namespace cryptonote
   namespace komodo
   {
     extern int32_t NOTARIZED_HEIGHT;
+    extern uint256 NOTARIZED_HASH;
   }
 }
 
@@ -324,6 +325,26 @@ uint64_t Blockchain::get_current_blockchain_height() const
   // well as not accessing class members, even read only (ie, m_invalid_blocks). The caller must
   // lock if it is otherwise needed.
   return m_db->height();
+}
+//------------------------------------------------------------------
+bool Blockchain::set_last_notarized_hash(crypto::hash const& notarized_hash) const
+{
+  LOG_PRINT_L3("Blockchain::" << __func__);
+  epee::span<const uint8_t> span_hash = epee::as_byte_span(notarized_hash);
+  bits256 hash_bits;
+  size_t i = 0;
+  for (const auto& byte : span_hash)
+  {
+    memcpy(&hash_bits.bytes[i++], &byte, sizeof(byte));
+  }
+  std::string notarized_string = epee::string_tools::pod_to_hex(hash_bits.bytes);
+  std::string binbuff;
+  if(!epee::string_tools::parse_hexstr_to_binbuff(notarized_string, binbuff)) {
+    MERROR("Error parsing hexstr to binbuff in set_last_notarized_hash!");
+    return false;
+  }
+  komodo::NOTARIZED_HASH = *reinterpret_cast<const uint256*>(binbuff.data());
+  return true;
 }
 //------------------------------------------------------------------
 //FIXME: possibly move this into the constructor, to avoid accidentally
