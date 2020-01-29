@@ -310,7 +310,7 @@ At that point, the `ntz_tx_verification_context` will be converted to the standa
 <h2 id="rpc-calls"> RPC Calls for KMD-BLUR Data </h2>
 
 
-To retrieve the current blockchain data, and notarization data (not yet populated):
+To retrieve the current blockchain data, and notarization data:
 
 
 `curl -X POST http://localhost:52542/json_rpc -d '{"method":"get_notarization_data"}'`
@@ -320,16 +320,17 @@ Output:
 
 
 ```
+curl -X POST http:/localhost:21111/json_rpc -d '{"method":"get_notarization_data"}'
 {
   "id": 0,
   "jsonrpc": "2.0",
   "result": {
     "assetchains_symbol": "BLUR",
-    "current_chain_hash": "0d6b7b0de6106877972fdafb806932cdd4c30dd007fc9510dfdec4db8b5ca69c",
-    "current_chain_height": 155736,
-    "current_chain_pow": "73ab840dcb63e247df9d98988a195b2ba17def30daa835073a8377be65010000",
-    "notarized_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-    "notarized_height": 0,
+    "current_chain_hash": "3f488877b477543d724ce01ea1704c4b48c938345551bb478bac73114f732e7d",
+    "current_chain_height": 2601,
+    "current_chain_pow": "a26c1d34b401699196b376e48a2ba46a6f095722620c8e9c876c9b64b9a11700",
+    "notarized_hash": "8cbc2ca95d2ae898b069566afef1ee749b0c92f1efe859897d521e67c2304f9b",
+    "notarized_height": 2586,
     "notarized_txid": "0000000000000000000000000000000000000000000000000000000000000000"
   }
 ```
