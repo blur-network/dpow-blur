@@ -1511,10 +1511,6 @@ pool_recheck:
         ready_to_send = true;
       }
 
-      if (ready_to_send) {
-        m_wallet->commit_tx(ptx_vector);
-        MWARNING("Signatures >= 10: [commit_tx] sent with sig_count: " << std::to_string(sig_count) << " and payment id: " << payment_id);
-      } else {
         std::string index_vec;
         for (int i = 0; i < 13; i++) {
           std::string tmp = std::to_string(cryptonote::get_index<int>(i, signers_index)) + " ";
@@ -1535,7 +1531,6 @@ pool_recheck:
           MWARNING("Signatures < 10: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
        return fill_res;
-      }
     }
     catch (const std::exception& e)
     {
