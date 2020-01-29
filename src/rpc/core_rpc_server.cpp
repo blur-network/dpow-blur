@@ -1232,7 +1232,7 @@ namespace cryptonote
     else if (req.sig_count >= 10)
     {
       cryptonote::tx_verification_context txvc = AUTO_VAL_INIT(txvc);
-      if(!m_core.handle_incoming_tx(req.tx_blob, txvc, false, false, false))
+      if(!m_core.handle_incoming_tx(req.tx_blob, txvc, false, false, true))
       {
         res.status = "Failed";
         res.reason = "";
