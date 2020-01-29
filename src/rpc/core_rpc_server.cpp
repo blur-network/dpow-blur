@@ -1178,6 +1178,9 @@ namespace cryptonote
     }
     const crypto::hash prior_ptx_hash =  *reinterpret_cast<const crypto::hash*>(prior_ptx_hash_data.data());
 
+    if ((req.sig_count < 10) && (req.sig_count > 0))
+    {
+
       rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tx_hash, tvc, false, true, false, sig_count, req.signers_index, ptx_string, ptx_hash, prior_tx_hash, prior_ptx_hash);
       if (rs == false)
       {
@@ -1212,8 +1215,6 @@ namespace cryptonote
         }
       }
 
-    if ((req.sig_count < 10) && (req.sig_count > 0))
-    {
       NOTIFY_REQUEST_NTZ_SIG::request r;
       r.ptx_string = req.ptx_string;
       r.ptx_hash = ptx_hash;
@@ -1230,6 +1231,35 @@ namespace cryptonote
     }
     else if (req.sig_count >= 10)
     {
+      cryptonote::tx_verification_context txvc = AUTO_VAL_INIT(txvc);
+      if(!m_core.handle_incoming_tx(req.tx_blob, txvc, false, false, false))
+      {
+        res.status = "Failed";
+        res.reason = "";
+        if ((res.low_mixin = tvc.m_low_mixin))
+          add_reason(res.reason, "ring size too small");
+        if ((res.double_spend = tvc.m_double_spend))
+          add_reason(res.reason, "double spend");
+        if ((res.invalid_input = tvc.m_invalid_input))
+          add_reason(res.reason, "invalid input");
+        if ((res.invalid_output = tvc.m_invalid_output))
+          add_reason(res.reason, "invalid output");
+        if ((res.too_big = tvc.m_too_big))
+          add_reason(res.reason, "too big");
+        if ((res.overspend = tvc.m_overspend))
+          add_reason(res.reason, "overspend");
+        if ((res.fee_too_low = tvc.m_fee_too_low))
+          add_reason(res.reason, "fee too low");
+        if ((res.not_rct = tvc.m_not_rct))
+          add_reason(res.reason, "tx is not ringct");
+        const std::string punctuation = res.reason.empty() ? "" : ": ";
+        if (tvc.m_verifivation_failed)
+        {
+          LOG_PRINT_L0("[on_send_raw_tx]: tx verification failed" << punctuation << res.reason);
+          return false;
+        }
+      }
+
       NOTIFY_NEW_NOTARIZATION::request r;
       std::list<blobdata> verified_tx_blobs;
       verified_tx_blobs.push_back(req.tx_blob);

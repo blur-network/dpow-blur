@@ -813,15 +813,12 @@ namespace cryptonote
       return 1;
     }
 
-    NOTIFY_NEW_NOTARIZATION::request ag;
     const int neg = -1;
 
     for (const auto& each : arg.signers_index) {
       if (each == neg) {
         MERROR("ERROR: Notarization received with less than required amount of signatures!");
         return 1;
-      } else {
-        ag.signers_index.push_back(each);
       }
     }
 
@@ -829,22 +826,23 @@ namespace cryptonote
 
     std::list<cryptonote::blobdata> tx_blobs;
     
-    for (const auto& tx : arg.txs)
+    for(auto tx_blob_it = arg.txs.begin(); tx_blob_it!=arg.txs.end();)
     {
       cryptonote::tx_verification_context tvc = AUTO_VAL_INIT(tvc);
-      m_core.handle_incoming_tx(tx, tvc, false, true, false);
+      m_core.handle_incoming_tx(*tx_blob_it, tvc, false, true, false);
       if(tvc.m_verifivation_failed)
       {
-        LOG_PRINT_CCONTEXT_L1("Notarization_tx verification failed, dropping connection");
+        LOG_PRINT_CCONTEXT_L1("Tx verification failed, dropping connection");
         drop_connection(context, false, false);
         return 1;
       }
-
-      tx_blobs.push_back(tx);
+      if(tvc.m_should_be_relayed)
+        ++tx_blob_it;
+      else
+        arg.txs.erase(tx_blob_it++);
     }
-    ag.txs = tx_blobs;
 
-    relay_notarization(ag, context);
+    relay_notarization(arg, context);
 
     return 1;
   }
@@ -1770,8 +1768,8 @@ skip:
   bool t_cryptonote_protocol_handler<t_core>::relay_transactions(NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& exclude_context)
   {
     // no check for success, so tell core they're relayed unconditionally
-    for(const auto& each : arg.txs)
-      m_core.on_transaction_relayed(each);
+    for(auto tx_blob_it = arg.txs.begin(); tx_blob_it!=arg.txs.end(); ++tx_blob_it)
+      m_core.on_transaction_relayed(*tx_blob_it);
     return relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(arg, exclude_context);
   }
   //------------------------------------------------------------------------------------------------------------------------
@@ -1785,8 +1783,8 @@ skip:
     std::string notarized_hash = epee::string_tools::pod_to_hex(arg.notarized_hash);
     MWARNING("Relaying notarization with signers_index = " << signers_index << "For notarized hash: " << notarized_hash);
     // no check for success, so tell core they're relayed unconditionally
-    for(const auto& each : arg.txs)
-      m_core.on_transaction_relayed(each);
+    for(auto tx_blob_it = arg.txs.begin(); tx_blob_it!=arg.txs.end(); ++tx_blob_it)
+      m_core.on_notarization_relayed(*tx_blob_it);
     return relay_post_notify<NOTIFY_NEW_NOTARIZATION>(arg, exclude_context);
   }
   //------------------------------------------------------------------------------------------------------------------------
