@@ -344,6 +344,7 @@ bool Blockchain::set_last_notarized_hash(crypto::hash const& notarized_hash) con
     return false;
   }
   komodo::NOTARIZED_HASH = *reinterpret_cast<const uint256*>(binbuff.data());
+  komodo::NOTARIZED_HEIGHT = (int32_t)get_block_height(m_db->get_block(notarized_hash));
   return true;
 }
 //------------------------------------------------------------------

@@ -1255,8 +1255,8 @@ namespace cryptonote
         const std::string punctuation = res.reason.empty() ? "" : ": ";
         if (tvc.m_verifivation_failed)
         {
-          LOG_PRINT_L0("[on_send_raw_tx]: tx verification failed" << punctuation << res.reason);
-          return false;
+          LOG_PRINT_L0("[notarization]: tx verification failed" << punctuation << res.reason);
+     //     return false;
         }
       }
 
