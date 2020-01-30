@@ -42,6 +42,7 @@ namespace cryptonote
 
 typedef struct mdb_txn_cursors
 {
+
   MDB_cursor *m_txc_blocks;
   MDB_cursor *m_txc_block_heights;
   MDB_cursor *m_txc_block_info;
@@ -58,11 +59,13 @@ typedef struct mdb_txn_cursors
   MDB_cursor *m_txc_txpool_meta;
   MDB_cursor *m_txc_txpool_blob;
 
+  MDB_cursor *m_txc_ntz_txs;
   MDB_cursor *m_txc_ntzpool_meta;
   MDB_cursor *m_txc_ntzpool_blob;
   MDB_cursor *m_txc_ntzpool_ptx_blob;
 
   MDB_cursor *m_txc_hf_versions;
+
 } mdb_txn_cursors;
 
 #define m_cur_blocks            m_cursors->m_txc_blocks
@@ -233,6 +236,8 @@ public:
 
   virtual uint64_t get_tx_count() const;
 
+  virtual bool get_ntz_tx_blob(const crypto::hash& h, cryptonote::blobdata &tx) const;
+
   virtual uint64_t get_notarization_count() const;
 
   virtual std::vector<transaction> get_tx_list(const std::vector<crypto::hash>& hlist) const;
@@ -335,6 +340,10 @@ private:
   virtual uint64_t add_transaction_data(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash& tx_hash);
 
   virtual void remove_transaction_data(const crypto::hash& tx_hash, const transaction& tx);
+
+  virtual uint64_t add_ntz_transaction_data(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash& tx_hash);
+
+  virtual void remove_ntz_transaction_data(const crypto::hash& tx_hash, const transaction& tx);
 
   virtual uint64_t add_output(const crypto::hash& tx_hash,
       const tx_out& tx_output,
