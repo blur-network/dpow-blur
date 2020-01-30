@@ -2701,7 +2701,7 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
   if (hf_version >= 1)
   {
     std::vector<uint8_t> vec_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
-    if ((hf_version >= 11) && (epee::string_tools::pod_to_hex(get_transaction_hash(tx)) == bytes256_to_hex(vec_hash))) {
+    if ((hf_version >= 11) && (tx.version == 2)) {
       /* ignore */
     } else {
       for (const auto& txin : tx.vin)
