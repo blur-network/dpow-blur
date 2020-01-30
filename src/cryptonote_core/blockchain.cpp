@@ -96,6 +96,7 @@ namespace cryptonote
   {
     extern int32_t NOTARIZED_HEIGHT;
     extern uint256 NOTARIZED_HASH;
+    extern uint256 NOTARIZED_DESTTXID;
   }
 }
 
@@ -327,7 +328,7 @@ uint64_t Blockchain::get_current_blockchain_height() const
   return m_db->height();
 }
 //------------------------------------------------------------------
-bool Blockchain::set_last_notarized_hash(crypto::hash const& notarized_hash) const
+bool Blockchain::set_last_notarized_hash(crypto::hash const& notarized_hash, crypto::hash const& notarized_txid) const
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
   epee::span<const uint8_t> span_hash = epee::as_byte_span(notarized_hash);
@@ -340,9 +341,16 @@ bool Blockchain::set_last_notarized_hash(crypto::hash const& notarized_hash) con
   std::string notarized_string = epee::string_tools::pod_to_hex(hash_bits.bytes);
   std::string binbuff;
   if(!epee::string_tools::parse_hexstr_to_binbuff(notarized_string, binbuff)) {
-    MERROR("Error parsing hexstr to binbuff in set_last_notarized_hash!");
+    MERROR("Error parsing hexstr to binbuff for notarized_hash!");
     return false;
   }
+  std::string notarized_txid_s = epee::string_tools::pod_to_hex(notarized_txid);
+  std::string txid_binbuff;
+  if(!epee::string_tools::parse_hexstr_to_binbuff(notarized_txid_s, txid_binbuff)) {
+    MERROR("Error parsing hexstr to binbuff for notarized_txid!");
+    return false;
+  }
+  komodo::NOTARIZED_DESTTXID = *reinterpret_cast<const uint256*>(txid_binbuff.data());
   komodo::NOTARIZED_HASH = *reinterpret_cast<const uint256*>(binbuff.data());
   komodo::NOTARIZED_HEIGHT = (int32_t)get_block_height(m_db->get_block(notarized_hash));
   return true;

@@ -825,7 +825,10 @@ namespace cryptonote
     /* insert notarized hash and merkle hash check here */
 
     std::list<cryptonote::blobdata> tx_blobs;
-    
+
+    cryptonote::transaction tx;
+    cryptonote::blobdata blob;
+    crypto::hash tx_hash, tx_prefix_hash;
     for(auto tx_blob_it = arg.txs.begin(); tx_blob_it!=arg.txs.end();)
     {
       cryptonote::tx_verification_context tvc = AUTO_VAL_INIT(tvc);
@@ -836,14 +839,21 @@ namespace cryptonote
         drop_connection(context, false, false);
         return 1;
       }
-      if(tvc.m_should_be_relayed)
+      if(tvc.m_should_be_relayed) {
+        blob = *tx_blob_it;
         ++tx_blob_it;
+      }
       else
         arg.txs.erase(tx_blob_it++);
     }
 
+    if (!cryptonote::parse_and_validate_tx_from_blob(blob, tx, tx_hash, tx_prefix_hash)) {
+      MERROR("Failed to parse and validate tx from blob in handle_notify_new_notarization!");
+      return 1;
+    }
+
     relay_notarization(arg, context);
-    if(!m_core.get_blockchain_storage().set_last_notarized_hash(arg.notarized_hash)) {
+    if(!m_core.get_blockchain_storage().set_last_notarized_hash(arg.notarized_hash, tx_hash)) {
       MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(arg.notarized_hash));
       return 1;
     }

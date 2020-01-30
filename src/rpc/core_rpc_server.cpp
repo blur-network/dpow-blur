@@ -1268,7 +1268,7 @@ namespace cryptonote
         r.signers_index.push_back(each);
       }
       r.notarized_hash = m_core.get_block_id_by_height(m_core.get_blockchain_storage().get_db().height() - 16);
-      if (!m_core.get_blockchain_storage().set_last_notarized_hash(r.notarized_hash)) {
+      if (!m_core.get_blockchain_storage().set_last_notarized_hash(r.notarized_hash, get_transaction_hash(tx))) {
         MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(r.notarized_hash));
         return false;
       }
