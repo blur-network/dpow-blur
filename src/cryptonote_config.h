@@ -69,7 +69,7 @@
 // COIN - number of smallest units in one coin
 #define COIN                                            ((uint64_t)1000000000000) /* pow(10, 12) */
 
-#define DEFAULT_MIXIN                                   5
+#define DEFAULT_MIXIN                                   4
 #define DEFAULT_RINGSIZE                                DEFAULT_MIXIN + 1
 #define DYNAMIC_FEE_PER_KB_BASE_FEE                     ((uint64_t)400000000)
 #define DYNAMIC_FEE_PER_KB_BASE_BLOCK_REWARD            ((uint64_t)9000000000000) /* 9 * pow(10,12) */
