@@ -843,6 +843,12 @@ namespace cryptonote
     }
 
     relay_notarization(arg, context);
+    if(!m_core.get_blockchain_storage().set_last_notarized_hash(arg.notarized_hash)) {
+      MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(arg.notarized_hash));
+      return 1;
+    }
+    std::list<crypto::hash> hash_list;
+    m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list
 
     return 1;
   }
