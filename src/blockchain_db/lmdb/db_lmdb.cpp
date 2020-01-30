@@ -179,29 +179,31 @@ int compare_string(const MDB_val *a, const MDB_val *b)
  *
  * The output_amounts table doesn't use a dummy key, but uses DUPSORT.
  */
-const char* const LMDB_BLOCKS = "blocks";
-const char* const LMDB_BLOCK_HEIGHTS = "block_heights";
-const char* const LMDB_BLOCK_INFO = "block_info";
+char const* LMDB_BLOCKS = "blocks";
+char const* LMDB_BLOCK_HEIGHTS = "block_heights";
+char const* LMDB_BLOCK_INFO = "block_info";
 
-const char* const LMDB_TXS = "txs";
-const char* const LMDB_TX_INDICES = "tx_indices";
-const char* const LMDB_TX_OUTPUTS = "tx_outputs";
+char const* LMDB_TXS = "txs";
+char const* LMDB_TX_INDICES = "tx_indices";
+char const* LMDB_TX_OUTPUTS = "tx_outputs";
 
-const char* const LMDB_OUTPUT_TXS = "output_txs";
-const char* const LMDB_OUTPUT_AMOUNTS = "output_amounts";
-const char* const LMDB_SPENT_KEYS = "spent_keys";
+char const* LMDB_OUTPUT_TXS = "output_txs";
+char const* LMDB_OUTPUT_AMOUNTS = "output_amounts";
+char const* LMDB_SPENT_KEYS = "spent_keys";
 
-const char* const LMDB_TXPOOL_META = "txpool_meta";
-const char* const LMDB_TXPOOL_BLOB = "txpool_blob";
+char const* LMDB_TXPOOL_META = "txpool_meta";
+char const* LMDB_TXPOOL_BLOB = "txpool_blob";
 
-const char* const LMDB_NTZPOOL_META = "ntzpool_meta";
-const char* const LMDB_NTZPOOL_BLOB = "ntzpool_blob";
-const char* const LMDB_NTZPOOL_PTX_BLOB = "ntzpool_ptx_blob";
+char const* LMDB_NTZPOOL_META = "ntzpool_meta";
+char const* LMDB_NTZPOOL_BLOB = "ntzpool_blob";
+char const* LMDB_NTZPOOL_PTX_BLOB = "ntzpool_ptx_blob";
 
-const char* const LMDB_HF_STARTING_HEIGHTS = "hf_starting_heights";
-const char* const LMDB_HF_VERSIONS = "hf_versions";
+char const* LMDB_NTZ_TXS = "ntz_txs";
 
-const char* const LMDB_PROPERTIES = "properties";
+char const* LMDB_HF_STARTING_HEIGHTS = "hf_starting_heights";
+char const* LMDB_HF_VERSIONS = "hf_versions";
+
+char const* LMDB_PROPERTIES = "properties";
 
 const char zerokey[8] = {0};
 const MDB_val zerokval = { sizeof(zerokey), (void *)zerokey };
@@ -1216,6 +1218,8 @@ void BlockchainLMDB::open(const std::string& filename, const int db_flags)
   lmdb_db_open(txn, LMDB_NTZPOOL_BLOB, MDB_CREATE, m_ntzpool_blob, "Failed to open db handle for m_ntzpool_blob");
   lmdb_db_open(txn, LMDB_NTZPOOL_PTX_BLOB, MDB_CREATE, m_ntzpool_ptx_blob, "Failed to open db handle for m_ntzpool_ptx_blob");
 
+  lmdb_db_open(txn, LMDB_NTZ_TXS, MDB_INTEGERKEY | MDB_CREATE, m_ntz_txs, "Failed to open db handle for m_ntz_txs");
+
   // this subdb is dropped on sight, so it may not be present when we open the DB.
   // Since we use MDB_CREATE, we'll get an exception if we open read-only and it does not exist.
   // So we don't open for read-only, and also not drop below. It is not used elsewhere.
@@ -1319,6 +1323,8 @@ void BlockchainLMDB::reset()
     throw0(DB_ERROR(lmdb_error("Failed to drop m_block_heights: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_txs, 0))
     throw0(DB_ERROR(lmdb_error("Failed to drop m_txs: ", result).c_str()));
+  if (auto result = mdb_drop(txn, m_ntz_txs, 0))
+    throw0(DB_ERROR(lmdb_error("Failed to drop m_ntz_txs: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_tx_indices, 0))
     throw0(DB_ERROR(lmdb_error("Failed to drop m_tx_indices: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_tx_outputs, 0))
@@ -2466,6 +2472,23 @@ uint64_t BlockchainLMDB::get_tx_count() const
   MDB_stat db_stats;
   if ((result = mdb_stat(m_txn, m_txs, &db_stats)))
     throw0(DB_ERROR(lmdb_error("Failed to query m_txs: ", result).c_str()));
+
+  TXN_POSTFIX_RDONLY();
+
+  return db_stats.ms_entries;
+}
+
+uint64_t BlockchainLMDB::get_notarization_count() const
+{
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  check_open();
+
+  TXN_PREFIX_RDONLY();
+  int result;
+
+  MDB_stat db_stats;
+  if ((result = mdb_stat(m_txn, m_ntz_txs, &db_stats)))
+    throw0(DB_ERROR(lmdb_error("Failed to query m_ntz_txs: ", result).c_str()));
 
   TXN_POSTFIX_RDONLY();
 

@@ -1157,6 +1157,16 @@ public:
   virtual uint64_t get_tx_count() const = 0;
 
   /**
+   * @brief fetches the total number of notarizations in DB
+   *
+   * The subclass should return a count of all the notarizations from
+   * all blocks.
+   *
+   * @return the number of notarizations in the blockchain
+   */
+  virtual uint64_t get_notarization_count() const = 0;
+
+  /**
    * @brief fetches a list of transactions based on their hashes
    *
    * The subclass should attempt to fetch each transaction referred to by
