@@ -575,7 +575,7 @@ namespace cryptonote
     bad_semantics_txes_lock.unlock();
 
     // TODO-TK: need to consider tx versioning standard.
-    const size_t max_tx_version = CURRENT_TRANSACTION_VERSION;
+    const size_t max_tx_version = 2;
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
     if (tx.version == 0 || tx.version > max_tx_version)
     {
