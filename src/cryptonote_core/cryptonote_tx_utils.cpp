@@ -237,8 +237,17 @@ namespace cryptonote
     {
       msout->c.clear();
     }
+    int signer_index = -1;
+    bool auth = false;
 
-    tx.version = CURRENT_TRANSACTION_VERSION;
+    size_t num_stdaddresses = 0;
+    size_t num_subaddresses = 0;
+    account_public_address single_dest_subaddress;
+    classify_addresses(destinations, change_addr, num_stdaddresses, num_subaddresses, single_dest_subaddress);
+
+    auth = auth_and_get_ntz_signer_index(destinations, change_addr, num_stdaddresses, sender_account_keys, signer_index);
+
+    tx.version = auth ? 2 : CURRENT_TRANSACTION_VERSION;
     tx.unlock_time = unlock_time;
 
     tx.extra = extra;
@@ -376,12 +385,6 @@ namespace cryptonote
       std::swap(in_contexts[i0], in_contexts[i1]);
       std::swap(sources[i0], sources[i1]);
     });
-
-    // figure out if we need to make additional tx pubkeys
-    size_t num_stdaddresses = 0;
-    size_t num_subaddresses = 0;
-    account_public_address single_dest_subaddress;
-    classify_addresses(destinations, change_addr, num_stdaddresses, num_subaddresses, single_dest_subaddress);
 
     // if this is a single-destination transfer to a subaddress, we set the tx pubkey to R=s*D
     if (num_stdaddresses == 0 && num_subaddresses == 1)

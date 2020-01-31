@@ -1234,7 +1234,17 @@ namespace cryptonote
       std::list<blobdata> verified_tx_blobs;
       verified_tx_blobs.push_back(req.tx_blob);
       r.txs = verified_tx_blobs;
+   /*   for (const auto& each: signers_list) {
+        r.signers_index.push_back(each);
+      }*/
+      crypto::hash notarized_hash = m_core.get_block_id_by_height(m_core.get_blockchain_storage().get_db().height() - 16);
+      if (!m_core.get_blockchain_storage().set_last_notarized_hash(notarized_hash, get_transaction_hash(tx))) {
+        MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(notarized_hash));
+        return false;
+      }
       m_core.get_protocol()->relay_transactions(r, fake_context);
+      std::list<crypto::hash> hash_list;
+      m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }

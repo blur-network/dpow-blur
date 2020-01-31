@@ -95,6 +95,8 @@ namespace cryptonote
   namespace komodo
   {
     extern int32_t NOTARIZED_HEIGHT;
+    extern uint256 NOTARIZED_HASH;
+    extern uint256 NOTARIZED_DESTTXID;
   }
 }
 
@@ -324,6 +326,34 @@ uint64_t Blockchain::get_current_blockchain_height() const
   // well as not accessing class members, even read only (ie, m_invalid_blocks). The caller must
   // lock if it is otherwise needed.
   return m_db->height();
+}
+//------------------------------------------------------------------
+bool Blockchain::set_last_notarized_hash(crypto::hash const& notarized_hash, crypto::hash const& notarized_txid) const
+{
+  LOG_PRINT_L3("Blockchain::" << __func__);
+  epee::span<const uint8_t> span_hash = epee::as_byte_span(notarized_hash);
+  bits256 hash_bits;
+  size_t i = 0;
+  for (const auto& byte : span_hash)
+  {
+    memcpy(&hash_bits.bytes[i++], &byte, sizeof(byte));
+  }
+  std::string notarized_string = epee::string_tools::pod_to_hex(hash_bits.bytes);
+  std::string binbuff;
+  if(!epee::string_tools::parse_hexstr_to_binbuff(notarized_string, binbuff)) {
+    MERROR("Error parsing hexstr to binbuff for notarized_hash!");
+    return false;
+  }
+  std::string notarized_txid_s = epee::string_tools::pod_to_hex(notarized_txid);
+  std::string txid_binbuff;
+  if(!epee::string_tools::parse_hexstr_to_binbuff(notarized_txid_s, txid_binbuff)) {
+    MERROR("Error parsing hexstr to binbuff for notarized_txid!");
+    return false;
+  }
+  komodo::NOTARIZED_DESTTXID = *reinterpret_cast<const uint256*>(txid_binbuff.data());
+  komodo::NOTARIZED_HASH = *reinterpret_cast<const uint256*>(binbuff.data());
+  komodo::NOTARIZED_HEIGHT = (int32_t)get_block_height(m_db->get_block(notarized_hash));
+  return true;
 }
 //------------------------------------------------------------------
 //FIXME: possibly move this into the constructor, to avoid accidentally
@@ -2681,7 +2711,7 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
     }
 
     // min/max tx version based on HF, and we accept v1 txes if having a non mixable
-    const size_t max_tx_version = 1;
+    const size_t max_tx_version = 2;
     if (tx.version > max_tx_version && hf_version >= 5)
     {
       MERROR_VER("transaction version " << (unsigned)tx.version << " is higher than max accepted version " << max_tx_version);
@@ -2932,7 +2962,7 @@ bool Blockchain::check_ntz_req_inputs(transaction& tx, ntz_req_verification_cont
     }
 
     // min/max tx version based on HF, and we accept v1 txes if having a non mixable
-    const size_t max_tx_version = 1;
+    const size_t max_tx_version = 2;
     if (tx.version > max_tx_version && hf_version >= 5)
     {
       MERROR_VER("transaction version " << (unsigned)tx.version << " is higher than max accepted version " << max_tx_version);

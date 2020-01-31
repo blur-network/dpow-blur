@@ -188,6 +188,72 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const transacti
   add_tx_amount_output_indices(tx_id, amount_output_indices);
 }
 
+void BlockchainDB::add_ntz_transaction(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash* tx_hash_ptr)
+{
+  bool miner_tx = false;
+  crypto::hash tx_hash;
+  if (!tx_hash_ptr)
+  {
+    // should only need to compute hash for miner transactions
+    tx_hash = get_transaction_hash(tx);
+    LOG_PRINT_L3("null tx_hash_ptr - needed to compute: " << tx_hash);
+  }
+  else
+  {
+    tx_hash = *tx_hash_ptr;
+  }
+
+  for (const txin_v& tx_input : tx.vin)
+  {
+    if (tx_input.type() == typeid(txin_to_key))
+    {
+      add_spent_key(boost::get<txin_to_key>(tx_input).k_image);
+    }
+    else if (tx_input.type() == typeid(txin_gen))
+    {
+      /* nothing to do here */
+      miner_tx = true;
+    }
+    else
+    {
+      LOG_PRINT_L1("Unsupported input type, removing key images and aborting transaction addition");
+      for (const txin_v& tx_input : tx.vin)
+      {
+        if (tx_input.type() == typeid(txin_to_key))
+        {
+          remove_spent_key(boost::get<txin_to_key>(tx_input).k_image);
+        }
+      }
+      return;
+    }
+  }
+
+  uint64_t tx_id = add_ntz_transaction_data(blk_hash, tx, tx_hash);
+
+  std::vector<uint64_t> amount_output_indices;
+
+  // iterate tx.vout using indices instead of C++11 foreach syntax because
+  // we need the index
+  for (uint64_t i = 0; i < tx.vout.size(); ++i)
+  {
+    // miner v2 txes have their coinbase output in one single out to save space,
+    // and we store them as rct outputs with an identity mask
+    if (miner_tx)
+    {
+      cryptonote::tx_out vout = tx.vout[i];
+      rct::key commitment = rct::zeroCommit(vout.amount);
+      vout.amount = 0;
+      amount_output_indices.push_back(add_output(tx_hash, vout, i, tx.unlock_time,
+        &commitment));
+    }
+    else
+    {
+      amount_output_indices.push_back(add_output(tx_hash, tx.vout[i], i, tx.unlock_time, &tx.rct_signatures.outPk[i].mask));
+    }
+  }
+  add_tx_amount_output_indices(tx_id, amount_output_indices);
+}
+
 uint64_t BlockchainDB::add_block( const block& blk
                                 , const size_t& block_size
                                 , const difficulty_type& cumulative_difficulty
@@ -217,7 +283,11 @@ uint64_t BlockchainDB::add_block( const block& blk
   for (const transaction& tx : txs)
   {
     tx_hash = blk.tx_hashes[tx_i];
-    add_transaction(blk_hash, tx, &tx_hash);
+    if (tx.version < 2) {
+      add_transaction(blk_hash, tx, &tx_hash);
+    } else if (tx.version == 2) {
+      add_ntz_transaction(blk_hash, tx, &tx_hash);
+    }
     ++tx_i;
   }
   TIME_MEASURE_FINISH(time1);
@@ -314,6 +384,25 @@ transaction BlockchainDB::get_tx(const crypto::hash& h) const
   transaction tx;
   if (!get_tx(h, tx))
     throw TX_DNE(std::string("tx with hash ").append(epee::string_tools::pod_to_hex(h)).append(" not found in db").c_str());
+  return tx;
+}
+
+bool BlockchainDB::get_ntz_tx(const crypto::hash& h, cryptonote::transaction &tx) const
+{
+  blobdata bd;
+  if (!get_ntz_tx_blob(h, bd))
+    return false;
+  if (!parse_and_validate_tx_from_blob(bd, tx))
+    throw DB_ERROR("Failed to parse notarization transaction from blob retrieved from the db");
+
+  return true;
+}
+
+transaction BlockchainDB::get_ntz_tx(const crypto::hash& h) const
+{
+  transaction tx;
+  if (!get_ntz_tx(h, tx))
+    throw TX_DNE(std::string("ntz tx with hash ").append(epee::string_tools::pod_to_hex(h)).append(" not found in db").c_str());
   return tx;
 }
 

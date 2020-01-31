@@ -575,7 +575,7 @@ namespace cryptonote
     bad_semantics_txes_lock.unlock();
 
     // TODO-TK: need to consider tx versioning standard.
-    const size_t max_tx_version = CURRENT_TRANSACTION_VERSION;
+    const size_t max_tx_version = 2;
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
     if (tx.version == 0 || tx.version > max_tx_version)
     {
@@ -685,7 +685,7 @@ namespace cryptonote
     tx_hash = hone;
     tx_prefixt_hash = htwo;
 
-    const size_t max_tx_version = CURRENT_TRANSACTION_VERSION;
+    const size_t max_tx_version = 2;
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
     if (tx.version == 0 || tx.version > max_tx_version)
     {
@@ -1033,13 +1033,13 @@ namespace cryptonote
       std::list<transaction> txs;
       std::list<crypto::hash> missed_txs;
       uint64_t coinbase_amount = get_outs_money_amount(b.miner_tx);
-      this->get_transactions(b.tx_hashes, txs, missed_txs);      
+      this->get_transactions(b.tx_hashes, txs, missed_txs);
       uint64_t tx_fee_amount = 0;
       for(const auto& tx: txs)
       {
         tx_fee_amount += get_tx_fee(tx);
       }
-      
+
       emission_amount += coinbase_amount - tx_fee_amount;
       total_fee_amount += tx_fee_amount;
       return true;
@@ -1182,12 +1182,12 @@ namespace cryptonote
       }
     } else {
 
-      LOG_PRINT_L2("tx " << tx_hash << "not ready to be sent yet, sig count: " << std::to_string(sig_count));
+      MWARNING("tx " << tx_hash << " not ready to be sent yet, sig count: " << std::to_string(sig_count));
 
 
       if(m_blockchain_storage.have_tx(tx_hash))
       {
-        LOG_PRINT_L2("tx " << tx_hash << " already have transaction in blockchain");
+        MWARNING("tx " << tx_hash << " already have transaction in blockchain");
         return true;
       }
 
@@ -1198,6 +1198,7 @@ namespace cryptonote
         return false;
       } else {
         if (sig_count == 1) {
+          MWARNING("Prior to add_ntz_req, tx_blob: " << tx_to_blob(tx));
           return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, has_raw_ntz_data, sig_count, signers_index, ptx_blob, ptx_hash);
         } else {
           std::pair<crypto::hash,cryptonote::blobdata> hash_blob;

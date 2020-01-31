@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2020, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 //
@@ -797,7 +798,7 @@ namespace cryptonote
   }
   //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>
-  int t_cryptonote_protocol_handler<t_core>::handle_notify_new_notarization(int command, NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& context)
+  int t_cryptonote_protocol_handler<t_core>::handle_notify_new_notarization(int command, NOTIFY_NEW_NOTARIZATION::request& arg, cryptonote_connection_context& context)
   {
     MLOG_P2P_MESSAGE("Received NOTIFY_NEW_NOTARIZATION (" << arg.txs.size() << " notarization tx)");
     if(context.m_state != cryptonote_connection_context::state_normal)
@@ -812,6 +813,18 @@ namespace cryptonote
       return 1;
     }
 
+    const int neg = -1;
+
+/*    for (const auto& each : arg.signers_index) {
+      if (each == neg) {
+        MERROR("ERROR: Notarization received with less than required amount of signatures!");
+        return 1;
+      }
+    }
+
+     insert notarized hash and merkle hash check here */
+    cryptonote::transaction tx;
+    crypto::hash tx_hash, prefix_hash;
     std::list<cryptonote::blobdata> tx_blobs;
     NOTIFY_NEW_TRANSACTIONS::request ag;
     for (const auto& tx : arg.txs)
@@ -830,6 +843,17 @@ namespace cryptonote
     ag.txs = tx_blobs;
 
     relay_transactions(ag, context);
+    
+    if (!parse_and_validate_tx_from_blob(arg.txs.front(), tx, tx_hash, prefix_hash)) {
+       MERROR("Failed to parse tx from blob prior to set_last_notarized, in protocol!");
+       return 1;
+    }
+    if(!m_core.get_blockchain_storage().set_last_notarized_hash(m_core.get_block_id_by_height(m_core.get_blockchain_storage().get_db().height()-16), get_transaction_hash(tx))) {
+      MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(arg.notarized_hash));
+      return 1;
+    }
+    std::list<crypto::hash> hash_list;
+    m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list
 
     return 1;
   }
