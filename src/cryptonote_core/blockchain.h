@@ -724,6 +724,24 @@ namespace cryptonote
     template<class t_ids_container, class t_tx_container, class t_missed_container>
     bool get_transactions(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs) const;
 
+
+    /**
+     * @brief gets transactions based on a list of transaction hashes
+     *
+     * @tparam t_ids_container a standard-iterable container
+     * @tparam t_tx_container a standard-iterable container
+     * @tparam t_missed_container a standard-iterable container
+     * @param txs_ids a container of hashes for which to get the corresponding transactions
+     * @param txs return-by-reference a container to store result transactions in
+     * @param missed_txs return-by-reference a container to store missed transactions in
+     *
+     * @return false if an unexpected exception occurs, else true
+     */
+    template<class t_ids_container, class t_tx_container, class t_missed_container>
+    bool get_notarizations_blobs(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs) const;
+    template<class t_ids_container, class t_tx_container, class t_missed_container>
+    bool get_notarizations(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs) const;
+
     //debug functions
 
     /**

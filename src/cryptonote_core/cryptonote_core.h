@@ -372,6 +372,20 @@ namespace cryptonote
      bool get_transactions(const std::vector<crypto::hash>& txs_ids, std::list<transaction>& txs, std::list<crypto::hash>& missed_txs) const;
 
      /**
+      * @copydoc Blockchain::get_transactions
+      *
+      * @note see Blockchain::get_transactions
+      */
+     bool get_notarizations(const std::vector<crypto::hash>& txs_ids, std::list<cryptonote::blobdata>& txs, std::list<crypto::hash>& missed_txs) const;
+
+     /**
+      * @copydoc Blockchain::get_transactions
+      *
+      * @note see Blockchain::get_transactions
+      */
+     bool get_notarizations(const std::vector<crypto::hash>& txs_ids, std::list<transaction>& txs, std::list<crypto::hash>& missed_txs) const;
+
+     /**
       * @copydoc Blockchain::get_block_by_hash
       *
       * @note see Blockchain::get_block_by_hash
