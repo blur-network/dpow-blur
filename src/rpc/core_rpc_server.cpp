@@ -778,11 +778,13 @@ namespace cryptonote
     }
     std::list<crypto::hash> missed_txs;
     std::list<transaction> txs;
-    bool r = m_core.get_blockchain_storage().get_notarizations(vh, txs, missed_txs);
-    if(!r)
-    {
-      res.status = "Failed";
-      return true;
+    for (const auto& each : vh) {
+      cryptonote::transaction each_tx;
+      bool r = m_core.get_blockchain_storage().get_db().get_ntz_tx(each, each_tx);
+      if (!r)
+        missed_txs.push_back(get_transaction_hash(each_tx));
+      else
+        txs.push_back(each_tx);
     }
     LOG_PRINT_L2("Found " << txs.size() << "/" << vh.size() << " transactions on the blockchain");
 
