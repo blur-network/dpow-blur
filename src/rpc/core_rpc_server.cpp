@@ -827,6 +827,80 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res, epee::json_rpc::error& error_resp)
+  {
+    PERF_TIMER(on_get_transactions);
+    bool ok;
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_NOTARIZATIONS>(invoke_http_mode::JON, "/get_notarizations", req, res, ok))
+      return ok;
+
+    std::vector<crypto::hash> vh;
+    for(const auto& tx_hex_str: req.ntz_hashes)
+    {
+      blobdata b;
+      if(!string_tools::parse_hexstr_to_binbuff(tx_hex_str, b))
+      {
+        res.status = "Failed to parse hex representation of transaction hash";
+        return true;
+      }
+      if(b.size() != sizeof(crypto::hash))
+      {
+        res.status = "Failed, size of data mismatch";
+        return true;
+      }
+      vh.push_back(*reinterpret_cast<const crypto::hash*>(b.data()));
+    }
+    std::list<crypto::hash> missed_txs;
+    std::list<transaction> txs;
+    for (const auto& each : vh) {
+      cryptonote::transaction each_tx;
+      bool r = m_core.get_blockchain_storage().get_db().get_ntz_tx(each, each_tx);
+      if (!r)
+        missed_txs.push_back(get_transaction_hash(each_tx));
+      else
+        txs.push_back(each_tx);
+    }
+    LOG_PRINT_L2("Found " << txs.size() << "/" << vh.size() << " transactions on the blockchain");
+
+    std::list<std::string>::const_iterator txhi = req.ntz_hashes.begin();
+    std::vector<crypto::hash>::const_iterator vhi = vh.begin();
+    for(auto& tx: txs)
+    {
+      if (tx.version != 2) {
+        /* ignore (shouldn't happen anyway) */
+      } else {
+        res.txs.push_back(COMMAND_RPC_GET_NOTARIZATIONS::entry());
+        COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
+
+        crypto::hash tx_hash = *vhi++;
+        e.tx_hash = *txhi++;
+        blobdata blob = t_serializable_object_to_blob(tx);
+        e.as_hex = string_tools::buff_to_hex_nodelimer(blob);
+        if (req.decode_as_json)
+          e.as_json = obj_to_json_str(tx);
+
+        e.block_height = m_core.get_blockchain_storage().get_db().get_tx_block_height(tx_hash);
+        e.block_timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(e.block_height);
+        e.double_spend_seen = false;
+
+        bool r = m_core.get_tx_outputs_gindexs(tx_hash, e.output_indices);
+        if (!r)
+        {
+            res.status = "Failed";
+            return false;
+        }
+      }
+    }
+    for(const auto& miss_tx: missed_txs)
+    {
+      res.missed_tx.push_back(string_tools::pod_to_hex(miss_tx));
+    }
+
+    LOG_PRINT_L2(res.txs.size() << " transactions found, " << res.missed_tx.size() << " not found");
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_transactions_by_heights(const COMMAND_RPC_GET_TRANSACTIONS_BY_HEIGHTS::request& req, COMMAND_RPC_GET_TRANSACTIONS_BY_HEIGHTS::response& res)
   {
     PERF_TIMER(on_get_transactions_by_heights);
