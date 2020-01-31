@@ -1242,6 +1242,13 @@ namespace cryptonote
         MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(notarized_hash));
         return false;
       }
+      cryptonote::tx_verification_context tvc;
+      std::vector<cryptonote::tx_verification_context> tvc_vec;
+      tvc_vec.push_back(tvc);
+      if (!m_core.handle_incoming_txs(verified_tx_blobs, tvc_vec, false, false, false)) {
+        MERROR("[RPC] Error in handling incoming txs, in request_ntz_sig!");
+        return false;
+      }
       m_core.get_protocol()->relay_transactions(r, fake_context);
       std::list<crypto::hash> hash_list;
       m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list
@@ -2284,6 +2291,7 @@ namespace cryptonote
     /*res.notarized_pow = n_pow;*/
       res.notarized_txid = n_txid;
       res.notarized_height = komodo::NOTARIZED_HEIGHT;
+      res.notarizations_completed = m_core.get_blockchain_storage().get_db().get_notarization_count();
 /*      res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
       res.notarized_MoM = n_MoM;*/

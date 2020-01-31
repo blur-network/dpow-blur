@@ -798,7 +798,7 @@ namespace cryptonote
   }
   //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>
-  int t_cryptonote_protocol_handler<t_core>::handle_notify_new_notarization(int command, NOTIFY_NEW_NOTARIZATION::request& arg, cryptonote_connection_context& context)
+  int t_cryptonote_protocol_handler<t_core>::handle_notify_new_notarization(int command, NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& context)
   {
     MLOG_P2P_MESSAGE("Received NOTIFY_NEW_NOTARIZATION (" << arg.txs.size() << " notarization tx)");
     if(context.m_state != cryptonote_connection_context::state_normal)
@@ -848,8 +848,9 @@ namespace cryptonote
        MERROR("Failed to parse tx from blob prior to set_last_notarized, in protocol!");
        return 1;
     }
-    if(!m_core.get_blockchain_storage().set_last_notarized_hash(m_core.get_block_id_by_height(m_core.get_blockchain_storage().get_db().height()-16), get_transaction_hash(tx))) {
-      MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(arg.notarized_hash));
+    crypto::hash notarized_hash = m_core.get_block_id_by_height(m_core.get_blockchain_storage().get_db().height()-16);
+    if(!m_core.get_blockchain_storage().set_last_notarized_hash(notarized_hash, get_transaction_hash(tx))) {
+      MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(	notarized_hash));
       return 1;
     }
     std::list<crypto::hash> hash_list;

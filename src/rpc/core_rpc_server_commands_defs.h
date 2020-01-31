@@ -1071,6 +1071,7 @@ namespace cryptonote
       int32_t prevMoMheight;
       int32_t notarized_MoMdepth;
       std::string notarized_MoM;
+      uint64_t notarizations_completed;
       std::string status;
 
       BEGIN_KV_SERIALIZE_MAP()
@@ -1081,6 +1082,7 @@ namespace cryptonote
         KV_SERIALIZE(notarized_height)
         KV_SERIALIZE(notarized_hash)
         KV_SERIALIZE(notarized_txid)
+        KV_SERIALIZE(notarizations_completed)
 /*        KV_SERIALIZE(notarized)*/
 /*        KV_SERIALIZE(prevMoMheight)
         KV_SERIALIZE(notarized_MoMdepth)

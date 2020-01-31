@@ -2700,16 +2700,19 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
   // if one output cannot mix with 2 others, we accept at most 1 output that can mix
   if (hf_version >= 1)
   {
-    for (const auto& txin : tx.vin)
-    {
-      if (boost::get<txin_to_key>(txin).key_offsets.size() < DEFAULT_RINGSIZE)
+    if ((hf_version >= 11) && (tx.version == 2)) {
+      /* ignore */
+    } else {
+      for (const auto& txin : tx.vin)
       {
-        MERROR_VER("Tx " << get_transaction_hash(tx) << " must have ring size (" << DEFAULT_RINGSIZE << ")");
-        tvc.m_low_mixin = true;
-        return false;
+        if (boost::get<txin_to_key>(txin).key_offsets.size() < DEFAULT_RINGSIZE)
+        {
+          MERROR_VER("Tx " << get_transaction_hash(tx) << " must have ring size (" << DEFAULT_RINGSIZE << ")");
+          tvc.m_low_mixin = true;
+          return false;
+        }
       }
     }
-
     // min/max tx version based on HF, and we accept v1 txes if having a non mixable
     const size_t max_tx_version = 2;
     if (tx.version > max_tx_version && hf_version >= 5)

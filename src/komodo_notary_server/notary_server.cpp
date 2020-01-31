@@ -1506,15 +1506,7 @@ pool_recheck:
             //Not fatal
         }
       }
-      bool ready_to_send = false;
-      if (sig_count >= 10) {
-        ready_to_send = true;
-      }
 
-      if (ready_to_send) {
-        m_wallet->commit_tx(ptx_vector);
-        MWARNING("Signatures >= 10: [commit_tx] sent with sig_count: " << std::to_string(sig_count) << " and payment id: " << payment_id);
-      } else {
         std::string index_vec;
         for (int i = 0; i < 13; i++) {
           std::string tmp = std::to_string(cryptonote::get_index<int>(i, signers_index)) + " ";
@@ -1523,7 +1515,7 @@ pool_recheck:
 
         const std::vector<int> si_const = signers_index;
         crypto::hash ptx_hash;
-        bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, ready_to_send,
+        bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
         if (fill_res) {
           std::string tx_metadata;
@@ -1536,7 +1528,6 @@ pool_recheck:
         }
        return fill_res;
       }
-    }
     catch (const std::exception& e)
     {
       handle_rpc_exception(std::current_exception(), er, NOTARY_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);

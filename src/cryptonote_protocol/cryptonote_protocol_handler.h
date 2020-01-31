@@ -110,7 +110,7 @@ namespace cryptonote
     //----------------- commands handlers ----------------------------------------------
     int handle_notify_new_block(int command, NOTIFY_NEW_BLOCK::request& arg, cryptonote_connection_context& context);
     int handle_notify_new_transactions(int command, NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& context);
-    int handle_notify_new_notarization(int command, NOTIFY_NEW_NOTARIZATION::request& arg, cryptonote_connection_context& context);
+    int handle_notify_new_notarization(int command, NOTIFY_NEW_TRANSACTIONS::request& arg, cryptonote_connection_context& context);
     int handle_request_get_objects(int command, NOTIFY_REQUEST_GET_OBJECTS::request& arg, cryptonote_connection_context& context);
     int handle_response_get_objects(int command, NOTIFY_RESPONSE_GET_OBJECTS::request& arg, cryptonote_connection_context& context);
     int handle_request_chain(int command, NOTIFY_REQUEST_CHAIN::request& arg, cryptonote_connection_context& context);
