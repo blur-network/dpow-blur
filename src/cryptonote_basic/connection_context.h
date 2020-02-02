@@ -72,7 +72,7 @@ namespace cryptonote
     case cryptonote_connection_context::state_normal:
       return "state_normal";
     default:
-      return "state_standby";
+      return "state_normal";
     }
   }
 

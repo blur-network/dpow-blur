@@ -1634,6 +1634,24 @@ public:
   virtual bool for_all_transactions(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const = 0;
 
   /**
+   * @brief runs a function over all transactions stored
+   *
+   * The subclass should run the passed function for each transaction it has
+   * stored, passing (transaction_hash, transaction) as its parameters.
+   *
+   * If any call to the function returns false, the subclass should return
+   * false.  Otherwise, the subclass returns true.
+   *
+   * The subclass should throw DB_ERROR if any of the expected values are
+   * not found.  Current implementations simply return false.
+   *
+   * @param std::function fn the function to run
+   *
+   * @return false if the function returns false for any transaction, otherwise true
+   */
+  virtual bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const = 0;
+
+  /**
    * @brief runs a function over all outputs stored
    *
    * The subclass should run the passed function for each output it has

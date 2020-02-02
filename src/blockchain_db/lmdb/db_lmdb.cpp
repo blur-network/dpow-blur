@@ -2980,6 +2980,58 @@ bool BlockchainLMDB::for_all_transactions(std::function<bool(const crypto::hash&
   return fret;
 }
 
+bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)> f) const
+{
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  check_open();
+
+  TXN_PREFIX_RDONLY();
+  RCURSOR(ntz_txs);
+  RCURSOR(tx_indices);
+
+  MDB_val k;
+  MDB_val v;
+  bool fret = true;
+
+  MDB_cursor_op op = MDB_FIRST;
+  while (1)
+  {
+    int ret = mdb_cursor_get(m_cur_tx_indices, &k, &v, op);
+    op = MDB_NEXT;
+    if (ret == MDB_NOTFOUND)
+      break;
+    if (ret)
+      throw0(DB_ERROR(lmdb_error("Failed to enumerate transactions: ", ret).c_str()));
+
+    txindex *ti = (txindex *)v.mv_data;
+    const crypto::hash hash = ti->key;
+    k.mv_data = (void *)&ti->data.tx_id;
+    k.mv_size = sizeof(ti->data.tx_id);
+    ret = mdb_cursor_get(m_cur_ntz_txs, &k, &v, MDB_SET);
+    if (ret == MDB_NOTFOUND)
+      break;
+    if (ret)
+      throw0(DB_ERROR(lmdb_error("Failed to enumerate transactions: ", ret).c_str()));
+    blobdata bd;
+    bd.assign(reinterpret_cast<char*>(v.mv_data), v.mv_size);
+    transaction tx;
+    crypto::hash tx_hash, prefix_hash;
+    if (!parse_and_validate_tx_from_blob(bd, tx, tx_hash, prefix_hash))
+      throw0(DB_ERROR("Failed to parse tx from blob retrieved from the db"));
+    if (!f(hash, tx)) {
+      fret = false;
+      break;
+    }
+    if (tx.version != 2) {
+      throw0(DB_ERROR(lmdb_error("Encountered notarization with incorrect tx version: ", ret).c_str()));
+    }
+  }
+
+  TXN_POSTFIX_RDONLY();
+
+  return fret;
+}
+
 bool BlockchainLMDB::for_all_outputs(std::function<bool(uint64_t amount, const crypto::hash &tx_hash, uint64_t height, size_t tx_idx)> f) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);

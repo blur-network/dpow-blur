@@ -911,6 +911,15 @@ namespace cryptonote
     bool for_all_transactions(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
 
     /**
+     * @brief perform a check on all transactions in the blockchain
+     *
+     * @param std::function the check to perform, pass/fail
+     *
+     * @return false if any transaction fails the check, otherwise true
+     */
+    bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
+
+    /**
      * @brief perform a check on all outputs in the blockchain
      *
      * @param std::function the check to perform, pass/fail
