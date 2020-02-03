@@ -200,6 +200,7 @@ char const* LMDB_NTZPOOL_BLOB = "ntzpool_blob";
 char const* LMDB_NTZPOOL_PTX_BLOB = "ntzpool_ptx_blob";
 
 char const* LMDB_NTZ_TXS = "ntz_txs";
+char const* LMDB_NTZ_INDICES = "ntz_indices";
 
 char const* LMDB_HF_STARTING_HEIGHTS = "hf_starting_heights";
 char const* LMDB_HF_VERSIONS = "hf_versions";
@@ -267,6 +268,12 @@ typedef struct txindex {
     crypto::hash key;
     tx_data_t data;
 } txindex;
+
+typedef struct ntzindex {
+    crypto::hash key;
+    uint64_t ntz_id;
+    uint64_t ntz_height;
+} ntzindex;
 
 typedef struct pre_rct_outkey {
     uint64_t amount_index;

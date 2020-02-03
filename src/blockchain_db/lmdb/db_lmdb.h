@@ -60,6 +60,8 @@ typedef struct mdb_txn_cursors
   MDB_cursor *m_txc_txpool_blob;
 
   MDB_cursor *m_txc_ntz_txs;
+  MDB_cursor *m_txc_ntz_indices;
+
   MDB_cursor *m_txc_ntzpool_meta;
   MDB_cursor *m_txc_ntzpool_blob;
   MDB_cursor *m_txc_ntzpool_ptx_blob;
@@ -75,6 +77,7 @@ typedef struct mdb_txn_cursors
 #define m_cur_output_amounts	m_cursors->m_txc_output_amounts
 #define m_cur_txs               m_cursors->m_txc_txs
 #define m_cur_ntz_txs           m_cursors->m_txc_ntz_txs
+#define m_cur_ntz_indices       m_cursors->m_txc_ntz_indices
 #define m_cur_tx_indices	m_cursors->m_txc_tx_indices
 #define m_cur_tx_outputs	m_cursors->m_txc_tx_outputs
 #define m_cur_spent_keys	m_cursors->m_txc_spent_keys
@@ -95,6 +98,7 @@ typedef struct mdb_rflags
   bool m_rf_output_amounts;
   bool m_rf_txs;
   bool m_rf_ntz_txs;
+  bool m_rf_ntz_indices;
   bool m_rf_tx_indices;
   bool m_rf_tx_outputs;
   bool m_rf_spent_keys;
@@ -426,6 +430,7 @@ private:
   MDB_dbi m_txpool_blob;
 
   MDB_dbi m_ntz_txs;
+  MDB_dbi m_ntz_indices;
 
   MDB_dbi m_ntzpool_meta;
   MDB_dbi m_ntzpool_blob;
