@@ -4987,6 +4987,11 @@ bool Blockchain::for_all_outputs(uint64_t amount, std::function<bool(uint64_t he
   return m_db->for_all_outputs(amount, f);;
 }
 
+uint64_t Blockchain::get_notarization_index(crypto::hash const& ntz_hash) const
+{
+  return m_db->get_notarization_index(ntz_hash);
+}
+
 namespace cryptonote {
 template bool Blockchain::get_transactions(const std::vector<crypto::hash>&, std::list<transaction>&, std::list<crypto::hash>&) const;
 //template bool Blockchain::get_notarizations(const std::vector<crypto::hash>&, std::list<transaction>&, std::list<crypto::hash>&) const;

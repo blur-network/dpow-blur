@@ -1255,6 +1255,16 @@ public:
   virtual uint64_t get_notarization_count() const = 0;
 
   /**
+   * @brief fetches corresponding index for notarization
+   *
+   * The subclass should returm a uint64_t corresponding to a notarizations
+   * chronological index.
+   *
+   * @return the index of notarization in the blockchain
+   */
+  virtual uint64_t get_notarization_index(crypto::hash const& h) const = 0;
+
+  /**
    * @brief fetches a list of transactions based on their hashes
    *
    * The subclass should attempt to fetch each transaction referred to by

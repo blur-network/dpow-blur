@@ -2645,6 +2645,34 @@ uint64_t BlockchainLMDB::get_notarization_count() const
   return db_stats.ms_entries;
 }
 
+uint64_t BlockchainLMDB::get_notarization_index(crypto::hash const& ntz_hash) const
+{
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  check_open();
+
+  TXN_PREFIX_RDONLY();
+
+  RCURSOR(ntz_indices)
+
+  uint64_t ret = 0;
+
+  MDB_val_copy<crypto::hash> k(ntz_hash);
+  MDB_val key = k;
+  ntzindex *ntz_index = (ntzindex *)key.mv_data;
+  int result;
+  MDB_val v;
+  result = mdb_cursor_get(m_cur_ntz_indices, &key, &v, MDB_SET);
+  if (result == MDB_NOTFOUND)
+    throw1(TX_DNE(std::string("notarization with hash ").append(epee::string_tools::pod_to_hex(ntz_index->key)).append(" not found in db with corresponding index").c_str()));
+  else if (result)
+    throw0(DB_ERROR(lmdb_error("DB error attempting to ntzindex from hash", result).c_str()));
+
+  TXN_POSTFIX_RDONLY();
+
+  ret = ntz_index->ntz_id;
+  return ret;
+}
+
 std::vector<transaction> BlockchainLMDB::get_tx_list(const std::vector<crypto::hash>& hlist) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
