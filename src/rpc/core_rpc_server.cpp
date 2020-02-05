@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2020, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 //
@@ -781,10 +782,11 @@ namespace cryptonote
     for (const auto& each : vh) {
       cryptonote::transaction each_tx;
       bool r = m_core.get_blockchain_storage().get_db().get_ntz_tx(each, each_tx);
-      if (!r)
+      if (!r) {
         missed_txs.push_back(get_transaction_hash(each_tx));
-      else
+      } else {
         txs.push_back(each_tx);
+      }
     }
     LOG_PRINT_L2("Found " << txs.size() << "/" << vh.size() << " transactions on the blockchain");
 
@@ -800,6 +802,7 @@ namespace cryptonote
 
         crypto::hash tx_hash = *vhi++;
         e.tx_hash = *txhi++;
+        e.notarization_index = m_core.get_blockchain_storage().get_notarization_index(tx_hash);
         blobdata blob = t_serializable_object_to_blob(tx);
         e.as_hex = string_tools::buff_to_hex_nodelimer(blob);
         if (req.decode_as_json)
