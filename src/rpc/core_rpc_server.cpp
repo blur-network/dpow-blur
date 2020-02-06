@@ -52,6 +52,7 @@ using namespace epee;
 #include "p2p/net_node.h"
 #include "version.h"
 #include "komodo/komodo_validation.h"
+#include "blockchain_db/db_structs.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"
@@ -1401,8 +1402,8 @@ namespace cryptonote
         return false;
       }
       m_core.get_protocol()->relay_transactions(r, fake_context);
-      std::list<crypto::hash> hash_list;
-      m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list
+//      std::list<crypto::hash> hash_list;
+//      m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }
@@ -2432,17 +2433,20 @@ namespace cryptonote
       std::string s_hash = span_to_hex(vc_hash);
       epee::span<const uint8_t> vc_pow = as_byte_span(c_pow);;
       std::string s_pow = span_to_hex(vc_pow);
+      uint64_t ntz_complete = m_core.get_blockchain_storage().get_db().get_notarization_count();
+
+      ntzindex ntz_index = m_core.get_blockchain_storage().get_ntz_by_index(ntz_complete);
 
 
       res.assetchains_symbol = komodo::ASSETCHAINS_SYMBOL;
       res.current_chain_height = height;
       res.current_chain_hash = s_hash;
       res.current_chain_pow = s_pow;
-      res.notarized_hash = n_hash;
+      res.notarized_hash = epee::string_tools::pod_to_hex(m_core.get_block_id_by_height(ntz_index.ntz_height));
     /*res.notarized_pow = n_pow;*/
-      res.notarized_txid = n_txid;
-      res.notarized_height = komodo::NOTARIZED_HEIGHT;
-      res.notarizations_completed = m_core.get_blockchain_storage().get_db().get_notarization_count();
+      res.notarized_txid = epee::string_tools::pod_to_hex(ntz_index.key);
+      res.notarized_height = ntz_index.ntz_height;
+      res.notarizations_completed = ntz_complete;
 /*      res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
       res.notarized_MoM = n_MoM;*/
