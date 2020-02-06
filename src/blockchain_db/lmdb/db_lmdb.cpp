@@ -2660,7 +2660,7 @@ ntzindex* BlockchainLMDB::get_ntz_by_index(uint64_t const& ntz_id) const
 
   MDB_val v;
 
-  ntzindex* ret;
+  ntzindex* ret = NULL;
   if (ntz_hash != crypto::null_hash) {
     MDB_val_set(k, ntz_hash);
     result = mdb_cursor_get(m_cur_ntz_indices, &k, &v, MDB_SET);
