@@ -920,7 +920,7 @@ namespace cryptonote
      */
     bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&, const ntzindex*)>) const;
 
-    ntzindex get_ntz_by_index(uint64_t const& ntz_index) const;
+    bool get_ntz_by_index(uint64_t const& ntz_id, ntzindex& ntz_index) const;
 
     /**
      * @brief perform a check on all outputs in the blockchain

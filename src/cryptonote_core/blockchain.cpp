@@ -4977,9 +4977,13 @@ bool Blockchain::for_all_notarizations(std::function<bool(const crypto::hash&, c
   return m_db->for_all_notarizations(f);
 }
 
-ntzindex Blockchain::get_ntz_by_index(uint64_t const& ntz_id) const
+bool Blockchain::get_ntz_by_index(uint64_t const& ntz_id, ntzindex& ntz_index) const
 {
-  return *m_db->get_ntz_by_index(ntz_id);
+  if (ntz_id < m_db->get_notarization_count()) {
+    ntz_index = *m_db->get_ntz_by_index(ntz_id);
+    return true;
+  }
+  return false;
 }
 
 bool Blockchain::for_all_outputs(std::function<bool(uint64_t amount, const crypto::hash &tx_hash, uint64_t height, size_t tx_idx)> f) const
