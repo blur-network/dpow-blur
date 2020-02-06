@@ -57,6 +57,7 @@
 #include "checkpoints/checkpoints.h"
 #include "cryptonote_basic/hardfork.h"
 #include "blockchain_db/blockchain_db.h"
+#include "blockchain_db/db_structs.h"
 
 namespace cryptonote
 {
@@ -917,7 +918,9 @@ namespace cryptonote
      *
      * @return false if any transaction fails the check, otherwise true
      */
-    bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
+    bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&, const ntzindex*)>) const;
+
+    ntzindex get_ntz_by_index(uint64_t const& ntz_index) const;
 
     /**
      * @brief perform a check on all outputs in the blockchain

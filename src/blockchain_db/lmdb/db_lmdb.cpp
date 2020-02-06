@@ -43,6 +43,7 @@
 #include "crypto/crypto.h"
 #include "profile_tools.h"
 #include "ringct/rctOps.h"
+#include "blockchain_db/db_structs.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "blockchain.db.lmdb"
@@ -54,16 +55,6 @@ using namespace crypto;
 
 namespace
 {
-
-#pragma pack(push, 1)
-// This MUST be identical to output_data_t, without the extra rct data at the end
-struct pre_rct_output_data_t
-{
-  crypto::public_key pubkey;       //!< the output's public key (for spend verification)
-  uint64_t           unlock_time;  //!< the output's unlock time (or height)
-  uint64_t           height;       //!< the height of the block which created the output
-};
-#pragma pack(pop)
 
 template <typename T>
 inline void throw0(const T &e)
@@ -248,50 +239,6 @@ inline void lmdb_db_open(MDB_txn* txn, const char* name, int flags, MDB_dbi& dbi
 
 namespace cryptonote
 {
-
-typedef struct mdb_block_info
-{
-  uint64_t bi_height;
-  uint64_t bi_timestamp;
-  uint64_t bi_coins;
-  uint64_t bi_size; // a size_t really but we need 32-bit compat
-  difficulty_type bi_diff;
-  crypto::hash bi_hash;
-} mdb_block_info;
-
-typedef struct blk_height {
-    crypto::hash bh_hash;
-    uint64_t bh_height;
-} blk_height;
-
-typedef struct txindex {
-    crypto::hash key;
-    tx_data_t data;
-} txindex;
-
-typedef struct ntzindex {
-    crypto::hash key;
-    uint64_t ntz_id;
-    uint64_t ntz_height;
-} ntzindex;
-
-typedef struct pre_rct_outkey {
-    uint64_t amount_index;
-    uint64_t output_id;
-    pre_rct_output_data_t data;
-} pre_rct_outkey;
-
-typedef struct outkey {
-    uint64_t amount_index;
-    uint64_t output_id;
-    output_data_t data;
-} outkey;
-
-typedef struct outtx {
-    uint64_t output_id;
-    crypto::hash tx_hash;
-    uint64_t local_index;
-} outtx;
 
 std::atomic<uint64_t> mdb_txn_safe::num_active_txns{0};
 std::atomic_flag mdb_txn_safe::creation_gate = ATOMIC_FLAG_INIT;
@@ -1024,15 +971,9 @@ uint64_t BlockchainLMDB::add_output(const crypto::hash& tx_hash,
   ok.data.pubkey = boost::get < txout_to_key > (tx_output.target).key;
   ok.data.unlock_time = unlock_time;
   ok.data.height = m_height;
-  if (tx_output.amount == 0)
-  {
-    ok.data.commitment = *commitment;
-    data.mv_size = sizeof(ok);
-  }
-  else
-  {
-    data.mv_size = sizeof(pre_rct_outkey);
-  }
+  ok.data.commitment = *commitment;
+  data.mv_size = sizeof(ok);
+
   data.mv_data = &ok;
 
   if ((result = mdb_cursor_put(m_cur_output_amounts, &val_amount, &data, MDB_APPENDDUP)))
@@ -1103,7 +1044,7 @@ void BlockchainLMDB::remove_output(const uint64_t amount, const uint64_t& out_in
   else if (result)
     throw0(DB_ERROR(lmdb_error("DB error attempting to get an output", result).c_str()));
 
-  const pre_rct_outkey *ok = (const pre_rct_outkey *)v.mv_data;
+  const outkey *ok = (const outkey *)v.mv_data;
   MDB_val_set(otxk, ok->output_id);
   result = mdb_cursor_get(m_cur_output_txs, (MDB_val *)&zerokval, &otxk, MDB_GET_BOTH);
   if (result == MDB_NOTFOUND)
@@ -2657,19 +2598,54 @@ uint64_t BlockchainLMDB::get_notarization_index(crypto::hash const& ntz_hash) co
   uint64_t ret = 0;
 
   MDB_val_copy<crypto::hash> k(ntz_hash);
-  MDB_val key = k;
-  ntzindex *ntz_index = (ntzindex *)key.mv_data;
   int result;
   MDB_val v;
-  result = mdb_cursor_get(m_cur_ntz_indices, &key, &v, MDB_SET);
+
+  result = mdb_cursor_get(m_cur_ntz_indices, &k, &v, MDB_SET);
   if (result == MDB_NOTFOUND)
-    throw1(TX_DNE(std::string("notarization with hash ").append(epee::string_tools::pod_to_hex(ntz_index->key)).append(" not found in db with corresponding index").c_str()));
+    throw1(TX_DNE(std::string("notarization with hash ").append(epee::string_tools::pod_to_hex(ntz_hash)).append(" not found in db with corresponding index").c_str()));
   else if (result)
     throw0(DB_ERROR(lmdb_error("DB error attempting to ntzindex from hash", result).c_str()));
+
+  ntzindex* ntz_index = (ntzindex*)v.mv_data;
 
   TXN_POSTFIX_RDONLY();
 
   ret = ntz_index->ntz_id;
+  return ret;
+}
+
+ntzindex* BlockchainLMDB::get_ntz_by_index(uint64_t const& ntz_id) const
+{
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  check_open();
+
+  TXN_PREFIX_RDONLY();
+  ntzindex* ntz_index;
+  crypto::hash ntz_hash = crypto::null_hash;
+  for_all_notarizations([&ntz_id, &ntz_hash](const crypto::hash& hash, const cryptonote::transaction& tx, const ntzindex* ntzind) {
+    if (ntzind->ntz_id == ntz_id) {
+      ntz_hash = ntzind->key;
+      return true;
+    } else {
+      return false;
+    }
+  });
+
+  MDB_val k;
+  MDB_val v;
+  int result;
+
+  if (ntz_hash != crypto::null_hash) {
+    result = mdb_cursor_get(m_cur_ntz_indices, &k, &v, MDB_SET);
+    if (result == MDB_NOTFOUND)
+      throw1(TX_DNE(std::string("notarization indices for hash ").append(epee::string_tools::pod_to_hex(ntz_hash)).append(" not found in db with corresponding index").c_str()));
+    else if (result)
+      throw0(DB_ERROR(lmdb_error("DB error attempting to ntzindex from hash", result).c_str()));
+  }
+  ntzindex* ret = (ntzindex*)v.mv_data;
+  TXN_POSTFIX_RDONLY();
+
   return ret;
 }
 
@@ -2801,17 +2777,9 @@ output_data_t BlockchainLMDB::get_output_key(const uint64_t& amount, const uint6
     throw0(DB_ERROR("Error attempting to retrieve an output pubkey from the db"));
 
   output_data_t ret;
-  if (amount == 0)
-  {
-    const outkey *okp = (const outkey *)v.mv_data;
-    ret = okp->data;
-  }
-  else
-  {
-    const pre_rct_outkey *okp = (const pre_rct_outkey *)v.mv_data;
-    memcpy(&ret, &okp->data, sizeof(pre_rct_output_data_t));;
-    ret.commitment = rct::zeroCommit(amount);
-  }
+  const outkey *okp = (const outkey *)v.mv_data;
+  ret = okp->data;
+
   TXN_POSTFIX_RDONLY();
   return ret;
 }
@@ -3039,7 +3007,7 @@ bool BlockchainLMDB::for_all_transactions(std::function<bool(const crypto::hash&
   return fret;
 }
 
-bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)> f) const
+bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&, const ntzindex*)> f) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -3047,6 +3015,7 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
   TXN_PREFIX_RDONLY();
   RCURSOR(ntz_txs);
   RCURSOR(tx_indices);
+  RCURSOR(ntz_indices);
 
   MDB_val k;
   MDB_val v;
@@ -3077,12 +3046,19 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
     crypto::hash tx_hash, prefix_hash;
     if (!parse_and_validate_tx_from_blob(bd, tx, tx_hash, prefix_hash))
       throw0(DB_ERROR("Failed to parse tx from blob retrieved from the db"));
-    if (!f(hash, tx)) {
-      fret = false;
-      break;
-    }
     if (tx.version != 2) {
       throw0(DB_ERROR(lmdb_error("Encountered notarization with incorrect tx version: ", ret).c_str()));
+    }
+    MDB_val_copy<crypto::hash> ktwo(ti->key);
+    ret = mdb_cursor_get(m_cur_ntz_indices, &ktwo, &v, MDB_SET);
+    if (ret == MDB_NOTFOUND)
+      break;
+    if (ret)
+      throw0(DB_ERROR(lmdb_error("Failed to get ntz_indices for transactions: ", ret).c_str()));
+    ntzindex* ntz_index = (ntzindex*)v.mv_data;
+    if (!f(hash, tx, ntz_index)) {
+      fret = false;
+      break;
     }
   }
 
@@ -3558,17 +3534,8 @@ void BlockchainLMDB::get_output_key(const uint64_t &amount, const std::vector<ui
       throw0(DB_ERROR(lmdb_error("Error attempting to retrieve an output pubkey from the db", get_result).c_str()));
 
     output_data_t data;
-    if (amount == 0)
-    {
-      const outkey *okp = (const outkey *)v.mv_data;
-      data = okp->data;
-    }
-    else
-    {
-      const pre_rct_outkey *okp = (const pre_rct_outkey *)v.mv_data;
-      memcpy(&data, &okp->data, sizeof(pre_rct_output_data_t));
-      data.commitment = rct::zeroCommit(amount);
-    }
+    const outkey *okp = (const outkey *)v.mv_data;
+    data = okp->data;
     outputs.push_back(data);
   }
 

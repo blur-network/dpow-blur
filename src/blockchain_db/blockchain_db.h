@@ -40,6 +40,7 @@
 #include "cryptonote_basic/cryptonote_basic.h"
 #include "cryptonote_basic/difficulty.h"
 #include "cryptonote_basic/hardfork.h"
+#include "db_structs.h"
 
 /** \file
  * Cryptonote Blockchain Database Interface
@@ -107,28 +108,6 @@ extern const command_line::arg_descriptor<std::string> arg_db_type;
 extern const command_line::arg_descriptor<std::string> arg_db_sync_mode;
 extern const command_line::arg_descriptor<bool, false> arg_db_salvage;
 
-#pragma pack(push, 1)
-
-/**
- * @brief a struct containing output metadata
- */
-struct output_data_t
-{
-  crypto::public_key pubkey;       //!< the output's public key (for spend verification)
-  uint64_t           unlock_time;  //!< the output's unlock time (or height)
-  uint64_t           height;       //!< the height of the block which created the output
-  rct::key           commitment;   //!< the output's amount commitment (for spend verification)
-};
-#pragma pack(pop)
-
-#pragma pack(push, 1)
-struct tx_data_t
-{
-  uint64_t tx_id;
-  uint64_t unlock_time;
-  uint64_t block_id;
-};
-#pragma pack(pop)
 
 /**
  * @brief a struct containing txpool per transaction metadata
@@ -649,7 +628,7 @@ public:
    * This function opens an existing database or creates it if it
    * does not exist.
    *
-   * The subclass implementing this will handle all file opening/creation,
+;   * The subclass implementing this will handle all file opening/creation,
    * and is responsible for maintaining its state.
    *
    * The parameter <filename> may not refer to a file name, necessarily, but
@@ -1044,6 +1023,8 @@ public:
    * @return the hash
    */
   virtual crypto::hash get_block_hash_from_height(const uint64_t& height) const = 0;
+
+  virtual cryptonote::ntzindex* get_ntz_by_index(const uint64_t& ntz_index) const = 0;
 
   /**
    * @brief fetch a list of blocks
@@ -1659,7 +1640,7 @@ public:
    *
    * @return false if the function returns false for any transaction, otherwise true
    */
-  virtual bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const = 0;
+  virtual bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&, const ntzindex*)>) const = 0;
 
   /**
    * @brief runs a function over all outputs stored

@@ -44,6 +44,7 @@ set(blockchain_db_headers)
 set(blockchain_db_private_headers
   blockchain_db.h
   lmdb/db_lmdb.h
+  db_structs.h
   )
 
 if (BERKELEY_DB)
