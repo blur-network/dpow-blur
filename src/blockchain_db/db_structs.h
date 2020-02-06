@@ -21,6 +21,14 @@ struct tx_data_t
 };
 #pragma pack(pop)
 
+#pragma pack(push, 1)
+struct ntz_data_t
+{
+  uint64_t ntz_id;
+  uint64_t ntz_height;
+};
+#pragma pack(pop)
+
 namespace cryptonote {
 
 typedef struct mdb_block_info
@@ -45,8 +53,7 @@ typedef struct txindex {
 
 typedef struct ntzindex {
     crypto::hash key;
-    uint64_t ntz_id;
-    uint64_t ntz_height;
+    ntz_data_t data;
 } ntzindex;
 
 typedef struct outkey {

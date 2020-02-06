@@ -70,6 +70,13 @@ inline void throw1(const T &e)
   throw e;
 }
 
+template <typename T, typename t>
+inline void throw2(const T &e, const t& f)
+{
+  LOG_PRINT_L1(e.what() << ", in function: " << f);
+  throw e;
+}
+
 #define MDB_val_set(var, val)   MDB_val var = {sizeof(val), (void *)&val}
 
 template<typename T>
@@ -227,7 +234,21 @@ inline void lmdb_db_open(MDB_txn* txn, const char* name, int flags, MDB_dbi& dbi
 	if (!m_cur_ ## name) { \
 	  int result = mdb_cursor_open(m_txn, m_ ## name, (MDB_cursor **)&m_cur_ ## name); \
 	  if (result) \
-        throw0(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str())); \
+        throw1(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str())); \
+	  if (m_cursors != &m_wcursors) \
+	    m_tinfo->m_ti_rflags.m_rf_ ## name = true; \
+	} else if (m_cursors != &m_wcursors && !m_tinfo->m_ti_rflags.m_rf_ ## name) { \
+	  int result = mdb_cursor_renew(m_txn, m_cur_ ## name); \
+      if (result) \
+        throw0(DB_ERROR(lmdb_error("Failed to renew cursor: ", result).c_str())); \
+	  m_tinfo->m_ti_rflags.m_rf_ ## name = true; \
+	}
+
+#define RCURSOR2(name) \
+	if (!m_cur_ ## name) { \
+	  int result = mdb_cursor_open(m_txn, m_ ## name, (MDB_cursor **)&m_cur_ ## name); \
+	  if (result) \
+        throw2(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str()), std::string(__func__)); \
 	  if (m_cursors != &m_wcursors) \
 	    m_tinfo->m_ti_rflags.m_rf_ ## name = true; \
 	} else if (m_cursors != &m_wcursors && !m_tinfo->m_ti_rflags.m_rf_ ## name) { \
@@ -814,8 +835,8 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
 
   ntzindex ntzind;
   ntzind.key = tx_hash;
-  ntzind.ntz_id = tx_id;
-  ntzind.ntz_height = m_height;  // we don't need blk_hash since we know m_height
+  ntzind.data.ntz_id = tx_id;
+  ntzind.data.ntz_height = m_height - 16;
 
   val_h.mv_size = sizeof(ntzind);
   val_h.mv_data = (void *)&ntzind;
@@ -2593,12 +2614,12 @@ uint64_t BlockchainLMDB::get_notarization_index(crypto::hash const& ntz_hash) co
 
   TXN_PREFIX_RDONLY();
 
-  RCURSOR(ntz_indices)
+  RCURSOR2(ntz_indices)
 
   uint64_t ret = 0;
 
-  MDB_val_copy<crypto::hash> k(ntz_hash);
   int result;
+  MDB_val_set(k, ntz_hash);
   MDB_val v;
 
   result = mdb_cursor_get(m_cur_ntz_indices, &k, &v, MDB_SET);
@@ -2611,7 +2632,7 @@ uint64_t BlockchainLMDB::get_notarization_index(crypto::hash const& ntz_hash) co
 
   TXN_POSTFIX_RDONLY();
 
-  ret = ntz_index->ntz_id;
+  ret = ntz_index->data.ntz_id;
   return ret;
 }
 
@@ -2621,10 +2642,13 @@ ntzindex* BlockchainLMDB::get_ntz_by_index(uint64_t const& ntz_id) const
   check_open();
 
   TXN_PREFIX_RDONLY();
+
+  RCURSOR2(ntz_indices)
+
   ntzindex* ntz_index;
   crypto::hash ntz_hash = crypto::null_hash;
   for_all_notarizations([&ntz_id, &ntz_hash](const crypto::hash& hash, const cryptonote::transaction& tx, const ntzindex* ntzind) {
-    if (ntzind->ntz_id == ntz_id) {
+    if (ntzind->data.ntz_id == ntz_id) {
       ntz_hash = ntzind->key;
       return true;
     } else {
@@ -2632,18 +2656,22 @@ ntzindex* BlockchainLMDB::get_ntz_by_index(uint64_t const& ntz_id) const
     }
   });
 
-  MDB_val k;
-  MDB_val v;
   int result;
 
+  MDB_val v;
+
+  ntzindex* ret;
   if (ntz_hash != crypto::null_hash) {
+    MDB_val_set(k, ntz_hash);
     result = mdb_cursor_get(m_cur_ntz_indices, &k, &v, MDB_SET);
     if (result == MDB_NOTFOUND)
       throw1(TX_DNE(std::string("notarization indices for hash ").append(epee::string_tools::pod_to_hex(ntz_hash)).append(" not found in db with corresponding index").c_str()));
     else if (result)
       throw0(DB_ERROR(lmdb_error("DB error attempting to ntzindex from hash", result).c_str()));
+    else {
+      ret = (ntzindex*)v.mv_data;
+    }
   }
-  ntzindex* ret = (ntzindex*)v.mv_data;
   TXN_POSTFIX_RDONLY();
 
   return ret;
@@ -3015,7 +3043,7 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
   TXN_PREFIX_RDONLY();
   RCURSOR(ntz_txs);
   RCURSOR(tx_indices);
-  RCURSOR(ntz_indices);
+  RCURSOR2(ntz_indices);
 
   MDB_val k;
   MDB_val v;
@@ -3049,16 +3077,18 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
     if (tx.version != 2) {
       throw0(DB_ERROR(lmdb_error("Encountered notarization with incorrect tx version: ", ret).c_str()));
     }
-    MDB_val_copy<crypto::hash> ktwo(ti->key);
-    ret = mdb_cursor_get(m_cur_ntz_indices, &ktwo, &v, MDB_SET);
+    MDB_val_set(k,ti->key);
+    ret = mdb_cursor_get(m_cur_ntz_indices, &k, &v, MDB_SET);
     if (ret == MDB_NOTFOUND)
       break;
-    if (ret)
+    else if (ret) {
       throw0(DB_ERROR(lmdb_error("Failed to get ntz_indices for transactions: ", ret).c_str()));
-    ntzindex* ntz_index = (ntzindex*)v.mv_data;
-    if (!f(hash, tx, ntz_index)) {
-      fret = false;
-      break;
+    } else {
+      ntzindex* ntz_index = (ntzindex*)v.mv_data;
+      if (!f(hash, tx, ntz_index)) {
+        fret = false;
+        break;
+      }
     }
   }
 

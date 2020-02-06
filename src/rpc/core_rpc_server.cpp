@@ -2442,10 +2442,10 @@ namespace cryptonote
       res.current_chain_height = height;
       res.current_chain_hash = s_hash;
       res.current_chain_pow = s_pow;
-      res.notarized_hash = get_by_id ? epee::string_tools::pod_to_hex(m_core.get_block_id_by_height(ntz_index.ntz_height)) : epee::string_tools::pod_to_hex(crypto::null_hash);
+      res.notarized_hash = get_by_id ? epee::string_tools::pod_to_hex(m_core.get_block_id_by_height(ntz_index.data.ntz_height)) : epee::string_tools::pod_to_hex(crypto::null_hash);
     /*res.notarized_pow = n_pow;*/
       res.notarized_txid = get_by_id ? epee::string_tools::pod_to_hex(ntz_index.key) : epee::string_tools::pod_to_hex(crypto::null_hash);
-      res.notarized_height = get_by_id ? ntz_index.ntz_height : 0;
+      res.notarized_height = get_by_id ? ntz_index.data.ntz_height : 0;
       res.notarizations_completed = ntz_complete;
 /*      res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
