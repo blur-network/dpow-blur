@@ -2435,7 +2435,7 @@ namespace cryptonote
       std::string s_pow = span_to_hex(vc_pow);
       uint64_t ntz_complete = m_core.get_blockchain_storage().get_db().get_notarization_count();
 
-      ntzindex ntz_index = m_core.get_blockchain_storage().get_ntz_by_index(ntz_complete);
+      ntzindex ntz_index = m_core.get_blockchain_storage().get_ntz_by_index(ntz_complete-1);
 
 
       res.assetchains_symbol = komodo::ASSETCHAINS_SYMBOL;
