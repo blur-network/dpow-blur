@@ -793,24 +793,14 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
   uint64_t m_height = height();
 
   int result;
-  uint64_t tx_id = get_tx_count();
   uint64_t ntz_id = get_notarization_count();
 
   CURSOR(ntz_txs)
-  CURSOR(tx_indices)
   CURSOR(ntz_indices)
 
-  MDB_val_set(val_tx_id, tx_id);
   MDB_val_set(val_h, tx_hash);
-  result = mdb_cursor_get(m_cur_tx_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
-  if (result == 0) {
-    txindex *tip = (txindex *)val_h.mv_data;
-    throw1(TX_EXISTS(std::string("Attempting to add notarization transaction that's already in the db (tx id ").append(boost::lexical_cast<std::string>(tip->data.tx_id)).append(")").c_str()));
-  } else if (result != MDB_NOTFOUND) {
-    throw1(DB_ERROR(lmdb_error(std::string("Error checking if tx index exists for tx hash ") + epee::string_tools::pod_to_hex(tx_hash) + ": ", result).c_str()));
-  }
-
   MDB_val_set(val_ntz_id, ntz_id);
+
   result = mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
   if (result == 0) {
     ntzindex *ni = (ntzindex *)val_h.mv_data;
@@ -819,23 +809,9 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
     throw1(DB_ERROR(lmdb_error(std::string("Error checking if ntz index exists for ntz hash ") + epee::string_tools::pod_to_hex(tx_hash) + ": ", result).c_str()));
   }
 
-  txindex ti;
-  ti.key = tx_hash;
-  ti.data.tx_id = tx_id;
-  ti.data.unlock_time = tx.unlock_time;
-  ti.data.block_id = m_height;  // we don't need blk_hash since we know m_height
-
-  val_h.mv_size = sizeof(ti);
-  val_h.mv_data = (void *)&ti;
-
-  result = mdb_cursor_put(m_cur_tx_indices, (MDB_val *)&zerokval, &val_h, 0);
-  if (result)
-    throw0(DB_ERROR(lmdb_error("Failed to add ntz tx data to db transaction: ", result).c_str()));
-
-
   ntzindex ntzind;
   ntzind.key = tx_hash;
-  ntzind.data.ntz_id = tx_id;
+  ntzind.data.ntz_id = ntz_id;
   ntzind.data.ntz_height = m_height - 16;
 
   val_h.mv_size = sizeof(ntzind);
@@ -846,11 +822,11 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
     throw0(DB_ERROR(lmdb_error("Failed to add ntz index for db transaction: ", result).c_str()));
 
   MDB_val_copy<blobdata> blob(tx_to_blob(tx));
-  result = mdb_cursor_put(m_cur_ntz_txs, &val_tx_id, &blob, MDB_APPEND);
+  result = mdb_cursor_put(m_cur_ntz_txs, &val_ntz_id, &blob, MDB_APPEND);
   if (result)
     throw0(DB_ERROR(lmdb_error("Failed to add tx blob to db transaction: ", result).c_str()));
 
-  return tx_id;
+  return ntz_id;
 }
 
 // TODO: compare pros and cons of looking up the tx hash's tx index once and
@@ -909,6 +885,7 @@ void BlockchainLMDB::remove_ntz_transaction_data(const crypto::hash& tx_hash, co
   mdb_txn_cursors *m_cursors = &m_wcursors;
   CURSOR(tx_indices)
   CURSOR(ntz_txs)
+  CURSOR(ntz_indices)
   CURSOR(tx_outputs)
 
   MDB_val_set(val_h, tx_hash);
@@ -918,8 +895,13 @@ void BlockchainLMDB::remove_ntz_transaction_data(const crypto::hash& tx_hash, co
   txindex *tip = (txindex *)val_h.mv_data;
   MDB_val_set(val_tx_id, tip->data.tx_id);
 
-  if ((result = mdb_cursor_get(m_cur_ntz_txs, &val_tx_id, NULL, MDB_SET)))
-      throw1(DB_ERROR(lmdb_error("Failed to locate tx for removal: ", result).c_str()));
+  if (mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH))
+      throw1(TX_DNE("Attempting to remove ntz indices for tx that isn't in the db"));
+  ntzindex *ntz = (ntzindex *)val_h.mv_data;
+  MDB_val_set(val_ntz_id, ntz->data.ntz_id);
+
+  if ((result = mdb_cursor_get(m_cur_ntz_txs, &val_ntz_id, NULL, MDB_SET)))
+      throw1(DB_ERROR(lmdb_error("Failed to locate ntz tx for removal: ", result).c_str()));
   result = mdb_cursor_del(m_cur_ntz_txs, 0);
   if (result)
       throw1(DB_ERROR(lmdb_error("Failed to add removal of ntz tx to db transaction: ", result).c_str()));
@@ -940,6 +922,9 @@ void BlockchainLMDB::remove_ntz_transaction_data(const crypto::hash& tx_hash, co
 
   // Don't delete the tx_indices entry until the end, after we're done with val_tx_id
   if (mdb_cursor_del(m_cur_tx_indices, 0))
+      throw1(DB_ERROR("Failed to add removal of tx index to db transaction"));
+
+  if (mdb_cursor_del(m_cur_ntz_indices, 0))
       throw1(DB_ERROR("Failed to add removal of tx index to db transaction"));
 }
 

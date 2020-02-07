@@ -1330,7 +1330,7 @@ namespace cryptonote
     }
     const crypto::hash prior_ptx_hash =  *reinterpret_cast<const crypto::hash*>(prior_ptx_hash_data.data());
 
-      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tx_hash, tvc, false, true, false, sig_count, req.signers_index, ptx_string, ptx_hash, prior_tx_hash, prior_ptx_hash);
+      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tx_hash, tvc, false, false, false, sig_count, req.signers_index, ptx_string, ptx_hash, prior_tx_hash, prior_ptx_hash);
       if (rs == false)
       {
         res.status = "Failed";
