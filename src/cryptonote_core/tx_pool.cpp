@@ -296,6 +296,8 @@ namespace cryptonote
       return false;
     }
 
+    MWARNING("Transaction version: " << std::to_string(tx.version));
+
     // we do not accept transactions that timed out before
     if (m_timed_out_transactions.find(id) != m_timed_out_transactions.end())
     {

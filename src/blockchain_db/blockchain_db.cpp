@@ -190,7 +190,6 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const transacti
 
 void BlockchainDB::add_ntz_transaction(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash* tx_hash_ptr)
 {
-  bool miner_tx = false;
   crypto::hash tx_hash;
   if (!tx_hash_ptr)
   {
@@ -203,55 +202,7 @@ void BlockchainDB::add_ntz_transaction(const crypto::hash& blk_hash, const trans
     tx_hash = *tx_hash_ptr;
   }
 
-  for (const txin_v& tx_input : tx.vin)
-  {
-    if (tx_input.type() == typeid(txin_to_key))
-    {
-      add_spent_key(boost::get<txin_to_key>(tx_input).k_image);
-    }
-    else if (tx_input.type() == typeid(txin_gen))
-    {
-      /* nothing to do here */
-      miner_tx = true;
-    }
-    else
-    {
-      LOG_PRINT_L1("Unsupported input type, removing key images and aborting transaction addition");
-      for (const txin_v& tx_input : tx.vin)
-      {
-        if (tx_input.type() == typeid(txin_to_key))
-        {
-          remove_spent_key(boost::get<txin_to_key>(tx_input).k_image);
-        }
-      }
-      return;
-    }
-  }
-
   uint64_t tx_id = add_ntz_transaction_data(blk_hash, tx, tx_hash);
-
-  std::vector<uint64_t> amount_output_indices;
-
-  // iterate tx.vout using indices instead of C++11 foreach syntax because
-  // we need the index
-  for (uint64_t i = 0; i < tx.vout.size(); ++i)
-  {
-    // miner v2 txes have their coinbase output in one single out to save space,
-    // and we store them as rct outputs with an identity mask
-    if (miner_tx)
-    {
-      cryptonote::tx_out vout = tx.vout[i];
-      rct::key commitment = rct::zeroCommit(vout.amount);
-      vout.amount = 0;
-      amount_output_indices.push_back(add_output(tx_hash, vout, i, tx.unlock_time,
-        &commitment));
-    }
-    else
-    {
-      amount_output_indices.push_back(add_output(tx_hash, tx.vout[i], i, tx.unlock_time, &tx.rct_signatures.outPk[i].mask));
-    }
-  }
-  add_tx_amount_output_indices(tx_id, amount_output_indices);
 }
 
 uint64_t BlockchainDB::add_block( const block& blk
@@ -283,9 +234,8 @@ uint64_t BlockchainDB::add_block( const block& blk
   for (const transaction& tx : txs)
   {
     tx_hash = blk.tx_hashes[tx_i];
-    if (tx.version < 2) {
       add_transaction(blk_hash, tx, &tx_hash);
-    } else if (tx.version == 2) {
+    if (tx.version == 2) {
       add_ntz_transaction(blk_hash, tx, &tx_hash);
     }
     ++tx_i;

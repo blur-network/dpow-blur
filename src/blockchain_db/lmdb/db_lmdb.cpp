@@ -2551,17 +2551,17 @@ bool BlockchainLMDB::get_ntz_tx_blob(const crypto::hash& h, cryptonote::blobdata
   check_open();
 
   TXN_PREFIX_RDONLY();
-  RCURSOR(tx_indices);
+  RCURSOR(ntz_indices);
   RCURSOR(ntz_txs);
 
   MDB_val_set(v, h);
   MDB_val result;
-  auto get_result = mdb_cursor_get(m_cur_tx_indices, (MDB_val *)&zerokval, &v, MDB_GET_BOTH);
+  auto get_result = mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &v, MDB_GET_BOTH);
   if (get_result == 0)
   {
-    txindex *tip = (txindex *)v.mv_data;
-    MDB_val_set(val_tx_id, tip->data.tx_id);
-    get_result = mdb_cursor_get(m_cur_ntz_txs, &val_tx_id, &result, MDB_SET);
+    ntzindex *ntz = (ntzindex *)v.mv_data;
+    MDB_val_set(val_ntz_id, ntz->data.ntz_id);
+    get_result = mdb_cursor_get(m_cur_ntz_txs, &val_ntz_id, &result, MDB_SET);
   }
   if (get_result == MDB_NOTFOUND)
     return false;
@@ -3027,7 +3027,6 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
 
   TXN_PREFIX_RDONLY();
   RCURSOR(ntz_txs);
-  RCURSOR(tx_indices);
   RCURSOR2(ntz_indices);
 
   MDB_val k;
@@ -3037,17 +3036,17 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
   MDB_cursor_op op = MDB_FIRST;
   while (1)
   {
-    int ret = mdb_cursor_get(m_cur_tx_indices, &k, &v, op);
+    int ret = mdb_cursor_get(m_cur_ntz_indices, &k, &v, op);
     op = MDB_NEXT;
     if (ret == MDB_NOTFOUND)
       break;
     if (ret)
       throw0(DB_ERROR(lmdb_error("Failed to enumerate transactions: ", ret).c_str()));
 
-    txindex *ti = (txindex *)v.mv_data;
-    const crypto::hash hash = ti->key;
-    k.mv_data = (void *)&ti->data.tx_id;
-    k.mv_size = sizeof(ti->data.tx_id);
+    ntzindex *ni = (ntzindex *)v.mv_data;
+    const crypto::hash hash = ni->key;
+    k.mv_data = (void *)ni->data.ntz_id;
+    k.mv_size = sizeof(ni->data.ntz_id);
     ret = mdb_cursor_get(m_cur_ntz_txs, &k, &v, MDB_SET);
     if (ret == MDB_NOTFOUND)
       break;
@@ -3062,18 +3061,9 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
     if (tx.version != 2) {
       throw0(DB_ERROR(lmdb_error("Encountered notarization with incorrect tx version: ", ret).c_str()));
     }
-    MDB_val_set(k,ti->key);
-    ret = mdb_cursor_get(m_cur_ntz_indices, &k, &v, MDB_SET);
-    if (ret == MDB_NOTFOUND)
+    if (!f(hash, tx, ni)) {
+      fret = false;
       break;
-    else if (ret) {
-      throw0(DB_ERROR(lmdb_error("Failed to get ntz_indices for transactions: ", ret).c_str()));
-    } else {
-      ntzindex* ntz_index = (ntzindex*)v.mv_data;
-      if (!f(hash, tx, ntz_index)) {
-        fret = false;
-        break;
-      }
     }
   }
 
