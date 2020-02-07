@@ -2338,20 +2338,67 @@ void wallet2::update_pool_state(bool refreshed)
   {
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request req;
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::response res;
-    for (const auto &p: txids)
+    cryptonote::COMMAND_RPC_GET_NOTARIZATIONS::request nreq;
+    cryptonote::COMMAND_RPC_GET_NOTARIZATIONS::response nres;
+    for (const auto &p: txids) {
       req.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
+      nreq.ntz_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
+    }
     MDEBUG("asking for " << txids.size() << " transactions");
     req.decode_as_json = false;
     req.prune = false;
+    nreq.decode_as_json = false;
     m_daemon_rpc_mutex.lock();
     bool r = epee::net_utils::invoke_http_json("/gettransactions", req, res, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
-    MDEBUG("Got " << r << " and " << res.status);
-    if (r && res.status == CORE_RPC_STATUS_OK)
+    m_daemon_rpc_mutex.lock();
+    bool nr = epee::net_utils::invoke_http_json("/getnotarizations", nreq, nres, m_http_client, rpc_timeout);
+    m_daemon_rpc_mutex.unlock();
+    MDEBUG("Got " << r << " and " << res.status << ", from gettransactions");
+    MDEBUG("Got " << nr << " and " << nres.status << ", from getnotarizations");
+    if ((r && res.status == CORE_RPC_STATUS_OK) || (nr && nres.status == CORE_RPC_STATUS_OK))
     {
-      if (res.txs.size() == txids.size())
+      struct entry
       {
-        for (const auto &tx_entry: res.txs)
+        std::string tx_hash;
+        std::string as_hex;
+        std::string as_json;
+        bool in_pool;
+        bool double_spend_seen;
+        uint64_t block_height;
+        uint64_t block_timestamp;
+        std::vector<uint64_t> output_indices;
+      };
+
+      std::vector<entry> collective_txs;
+      for (const auto& each : res.txs) {
+        entry e;
+        e.tx_hash = each.tx_hash;
+        e.as_hex = each.as_hex;
+        e.as_json = each.as_json;
+        e.in_pool = each.in_pool;
+        e.double_spend_seen = each.double_spend_seen;
+        e.block_height = each.block_height;
+        e.block_timestamp = each.block_timestamp;
+        e.output_indices = each.output_indices;
+        collective_txs.push_back(e);
+      }
+      for (const auto& each : nres.txs) {
+        entry e;
+        e.tx_hash = each.tx_hash;
+        e.as_hex = each.as_hex;
+        e.as_json = each.as_json;
+        e.in_pool = each.in_pool;
+        e.double_spend_seen = each.double_spend_seen;
+        e.block_height = each.block_height;
+        e.block_timestamp = each.block_timestamp;
+        e.output_indices = each.output_indices;
+        // TODO: missing notarization index field from entry struct
+        collective_txs.push_back(e);
+      }
+      if (collective_txs.size() == txids.size())
+      {
+        for (const auto &tx_entry: collective_txs)
         {
           if (tx_entry.in_pool)
           {
