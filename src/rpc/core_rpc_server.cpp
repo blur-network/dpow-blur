@@ -789,6 +789,63 @@ namespace cryptonote
         txs.push_back(each_tx);
       }
     }
+    // try the pool for any missing txes
+    size_t found_in_pool = 0;
+    std::unordered_set<crypto::hash> pool_tx_hashes;
+    std::unordered_map<crypto::hash, bool> double_spend_seen;
+    if (!missed_txs.empty())
+    {
+      std::vector<tx_info> pool_tx_info;
+      std::vector<spent_key_image_info> pool_key_image_info;
+      bool r = m_core.get_pool_transactions_and_spent_keys_info(pool_tx_info, pool_key_image_info);
+      if(r)
+      {
+        // sort to match original request
+        std::vector<tx_info>::const_iterator i;
+        std::list<transaction> sorted_txs;
+        for (const crypto::hash &h: vh)
+        {
+          if (std::find(missed_txs.begin(), missed_txs.end(), h) == missed_txs.end())
+          {
+            if (txs.empty())
+            {
+              res.status = "Failed: internal error - txs is empty";
+              return true;
+            }
+            // core returns the ones it finds in the right order
+            if (get_transaction_hash(txs.front()) != h)
+            {
+              res.status = "Failed: tx hash mismatch";
+              return true;
+            }
+            sorted_txs.push_back(std::move(txs.front()));
+            txs.pop_front();
+          }
+          else if ((i = std::find_if(pool_tx_info.begin(), pool_tx_info.end(), [h](const tx_info &txi) { return epee::string_tools::pod_to_hex(h) == txi.id_hash; })) != pool_tx_info.end())
+          {
+            cryptonote::transaction tx;
+            if (!cryptonote::parse_and_validate_tx_from_blob(i->tx_blob, tx))
+            {
+              res.status = "Failed to parse and validate tx from blob";
+              return true;
+            }
+            sorted_txs.push_back(tx);
+            missed_txs.remove(h);
+            pool_tx_hashes.insert(h);
+            const std::string hash_string = epee::string_tools::pod_to_hex(h);
+            for (const auto &ti: pool_tx_info)
+            {
+              if (ti.id_hash == hash_string)
+              {
+                double_spend_seen.insert(std::make_pair(h, ti.double_spend_seen));
+                break;
+              }
+            }
+            ++found_in_pool;
+          }
+        }
+      }
+    }
     LOG_PRINT_L2("Found " << txs.size() << "/" << vh.size() << " transactions on the blockchain");
 
     std::list<std::string>::const_iterator txhi = req.ntz_hashes.begin();
@@ -808,16 +865,29 @@ namespace cryptonote
         e.as_hex = string_tools::buff_to_hex_nodelimer(blob);
         if (req.decode_as_json)
           e.as_json = obj_to_json_str(tx);
-
-        e.block_height = m_core.get_blockchain_storage().get_db().get_tx_block_height(tx_hash);
-        e.block_timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(e.block_height);
-        e.double_spend_seen = false;
-
-        bool r = m_core.get_tx_outputs_gindexs(tx_hash, e.output_indices);
-        if (!r)
+        e.in_pool = pool_tx_hashes.find(tx_hash) != pool_tx_hashes.end();
+        if (e.in_pool)
         {
-            res.status = "Failed";
-            return false;
+          e.block_height = e.block_timestamp = std::numeric_limits<uint64_t>::max();
+          if (double_spend_seen.find(tx_hash) != double_spend_seen.end())
+          {
+            e.double_spend_seen = double_spend_seen[tx_hash];
+          }
+          else
+          {
+            MERROR("Failed to determine double spend status for " << tx_hash);
+            e.double_spend_seen = false;
+          }
+        } else {
+          e.block_height = m_core.get_blockchain_storage().get_db().get_tx_block_height(tx_hash);
+          e.block_timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(e.block_height);
+          e.double_spend_seen = false;
+          bool r = m_core.get_tx_outputs_gindexs(tx_hash, e.output_indices);
+          if (!r)
+          {
+              res.status = "Failed";
+              return false;
+          }
         }
       }
     }
@@ -859,10 +929,68 @@ namespace cryptonote
     for (const auto& each : vh) {
       cryptonote::transaction each_tx;
       bool r = m_core.get_blockchain_storage().get_db().get_ntz_tx(each, each_tx);
-      if (!r)
+      if (!r) {
         missed_txs.push_back(get_transaction_hash(each_tx));
-      else
+      } else {
         txs.push_back(each_tx);
+      }
+    }
+    // try the pool for any missing txes
+    size_t found_in_pool = 0;
+    std::unordered_set<crypto::hash> pool_tx_hashes;
+    std::unordered_map<crypto::hash, bool> double_spend_seen;
+    if (!missed_txs.empty())
+    {
+      std::vector<tx_info> pool_tx_info;
+      std::vector<spent_key_image_info> pool_key_image_info;
+      bool r = m_core.get_pool_transactions_and_spent_keys_info(pool_tx_info, pool_key_image_info);
+      if(r)
+      {
+        // sort to match original request
+        std::vector<tx_info>::const_iterator i;
+        std::list<transaction> sorted_txs;
+        for (const crypto::hash &h: vh)
+        {
+          if (std::find(missed_txs.begin(), missed_txs.end(), h) == missed_txs.end())
+          {
+            if (txs.empty())
+            {
+              res.status = "Failed: internal error - txs is empty";
+              return true;
+            }
+            // core returns the ones it finds in the right order
+            if (get_transaction_hash(txs.front()) != h)
+            {
+              res.status = "Failed: tx hash mismatch";
+              return true;
+            }
+            sorted_txs.push_back(std::move(txs.front()));
+            txs.pop_front();
+          }
+          else if ((i = std::find_if(pool_tx_info.begin(), pool_tx_info.end(), [h](const tx_info &txi) { return epee::string_tools::pod_to_hex(h) == txi.id_hash; })) != pool_tx_info.end())
+          {
+            cryptonote::transaction tx;
+            if (!cryptonote::parse_and_validate_tx_from_blob(i->tx_blob, tx))
+            {
+              res.status = "Failed to parse and validate tx from blob";
+              return true;
+            }
+            sorted_txs.push_back(tx);
+            missed_txs.remove(h);
+            pool_tx_hashes.insert(h);
+            const std::string hash_string = epee::string_tools::pod_to_hex(h);
+            for (const auto &ti: pool_tx_info)
+            {
+              if (ti.id_hash == hash_string)
+              {
+                double_spend_seen.insert(std::make_pair(h, ti.double_spend_seen));
+                break;
+              }
+            }
+            ++found_in_pool;
+          }
+        }
+      }
     }
     LOG_PRINT_L2("Found " << txs.size() << "/" << vh.size() << " transactions on the blockchain");
 
@@ -878,20 +1006,34 @@ namespace cryptonote
 
         crypto::hash tx_hash = *vhi++;
         e.tx_hash = *txhi++;
+        e.notarization_index = m_core.get_blockchain_storage().get_notarization_index(tx_hash);
         blobdata blob = t_serializable_object_to_blob(tx);
         e.as_hex = string_tools::buff_to_hex_nodelimer(blob);
         if (req.decode_as_json)
           e.as_json = obj_to_json_str(tx);
-
-        e.block_height = m_core.get_blockchain_storage().get_db().get_tx_block_height(tx_hash);
-        e.block_timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(e.block_height);
-        e.double_spend_seen = false;
-
-        bool r = m_core.get_tx_outputs_gindexs(tx_hash, e.output_indices);
-        if (!r)
+        e.in_pool = pool_tx_hashes.find(tx_hash) != pool_tx_hashes.end();
+        if (e.in_pool)
         {
-            res.status = "Failed";
-            return false;
+          e.block_height = e.block_timestamp = std::numeric_limits<uint64_t>::max();
+          if (double_spend_seen.find(tx_hash) != double_spend_seen.end())
+          {
+            e.double_spend_seen = double_spend_seen[tx_hash];
+          }
+          else
+          {
+            MERROR("Failed to determine double spend status for " << tx_hash);
+            e.double_spend_seen = false;
+          }
+        } else {
+          e.block_height = m_core.get_blockchain_storage().get_db().get_tx_block_height(tx_hash);
+          e.block_timestamp = m_core.get_blockchain_storage().get_db().get_block_timestamp(e.block_height);
+          e.double_spend_seen = false;
+          bool r = m_core.get_tx_outputs_gindexs(tx_hash, e.output_indices);
+          if (!r)
+          {
+              res.status = "Failed";
+              return false;
+          }
         }
       }
     }
@@ -1219,7 +1361,7 @@ namespace cryptonote
 
     cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
     tx_verification_context tvc = AUTO_VAL_INIT(tvc);
-    if(!m_core.handle_incoming_tx(tx_blob, tvc, false, false, req.do_not_relay) || tvc.m_verifivation_failed)
+    if(!m_core.handle_incoming_tx(tx_blob, tvc, false, false, false) || tvc.m_verifivation_failed)
     {
       res.status = "Failed";
       res.reason = "";

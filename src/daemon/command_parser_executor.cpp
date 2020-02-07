@@ -649,7 +649,7 @@ bool t_command_parser_executor::relay_ntzpool_tx(const std::vector<std::string>&
     return true;
   }
   txid = args[0];
-  return m_executor.relay_tx(txid);
+  return m_executor.relay_ntzpool_tx(txid);
 }
 
 bool t_command_parser_executor::sync_info(const std::vector<std::string>& args)

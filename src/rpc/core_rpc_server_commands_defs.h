@@ -641,6 +641,7 @@ namespace cryptonote
       std::string tx_hash;
       std::string as_hex;
       std::string as_json;
+      bool in_pool;
       bool double_spend_seen;
       uint64_t block_height;
       uint64_t block_timestamp;
@@ -651,6 +652,7 @@ namespace cryptonote
         KV_SERIALIZE(tx_hash)
         KV_SERIALIZE(as_hex)
         KV_SERIALIZE(as_json)
+        KV_SERIALIZE(in_pool)
         KV_SERIALIZE(double_spend_seen)
         KV_SERIALIZE(block_height)
         KV_SERIALIZE(block_timestamp)
