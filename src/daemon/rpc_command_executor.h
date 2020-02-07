@@ -139,6 +139,8 @@ public:
 
   bool relay_tx(const std::string &txid);
 
+  bool relay_ntzpool_tx(const std::string &txid);
+
   bool sync_info();
 };
 

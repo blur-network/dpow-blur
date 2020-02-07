@@ -1330,7 +1330,7 @@ namespace cryptonote
     }
     const crypto::hash prior_ptx_hash =  *reinterpret_cast<const crypto::hash*>(prior_ptx_hash_data.data());
 
-      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tx_hash, tvc, false, false, false, sig_count, req.signers_index, ptx_string, ptx_hash, prior_tx_hash, prior_ptx_hash);
+      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tx_hash, tvc, false, true, false, sig_count, req.signers_index, ptx_string, ptx_hash, prior_tx_hash, prior_ptx_hash);
       if (rs == false)
       {
         res.status = "Failed";
@@ -1397,7 +1397,7 @@ namespace cryptonote
       cryptonote::tx_verification_context tvc;
       std::vector<cryptonote::tx_verification_context> tvc_vec;
       tvc_vec.push_back(tvc);
-      if (!m_core.handle_incoming_txs(verified_tx_blobs, tvc_vec, false, false, false)) {
+      if (!m_core.handle_incoming_txs(verified_tx_blobs, tvc_vec, false, true, false)) {
         MERROR("[RPC] Error in handling incoming txs, in request_ntz_sig!");
         return false;
       }
@@ -2850,6 +2850,68 @@ namespace cryptonote
         NOTIFY_NEW_TRANSACTIONS::request r;
         r.txs.push_back(txblob);
         m_core.get_protocol()->relay_transactions(r, fake_context);
+        //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
+      }
+      else
+      {
+        if (!res.status.empty()) res.status += ", ";
+        res.status += std::string("transaction not found in pool: ") + str;
+        failed = true;
+        continue;
+      }
+    }
+
+    if (failed)
+    {
+      return false;
+    }
+
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_relay_ntzpool_tx(const COMMAND_RPC_RELAY_NTZPOOL_TX::request& req, COMMAND_RPC_RELAY_NTZPOOL_TX::response& res, epee::json_rpc::error& error_resp)
+  {
+    PERF_TIMER(on_relay_ntzpool_tx);
+
+    bool failed = false;
+    res.status = "";
+    for (const auto &str: req.txids)
+    {
+      cryptonote::blobdata txid_data;
+      if(!epee::string_tools::parse_hexstr_to_binbuff(str, txid_data))
+      {
+        if (!res.status.empty()) res.status += ", ";
+        res.status += std::string("invalid transaction id: ") + str;
+        failed = true;
+        continue;
+      }
+      crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_data.data());
+
+      cryptonote::blobdata txblob;
+      cryptonote::blobdata ptxblob;
+      ntzpool_tx_meta_t meta = AUTO_VAL_INIT(meta);
+      bool r = m_core.get_ntzpool_transaction(txid, txblob, ptxblob);
+      if (r)
+      {
+        if (!m_core.get_blockchain_storage().get_ntzpool_tx_meta(txid, meta)) {
+          if (!res.status.empty()) res.status += ", ";
+          res.status += "failed to get meta for tx with hash: " + str;
+          failed = true;
+          continue;
+        }
+
+        cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+        NOTIFY_REQUEST_NTZ_SIG::request r;
+        r.ptx_string = ptxblob;
+        r.ptx_hash = meta.ptx_hash;
+        r.tx_blob = txblob;
+        r.sig_count = meta.sig_count;
+        for (size_t i = 0; i < 13; i++) {
+          int each_ind = meta.signers_index[i];
+          r.signers_index.push_back(each_ind);
+        }
+        m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
         //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
       }
       else

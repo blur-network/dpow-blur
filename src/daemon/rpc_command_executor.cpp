@@ -1896,6 +1896,35 @@ bool t_rpc_command_executor::relay_tx(const std::string &txid)
     return true;
 }
 
+bool t_rpc_command_executor::relay_ntzpool_tx(const std::string &txid)
+{
+    cryptonote::COMMAND_RPC_RELAY_NTZPOOL_TX::request req;
+    cryptonote::COMMAND_RPC_RELAY_NTZPOOL_TX::response res;
+    std::string fail_message = "Unsuccessful";
+    epee::json_rpc::error error_resp;
+
+    req.txids.push_back(txid);
+
+    if (m_is_rpc)
+    {
+        if (!m_rpc_client->json_rpc_request(req, res, "relay_tx", fail_message.c_str()))
+        {
+            return true;
+        }
+    }
+    else
+    {
+        if (!m_rpc_server->on_relay_ntzpool_tx(req, res, error_resp) || res.status != CORE_RPC_STATUS_OK)
+        {
+            tools::fail_msg_writer() << make_error(fail_message, res.status);
+            return true;
+        }
+    }
+
+    tools::success_msg_writer() << "Pending notarization transaction was successfully relayed";
+    return true;
+}
+
 bool t_rpc_command_executor::sync_info()
 {
     cryptonote::COMMAND_RPC_SYNC_INFO::request req;

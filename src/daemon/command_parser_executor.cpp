@@ -637,6 +637,21 @@ bool t_command_parser_executor::relay_tx(const std::vector<std::string>& args)
   return m_executor.relay_tx(txid);
 }
 
+bool t_command_parser_executor::relay_ntzpool_tx(const std::vector<std::string>& args)
+{
+  if (args.size() != 1) return false;
+
+  std::string txid;
+  crypto::hash hash;
+  if (!parse_hash256(args[0], hash))
+  {
+    std::cout << "failed to parse tx id" << std::endl;
+    return true;
+  }
+  txid = args[0];
+  return m_executor.relay_tx(txid);
+}
+
 bool t_command_parser_executor::sync_info(const std::vector<std::string>& args)
 {
   if (args.size() != 0) return false;

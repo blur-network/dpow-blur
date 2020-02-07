@@ -2564,6 +2564,28 @@ namespace cryptonote
     };
   };
 
+
+  struct COMMAND_RPC_RELAY_NTZPOOL_TX
+  {
+    struct request
+    {
+      std::list<std::string> txids;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(txids)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
 /*
   struct COMMAND_RPC_CALC_MOM
   {

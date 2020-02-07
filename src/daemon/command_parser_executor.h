@@ -133,6 +133,8 @@ public:
 
   bool relay_tx(const std::vector<std::string>& args);
 
+  bool relay_ntzpool_tx(const std::vector<std::string>& args);
+
   bool sync_info(const std::vector<std::string>& args);
 };
 
