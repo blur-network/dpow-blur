@@ -266,6 +266,12 @@ t_command_server::t_command_server(
     , "Relay a given transaction by its <txid>."
     );
     m_command_lookup.set_handler(
+      "relay_ntzpool_tx"
+    , std::bind(&t_command_parser_executor::relay_ntzpool_tx, &m_parser, p::_1)
+    , "relay_ntzpool_tx <txid>"
+    , "Relay a given ntzpool transaction by its <txid>."
+    );
+    m_command_lookup.set_handler(
       "sync_info"
     , std::bind(&t_command_parser_executor::sync_info, &m_parser, p::_1)
     , "Print information about the blockchain sync state."
