@@ -1907,7 +1907,7 @@ bool t_rpc_command_executor::relay_ntzpool_tx(const std::string &txid)
 
     if (m_is_rpc)
     {
-        if (!m_rpc_client->json_rpc_request(req, res, "relay_tx", fail_message.c_str()))
+        if (!m_rpc_client->json_rpc_request(req, res, "relay_ntzpool_tx", fail_message.c_str()))
         {
             return true;
         }
