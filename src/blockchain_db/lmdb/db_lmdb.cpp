@@ -230,6 +230,13 @@ inline void lmdb_db_open(MDB_txn* txn, const char* name, int flags, MDB_dbi& dbi
         throw0(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str())); \
 	}
 
+#define CURSOR2(name) \
+	if (!m_cur_ ## name) { \
+	  int result = mdb_cursor_open(*m_write_txn, m_ ## name, &m_cur_ ## name); \
+	  if (result) \
+        throw2(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str()), std::string(__func__)); \
+	}
+
 #define RCURSOR(name) \
 	if (!m_cur_ ## name) { \
 	  int result = mdb_cursor_open(m_txn, m_ ## name, (MDB_cursor **)&m_cur_ ## name); \
@@ -795,8 +802,8 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
   int result;
   uint64_t ntz_id = get_notarization_count();
 
-  CURSOR(ntz_txs)
-  CURSOR(ntz_indices)
+  CURSOR2(ntz_txs)
+  CURSOR2(ntz_indices)
 
   MDB_val_set(val_h, tx_hash);
   MDB_val_set(val_ntz_id, ntz_id);
