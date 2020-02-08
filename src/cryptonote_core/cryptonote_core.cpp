@@ -1139,6 +1139,11 @@ namespace cryptonote
       return true;
     }
 
+    if (tx.version != 2) {
+      MERROR("Encountered ntz sig request with incorrect tx version! Failing validation...");
+      return false;
+    }
+
     std::list<int> signers_index;
     for (int i = 0; i < 13; i++) {
       std::string si_tmp = signers_str.substr(i*2, 2);
@@ -1207,19 +1212,7 @@ namespace cryptonote
         MERROR("Error: Signature count does not match signer index!");
         return false;
       } else {
-        if (sig_count == 1) {
-          MWARNING("Prior to add_ntz_req, tx_blob: " << tx_to_blob(tx));
-          return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, has_raw_ntz_data, sig_count, signers_index, ptx_blob, ptx_hash);
-        } else {
-          std::pair<crypto::hash,cryptonote::blobdata> hash_blob;
-          hash_blob.first = tx_hash;
-          hash_blob.second = tx_to_blob(tx);
-          if (!m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, has_raw_ntz_data, sig_count, signers_index, ptx_blob, ptx_hash)){
-            bool inc = m_mempool.req_ntz_sig_inc(hash_blob, prior_tx_hash, ptx_blob, ptx_hash, sig_count, signers_str);
-            return true;
-          }
-          return false;
-        }
+        return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, has_raw_ntz_data, sig_count, signers_index, ptx_blob, ptx_hash);
       }
     }
   }
