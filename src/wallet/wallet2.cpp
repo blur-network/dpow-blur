@@ -5005,7 +5005,6 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
 {
   using namespace cryptonote;
     // Normal submit
-    if (sigs_count < 10) {
       COMMAND_RPC_REQUEST_NTZ_SIG::request request = AUTO_VAL_INIT(request);
       request.sig_count = sigs_count;
       request.ptx_string = ptx_string;
@@ -5077,9 +5076,6 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
               << "Unlocked: " << print_money(unlocked_balance(ptx.construction_data.subaddr_account)) << ENDL
               << "Please, wait for further signatures");
       }
-    } else {
-        commit_tx(ptxs);
-    }
 }
 //----------------------------------------------------------------------------------------------------
 bool wallet2::save_tx(const std::vector<pending_tx>& ptx_vector, const std::string &filename) const

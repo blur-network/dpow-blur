@@ -90,7 +90,7 @@ namespace cryptonote
       MERROR("Failed to derive public key from secret spend key!");
       return false;
     }
-    MWARNING("In auth_ntz, account_pub_key = " << epee::string_tools::pod_to_hex(account_pub_key));
+//    MWARNING("In auth_ntz, account_pub_key = " << epee::string_tools::pod_to_hex(account_pub_key));
     hw::device &hwdev = sender_account_keys.get_device();
     bool found_pubkey = false;
     bool pubkey_check = false;

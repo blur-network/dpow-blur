@@ -654,7 +654,7 @@ void BlockchainLMDB::add_block(const block& blk, const size_t& block_size, const
   mdb_txn_cursors *m_cursors = &m_wcursors;
   uint64_t m_height = height();
 
-  CURSOR(block_heights)
+  CURSOR2(block_heights)
   blk_height bh = {blk_hash, m_height};
   MDB_val_set(val_h, bh);
   if (mdb_cursor_get(m_cur_block_heights, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH) == 0)
@@ -758,8 +758,8 @@ uint64_t BlockchainLMDB::add_transaction_data(const crypto::hash& blk_hash, cons
   int result;
   uint64_t tx_id = get_tx_count();
 
-  CURSOR(txs)
-  CURSOR(tx_indices)
+  CURSOR2(txs)
+  CURSOR2(tx_indices)
 
   MDB_val_set(val_tx_id, tx_id);
   MDB_val_set(val_h, tx_hash);

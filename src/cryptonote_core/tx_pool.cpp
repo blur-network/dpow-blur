@@ -268,7 +268,7 @@ namespace cryptonote
       }
       tvc.m_added_to_pool = true;
 
-      if(meta.fee > 0 && !do_not_relay)
+//      if(meta.fee > 0 && !do_not_relay)
         tvc.m_should_be_relayed = true;
     }
 
