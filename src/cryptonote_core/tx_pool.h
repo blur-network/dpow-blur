@@ -107,7 +107,7 @@ namespace cryptonote
      * @param id the transaction's hash
      * @param blob_size the transaction's size
      */
-    bool add_tx(transaction &tx, const crypto::hash &id, size_t blob_size, tx_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version);
+    bool add_tx(transaction &tx, const crypto::hash &id, size_t blob_size, tx_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t const& version);
 
     bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t const& version, uint8_t const& has_raw_ntz_data, int const& sig_count, std::list<int> const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash);
 
@@ -128,7 +128,7 @@ namespace cryptonote
      *
      * @return true if the transaction passes validations, otherwise false
      */
-    bool add_tx(transaction &tx, tx_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t version);
+    bool add_tx(transaction &tx, tx_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t const& version);
 
     /**
      * @brief takes a transaction with the given hash from the pool
