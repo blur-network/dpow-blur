@@ -800,40 +800,46 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
   uint64_t m_height = height();
 
   int result;
-  uint64_t ntz_id = get_notarization_count();
+  uint64_t tx_id = get_tx_count();
 
   CURSOR2(ntz_txs)
-  CURSOR2(ntz_indices)
+  CURSOR2(tx_indices)
 
   MDB_val_set(val_h, tx_hash);
-  MDB_val_set(val_ntz_id, ntz_id);
+  MDB_val_set(val_tx_id, tx_id);
 
-  result = mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
+  result = mdb_cursor_get(m_cur_tx_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
   if (result == 0) {
-    ntzindex *ni = (ntzindex *)val_h.mv_data;
-    throw1(TX_EXISTS(std::string("Attempting to add notarization index that's already in the db (ntz id ").append(boost::lexical_cast<std::string>(ni->key)).append(")").c_str()));
+    txindex *tip = (txindex *)val_h.mv_data;
+    throw1(TX_EXISTS(std::string("Attempting to add notarization index that's already in the db (ntz id ").append(boost::lexical_cast<std::string>(tip->key)).append(")").c_str()));
   } else if (result != MDB_NOTFOUND) {
     throw1(DB_ERROR(lmdb_error(std::string("Error checking if ntz index exists for ntz hash ") + epee::string_tools::pod_to_hex(tx_hash) + ": ", result).c_str()));
   }
 
-  ntzindex ntzind;
+  txindex ti;
+  ti.key = tx_hash;
+  ti.data.tx_id = tx_id;
+  ti.data.unlock_time = tx.unlock_time;
+  ti.data.block_id = m_height;  // we don't need blk_hash since we know m_height
+
+/*  ntzindex ntzind;
   ntzind.key = tx_hash;
   ntzind.data.ntz_id = ntz_id;
   ntzind.data.ntz_height = m_height - 16;
+*/
+  val_h.mv_size = sizeof(ti);
+  val_h.mv_data = (void *)&ti;
 
-  val_h.mv_size = sizeof(ntzind);
-  val_h.mv_data = (void *)&ntzind;
-
-  result = mdb_cursor_put(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, 0);
+  result = mdb_cursor_put(m_cur_tx_indices, (MDB_val *)&zerokval, &val_h, 0);
   if (result)
     throw0(DB_ERROR(lmdb_error("Failed to add ntz index for db transaction: ", result).c_str()));
 
   MDB_val_copy<blobdata> blob(tx_to_blob(tx));
-  result = mdb_cursor_put(m_cur_ntz_txs, &val_ntz_id, &blob, MDB_APPEND);
+  result = mdb_cursor_put(m_cur_ntz_txs, &val_tx_id, &blob, MDB_APPEND);
   if (result)
     throw0(DB_ERROR(lmdb_error("Failed to add tx blob to db transaction: ", result).c_str()));
 
-  return ntz_id;
+  return tx_id;
 }
 
 // TODO: compare pros and cons of looking up the tx hash's tx index once and

@@ -234,10 +234,12 @@ uint64_t BlockchainDB::add_block( const block& blk
   for (const transaction& tx : txs)
   {
     tx_hash = blk.tx_hashes[tx_i];
-      add_transaction(blk_hash, tx, &tx_hash);
-/*    if (tx.version == 2) {
+    if (tx.version == 2) {
       add_ntz_transaction(blk_hash, tx, &tx_hash);
-    }*/
+    }
+    else {
+      add_transaction(blk_hash, tx, &tx_hash);
+    }
     ++tx_i;
   }
   TIME_MEASURE_FINISH(time1);
