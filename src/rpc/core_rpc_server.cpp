@@ -2576,17 +2576,19 @@ namespace cryptonote
       epee::span<const uint8_t> vc_pow = as_byte_span(c_pow);;
       std::string s_pow = span_to_hex(vc_pow);
       uint64_t ntz_complete = m_core.get_blockchain_storage().get_db().get_notarization_count();
-      ntzindex ntz_index;
-//      bool get_by_id = m_core.get_blockchain_storage().get_ntz_by_index(ntz_complete-1, ntz_index);
+      bool ntz = ntz_complete > 0;
 
+      crypto::hash ntz_txid = crypto::null_hash;
+      bool get_by_ntz_index = m_core.get_blockchain_storage().get_hash_by_ntz_index(ntz_complete-1, ntz_txid);
+      crypto::hash ntz_hash = crypto::null_hash;
 
       res.assetchains_symbol = komodo::ASSETCHAINS_SYMBOL;
       res.current_chain_height = height;
       res.current_chain_hash = s_hash;
       res.current_chain_pow = s_pow;
-      res.notarized_hash = epee::string_tools::pod_to_hex(crypto::null_hash); /*get_by_id ? epee::string_tools::pod_to_hex(m_core.get_block_id_by_height(ntz_index.data.ntz_height)) : epee::string_tools::pod_to_hex(crypto::null_hash);*/
+      res.notarized_hash = epee::string_tools::pod_to_hex(ntz_txid);
     /*res.notarized_pow = n_pow;*/
-      res.notarized_txid = epee::string_tools::pod_to_hex(crypto::null_hash); /*get_by_id ? epee::string_tools::pod_to_hex(ntz_index.key) : epee::string_tools::pod_to_hex(crypto::null_hash);*/
+      res.notarized_txid = epee::string_tools::pod_to_hex(ntz_hash);
       res.notarized_height = 0;
       res.notarizations_completed = ntz_complete;
 /*      res.prevMoMheight = komodo::komodo_prevMoMheight();

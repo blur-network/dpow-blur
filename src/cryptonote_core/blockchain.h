@@ -918,9 +918,9 @@ namespace cryptonote
      *
      * @return false if any transaction fails the check, otherwise true
      */
-    bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&, const ntzindex*)>) const;
+    bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
 
-    bool get_ntz_by_index(uint64_t const& ntz_id, ntzindex& ntz_index) const;
+    bool get_hash_by_ntz_index(uint64_t const& ntz_id, crypto::hash& ntz_hash) const;
 
     /**
      * @brief perform a check on all outputs in the blockchain
