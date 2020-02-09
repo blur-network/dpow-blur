@@ -25,7 +25,8 @@ struct tx_data_t
 struct ntz_data_t
 {
   uint64_t ntz_id;
-  uint64_t ntz_height;
+  uint64_t tx_id;
+  uint64_t block_id;
 };
 #pragma pack(pop)
 
