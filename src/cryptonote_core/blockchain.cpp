@@ -1630,7 +1630,7 @@ bool Blockchain::get_blocks(uint64_t start_offset, size_t count, std::list<std::
       cryptonote::blobdata blob;
       if (!m_db->get_tx_blob(each, blob)) {
         if (m_db->get_ntz_tx_blob(each, blob)) {
-           ntz_ids.push_back(each);
+          ntz_ids.push_back(each);
         } else {
           MERROR("Failed to retrieve a blob for both regular tx, and ntz tx! Ignoring tx with hash: " << epee::string_tools::pod_to_hex(each) << " ... ");
         }
@@ -1638,13 +1638,17 @@ bool Blockchain::get_blocks(uint64_t start_offset, size_t count, std::list<std::
         tx_ids.push_back(each);
       }
     }
-    get_transactions_blobs(tx_ids, txs, missed_tx_ids);
-    get_notarizations_blobs(ntz_ids, txs, missed_ntz_ids);
-    for (const auto& each : missed_tx_ids) {
-      missed_ids.push_back(each);
+    if (!tx_ids.empty()) {
+      get_transactions_blobs(tx_ids, txs, missed_tx_ids);
+      for (const auto& each : missed_tx_ids) {
+        missed_ids.push_back(each);
+      }
     }
-    for (const auto& each : missed_ntz_ids) {
-      missed_ids.push_back(each);
+    if (!ntz_ids.empty()) {
+      get_notarizations_blobs(ntz_ids, txs, missed_ntz_ids);
+      for (const auto& each : missed_ntz_ids) {
+        missed_ids.push_back(each);
+      }
     }
     CHECK_AND_ASSERT_MES(!missed_ids.size(), false, "has missed transactions in own block in main blockchain");
   }
@@ -1697,26 +1701,27 @@ bool Blockchain::handle_get_objects(NOTIFY_REQUEST_GET_OBJECTS::request& arg, NO
       cryptonote::blobdata blob;
       if (!m_db->get_tx_blob(each, blob)) {
         if (m_db->get_ntz_tx_blob(each, blob)) {
-           ntz_txs.push_back(blob);
-           ntz_ids.push_back(each);
+          ntz_ids.push_back(each);
         } else {
           MERROR("Failed to retrieve a blob for both regular tx, and ntz tx! Ignoring tx with hash: " << epee::string_tools::pod_to_hex(each) << " ... ");
         }
       } else {
-        txs.push_back(blob);
         tx_ids.push_back(each);
       }
     }
-
-    get_transactions_blobs(tx_ids, txs, missed_tx_ids);
-    get_notarizations_blobs(ntz_ids, ntz_txs, missed_ntz_ids);
-
-    for (const auto& each : missed_tx_ids) {
-      missed_ids.push_back(each);
+    if (!tx_ids.empty()) {
+      get_transactions_blobs(tx_ids, txs, missed_tx_ids);
+      for (const auto& each : missed_tx_ids) {
+        missed_ids.push_back(each);
+      }
     }
-    for (const auto& each : missed_ntz_ids) {
-      missed_ids.push_back(each);
+    if (!ntz_ids.empty()) {
+      get_notarizations_blobs(ntz_ids, txs, missed_ntz_ids);
+      for (const auto& each : missed_ntz_ids) {
+        missed_ids.push_back(each);
+      }
     }
+
     if (missed_tx_ids.size() != 0)
     {
       LOG_ERROR("Error retrieving blocks, missed " << missed_tx_ids.size()
