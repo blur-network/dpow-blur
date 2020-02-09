@@ -2657,7 +2657,7 @@ uint64_t BlockchainLMDB::get_notarization_index(crypto::hash const& ntz_hash) co
   return ret;
 }
 
-ntzindex* BlockchainLMDB::get_ntz_by_index(uint64_t const& ntz_id) const
+crypto::hash BlockchainLMDB::get_hash_by_ntz_index(uint64_t const& ntz_id) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -2666,36 +2666,28 @@ ntzindex* BlockchainLMDB::get_ntz_by_index(uint64_t const& ntz_id) const
 
   RCURSOR2(ntz_indices)
 
-  ntzindex* ntz_index;
   crypto::hash ntz_hash = crypto::null_hash;
-  for_all_notarizations([&ntz_id, &ntz_hash](const crypto::hash& hash, const cryptonote::transaction& tx, const ntzindex* ntzind) {
-    if (ntzind->data.ntz_id == ntz_id) {
-      ntz_hash = ntzind->key;
-      return true;
-    } else {
-      return false;
-    }
-  });
+
+  for_all_notarizations([&](const crypto::hash& hash, cryptonote::transaction const& tx) {
+    if (ntz_id == get_notarization_index(hash)) { ntz_hash = hash; return true; } return false; });
+
+  /* check to make sure inverse works... */
 
   int result;
 
   MDB_val v;
 
-  ntzindex* ret = NULL;
   if (ntz_hash != crypto::null_hash) {
-    MDB_val_set(k, ntz_hash);
-    result = mdb_cursor_get(m_cur_ntz_indices, &k, &v, MDB_SET);
+    MDB_val_set(v, ntz_hash);
+    result = mdb_cursor_get(m_cur_ntz_indices, (MDB_val*)&zerokval, &v, MDB_GET_BOTH);
     if (result == MDB_NOTFOUND)
       throw1(TX_DNE(std::string("notarization indices for hash ").append(epee::string_tools::pod_to_hex(ntz_hash)).append(" not found in db with corresponding index").c_str()));
     else if (result)
       throw0(DB_ERROR(lmdb_error("DB error attempting to ntzindex from hash", result).c_str()));
-    else {
-      ret = (ntzindex*)v.mv_data;
-    }
   }
   TXN_POSTFIX_RDONLY();
 
-  return ret;
+  return ntz_hash;
 }
 
 std::vector<transaction> BlockchainLMDB::get_tx_list(const std::vector<crypto::hash>& hlist) const
@@ -3056,7 +3048,7 @@ bool BlockchainLMDB::for_all_transactions(std::function<bool(const crypto::hash&
   return fret;
 }
 
-bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&, const ntzindex*)> f) const
+bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)> f) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -3097,7 +3089,7 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
     if (tx.version != 2) {
       throw0(DB_ERROR(lmdb_error("Encountered notarization with incorrect tx version: ", ret).c_str()));
     }
-    if (!f(hash, tx, ni)) {
+    if (!f(hash, tx)) {
       fret = false;
       break;
     }

@@ -1024,7 +1024,7 @@ public:
    */
   virtual crypto::hash get_block_hash_from_height(const uint64_t& height) const = 0;
 
-  virtual cryptonote::ntzindex* get_ntz_by_index(const uint64_t& ntz_index) const = 0;
+  virtual crypto::hash get_hash_by_ntz_index(const uint64_t& ntz_index) const = 0;
 
   /**
    * @brief fetch a list of blocks
@@ -1640,7 +1640,7 @@ public:
    *
    * @return false if the function returns false for any transaction, otherwise true
    */
-  virtual bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&, const ntzindex*)>) const = 0;
+  virtual bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const = 0;
 
   /**
    * @brief runs a function over all outputs stored

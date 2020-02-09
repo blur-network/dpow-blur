@@ -285,7 +285,7 @@ public:
   virtual bool remove_ntzpool_tx(const crypto::hash& txid, const crypto::hash& ptx_hash);
   virtual bool get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_meta_t &meta) const;
   virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata &ptx_blob, crypto::hash const& ptx_hash) const;
-  virtual ntzindex* get_ntz_by_index(uint64_t const& ntz_index) const;
+  virtual crypto::hash get_hash_by_ntz_index(uint64_t const& ntz_index) const;
 
   virtual std::pair<cryptonote::blobdata,cryptonote::blobdata> get_ntzpool_tx_blob(const crypto::hash& txid, crypto::hash const& ptx_hash) const;
   virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, crypto::hash const&, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)> f, bool include_blob = true, bool include_unrelayed_txes = true) const;
@@ -293,7 +293,7 @@ public:
   virtual bool for_all_key_images(std::function<bool(const crypto::key_image&)>) const;
   virtual bool for_blocks_range(const uint64_t& h1, const uint64_t& h2, std::function<bool(uint64_t, const crypto::hash&, const cryptonote::block&)>) const;
   virtual bool for_all_transactions(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
-  virtual bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&, const ntzindex*)>) const;
+  virtual bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
   virtual bool for_all_outputs(std::function<bool(uint64_t amount, const crypto::hash &tx_hash, uint64_t height, size_t tx_idx)> f) const;
   virtual bool for_all_outputs(uint64_t amount, const std::function<bool(uint64_t height)> &f) const;
 
