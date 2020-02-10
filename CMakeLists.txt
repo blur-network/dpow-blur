@@ -29,6 +29,10 @@
 # Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 list(INSERT CMAKE_MODULE_PATH 0
   "${CMAKE_SOURCE_DIR}/cmake")
+
+add_subdirectory(external/backward)
+find_package(Backward)
+
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(CheckLinkerFlag)
@@ -348,8 +352,6 @@ if (UNIX AND NOT APPLE)
   add_c_flag_if_supported(-pthread CMAKE_C_FLAGS)
   add_cxx_flag_if_supported(-pthread CMAKE_CXX_FLAGS)
 endif()
-
-find_package(Backward)
 
 # Handle OpenSSL, used for sha256sum on binary updates and light wallet ssl http
 if (CMAKE_SYSTEM_NAME MATCHES "(SunOS|Solaris)")

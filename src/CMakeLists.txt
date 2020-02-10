@@ -28,6 +28,8 @@
 #
 # Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+list(APPEND CMAKE_MODULE_PATH external/backward)
+
 if (WIN32 OR STATIC)
   add_definitions(-DSTATICLIB)
 endif ()
@@ -64,11 +66,7 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND BUILD_SHARED_LIBRARIES)
     PRIVATE
       ${EXTRA_LIBRARIES}
     PUBLIC
-      ${BACKWARD_LIBRARIES}
-      ${LIBDWARF_LIBRARIES}
-      ${LIBDW_LIBRARIES}
-      ${EBL_LIBRARY}
-      ${ELF_LIBRARY}
+      Backward::Backward
      )
 else()
   add_executable("${name}"
