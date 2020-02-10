@@ -70,11 +70,11 @@ inline void throw1(const T &e)
   throw e;
 }
 
-template <typename T, typename t>
-inline void throw2(const T &e, const t& f)
+template <typename T, typename t, typename Tt>
+inline void throw2(const T &e, const t& f, const Tt& h)
 {
-  LOG_PRINT_L1(e.what() << ", in function: " << f);
-  throw e;
+  std::string g = e.what() + std::string(", in function: ") + f + std::string(", with cursor: ") + h;
+  throw g;
 }
 
 #define MDB_val_set(var, val)   MDB_val var = {sizeof(val), (void *)&val}
@@ -227,35 +227,14 @@ inline void lmdb_db_open(MDB_txn* txn, const char* name, int flags, MDB_dbi& dbi
 	if (!m_cur_ ## name) { \
 	  int result = mdb_cursor_open(*m_write_txn, m_ ## name, &m_cur_ ## name); \
 	  if (result) \
-        throw0(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str())); \
-	}
-
-#define CURSOR2(name) \
-	if (!m_cur_ ## name) { \
-	  int result = mdb_cursor_open(*m_write_txn, m_ ## name, &m_cur_ ## name); \
-	  if (result) \
-        throw2(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str()), std::string(__func__)); \
+        throw2(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str()), std::string(__func__), std::string(#name)); \
 	}
 
 #define RCURSOR(name) \
 	if (!m_cur_ ## name) { \
 	  int result = mdb_cursor_open(m_txn, m_ ## name, (MDB_cursor **)&m_cur_ ## name); \
 	  if (result) \
-        throw1(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str())); \
-	  if (m_cursors != &m_wcursors) \
-	    m_tinfo->m_ti_rflags.m_rf_ ## name = true; \
-	} else if (m_cursors != &m_wcursors && !m_tinfo->m_ti_rflags.m_rf_ ## name) { \
-	  int result = mdb_cursor_renew(m_txn, m_cur_ ## name); \
-      if (result) \
-        throw0(DB_ERROR(lmdb_error("Failed to renew cursor: ", result).c_str())); \
-	  m_tinfo->m_ti_rflags.m_rf_ ## name = true; \
-	}
-
-#define RCURSOR2(name) \
-	if (!m_cur_ ## name) { \
-	  int result = mdb_cursor_open(m_txn, m_ ## name, (MDB_cursor **)&m_cur_ ## name); \
-	  if (result) \
-        throw2(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str()), std::string(__func__)); \
+        throw2(DB_ERROR(lmdb_error("Failed to open cursor: ", result).c_str()), std::string(__func__), std::string(#name)); \
 	  if (m_cursors != &m_wcursors) \
 	    m_tinfo->m_ti_rflags.m_rf_ ## name = true; \
 	} else if (m_cursors != &m_wcursors && !m_tinfo->m_ti_rflags.m_rf_ ## name) { \
@@ -654,7 +633,7 @@ void BlockchainLMDB::add_block(const block& blk, const size_t& block_size, const
   mdb_txn_cursors *m_cursors = &m_wcursors;
   uint64_t m_height = height();
 
-  CURSOR2(block_heights)
+  CURSOR(block_heights)
   blk_height bh = {blk_hash, m_height};
   MDB_val_set(val_h, bh);
   if (mdb_cursor_get(m_cur_block_heights, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH) == 0)
@@ -758,8 +737,8 @@ uint64_t BlockchainLMDB::add_transaction_data(const crypto::hash& blk_hash, cons
   int result;
   uint64_t tx_id = get_tx_count();
 
-  CURSOR2(txs)
-  CURSOR2(tx_indices)
+  CURSOR(txs)
+  CURSOR(tx_indices)
 
   MDB_val_set(val_tx_id, tx_id);
   MDB_val_set(val_h, tx_hash);
@@ -803,13 +782,13 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
   uint64_t ntz_id = get_notarization_count();
   uint64_t tx_id = get_tx_count();
 
-  CURSOR2(ntz_txs)
-  CURSOR2(ntz_indices)
-  CURSOR2(tx_indices)
+  CURSOR(ntz_txs)
+//  CURSOR(ntz_indices)
+  CURSOR(tx_indices)
 
   MDB_val_set(val_h, tx_hash);
   MDB_val_set(val_tx_id, tx_id);
-  MDB_val_set(val_ntz_id, ntz_id);
+//  MDB_val_set(val_ntz_id, ntz_id);
 
   result = mdb_cursor_get(m_cur_tx_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
   if (result == 0) {
@@ -831,7 +810,7 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
   result = mdb_cursor_put(m_cur_tx_indices, (MDB_val *)&zerokval, &val_h, 0);
   if (result)
     throw0(DB_ERROR(lmdb_error("Failed to add tx index for db transaction: ", result).c_str()));
-
+/*
   result = mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
   if (result == 0) {
     ntzindex *ntip = (ntzindex *)val_h.mv_data;
@@ -852,13 +831,9 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
   result = mdb_cursor_put(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, 0);
   if (result)
     throw0(DB_ERROR(lmdb_error("Failed to add ntz index for db transaction: ", result).c_str()));
-
+*/
   MDB_val_copy<blobdata> blob(tx_to_blob(tx));
-  result = mdb_cursor_put(m_cur_txs, &val_tx_id, &blob, MDB_APPEND);
-  if (result)
-    throw0(DB_ERROR(lmdb_error("Failed to add tx blob to db transaction: ", result).c_str()));
-
-  result = mdb_cursor_put(m_cur_ntz_txs, &val_ntz_id, &blob, MDB_APPEND);
+  result = mdb_cursor_put(m_cur_ntz_txs, &val_tx_id, &blob, MDB_APPEND);
   if (result)
     throw0(DB_ERROR(lmdb_error("Failed to add tx blob to db transaction: ", result).c_str()));
 
@@ -921,7 +896,7 @@ void BlockchainLMDB::remove_ntz_transaction_data(const crypto::hash& tx_hash, co
   mdb_txn_cursors *m_cursors = &m_wcursors;
   CURSOR(tx_indices)
   CURSOR(ntz_txs)
-  CURSOR(ntz_indices)
+//  CURSOR(ntz_indices)
   CURSOR(tx_outputs)
 
   MDB_val_set(val_h, tx_hash);
@@ -930,13 +905,13 @@ void BlockchainLMDB::remove_ntz_transaction_data(const crypto::hash& tx_hash, co
       throw1(TX_DNE("Attempting to remove transaction that isn't in the db"));
   txindex *tip = (txindex *)val_h.mv_data;
   MDB_val_set(val_tx_id, tip->data.tx_id);
-
+/*
   if (mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH))
       throw1(TX_DNE("Attempting to remove ntz indices for tx that isn't in the db"));
   ntzindex *ntz = (ntzindex *)val_h.mv_data;
   MDB_val_set(val_ntz_id, ntz->data.ntz_id);
-
-  if ((result = mdb_cursor_get(m_cur_ntz_txs, &val_ntz_id, NULL, MDB_SET)))
+*/
+  if ((result = mdb_cursor_get(m_cur_ntz_txs, &val_tx_id, NULL, MDB_SET)))
       throw1(DB_ERROR(lmdb_error("Failed to locate ntz tx for removal: ", result).c_str()));
   result = mdb_cursor_del(m_cur_ntz_txs, 0);
   if (result)
@@ -960,8 +935,8 @@ void BlockchainLMDB::remove_ntz_transaction_data(const crypto::hash& tx_hash, co
   if (mdb_cursor_del(m_cur_tx_indices, 0))
       throw1(DB_ERROR("Failed to add removal of tx index to db transaction"));
 
-  if (mdb_cursor_del(m_cur_ntz_indices, 0))
-      throw1(DB_ERROR("Failed to add removal of tx index to db transaction"));
+/*  if (mdb_cursor_del(m_cur_ntz_indices, 0))
+      throw1(DB_ERROR("Failed to add removal of tx index to db transaction"));*/
 }
 
 uint64_t BlockchainLMDB::add_output(const crypto::hash& tx_hash,
@@ -2587,17 +2562,17 @@ bool BlockchainLMDB::get_ntz_tx_blob(const crypto::hash& h, cryptonote::blobdata
   check_open();
 
   TXN_PREFIX_RDONLY();
-  RCURSOR(ntz_indices);
+  RCURSOR(tx_indices);
   RCURSOR(ntz_txs);
 
   MDB_val_set(v, h);
   MDB_val result;
-  auto get_result = mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &v, MDB_GET_BOTH);
+  auto get_result = mdb_cursor_get(m_cur_tx_indices, (MDB_val *)&zerokval, &v, MDB_GET_BOTH);
   if (get_result == 0)
   {
-    ntzindex *ntz = (ntzindex *)v.mv_data;
-    MDB_val_set(val_ntz_id, ntz->data.ntz_id);
-    get_result = mdb_cursor_get(m_cur_ntz_txs, &val_ntz_id, &result, MDB_SET);
+    txindex *tip = (txindex *)v.mv_data;
+    MDB_val_set(val_tx_id, tip->data.tx_id);
+    get_result = mdb_cursor_get(m_cur_ntz_txs, &val_tx_id, &result, MDB_SET);
   }
   if (get_result == MDB_NOTFOUND)
     return false;
@@ -2635,7 +2610,7 @@ uint64_t BlockchainLMDB::get_notarization_index(crypto::hash const& ntz_hash) co
 
   TXN_PREFIX_RDONLY();
 
-  RCURSOR2(ntz_indices)
+  RCURSOR(ntz_indices)
 
   uint64_t ret = 0;
 
@@ -2664,7 +2639,7 @@ crypto::hash BlockchainLMDB::get_hash_by_ntz_index(uint64_t const& ntz_id) const
 
   TXN_PREFIX_RDONLY();
 
-  RCURSOR2(ntz_indices)
+  RCURSOR(ntz_indices)
 
   crypto::hash ntz_hash = crypto::null_hash;
 
@@ -3055,7 +3030,7 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
 
   TXN_PREFIX_RDONLY();
   RCURSOR(ntz_txs);
-  RCURSOR2(ntz_indices);
+  RCURSOR(ntz_indices);
 
   MDB_val k;
   MDB_val v;

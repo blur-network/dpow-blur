@@ -7,3 +7,6 @@
 [submodule "libbtc"]
 	path = external/libbtc
 	url = https://github.com/who-biz/libbtc.git
+[submodule "external/backward"]
+	path = external/backward
+	url = http://github.com/bombela/backward-cpp.git

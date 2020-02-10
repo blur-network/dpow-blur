@@ -4048,6 +4048,13 @@ leave:
       return_tx_to_pool(txs);
       return false;
     }
+    catch (const std::string& s)
+    {
+      LOG_ERROR("Custom exception caught when adding block to DB: " <<  s);
+      bvc.m_verifivation_failed = true;
+      return_tx_to_pool(txs);
+      return false;
+    }
     catch (const std::exception& e)
     {
       //TODO: figure out the best way to deal with this failure
