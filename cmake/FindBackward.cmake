@@ -23,6 +23,8 @@
 ###############################################################################
 # OPTIONS
 ###############################################################################
+cmake_policy(SET CMP0011 NEW)
+cmake_policy(SET CMP0012 NEW)
 
 set(STACK_WALKING_UNWIND TRUE CACHE BOOL
 	"Use compiler's unwind API")
