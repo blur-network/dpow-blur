@@ -1335,6 +1335,7 @@ pool_recheck:
     boost::archive::portable_binary_iarchive ar(iss);
     ar >> pen_tx;
 
+    uint64_t pk_counter = 0;
     const int neg = -1;
     const int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
     MWARNING("Count = " << std::to_string(count));
@@ -1385,9 +1386,9 @@ pool_recheck:
         MERROR("Failed to generate recv_derivation at append_ntz_sig! recv_tx_key = " << recv_tx_key << ", notary_viewkey = " << epee::string_tools::pod_to_hex(each));
         return false;
       } else {
-        MWARNING("Recv derivation = " << recv_derivation);
+//        MWARNING("Recv derivation = " << recv_derivation);
         if (epee::string_tools::pod_to_hex(recv_derivation) != "0100000000000000000000000000000000000000000000000000000000000000") {
-          MERROR("Recv derivation does not equal rct identity element! Validation failed!");
+//          MERROR("Recv derivation does not equal rct identity element! Validation failed!");
 /*          std::list<std::string> tx_strings;
           std::string tx_hash_string = epee::string_tools::pod_to_hex(get_transaction_hash(tx));
           tx_strings.push_back(tx_hash_string);
@@ -1395,10 +1396,13 @@ pool_recheck:
           break;*/
         } else {
           recv_derivations.push_back(recv_derivation);
+          pk_counter = pk_index;
         }
       }
     }
   }
+
+    MWARNING("Recv derivations passed on index: " << std::to_string(pk_counter));
 
     for (int i = 0; i < 64; i++)
     {

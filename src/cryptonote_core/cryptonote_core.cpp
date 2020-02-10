@@ -587,7 +587,7 @@ namespace cryptonote
     // TODO-TK: need to consider tx versioning standard.
     const size_t max_tx_version = 2;
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
-    if (tx.version == 0 || tx.version > max_tx_version)
+    if ((tx.version == 0) || (tx.version > max_tx_version))
     {
       // v2 is the latest one we know
       tvc.m_verifivation_failed = true;
@@ -666,21 +666,18 @@ namespace cryptonote
     // TODO: this is a placeholder for verification
 
     tvc = boost::value_initialized<ntz_req_verification_context>();
-    cryptonote::transaction tx_input_check;
-    crypto::hash hone,htwo;
-    if (!parse_and_validate_tx_from_blob(tx_blob, tx_input_check, hone, htwo))
+    crypto::hash hone, htwo;
+    if (!parse_and_validate_tx_from_blob(tx_blob, tx, hone, htwo))
     {
       MERROR("Failed to parse tx from blob in handle_incoming_ntz_sig_pre!");
       tvc.m_verifivation_failed = true;
       return false;
     }
     MWARNING("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(hone));
-    cryptonote::transaction const tx_output_check = tx_input_check;
-    uint64_t* pmax = NULL;
-    bool check_in = m_blockchain_storage.check_ntz_req_inputs(tx_input_check, tvc, pmax);
+    cryptonote::transaction const tx_output_check = tx;
     bool check_out = m_blockchain_storage.check_ntz_req_outputs(tx_output_check, tvc);
-    if (!check_in || !check_out) {
-      MERROR("Input/output check failed in handle_incoming_ntz_sig_pre!");
+    if (!check_out) {
+      MERROR("Output check failed in handle_incoming_ntz_sig_pre!");
       tvc.m_verifivation_failed = true;
       return false;
     }
@@ -691,7 +688,6 @@ namespace cryptonote
       tvc.m_too_big = true;
       return false;
     }
-    tx = tx_input_check;
     tx_hash = hone;
     tx_prefixt_hash = htwo;
 
