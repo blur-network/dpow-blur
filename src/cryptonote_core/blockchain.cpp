@@ -1506,7 +1506,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       return false;
     }
 
-  int32_t notarized_height = komodo::NOTARIZED_HEIGHT;
+/*  int32_t notarized_height = komodo::NOTARIZED_HEIGHT;
   uint64_t nHeight = bei.height;
   crypto::hash hash = m_db->get_block_hash_from_height(nHeight);
 
@@ -1523,7 +1523,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       return false;
     }
   }
-
+*/
     // Check the block's hash against the difficulty target for its alt chain
     difficulty_type current_diff = get_next_difficulty_for_alternative_chain(alt_chain, bei);
     CHECK_AND_ASSERT_MES(current_diff, false, "!!!!!!! DIFFICULTY OVERHEAD !!!!!!!");
