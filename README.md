@@ -2,8 +2,11 @@
 
 There are files in here from many different projects, including but not limited to BLUR, BTC, KMD, and XMR. Please retain proper licensing if you reuse any files, and be aware that this repo is under heavy development... So files will not yet be in their proper homes.
 
-# Contents:
+## Setup For Notary Nodes on BLUR
 
+Notary nodes can follow the procedure <a href="https://github.com/blur-network/dpow-blur/tree/dpow/docs/Blur-NN-Setup.md">located here</a>, with the guidane of a KMD administrator, to set up notary wallets for BLUR.
+
+# Contents:
 
 - <a href="https://github.com/blur-network/dpow-blur#compile">Compile From Source with Dependencies</a>
 - <a href="https://github.com/blur-network/dpow-blur#deps">Dependencies (Package Manager)</a>
