@@ -1439,10 +1439,14 @@ namespace cryptonote
         LOG_PRINT_L1("Block found but, seems that reorganize just happened after that, do not relay this block");
         return true;
       }
-      for (const auto& each : txs)
-        total_txs.push_back(each);
-      for (const auto& each : ntz_txs)
-        total_txs.push_back(each);
+      if (!txs.empty()) {
+        for (const auto& each : txs)
+          total_txs.push_back(each);
+      }
+      if (!ntz_txs.empty()) {
+        for (const auto& each : ntz_txs)
+          total_txs.push_back(each);
+      }
 
       CHECK_AND_ASSERT_MES(total_txs.size() == b.tx_hashes.size() && !missed.size(), false, "can't find some transactions in found block:" << get_block_hash(b) << " txs.size()=" << total_txs.size()
         << ", b.tx_hashes.size()=" << b.tx_hashes.size() << ", missed_txs.size()" << missed.size());

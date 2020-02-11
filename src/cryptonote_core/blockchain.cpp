@@ -1716,7 +1716,7 @@ bool Blockchain::handle_get_objects(NOTIFY_REQUEST_GET_OBJECTS::request& arg, NO
       }
     }
     if (!ntz_ids.empty()) {
-      get_notarizations_blobs(ntz_ids, txs, missed_ntz_ids);
+      get_notarizations_blobs(ntz_ids, ntz_txs, missed_ntz_ids);
       for (const auto& each : missed_ntz_ids) {
         missed_ids.push_back(each);
       }
@@ -1742,14 +1742,23 @@ bool Blockchain::handle_get_objects(NOTIFY_REQUEST_GET_OBJECTS::request& arg, NO
     //pack block
     e.block = bl.first;
     //pack transactions
-    for (const cryptonote::blobdata& tx: txs)
-      e.txs.push_back(tx);
+    if (!txs.empty()) {
+      for (const cryptonote::blobdata& tx: txs)
+        e.txs.push_back(tx);
+    }
+    if (!ntz_txs.empty()) {
+      for (const cryptonote::blobdata& tx: ntz_txs)
+        e.txs.push_back(tx);
+    }
   }
-  //get another transactions, if need
-  get_transactions_blobs(arg.txs, txs, rsp.missed_ids);
-  //pack aside transactions
-  for (const auto& tx: txs)
-    rsp.txs.push_back(tx);
+  if (!txs.empty()) {
+    for (const auto& tx: txs)
+      rsp.txs.push_back(tx);
+  }
+  if (!ntz_txs.empty()) {
+    for (const auto& tx: ntz_txs)
+      rsp.txs.push_back(tx);
+  }
 
   m_db->block_txn_stop();
   return true;
