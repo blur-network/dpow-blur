@@ -783,7 +783,7 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
   uint64_t tx_id = get_tx_count();
 
   CURSOR(ntz_txs)
-  CURSOR(ntz_indices)
+ // CURSOR(ntz_indices)
   CURSOR(tx_indices)
 
   MDB_val_set(val_h, tx_hash);
@@ -811,7 +811,7 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
   if (result)
     throw0(DB_ERROR(lmdb_error("Failed to add tx index for db transaction: ", result).c_str()));
 
-  result = mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
+/*  result = mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
   if (result == 0) {
     ntzindex *tip = (ntzindex *)val_h.mv_data;
     throw1(TX_EXISTS(std::string("Attempting to add tx index that's already in the db (ntz id ").append(boost::lexical_cast<std::string>(tip->key)).append(")").c_str()));
@@ -831,7 +831,7 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
   result = mdb_cursor_put(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, 0);
   if (result)
     throw0(DB_ERROR(lmdb_error("Failed to add ntz index for db transaction: ", result).c_str()));
-
+*/
   MDB_val_copy<blobdata> blob(tx_to_blob(tx));
   result = mdb_cursor_put(m_cur_ntz_txs, &val_tx_id, &blob, MDB_APPEND);
   if (result)
