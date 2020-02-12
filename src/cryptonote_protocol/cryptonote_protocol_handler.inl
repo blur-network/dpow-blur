@@ -1068,14 +1068,14 @@ namespace cryptonote
       block_hashes.push_back(block_hash);
     }
 
-/*    if(context.m_requested_objects.size())
+    if(context.m_requested_objects.size())
     {
       MERROR("returned not all requested objects (context.m_requested_objects.size()="
         << context.m_requested_objects.size() << "), dropping connection");
       drop_connection(context, false, false);
       return 1;
     }
-*/
+
     // get the last parsed block, which should be the highest one
     const crypto::hash last_block_hash = cryptonote::get_block_hash(b);
     if(m_core.have_block(last_block_hash))
