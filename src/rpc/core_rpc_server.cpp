@@ -860,7 +860,8 @@ namespace cryptonote
 
         crypto::hash tx_hash = *vhi++;
         e.tx_hash = *txhi++;
-        e.notarization_index = m_core.get_blockchain_storage().get_notarization_index(tx_hash);
+        // TODO: Change below to grab an index, not count. Placeholder for now
+        e.notarization_index = m_core.get_blockchain_storage().get_db().get_notarization_count();
         blobdata blob = t_serializable_object_to_blob(tx);
         e.as_hex = string_tools::buff_to_hex_nodelimer(blob);
         if (req.decode_as_json)
@@ -1006,7 +1007,8 @@ namespace cryptonote
 
         crypto::hash tx_hash = *vhi++;
         e.tx_hash = *txhi++;
-        e.notarization_index = m_core.get_blockchain_storage().get_notarization_index(tx_hash);
+        // TODO: Change below to grab an index, not count. Placeholder for now
+        e.notarization_index = m_core.get_blockchain_storage().get_db().get_notarization_count();
         blobdata blob = t_serializable_object_to_blob(tx);
         e.as_hex = string_tools::buff_to_hex_nodelimer(blob);
         if (req.decode_as_json)
@@ -2579,7 +2581,7 @@ namespace cryptonote
       bool ntz = ntz_complete > 0;
 
       crypto::hash ntz_txid = crypto::null_hash;
-      bool get_by_ntz_index = m_core.get_blockchain_storage().get_hash_by_ntz_index(ntz_complete-1, ntz_txid);
+//      bool get_by_ntz_index = m_core.get_blockchain_storage().get_hash_by_ntz_index(ntz_complete-1, ntz_txid);
       crypto::hash ntz_hash = crypto::null_hash;
 
       res.assetchains_symbol = komodo::ASSETCHAINS_SYMBOL;

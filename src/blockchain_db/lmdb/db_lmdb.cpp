@@ -2603,7 +2603,7 @@ uint64_t BlockchainLMDB::get_notarization_count() const
   return db_stats.ms_entries;
 }
 
-uint64_t BlockchainLMDB::get_notarization_index(crypto::hash const& ntz_hash) const
+/*uint64_t BlockchainLMDB::get_notarization_index(crypto::hash const& ntz_hash) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -2646,7 +2646,6 @@ crypto::hash BlockchainLMDB::get_hash_by_ntz_index(uint64_t const& ntz_id) const
   for_all_notarizations([&](const crypto::hash& hash, cryptonote::transaction const& tx) {
     if (ntz_id == get_notarization_index(hash)) { ntz_hash = hash; return true; } return false; });
 
-  /* check to make sure inverse works... */
 
   int result;
 
@@ -2664,7 +2663,7 @@ crypto::hash BlockchainLMDB::get_hash_by_ntz_index(uint64_t const& ntz_id) const
 
   return ntz_hash;
 }
-
+*/
 std::vector<transaction> BlockchainLMDB::get_tx_list(const std::vector<crypto::hash>& hlist) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
@@ -3030,7 +3029,7 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
 
   TXN_PREFIX_RDONLY();
   RCURSOR(ntz_txs);
-  RCURSOR(ntz_indices);
+  RCURSOR(tx_indices);
 
   MDB_val k;
   MDB_val v;
@@ -3039,17 +3038,17 @@ bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash
   MDB_cursor_op op = MDB_FIRST;
   while (1)
   {
-    int ret = mdb_cursor_get(m_cur_ntz_indices, &k, &v, op);
+    int ret = mdb_cursor_get(m_cur_tx_indices, &k, &v, op);
     op = MDB_NEXT;
     if (ret == MDB_NOTFOUND)
       break;
     if (ret)
       throw0(DB_ERROR(lmdb_error("Failed to enumerate transactions: ", ret).c_str()));
 
-    ntzindex *ni = (ntzindex *)v.mv_data;
+    txindex *ni = (txindex *)v.mv_data;
     const crypto::hash hash = ni->key;
-    k.mv_data = (void *)ni->data.ntz_id;
-    k.mv_size = sizeof(ni->data.ntz_id);
+    k.mv_data = (void *)ni->data.tx_id;
+    k.mv_size = sizeof(ni->data.tx_id);
     ret = mdb_cursor_get(m_cur_ntz_txs, &k, &v, MDB_SET);
     if (ret == MDB_NOTFOUND)
       break;

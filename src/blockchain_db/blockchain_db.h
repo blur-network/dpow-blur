@@ -1024,7 +1024,7 @@ public:
    */
   virtual crypto::hash get_block_hash_from_height(const uint64_t& height) const = 0;
 
-  virtual crypto::hash get_hash_by_ntz_index(const uint64_t& ntz_index) const = 0;
+//  virtual crypto::hash get_hash_by_ntz_index(const uint64_t& ntz_index) const = 0;
 
   /**
    * @brief fetch a list of blocks
@@ -1243,7 +1243,7 @@ public:
    *
    * @return the index of notarization in the blockchain
    */
-  virtual uint64_t get_notarization_index(crypto::hash const& h) const = 0;
+//  virtual uint64_t get_notarization_index(crypto::hash const& h) const = 0;
 
   /**
    * @brief fetches a list of transactions based on their hashes
