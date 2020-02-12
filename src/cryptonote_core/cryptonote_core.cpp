@@ -1403,7 +1403,9 @@ namespace cryptonote
       NOTIFY_NEW_BLOCK::request arg = AUTO_VAL_INIT(arg);
       arg.current_blockchain_height = m_blockchain_storage.get_current_blockchain_height();
 
-      std::list<cryptonote::blobdata> txs, ntz_txs, total_txs;
+      block_to_blob(b, arg.b.block);
+
+      std::list<cryptonote::blobdata> txs, ntz_txs;
       std::vector<crypto::hash> tx_ids, ntz_ids;
       std::list<crypto::hash> missed_txs, missed_ntz_txs, missed;
 
@@ -1441,20 +1443,15 @@ namespace cryptonote
       }
       if (!txs.empty()) {
         for (const auto& each : txs)
-          total_txs.push_back(each);
+          arg.b.txs.push_back(each);
       }
       if (!ntz_txs.empty()) {
         for (const auto& each : ntz_txs)
-          total_txs.push_back(each);
+          arg.b.txs.push_back(each);
       }
 
-      CHECK_AND_ASSERT_MES(total_txs.size() == b.tx_hashes.size() && !missed.size(), false, "can't find some transactions in found block:" << get_block_hash(b) << " txs.size()=" << total_txs.size()
+      CHECK_AND_ASSERT_MES(arg.b.txs.size() == b.tx_hashes.size() && !missed.size(), false, "can't find some transactions in found block:" << get_block_hash(b) << " txs.size()=" << arg.b.txs.size()
         << ", b.tx_hashes.size()=" << b.tx_hashes.size() << ", missed_txs.size()" << missed.size());
-
-      block_to_blob(b, arg.b.block);
-      //pack transactions
-      for(auto& tx:  total_txs)
-        arg.b.txs.push_back(tx);
 
       m_pprotocol->relay_block(arg, exclude_context);
     }

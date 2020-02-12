@@ -411,8 +411,8 @@ namespace cryptonote
 
     m_core.pause_mine();
 
-    block new_block;
-    transaction miner_tx;
+    cryptonote::block new_block;
+    cryptonote::transaction miner_tx;
     if(parse_and_validate_block_from_blob(arg.b.block, new_block))
     {
       // This is a second notification, we must have asked for some missing tx
@@ -438,15 +438,9 @@ namespace cryptonote
 
       std::list<blobdata> have_tx;
 
-      // Instead of requesting missing transactions by hash like BTC,
-      // we do it by index (thanks to a suggestion from moneromooo) because
-      // we're way cooler .. and also because they're smaller than hashes.
-      //
-      // Also, remember to pepper some whitespace changes around to bother
-      // moneromooo ... only because I <3 him.
       std::vector<uint64_t> need_tx_indices;
 
-      transaction tx;
+      cryptonote::transaction tx;
       crypto::hash tx_hash;
 
       for(auto& tx_blob: arg.b.txs)
@@ -476,19 +470,11 @@ namespace cryptonote
                 << ", exception thrown"
                 << ", dropping connection"
             );
-
             drop_connection(context, false, false);
             m_core.resume_mine();
             return 1;
           }
 
-          // hijacking m_requested objects in connection context to patch up
-          // a possible DOS vector pointed out by @monero-moo where peers keep
-          // sending (0...n-1) transactions.
-          // If requested objects is not empty, then we must have asked for
-          // some missing transacionts, make sure that they're all there.
-          //
-          // Can I safely re-use this field? I think so, but someone check me!
           if(!context.m_requested_objects.empty())
           {
             auto req_tx_it = context.m_requested_objects.find(tx_hash);
@@ -500,17 +486,12 @@ namespace cryptonote
                 << "transaction with id = " << tx_hash << " wasn't requested, "
                 << "dropping connection"
               );
-
               drop_connection(context, false, false);
               m_core.resume_mine();
               return 1;
             }
-
             context.m_requested_objects.erase(req_tx_it);
           }
-
-          // we might already have the tx that the peer
-          // sent in our pool, so don't verify again..
           if(!m_core.pool_has_tx(tx_hash))
           {
             MDEBUG("Incoming tx " << tx_hash << " not in pool, adding");
@@ -522,13 +503,6 @@ namespace cryptonote
               m_core.resume_mine();
               return 1;
             }
-
-            //
-            // future todo:
-            // tx should only not be added to pool if verification failed, but
-            // maybe in the future could not be added for other reasons
-            // according to monero-moo so keep track of these separately ..
-            //
           }
         }
         else
@@ -546,10 +520,6 @@ namespace cryptonote
         }
       }
 
-      // The initial size equality check could have been fooled if the sender
-      // gave us the number of transactions we asked for, but not the right
-      // ones. This check make sure the transactions we asked for were the
-      // ones we received.
       if(context.m_requested_objects.size())
       {
         MERROR
@@ -989,8 +959,6 @@ namespace cryptonote
     return 1;
   }
   //------------------------------------------------------------------------------------------------------------------------
-
-
   template<class t_core>
   double t_cryptonote_protocol_handler<t_core>::get_avg_block_size()
   {
@@ -1003,8 +971,7 @@ namespace cryptonote
     for (const auto &element : m_avg_buffer) avg += element;
     return avg / m_avg_buffer.size();
   }
-
-
+  //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>
   int t_cryptonote_protocol_handler<t_core>::handle_response_get_objects(int command, NOTIFY_RESPONSE_GET_OBJECTS::request& arg, cryptonote_connection_context& context)
   {
@@ -1079,7 +1046,7 @@ namespace cryptonote
         start_height = boost::get<txin_gen>(b.miner_tx.vin[0]).height;
 
       const crypto::hash block_hash = get_block_hash(b);
-      auto req_it = context.m_requested_objects.find(block_hash);
+      std::unordered_set<crypto::hash>::iterator req_it = context.m_requested_objects.find(block_hash);
       if(req_it == context.m_requested_objects.end())
       {
         LOG_ERROR_CCONTEXT("sent wrong NOTIFY_RESPONSE_GET_OBJECTS: block with id=" << epee::string_tools::pod_to_hex(get_blob_hash(block_entry.block))
@@ -1089,8 +1056,10 @@ namespace cryptonote
       }
       if(b.tx_hashes.size() != block_entry.txs.size())
       {
+        cryptonote::transaction tx;
+        parse_and_validate_tx_from_blob(block_entry.txs.front(), tx); 
         LOG_ERROR_CCONTEXT("sent wrong NOTIFY_RESPONSE_GET_OBJECTS: block with id=" << epee::string_tools::pod_to_hex(get_blob_hash(block_entry.block))
-          << ", tx_hashes.size()=" << b.tx_hashes.size() << " mismatch with block_complete_entry.m_txs.size()=" << block_entry.txs.size() << ", dropping connection");
+          << ", tx_hashes.size()=" << b.tx_hashes.size() << " mismatch with block_complete_entry.m_txs.size()=" << block_entry.txs.size() << ", Missing hash from block: " <<epee::string_tools::pod_to_hex(get_transaction_hash(tx)));
         drop_connection(context, false, false);
         return 1;
       }
@@ -1099,14 +1068,14 @@ namespace cryptonote
       block_hashes.push_back(block_hash);
     }
 
-    if(context.m_requested_objects.size())
+/*    if(context.m_requested_objects.size())
     {
       MERROR("returned not all requested objects (context.m_requested_objects.size()="
         << context.m_requested_objects.size() << "), dropping connection");
       drop_connection(context, false, false);
       return 1;
     }
-
+*/
     // get the last parsed block, which should be the highest one
     const crypto::hash last_block_hash = cryptonote::get_block_hash(b);
     if(m_core.have_block(last_block_hash))

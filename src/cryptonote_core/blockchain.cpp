@@ -1621,12 +1621,14 @@ bool Blockchain::get_blocks(uint64_t start_offset, size_t count, std::list<std::
   }
 
 
-  for(const auto& blk : blocks)
+  for(const auto& bl : blocks)
   {
+
+    std::list<cryptonote::blobdata> m_txs, m_ntz_txs;
     std::vector<crypto::hash> tx_ids, ntz_ids;
     std::list<crypto::hash> missed_tx_ids, missed_ntz_ids, missed_ids;
 
-    for (const auto& each : blk.second.tx_hashes) {
+    for (const auto& each : bl.second.tx_hashes) {
       cryptonote::blobdata blob;
       if (!m_db->get_tx_blob(each, blob)) {
         if (m_db->get_ntz_tx_blob(each, blob)) {
@@ -1639,16 +1641,22 @@ bool Blockchain::get_blocks(uint64_t start_offset, size_t count, std::list<std::
       }
     }
     if (!tx_ids.empty()) {
-      get_transactions_blobs(tx_ids, txs, missed_tx_ids);
+      get_transactions_blobs(tx_ids, m_txs, missed_tx_ids);
       for (const auto& each : missed_tx_ids) {
         missed_ids.push_back(each);
       }
     }
     if (!ntz_ids.empty()) {
-      get_notarizations_blobs(ntz_ids, txs, missed_ntz_ids);
+      get_notarizations_blobs(ntz_ids, m_ntz_txs, missed_ntz_ids);
       for (const auto& each : missed_ntz_ids) {
         missed_ids.push_back(each);
       }
+    }
+    if (!m_txs.empty()) {
+      for (const auto& each : m_txs)
+        txs.push_back(each);
+      for (const auto& each : m_ntz_txs)
+        txs.push_back(each);
     }
     CHECK_AND_ASSERT_MES(!missed_ids.size(), false, "has missed transactions in own block in main blockchain");
   }
@@ -1690,38 +1698,33 @@ bool Blockchain::handle_get_objects(NOTIFY_REQUEST_GET_OBJECTS::request& arg, NO
   rsp.current_blockchain_height = get_current_blockchain_height();
   std::list<std::pair<cryptonote::blobdata,block>> blocks;
   get_blocks(arg.blocks, blocks, rsp.missed_ids);
-  std::list<cryptonote::blobdata> txs, ntz_txs;
 
   for (const auto& bl: blocks)
   {
-    std::vector<crypto::hash> tx_ids, ntz_ids;
-    std::list<crypto::hash> missed_tx_ids, missed_ntz_ids, missed_ids;
+    std::list<crypto::hash> missed_tx_ids, missed_ntz_tx_ids;
+    std::list<cryptonote::blobdata> ntz_txs, txs;
 
-    for (const auto& each : bl.second.tx_hashes) {
-      cryptonote::blobdata blob;
-      if (!m_db->get_tx_blob(each, blob)) {
-        if (m_db->get_ntz_tx_blob(each, blob)) {
-          ntz_ids.push_back(each);
-        } else {
-          MERROR("Failed to retrieve a blob for both regular tx, and ntz tx! Ignoring tx with hash: " << epee::string_tools::pod_to_hex(each) << " ... ");
+    // FIXME: s/rsp.missed_ids/missed_tx_id/ ?  Seems like rsp.missed_ids
+    //        is for missed blocks, not missed transactions as well.
+    get_transactions_blobs(bl.second.tx_hashes, txs, missed_tx_ids);
+
+    if (!missed_tx_ids.empty()) {
+      std::list<crypto::hash>::iterator missed_it;
+      get_notarizations_blobs(bl.second.tx_hashes, ntz_txs, missed_ntz_tx_ids);
+      for (const auto& each : ntz_txs) {
+        cryptonote::transaction tx;
+        parse_and_validate_tx_from_blob(each, tx);
+        crypto::hash hash = get_transaction_hash(tx);
+        missed_it = missed_tx_ids.begin();
+        for (const auto& each : missed_tx_ids) {
+          auto m_it = missed_it;
+          if (epee::string_tools::pod_to_hex(each) == epee::string_tools::pod_to_hex(hash)) {
+            ++missed_it;
+            missed_tx_ids.erase(m_it);
+          }
         }
-      } else {
-        tx_ids.push_back(each);
       }
     }
-    if (!tx_ids.empty()) {
-      get_transactions_blobs(tx_ids, txs, missed_tx_ids);
-      for (const auto& each : missed_tx_ids) {
-        missed_ids.push_back(each);
-      }
-    }
-    if (!ntz_ids.empty()) {
-      get_notarizations_blobs(ntz_ids, ntz_txs, missed_ntz_ids);
-      for (const auto& each : missed_ntz_ids) {
-        missed_ids.push_back(each);
-      }
-    }
-
     if (missed_tx_ids.size() != 0)
     {
       LOG_ERROR("Error retrieving blocks, missed " << missed_tx_ids.size()
@@ -1742,24 +1745,37 @@ bool Blockchain::handle_get_objects(NOTIFY_REQUEST_GET_OBJECTS::request& arg, NO
     //pack block
     e.block = bl.first;
     //pack transactions
-    if (!txs.empty()) {
-      for (const cryptonote::blobdata& tx: txs)
-        e.txs.push_back(tx);
-    }
-    if (!ntz_txs.empty()) {
-      for (const cryptonote::blobdata& tx: ntz_txs)
-        e.txs.push_back(tx);
-    }
-  }
-  if (!txs.empty()) {
-    for (const auto& tx: txs)
-      rsp.txs.push_back(tx);
-  }
-  if (!ntz_txs.empty()) {
-    for (const auto& tx: ntz_txs)
-      rsp.txs.push_back(tx);
+    for (const cryptonote::blobdata& tx: txs)
+      e.txs.push_back(tx);
+    for (const cryptonote::blobdata& tx: ntz_txs)
+      e.txs.push_back(tx);
   }
 
+  std::list<cryptonote::blobdata> txs, ntz_txs;
+  std::list<crypto::hash> missed_ids, missed_ntz_ids;
+
+  get_transactions_blobs(arg.txs, txs, missed_ids);
+    if (!missed_ids.empty()) {
+      std::list<crypto::hash>::iterator missed_it;
+      get_notarizations_blobs(arg.txs, ntz_txs, missed_ntz_ids);
+      for (const auto& each : ntz_txs) {
+        cryptonote::transaction tx;
+        parse_and_validate_tx_from_blob(each, tx);
+        crypto::hash hash = get_transaction_hash(tx);
+        for (const auto& each : missed_ids) {
+          auto m_it = missed_it;
+          if (epee::string_tools::pod_to_hex(each) == epee::string_tools::pod_to_hex(hash)) {
+            ++missed_it;
+            missed_ids.erase(m_it);
+          }
+        }
+      }
+      for (const auto& each : ntz_txs)
+        rsp.txs.push_back(each);
+    }
+
+  for (const auto& each : txs)
+    rsp.txs.push_back(each);
   m_db->block_txn_stop();
   return true;
 }
