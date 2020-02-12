@@ -47,11 +47,10 @@
  ****************************************************************************************/
 
 #include "komodo_notaries.h"
-#include "komodo_notary_server/notary_server.h"
-#include "komodo/komodo_validation.h"
+#include "notary_server/notary_server.h"
+#include "komodo_validation.h"
 #include "common/hex_str.h"
 #include "bitcoin/bitcoin.h"
-
 #include "libbtc/include/btc/wallet.h"
 
 namespace cryptonote {
@@ -64,7 +63,7 @@ static uint64_t const  KOMODO_NOTARIES_TIMESTAMP1 = 1525132800; // May 1st 2018 
 static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP) * KOMODO_ELECTION_GAP);
 
 
-  char const* Notaries_elected[64][3] =
+  const char* Notaries_elected[64][3] =
   {
     {"madmax_NA",          "0237e0d3268cebfa235958808db1efc20cc43b31100813b1f3e15cc5aa647ad2c3", "fd1d3172b91ff9f898dab7626bbf3d45e370e185fe49c09321d72ebc1a1639f5" }, // 0
     {"alright_AR",         "020566fe2fb3874258b2d3cf1809a5d650e0edc7ba746fa5eec72750c5188c9cc9", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
@@ -311,7 +310,6 @@ namespace komodo {
   //------------------------------------------------------------------
   int32_t komodo_core::komodo_init(BlockchainDB* db)
   {
-    decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
     return(0);
   }
   //------------------------------------------------------------------
@@ -413,13 +411,13 @@ namespace komodo {
     return(0);
   }
   //------------------------------------------------------------------
-  void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 notarized_hash,uint256 notarized_desttxid,uint256 MoM,int32_t MoMdepth)
+/*  void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 notarized_hash,uint256 notarized_desttxid,uint256 MoM,int32_t MoMdepth)
   {
     static int didinit; static uint256 zero; static FILE *fp; cryptonote::block *pindex = nullptr; struct notarized_checkpoint *np,N; long fpos;
     if ( didinit == 0 )
     {
         char fname[512]; uint64_t latestht = 0;
-        decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
+//        decode_hex(NOTARY_PUBKEY33,33,(char *)NOTARY_PUBKEY.c_str());
         pthread_mutex_init(&komodo_mutex,NULL);
   //#ifdef _WIN32
   //      sprintf(fname,"%s\\notarizations",GetDefaultDataDir().string().c_str());
@@ -538,7 +536,7 @@ namespace komodo {
           else if ( activeheight == temp_height && memcmp(&hash,&notarized_hash,sizeof(hash)) != 0 )
           {
             MERROR("nHeight == NOTARIZED_HEIGHT, but different hash!");
-            /* Could probably use slightly more informative logging here */
+             Could probably use slightly more informative logging here
             return(-1);
           }
         } else {
@@ -552,12 +550,12 @@ namespace komodo {
   void komodo_core::komodo_connectblock(uint64_t& height,cryptonote::block& b)
   {
     static uint64_t hwmheight;
-    uint64_t signedmask; uint8_t scriptbuf[4096],pubkeys[64][33],scriptPubKey[35]; crypto::hash zero; int i,j,k,/*numnotaries,*/notarized,scriptlen,numvalid,specialtx,notarizedheight,len,numvouts,numvins;
+    uint64_t signedmask; uint8_t scriptbuf[4096],pubkeys[64][33],scriptPubKey[35]; crypto::hash zero; int i,j,k,numnotaries,notarized,scriptlen,numvalid,specialtx,notarizedheight,len,numvouts,numvins;
     size_t txn_count = 0;
 
     uint64_t nHeight = height;
 
-/*    if ( KOMODO_NEEDPUBKEYS != 0 )
+    if ( KOMODO_NEEDPUBKEYS != 0 )
     {
         komodo_importpubkeys();
         KOMODO_NEEDPUBKEYS = 0;
@@ -573,7 +571,7 @@ namespace komodo {
         if ( nHeight != hwmheight )
           printf("dpow: %s hwmheight.%lu vs pindex->nHeight.%lu t.%lu reorg.%lu\n",ASSETCHAINS_SYMBOL,hwmheight,nHeight,b.timestamp,hwmheight - nHeight);
     }
-  
+
     if ( height != 0 )
     {
         height = nHeight;
@@ -629,8 +627,8 @@ namespace komodo {
           LogPrintf("dpow: [%s] ht.%d txi.%d signedmask.%llx numvins.%d numvouts.%d notarized.%d special.%d\n",ASSETCHAINS_SYMBOL,height,i,(long long)signedmask,numvins,numvouts,notarized,specialtx);
         }
     } else fprintf(stderr,"komodo_connectblock: unexpected null pindex\n");
-  */
-    }
+
+    }*/
  //----------------------------------------------------------------------------
   int32_t komodo_init(BlockchainDB* db)
   {

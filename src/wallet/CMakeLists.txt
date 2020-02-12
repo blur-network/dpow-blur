@@ -93,7 +93,6 @@ target_link_libraries(wallet_rpc_server
     common
     version
     cryptonote_protocol
-    komodo
     ${READLINE_LIBRARIES}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

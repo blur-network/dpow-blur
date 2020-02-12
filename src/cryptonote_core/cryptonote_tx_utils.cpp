@@ -41,7 +41,7 @@ using namespace epee;
 #include "cryptonote_basic/miner.h"
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
-#include "komodo/komodo_validation.h"
+#include "komodo_validation.h"
 #include "ringct/rctSigs.h"
 #include "multisig/multisig.h"
 #include "libhydrogen/hydrogen.h"

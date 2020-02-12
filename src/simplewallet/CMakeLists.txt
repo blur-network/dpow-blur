@@ -45,7 +45,6 @@ target_link_libraries(simplewallet
   PRIVATE
     wallet
     rpc_base
-    komodo
     cryptonote_core
     cncrypto
     common

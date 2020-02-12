@@ -48,7 +48,7 @@ using namespace epee;
 #include "wallet2.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "rpc/core_rpc_server_commands_defs.h"
-#include "komodo_notary_server/notary_server_commands_defs.h"
+#include "notary_server/notary_server_commands_defs.h"
 #include "misc_language.h"
 #include "cryptonote_basic/cryptonote_basic_impl.h"
 #include "cryptonote_core/komodo_notaries.h"
@@ -73,7 +73,7 @@ using namespace epee;
 #include "common/base58.h"
 #include "ringct/rctSigs.h"
 #include "ringdb.h"
-#include "komodo/komodo_validation.h"
+#include "cryptonote_core/komodo_validation.h"
 #include "libhydrogen/hydrogen.h"
 
 extern "C"
