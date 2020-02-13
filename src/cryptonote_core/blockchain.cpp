@@ -5055,7 +5055,7 @@ bool Blockchain::for_all_notarizations(std::function<bool(const crypto::hash&, c
   return m_db->for_all_notarizations(f);
 }
 
-bool Blockchain::get_hash_by_ntz_index(uint64_t const& ntz_id, crypto::hash& ntz_hash) const
+/*bool Blockchain::get_hash_by_ntz_index(uint64_t const& ntz_id, crypto::hash& ntz_hash) const
 {
   if (ntz_id < m_db->get_notarization_count()) {
     ntz_hash = m_db->get_hash_by_ntz_index(ntz_id);
@@ -5064,7 +5064,7 @@ bool Blockchain::get_hash_by_ntz_index(uint64_t const& ntz_id, crypto::hash& ntz
     return false;
   }
 }
-
+*/
 bool Blockchain::for_all_outputs(std::function<bool(uint64_t amount, const crypto::hash &tx_hash, uint64_t height, size_t tx_idx)> f) const
 {
   return m_db->for_all_outputs(f);;
@@ -5075,10 +5075,10 @@ bool Blockchain::for_all_outputs(uint64_t amount, std::function<bool(uint64_t he
   return m_db->for_all_outputs(amount, f);;
 }
 
-uint64_t Blockchain::get_notarization_index(crypto::hash const& ntz_hash) const
+/*uint64_t Blockchain::get_notarization_index(crypto::hash const& ntz_hash) const
 {
   return m_db->get_notarization_index(ntz_hash);
-}
+}*/
 
 namespace cryptonote {
 template bool Blockchain::get_transactions(const std::vector<crypto::hash>&, std::list<transaction>&, std::list<crypto::hash>&) const;

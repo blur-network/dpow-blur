@@ -246,7 +246,7 @@ public:
 
   virtual uint64_t get_notarization_count() const;
 
-  virtual uint64_t get_notarization_index(crypto::hash const& ntz_hash) const;
+ // virtual uint64_t get_notarization_index(crypto::hash const& ntz_hash) const;
 
   virtual std::vector<transaction> get_tx_list(const std::vector<crypto::hash>& hlist) const;
 
@@ -286,7 +286,7 @@ public:
   virtual bool remove_ntzpool_tx(const crypto::hash& txid, const crypto::hash& ptx_hash);
   virtual bool get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_meta_t &meta) const;
   virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata &ptx_blob, crypto::hash const& ptx_hash) const;
-  virtual crypto::hash get_hash_by_ntz_index(uint64_t const& ntz_index) const;
+//  virtual crypto::hash get_hash_by_ntz_index(uint64_t const& ntz_index) const;
 
   virtual std::pair<cryptonote::blobdata,cryptonote::blobdata> get_ntzpool_tx_blob(const crypto::hash& txid, crypto::hash const& ptx_hash) const;
   virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, crypto::hash const&, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)> f, bool include_blob = true, bool include_unrelayed_txes = true) const;
