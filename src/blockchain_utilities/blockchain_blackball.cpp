@@ -37,7 +37,6 @@
 #include "cryptonote_core/blockchain.h"
 #include "blockchain_db/blockchain_db.h"
 #include "blockchain_db/db_types.h"
-#include "cryptonote_core/komodo_validation.h"
 #include "wallet/ringdb.h"
 #include "version.h"
 

@@ -36,7 +36,6 @@
 #include "cryptonote_core/cryptonote_core.h"
 #include "blockchain_db/blockchain_db.h"
 #include "blockchain_db/db_types.h"
-#include "cryptonote_core/komodo_validation.h"
 #include "version.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY

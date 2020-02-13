@@ -45,7 +45,6 @@ using namespace epee;
 #include "cryptonote_config.h"
 #include "cryptonote_core/tx_pool.h"
 #include "cryptonote_core/komodo_notaries.h"
-#include "cryptonote_core/komodo_validation.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_protocol/cryptonote_protocol_defs.h"
 #include "cryptonote_basic/account.h"

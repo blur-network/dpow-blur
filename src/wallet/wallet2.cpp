@@ -73,7 +73,7 @@ using namespace epee;
 #include "common/base58.h"
 #include "ringct/rctSigs.h"
 #include "ringdb.h"
-#include "cryptonote_core/komodo_validation.h"
+#include "cryptonote_core/komodo_notaries.h"
 #include "libhydrogen/hydrogen.h"
 
 extern "C"

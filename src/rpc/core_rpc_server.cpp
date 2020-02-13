@@ -51,7 +51,7 @@ using namespace epee;
 #include "core_rpc_server_error_codes.h"
 #include "p2p/net_node.h"
 #include "version.h"
-#include "cryptonote_core/komodo_validation.h"
+#include "cryptonote_core/komodo_notaries.h"
 #include "blockchain_db/db_structs.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY

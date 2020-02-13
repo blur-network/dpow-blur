@@ -48,7 +48,6 @@
 
 #include "komodo_notaries.h"
 #include "notary_server/notary_server.h"
-#include "komodo_validation.h"
 #include "common/hex_str.h"
 #include "bitcoin/bitcoin.h"
 #include "libbtc/include/btc/wallet.h"
@@ -217,7 +216,6 @@ namespace komodo {
 
    std::string NOTARY_PUBKEY;
    uint8_t NOTARY_PUBKEY33[33];
-   portable_mutex_t komodo_mutex;
    int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS;
    uint256 NOTARIZED_HASH, NOTARIZED_MOM, NOTARIZED_DESTTXID;
 
@@ -246,14 +244,14 @@ namespace komodo {
 
   void komodo_clearstate()
   {
-    portable_mutex_lock(&komodo_mutex);
+   // portable_mutex_lock(&komodo_mutex);
     memset(&NOTARIZED_HEIGHT,0,sizeof(NOTARIZED_HEIGHT));
     std::fill(NOTARIZED_HASH.begin(),NOTARIZED_HASH.begin()+32,0);
     std::fill(NOTARIZED_DESTTXID.begin(),NOTARIZED_DESTTXID.begin()+32,0);
     std::fill(NOTARIZED_MOM.begin(),NOTARIZED_MOM.begin()+32,0);
     memset(&NOTARIZED_MOMDEPTH,0,sizeof(NOTARIZED_MOMDEPTH));
     memset(&last_NPOINTSi,0,sizeof(last_NPOINTSi));
-    portable_mutex_unlock(&komodo_mutex);
+  //  portable_mutex_unlock(&komodo_mutex);
   }
 
   komodo_core::komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p) : m_core(cr), m_p2p(p2p) {};
