@@ -859,7 +859,7 @@ namespace cryptonote
         COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
 
         crypto::hash tx_hash = *vhi++;
-        e.tx_hash = *txhi++;
+        e.ntz_tx_hash = *txhi++;
         // TODO: Change below to grab an index, not count. Placeholder for now
         e.notarization_index = m_core.get_blockchain_storage().get_db().get_notarization_count();
         blobdata blob = t_serializable_object_to_blob(tx);
@@ -1006,7 +1006,7 @@ namespace cryptonote
         COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
 
         crypto::hash tx_hash = *vhi++;
-        e.tx_hash = *txhi++;
+        e.ntz_tx_hash = *txhi++;
         // TODO: Change below to grab an index, not count. Placeholder for now
         e.notarization_index = m_core.get_blockchain_storage().get_db().get_notarization_count();
         blobdata blob = t_serializable_object_to_blob(tx);

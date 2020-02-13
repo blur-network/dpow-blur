@@ -2385,7 +2385,7 @@ void wallet2::update_pool_state(bool refreshed)
       }
       for (const auto& each : nres.txs) {
         entry e;
-        e.tx_hash = each.tx_hash;
+        e.tx_hash = each.ntz_tx_hash;
         e.as_hex = each.as_hex;
         e.as_json = each.as_json;
         e.in_pool = each.in_pool;
