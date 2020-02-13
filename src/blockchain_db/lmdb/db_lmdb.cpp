@@ -2423,18 +2423,34 @@ bool BlockchainLMDB::tx_exists(const crypto::hash& h) const
   RCURSOR(tx_indices);
   RCURSOR(txs);
 
-  MDB_val_set(key, h);
   bool tx_found = false;
 
   TIME_MEASURE_START(time1);
-  auto get_result = mdb_cursor_get(m_cur_tx_indices, (MDB_val *)&zerokval, &key, MDB_GET_BOTH);
-  if (get_result == 0)
-    tx_found = true;
-  else if (get_result != MDB_NOTFOUND)
-    throw0(DB_ERROR(lmdb_error(std::string("DB error attempting to fetch transaction index from hash ") + epee::string_tools::pod_to_hex(h) + ": ", get_result).c_str()));
+  MDB_val_set(v, h);
+  MDB_val result;
 
-  // This isn't needed as part of the check. we're not checking consistency of db.
-  // get_result = mdb_cursor_get(m_cur_txs, &val_tx_index, &result, MDB_SET);
+  auto get_result = mdb_cursor_get(m_cur_tx_indices, (MDB_val *)&zerokval, &v, MDB_GET_BOTH);
+  if (get_result == 0)
+  {
+    txindex *tip = (txindex *)v.mv_data;
+    MDB_val_set(val_tx_id, tip->data.tx_id);
+    get_result = mdb_cursor_get(m_cur_txs, &val_tx_id, &result, MDB_SET);
+    if (get_result == 0)
+      tx_found = true;
+    else if (get_result == MDB_NOTFOUND)
+    {
+      get_result = mdb_cursor_get(m_cur_ntz_txs, &val_tx_id, &result, MDB_SET);
+      if (get_result == 0)
+        tx_found = true;
+      else if (get_result == MDB_NOTFOUND)
+       throw0(DB_ERROR(std::string("transaction with hash ").append(epee::string_tools::pod_to_hex(h)).append(" not found at index").c_str()));
+      else
+       throw0(DB_ERROR(lmdb_error(std::string("DB error attempting to fetch transaction ") + epee::string_tools::pod_to_hex(h) + " at index: ", get_result).c_str()));
+    }
+    else
+      throw0(DB_ERROR(lmdb_error(std::string("DB error attempting to fetch transaction ") + epee::string_tools::pod_to_hex(h) + " at index: ", get_result).c_str()));
+  }
+
   TIME_MEASURE_FINISH(time1);
   time_tx_exists += time1;
 
@@ -2447,10 +2463,6 @@ bool BlockchainLMDB::tx_exists(const crypto::hash& h) const
   }
 
   // Below not needed due to above comment.
-  // if (get_result == MDB_NOTFOUND)
-  //   throw0(DB_ERROR(std::string("transaction with hash ").append(epee::string_tools::pod_to_hex(h)).append(" not found at index").c_str()));
-  // else if (get_result)
-  //   throw0(DB_ERROR(lmdb_error(std::string("DB error attempting to fetch transaction ") + epee::string_tools::pod_to_hex(h) + " at index: ", get_result).c_str()));
   return true;
 }
 

@@ -1395,18 +1395,10 @@ namespace cryptonote
       return true;
     }
 
-    if(!tvc.m_should_be_relayed)
-    {
-      LOG_PRINT_L0("[on_send_raw_tx]: tx accepted, but not relayed");
-      res.reason = "Not relayed";
-      res.not_relayed = true;
-      res.status = CORE_RPC_STATUS_OK;
-      return true;
-    }
-
     NOTIFY_NEW_TRANSACTIONS::request r;
     r.txs.push_back(tx_blob);
-    m_core.get_protocol()->relay_transactions(r, fake_context);
+//    m_core.get_protocol()->relay_transactions(r, fake_context);
+    m_core.get_protocol()->relay_notarization(r, fake_context);
     //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
     res.status = CORE_RPC_STATUS_OK;
     return true;

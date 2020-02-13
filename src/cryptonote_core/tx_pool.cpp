@@ -191,7 +191,7 @@ namespace cryptonote
     uint64_t max_used_block_height = 0;
     cryptonote::txpool_tx_meta_t meta;
     bool ch_inp_res = m_blockchain.check_tx_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
-    if(!ch_inp_res)
+    if(!ch_inp_res && (tx.version != 2))
     {
       // if the transaction was valid before (kept_by_block), then it
       // may become valid again, so ignore the failed inputs check.

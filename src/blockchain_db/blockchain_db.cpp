@@ -237,8 +237,7 @@ uint64_t BlockchainDB::add_block( const block& blk
     tx_hash = blk.tx_hashes[tx_i];
     if (tx.version == 2) {
       add_ntz_transaction(blk_hash, tx, &tx_hash);
-    }
-    else {
+    } else {
       add_transaction(blk_hash, tx, &tx_hash);
     }
     ++tx_i;

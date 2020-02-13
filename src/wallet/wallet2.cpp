@@ -4887,7 +4887,7 @@ crypto::hash wallet2::get_payment_id(const pending_tx &ptx) const
 
 //----------------------------------------------------------------------------------------------------
 // take a pending tx and actually send it to the daemon
-void wallet2::commit_tx(pending_tx& ptx)
+void wallet2::commit_tx(pending_tx const& ptx)
 {
   using namespace cryptonote;
 
@@ -5005,44 +5005,40 @@ void wallet2::get_ntzpool_tx(std::vector<pending_tx>& ptx_vector)
 void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const& ptx_hash, std::vector<pending_tx> ptxs, const int& sigs_count, const std::string& payment_id, std::vector<int> const& signers_index, std::string const& prior_tx_hash, std::string const& prior_ptx_hash)
 {
   using namespace cryptonote;
-    // Normal submit
+    // ntzpool
+    if (sigs_count < 10) {
       COMMAND_RPC_REQUEST_NTZ_SIG::request request = AUTO_VAL_INIT(request);
       request.sig_count = sigs_count;
       request.ptx_string = ptx_string;
       request.ptx_hash = epee::string_tools::pod_to_hex(ptx_hash);
-      std::vector<std::string> tx_blobs;
-      for (const auto& each : ptxs) {
-        blobdata blob = tx_to_blob(each.tx);
-        tx_blobs.push_back(blob);
+      for (const auto& ptx : ptxs) {
+        std::string tx_blob = tx_to_blob(ptx.tx);
  //     std::string blobhex = epee::string_tools::buff_to_hex_nodelimer(blob);
  //     MWARNING("trying to relay request ntz sig with tx blob: " << blobhex << ", sigs_count: " << std::to_string(sigs_count) << ", and payment id: " << payment_id);
-      }
-      request.tx_blob = tx_blobs[0];
-      request.payment_id = payment_id;
-      const int neg = -1;
-      std::string temp;
-      int i = 0;
-      for (i = 0; i < 13; i++) {
-        int each = signers_index[i];
-        if ((each < 10) && (each > neg)) {
-          std::string each_lten = "0" + std::to_string(each);
-          temp += each_lten;
-        } else {
-          temp += std::to_string(each);
+        request.tx_blob = tx_blob;
+        request.payment_id = payment_id;
+        const int neg = -1;
+        std::string temp;
+        int i = 0;
+        for (i = 0; i < 13; i++) {
+          int each = signers_index[i];
+          if ((each < 10) && (each > neg)) {
+            std::string each_lten = "0" + std::to_string(each);
+            temp += each_lten;
+          } else {
+            temp += std::to_string(each);
+          }
         }
-      }
-    //  MWARNING("Indexes string created using get_index template:" << temp);
-      request.signers_index = temp;
-      request.prior_tx_hash = prior_tx_hash;
-      request.prior_ptx_hash = prior_ptx_hash;
-      COMMAND_RPC_REQUEST_NTZ_SIG::response daemon_send_resp = AUTO_VAL_INIT(daemon_send_resp);
-      m_daemon_rpc_mutex.lock();
-      bool r = epee::net_utils::invoke_http_json("/requestntzsig", request, daemon_send_resp, m_http_client);
-      m_daemon_rpc_mutex.unlock();
-      THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig failed with status: " + daemon_send_resp.status + " and reason: " + daemon_send_resp.reason);
-      THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "request_ntz_sig");
-      for (const auto& ptx : ptxs)
-      {
+      //  MWARNING("Indexes string created using get_index template:" << temp);
+        request.signers_index = temp;
+        request.prior_tx_hash = prior_tx_hash;
+        request.prior_ptx_hash = prior_ptx_hash;
+        COMMAND_RPC_REQUEST_NTZ_SIG::response daemon_send_resp = AUTO_VAL_INIT(daemon_send_resp);
+        m_daemon_rpc_mutex.lock();
+        bool r = epee::net_utils::invoke_http_json("/requestntzsig", request, daemon_send_resp, m_http_client);
+        m_daemon_rpc_mutex.unlock();
+        THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "request_ntz_sig failed with status: " + daemon_send_resp.status + " and reason: " + daemon_send_resp.reason);
+        THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "request_ntz_sig");
         THROW_WALLET_EXCEPTION_IF(daemon_send_resp.status != CORE_RPC_STATUS_OK, error::tx_rejected, ptx.tx, daemon_send_resp.status, daemon_send_resp.reason);
         // sanity checks
         for (size_t idx: ptx.selected_transfers)
@@ -5077,6 +5073,40 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
               << "Unlocked: " << print_money(unlocked_balance(ptx.construction_data.subaddr_account)) << ENDL
               << "Please, wait for further signatures");
       }
+   } else {
+      for (const auto& ptx : ptxs) {
+        commit_tx(ptx);
+        // sanity checks
+        for (size_t idx: ptx.selected_transfers)
+        {
+          transfer_details &td = m_transfers[idx];
+          // notary wallet will not know about other notarizers' key images
+          if (!td.m_key_image_known || td.m_key_image_partial)
+            continue;
+          THROW_WALLET_EXCEPTION_IF(idx >= m_transfers.size(), error::wallet_internal_error,
+             "Bad output index in selected transfers: " + boost::lexical_cast<std::string>(idx));
+        }
+        crypto::hash txid;
+
+        txid = get_transaction_hash(ptx.tx);
+        crypto::hash payment_id_hash = crypto::null_hash;
+        std::vector<cryptonote::tx_destination_entry> dests;
+        uint64_t amount_in = 0;
+
+        payment_id_hash = get_payment_id(ptx);
+        dests = ptx.dests;
+        for(size_t idx: ptx.selected_transfers)
+          amount_in += m_transfers[idx].amount();
+        m_tx_keys.insert(std::make_pair(txid, ptx.tx_key));
+
+        add_unconfirmed_tx(ptx.tx, amount_in, dests, payment_id_hash, ptx.change_dts.amount, ptx.construction_data.subaddr_account, ptx.construction_data.subaddr_indices);
+
+        MWARNING("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
+        //fee includes dust if dust policy specified it.
+        MWARNING("Signatures added. " << "Relaying Notarization <" << txid << ">" << ", Commission: " << print_money(ptx.fee) << ENDL
+              << "Balance: " << print_money(balance(ptx.construction_data.subaddr_account)) << ", Unlocked: " << print_money(unlocked_balance(ptx.construction_data.subaddr_account)) << ENDL);
+    }
+  }
 }
 //----------------------------------------------------------------------------------------------------
 bool wallet2::save_tx(const std::vector<pending_tx>& ptx_vector, const std::string &filename) const
