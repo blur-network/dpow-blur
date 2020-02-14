@@ -779,59 +779,12 @@ uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, 
   uint64_t m_height = height();
 
   int result;
-  uint64_t ntz_id = get_notarization_count();
   uint64_t tx_id = get_tx_count();
 
   CURSOR(ntz_txs)
- // CURSOR(ntz_indices)
-  CURSOR(tx_indices)
 
-  MDB_val_set(val_h, tx_hash);
-  MDB_val_set(val_tx_id, tx_id);
-  MDB_val_set(val_ntz_id, ntz_id);
+  MDB_val_set(val_tx_id, tx_hash);
 
-  result = mdb_cursor_get(m_cur_tx_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
-  if (result == 0) {
-    txindex *tip = (txindex *)val_h.mv_data;
-    throw1(TX_EXISTS(std::string("Attempting to add tx index that's already in the db (tx id ").append(boost::lexical_cast<std::string>(tip->key)).append(")").c_str()));
-  } else if (result != MDB_NOTFOUND) {
-    throw1(DB_ERROR(lmdb_error(std::string("Error checking if tx index exists for ntz hash ") + epee::string_tools::pod_to_hex(tx_hash) + ": ", result).c_str()));
-  }
-
-  txindex ti;
-  ti.key = tx_hash;
-  ti.data.tx_id = tx_id;
-  ti.data.unlock_time = tx.unlock_time;
-  ti.data.block_id = m_height;  // we don't need blk_hash since we know m_height
-
-  val_h.mv_size = sizeof(ti);
-  val_h.mv_data = (void *)&ti;
-
-  result = mdb_cursor_put(m_cur_tx_indices, (MDB_val *)&zerokval, &val_h, 0);
-  if (result)
-    throw0(DB_ERROR(lmdb_error("Failed to add tx index for db transaction: ", result).c_str()));
-
-/*  result = mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
-  if (result == 0) {
-    ntzindex *tip = (ntzindex *)val_h.mv_data;
-    throw1(TX_EXISTS(std::string("Attempting to add tx index that's already in the db (ntz id ").append(boost::lexical_cast<std::string>(tip->key)).append(")").c_str()));
-  } else if (result != MDB_NOTFOUND) {
-    throw1(DB_ERROR(lmdb_error(std::string("Error checking if ntz index exists for ntz hash ") + epee::string_tools::pod_to_hex(tx_hash) + ": ", result).c_str()));
-  }
-
-  ntzindex ni;
-  ni.key = tx_hash;
-  ni.data.ntz_id = ntz_id;
-  ni.data.tx_id = tx_id;
-  ni.data.block_id = m_height;  // we don't need blk_hash since we know m_height
-
-  val_h.mv_size = sizeof(ni);
-  val_h.mv_data = (void *)&ni;
-
-  result = mdb_cursor_put(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, 0);
-  if (result)
-    throw0(DB_ERROR(lmdb_error("Failed to add ntz index for db transaction: ", result).c_str()));
-*/
   MDB_val_copy<blobdata> blob(tx_to_blob(tx));
   result = mdb_cursor_put(m_cur_ntz_txs, &val_tx_id, &blob, MDB_APPEND);
   if (result)
@@ -1585,11 +1538,6 @@ uint64_t BlockchainLMDB::get_txpool_tx_count(bool include_unrelayed_txes) const
     MDB_stat db_stats;
     if ((result = mdb_stat(m_txn, m_txpool_meta, &db_stats))) {
       throw1(DB_ERROR(lmdb_error("Failed to query m_txpool_meta: ", result).c_str()));
-      if ((resultntz = mdb_stat(m_txn, m_ntzpool_meta, &db_stats))) {
-        throw0(DB_ERROR(lmdb_error("Failed to enumerate both txpool & ntzpool tx metadata: ", result).c_str()));
-      } else {
-        throw1(DB_ERROR(lmdb_error("Failed to enumerate txpool tx metadata, but found ntzpool meta instead: ", result).c_str()));
-      }
     }
     num_entries = db_stats.ms_entries;
   }
@@ -1605,34 +1553,19 @@ uint64_t BlockchainLMDB::get_txpool_tx_count(bool include_unrelayed_txes) const
     while (1)
     {
       result = mdb_cursor_get(m_cur_txpool_meta, &k, &v, op);
-      resultntz = mdb_cursor_get(m_cur_ntzpool_meta, &k, &v, op);
       op = MDB_NEXT;
       if (result == MDB_NOTFOUND) {
-        if (resultntz == MDB_NOTFOUND) {
           break;
-        }
       }
       if (result)
       {
-        throw1(DB_ERROR(lmdb_error("Failed to enumerate txpool tx metadata, so checking for ntzpool data: ", result).c_str()));
-        if (resultntz)
-        {
-          throw0(DB_ERROR(lmdb_error("Failed to enumerate both txpool & ntzpool tx metadata: ", result).c_str()));
-        }
-        else
-        {
-          throw1(DB_ERROR(lmdb_error("Failed to enumerate txpool tx metadata, but found ntzpool meta instead: ", result).c_str()));
-        }
+        throw1(DB_ERROR(lmdb_error("Failed to enumerate txpool tx metadata:", result).c_str()));
       }
-      if (!result && resultntz)
+      if (!result )
       {
         const txpool_tx_meta_t &meta = *(const txpool_tx_meta_t*)v.mv_data;
         if (!meta.do_not_relay)
           ++num_entries;
-      }
-      else if (!resultntz && result)
-      {
-        const ntzpool_tx_meta_t &meta = *(const ntzpool_tx_meta_t*)v.mv_data;
       }
     }
   }

@@ -149,6 +149,8 @@ namespace cryptonote
      */
     bool deinit();
 
+    uint64_t get_ntz_count(std::vector<std::pair<crypto::hash,uint64_t>>& ret);
+
     /**
      * @brief assign a set of blockchain checkpoint hashes
      *

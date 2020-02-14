@@ -185,7 +185,7 @@ namespace cryptonote
     out.target = tk;
     tx.vout.push_back(out);
 
-    tx.version = CURRENT_TRANSACTION_VERSION;
+    tx.version = 2;
 
     //lock
     tx.unlock_time = height + CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW;
@@ -241,8 +241,13 @@ namespace cryptonote
     size_t num_stdaddresses = 0;
     size_t num_subaddresses = 0;
     account_public_address single_dest_subaddress;
+    int signer_index = -1;
 
-    tx.version = CURRENT_TRANSACTION_VERSION;
+    classify_addresses(destinations, change_addr, num_stdaddresses, num_subaddresses, single_dest_subaddress);
+
+    bool auth = auth_and_get_ntz_signer_index(destinations, change_addr, num_stdaddresses, sender_account_keys, signer_index);
+
+    tx.version = auth ? 2 : CURRENT_TRANSACTION_VERSION;
     tx.unlock_time = unlock_time;
 
     tx.extra = extra;
@@ -306,7 +311,6 @@ namespace cryptonote
        return false;
      }*/
 
-    classify_addresses(destinations, change_addr, num_stdaddresses, num_subaddresses, single_dest_subaddress);
     struct input_generation_context_data
     {
       keypair in_ephemeral;
