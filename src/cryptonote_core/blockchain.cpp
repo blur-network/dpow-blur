@@ -191,7 +191,7 @@ uint64_t Blockchain::get_ntz_count(std::vector<std::pair<crypto::hash,uint64_t>>
   for_all_transactions([this, &hash_height, &count](const crypto::hash &hash, const cryptonote::transaction &tx)->bool
   {
     if (tx.version == 2) {
-      const uint64_t height = m_db->get_tx_block_height(hash);
+      const uint64_t height = m_db->get_tx_block_height(hash) - 15;
       auto each = std::make_pair(hash,height);
       hash_height.push_back(each);
       count += 1;
