@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, Blur Network
+// Copyright (c) 2018-2020, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 //
@@ -54,7 +54,6 @@
 #include "warnings.h"
 #include "crypto/hash.h"
 #include "cryptonote_core.h"
-#include "komodo/komodo_validation.h"
 #include "komodo_notaries.h"
 #include "ringct/rctSigs.h"
 #include "common/perf_timer.h"

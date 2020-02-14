@@ -28,7 +28,6 @@
 
 #include <memory>
 
-#include "komodo/komodo_validation.h"
 #include <boost/range/adaptor/transformed.hpp>
 #include <boost/algorithm/string.hpp>
 #include "common/command_line.h"

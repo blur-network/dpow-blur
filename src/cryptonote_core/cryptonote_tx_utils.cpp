@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2020, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 // 
@@ -41,7 +42,6 @@ using namespace epee;
 #include "cryptonote_basic/miner.h"
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
-#include "komodo/komodo_validation.h"
 #include "ringct/rctSigs.h"
 #include "multisig/multisig.h"
 #include "libhydrogen/hydrogen.h"

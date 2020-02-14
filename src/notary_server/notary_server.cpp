@@ -1,4 +1,4 @@
-// Copyright (c) 2019, Blur Network
+// Copyright (c) 2019-2020, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 // 
@@ -48,7 +48,6 @@ using namespace epee;
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_protocol/cryptonote_protocol_defs.h"
 #include "cryptonote_basic/account.h"
-#include "komodo/komodo_validation.h"
 #include "multisig/multisig.h"
 #include "notary_server_commands_defs.h"
 #include "misc_language.h"

@@ -105,7 +105,6 @@ target_link_libraries(blockchain_import
     epee
     cryptonote_protocol
     cryptonote_core
-    komodo
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
@@ -131,7 +130,6 @@ target_link_libraries(blockchain_export
     blockchain_db
     p2p
     cryptonote_core
-    komodo
     version
     epee
     cryptonote_protocol
@@ -156,7 +154,6 @@ target_link_libraries(blockchain_blackball
     cryptonote_core
     p2p
     cryptonote_core
-    komodo
     version
     epee
     cryptonote_protocol
@@ -182,7 +179,6 @@ target_link_libraries(blockchain_usage
     blockchain_db
     cryptonote_core
     p2p
-    komodo
     version
     epee
     cryptonote_protocol

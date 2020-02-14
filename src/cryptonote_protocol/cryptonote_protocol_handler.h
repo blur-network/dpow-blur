@@ -39,7 +39,7 @@
 #include "cryptonote_protocol_defs.h"
 #include "cryptonote_protocol_handler_common.h"
 #include "block_queue.h"
-#include "komodo_notary_server/notarization_tx_cache.h"
+#include "notary_server/notarization_tx_cache.h"
 #include "cryptonote_basic/connection_context.h"
 #include "cryptonote_basic/cryptonote_stat_info.h"
 #include <boost/circular_buffer.hpp>

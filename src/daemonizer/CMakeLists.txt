@@ -67,7 +67,6 @@ monero_add_library(daemonizer
 target_link_libraries(daemonizer
   PUBLIC
     common
-    komodo
     ${BTC_LIBRARY}
     ${SECP256K1_LIBRARY}
     ${EVENT_LIBRARY}

@@ -57,11 +57,16 @@
 
 #pragma once
 
+union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4];};
+typedef union _bits256 bits256;
+
 namespace cryptonote {
   bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys);
   bool get_notary_secret_viewkeys(std::vector<crypto::secret_key>& notary_viewkeys);
 
 namespace komodo {
+
+char const ASSETCHAINS_SYMBOL[5] = "BLUR";
 
 class komodo_core
 {
