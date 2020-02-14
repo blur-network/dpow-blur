@@ -189,23 +189,6 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const transacti
   add_tx_amount_output_indices(tx_id, amount_output_indices);
 }
 
-void BlockchainDB::add_ntz_transaction(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash* tx_hash_ptr)
-{
-  crypto::hash tx_hash;
-  if (!tx_hash_ptr)
-  {
-    // should only need to compute hash for miner transactions
-    tx_hash = get_transaction_hash(tx);
-    LOG_PRINT_L3("null tx_hash_ptr - needed to compute: " << tx_hash);
-  }
-  else
-  {
-    tx_hash = *tx_hash_ptr;
-  }
-
-  uint64_t tx_id = add_ntz_transaction_data(blk_hash, tx, tx_hash);
-}
-
 uint64_t BlockchainDB::add_block( const block& blk
                                 , const size_t& block_size
                                 , const difficulty_type& cumulative_difficulty
@@ -335,25 +318,6 @@ transaction BlockchainDB::get_tx(const crypto::hash& h) const
   transaction tx;
   if (!get_tx(h, tx))
     throw TX_DNE(std::string("tx with hash ").append(epee::string_tools::pod_to_hex(h)).append(" not found in db").c_str());
-  return tx;
-}
-
-bool BlockchainDB::get_ntz_tx(const crypto::hash& h, cryptonote::transaction &tx) const
-{
-  blobdata bd;
-  if (!get_ntz_tx_blob(h, bd))
-    return false;
-  if (!parse_and_validate_tx_from_blob(bd, tx))
-    throw DB_ERROR("Failed to parse notarization transaction from blob retrieved from the db");
-
-  return true;
-}
-
-transaction BlockchainDB::get_ntz_tx(const crypto::hash& h) const
-{
-  transaction tx;
-  if (!get_ntz_tx(h, tx))
-    throw TX_DNE(std::string("ntz tx with hash ").append(epee::string_tools::pod_to_hex(h)).append(" not found in db").c_str());
   return tx;
 }
 

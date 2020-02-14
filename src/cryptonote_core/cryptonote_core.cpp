@@ -307,11 +307,6 @@ namespace cryptonote
     return m_blockchain_storage.get_transactions_blobs(txs_ids, txs, missed_txs);
   }
   //-----------------------------------------------------------------------------------------------
-/*  bool core::get_notarizations(const std::vector<crypto::hash>& txs_ids, std::list<cryptonote::blobdata>& txs, std::list<crypto::hash>& missed_txs) const
-  {
-    return m_blockchain_storage.get_notarizations_blobs(txs_ids, txs, missed_txs);
-  }*/
-  //-----------------------------------------------------------------------------------------------
   bool core::get_txpool_backlog(std::vector<tx_backlog_entry>& backlog) const
   {
     m_mempool.get_transaction_backlog(backlog);
@@ -322,11 +317,6 @@ namespace cryptonote
   {
     return m_blockchain_storage.get_transactions(txs_ids, txs, missed_txs);
   }
-  //-----------------------------------------------------------------------------------------------
-/*  bool core::get_notarizations(const std::vector<crypto::hash>& txs_ids, std::list<transaction>& txs, std::list<crypto::hash>& missed_txs) const
-  {
-    return m_blockchain_storage.get_notarizations(txs_ids, txs, missed_txs);
-  }*/
   //-----------------------------------------------------------------------------------------------
   bool core::get_alternative_blocks(std::list<block>& blocks) const
   {
@@ -1403,56 +1393,21 @@ namespace cryptonote
       cryptonote_connection_context exclude_context = boost::value_initialized<cryptonote_connection_context>();
       NOTIFY_NEW_BLOCK::request arg = AUTO_VAL_INIT(arg);
       arg.current_blockchain_height = m_blockchain_storage.get_current_blockchain_height();
-
-      block_to_blob(b, arg.b.block);
-
-      std::list<cryptonote::blobdata> txs, ntz_txs;
-      std::vector<crypto::hash> tx_ids, ntz_ids;
-      std::list<crypto::hash> missed_txs, missed_ntz_txs, missed;
-
-      for (const auto& each : b.tx_hashes) {
-        cryptonote::blobdata blob;
-        if (!m_blockchain_storage.get_db().get_tx_blob(each, blob)) {
-          if (m_blockchain_storage.get_db().get_ntz_tx_blob(each, blob)) {
-            ntz_ids.push_back(each);
-          } else {
-            MERROR("Failed to retrieve a blob for both regular tx, and ntz tx! Ignoring tx with hash: " << epee::string_tools::pod_to_hex(each));
-          }
-        } else {
-          tx_ids.push_back(each);
-        }
-      }
-
-      if (!tx_ids.empty()) {
-        m_blockchain_storage.get_transactions_blobs(tx_ids, txs, missed_txs);
-        for (const auto& each : missed_txs) {
-          missed.push_back(each);
-        }
-      }
-
-      if (!ntz_ids.empty()) {
-        m_blockchain_storage.get_notarizations_blobs(ntz_ids, ntz_txs, missed_ntz_txs);
-        for (const auto& each : missed_ntz_txs) {
-          missed.push_back(each);
-        }
-      }
-
-      if(missed.size() &&  m_blockchain_storage.get_block_id_by_height(get_block_height(b)) != get_block_hash(b))
+      std::list<crypto::hash> missed_txs;
+      std::list<cryptonote::blobdata> txs;
+      m_blockchain_storage.get_transactions_blobs(b.tx_hashes, txs, missed_txs);
+      if(missed_txs.size() &&  m_blockchain_storage.get_block_id_by_height(get_block_height(b)) != get_block_hash(b))
       {
         LOG_PRINT_L1("Block found but, seems that reorganize just happened after that, do not relay this block");
         return true;
       }
-      if (!txs.empty()) {
-        for (const auto& each : txs)
-          arg.b.txs.push_back(each);
-      }
-      if (!ntz_txs.empty()) {
-        for (const auto& each : ntz_txs)
-          arg.b.txs.push_back(each);
-      }
+      CHECK_AND_ASSERT_MES(txs.size() == b.tx_hashes.size() && !missed_txs.size(), false, "can't find some transactions in found block:" << get_block_hash(b) << " txs.size()=" << txs.size()
+        << ", b.tx_hashes.size()=" << b.tx_hashes.size() << ", missed_txs.size()" << missed_txs.size());
 
-      CHECK_AND_ASSERT_MES(arg.b.txs.size() == b.tx_hashes.size() && !missed.size(), false, "can't find some transactions in found block:" << get_block_hash(b) << " txs.size()=" << arg.b.txs.size()
-        << ", b.tx_hashes.size()=" << b.tx_hashes.size() << ", missed_txs.size()" << missed.size());
+      block_to_blob(b, arg.b.block);
+      //pack transactions
+      for(auto& tx:  txs)
+        arg.b.txs.push_back(tx);
 
       m_pprotocol->relay_block(arg, exclude_context);
     }
@@ -1703,7 +1658,6 @@ namespace cryptonote
       m_starter_message_showed = true;
     }
 
-    m_fork_moaner.do_call(boost::bind(&core::check_fork_time, this));
     m_txpool_auto_relayer.do_call(boost::bind(&core::relay_txpool_transactions, this));
     m_check_disk_space_interval.do_call(boost::bind(&core::check_disk_space, this));
     m_miner.on_idle();

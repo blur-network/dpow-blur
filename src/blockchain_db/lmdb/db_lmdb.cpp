@@ -197,9 +197,6 @@ char const* LMDB_NTZPOOL_META = "ntzpool_meta";
 char const* LMDB_NTZPOOL_BLOB = "ntzpool_blob";
 char const* LMDB_NTZPOOL_PTX_BLOB = "ntzpool_ptx_blob";
 
-char const* LMDB_NTZ_TXS = "ntz_txs";
-char const* LMDB_NTZ_INDICES = "ntz_indices";
-
 char const* LMDB_HF_STARTING_HEIGHTS = "hf_starting_heights";
 char const* LMDB_HF_VERSIONS = "hf_versions";
 
@@ -771,28 +768,6 @@ uint64_t BlockchainLMDB::add_transaction_data(const crypto::hash& blk_hash, cons
   return tx_id;
 }
 
-uint64_t BlockchainLMDB::add_ntz_transaction_data(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash& tx_hash)
-{
-  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
-  check_open();
-  mdb_txn_cursors *m_cursors = &m_wcursors;
-  uint64_t m_height = height();
-
-  int result;
-  uint64_t tx_id = get_tx_count();
-
-  CURSOR(ntz_txs)
-
-  MDB_val_set(val_tx_id, tx_hash);
-
-  MDB_val_copy<blobdata> blob(tx_to_blob(tx));
-  result = mdb_cursor_put(m_cur_ntz_txs, &val_tx_id, &blob, MDB_APPEND);
-  if (result)
-    throw0(DB_ERROR(lmdb_error("Failed to add tx blob to db transaction: ", result).c_str()));
-
-  return tx_id;
-}
-
 // TODO: compare pros and cons of looking up the tx hash's tx index once and
 // passing it in to functions like this
 void BlockchainLMDB::remove_transaction_data(const crypto::hash& tx_hash, const transaction& tx)
@@ -837,59 +812,6 @@ void BlockchainLMDB::remove_transaction_data(const crypto::hash& tx_hash, const 
   // Don't delete the tx_indices entry until the end, after we're done with val_tx_id
   if (mdb_cursor_del(m_cur_tx_indices, 0))
       throw1(DB_ERROR("Failed to add removal of tx index to db transaction"));
-}
-
-void BlockchainLMDB::remove_ntz_transaction_data(const crypto::hash& tx_hash, const transaction& tx)
-{
-  int result;
-
-  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
-  check_open();
-
-  mdb_txn_cursors *m_cursors = &m_wcursors;
-  CURSOR(tx_indices)
-  CURSOR(ntz_txs)
-//  CURSOR(ntz_indices)
-  CURSOR(tx_outputs)
-
-  MDB_val_set(val_h, tx_hash);
-
-  if (mdb_cursor_get(m_cur_tx_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH))
-      throw1(TX_DNE("Attempting to remove transaction that isn't in the db"));
-  txindex *tip = (txindex *)val_h.mv_data;
-  MDB_val_set(val_tx_id, tip->data.tx_id);
-/*
-  if (mdb_cursor_get(m_cur_ntz_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH))
-      throw1(TX_DNE("Attempting to remove ntz indices for tx that isn't in the db"));
-  ntzindex *ntz = (ntzindex *)val_h.mv_data;
-  MDB_val_set(val_ntz_id, ntz->data.ntz_id);
-*/
-  if ((result = mdb_cursor_get(m_cur_ntz_txs, &val_tx_id, NULL, MDB_SET)))
-      throw1(DB_ERROR(lmdb_error("Failed to locate ntz tx for removal: ", result).c_str()));
-  result = mdb_cursor_del(m_cur_ntz_txs, 0);
-  if (result)
-      throw1(DB_ERROR(lmdb_error("Failed to add removal of ntz tx to db transaction: ", result).c_str()));
-
-  remove_tx_outputs(tip->data.tx_id, tx);
-
-  result = mdb_cursor_get(m_cur_tx_outputs, &val_tx_id, NULL, MDB_SET);
-  if (result == MDB_NOTFOUND)
-    LOG_PRINT_L1("tx has no outputs to remove: " << tx_hash);
-  else if (result)
-    throw1(DB_ERROR(lmdb_error("Failed to locate tx outputs for removal: ", result).c_str()));
-  if (!result)
-  {
-    result = mdb_cursor_del(m_cur_tx_outputs, 0);
-    if (result)
-      throw1(DB_ERROR(lmdb_error("Failed to add removal of tx outputs to db transaction: ", result).c_str()));
-  }
-
-  // Don't delete the tx_indices entry until the end, after we're done with val_tx_id
-  if (mdb_cursor_del(m_cur_tx_indices, 0))
-      throw1(DB_ERROR("Failed to add removal of tx index to db transaction"));
-
-/*  if (mdb_cursor_del(m_cur_ntz_indices, 0))
-      throw1(DB_ERROR("Failed to add removal of tx index to db transaction"));*/
 }
 
 uint64_t BlockchainLMDB::add_output(const crypto::hash& tx_hash,
@@ -1249,8 +1171,6 @@ void BlockchainLMDB::open(const std::string& filename, const int db_flags)
   lmdb_db_open(txn, LMDB_NTZPOOL_BLOB, MDB_CREATE, m_ntzpool_blob, "Failed to open db handle for m_ntzpool_blob");
   lmdb_db_open(txn, LMDB_NTZPOOL_PTX_BLOB, MDB_CREATE, m_ntzpool_ptx_blob, "Failed to open db handle for m_ntzpool_ptx_blob");
 
-  lmdb_db_open(txn, LMDB_NTZ_TXS, MDB_INTEGERKEY | MDB_CREATE, m_ntz_txs, "Failed to open db handle for m_ntz_txs");
-
   // this subdb is dropped on sight, so it may not be present when we open the DB.
   // Since we use MDB_CREATE, we'll get an exception if we open read-only and it does not exist.
   // So we don't open for read-only, and also not drop below. It is not used elsewhere.
@@ -1354,8 +1274,6 @@ void BlockchainLMDB::reset()
     throw0(DB_ERROR(lmdb_error("Failed to drop m_block_heights: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_txs, 0))
     throw0(DB_ERROR(lmdb_error("Failed to drop m_txs: ", result).c_str()));
-  if (auto result = mdb_drop(txn, m_ntz_txs, 0))
-    throw0(DB_ERROR(lmdb_error("Failed to drop m_ntz_txs: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_tx_indices, 0))
     throw0(DB_ERROR(lmdb_error("Failed to drop m_tx_indices: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_tx_outputs, 0))
@@ -2489,114 +2407,6 @@ uint64_t BlockchainLMDB::get_tx_count() const
   return db_stats.ms_entries;
 }
 
-bool BlockchainLMDB::get_ntz_tx_blob(const crypto::hash& h, cryptonote::blobdata &bd) const
-{
-  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
-  check_open();
-
-  TXN_PREFIX_RDONLY();
-  RCURSOR(tx_indices);
-  RCURSOR(ntz_txs);
-
-  MDB_val_set(v, h);
-  MDB_val result;
-  auto get_result = mdb_cursor_get(m_cur_tx_indices, (MDB_val *)&zerokval, &v, MDB_GET_BOTH);
-  if (get_result == 0)
-  {
-    txindex *tip = (txindex *)v.mv_data;
-    MDB_val_set(val_tx_id, tip->data.tx_id);
-    get_result = mdb_cursor_get(m_cur_ntz_txs, &val_tx_id, &result, MDB_SET);
-  }
-  if (get_result == MDB_NOTFOUND)
-    return false;
-  else if (get_result)
-    throw0(DB_ERROR(lmdb_error("DB error attempting to fetch ntz_tx from hash", get_result).c_str()));
-
-  bd.assign(reinterpret_cast<char*>(result.mv_data), result.mv_size);
-
-  TXN_POSTFIX_RDONLY();
-
-  return true;
-}
-
-uint64_t BlockchainLMDB::get_notarization_count() const
-{
-  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
-  check_open();
-
-  TXN_PREFIX_RDONLY();
-  int result;
-
-  MDB_stat db_stats;
-  if ((result = mdb_stat(m_txn, m_ntz_txs, &db_stats)))
-    throw0(DB_ERROR(lmdb_error("Failed to query m_ntz_txs: ", result).c_str()));
-
-  TXN_POSTFIX_RDONLY();
-
-  return db_stats.ms_entries;
-}
-
-/*uint64_t BlockchainLMDB::get_notarization_index(crypto::hash const& ntz_hash) const
-{
-  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
-  check_open();
-
-  TXN_PREFIX_RDONLY();
-
-  RCURSOR(ntz_indices)
-
-  uint64_t ret = 0;
-
-  int result;
-  MDB_val_set(k, ntz_hash);
-  MDB_val v;
-
-  result = mdb_cursor_get(m_cur_ntz_indices, &k, &v, MDB_SET);
-  if (result == MDB_NOTFOUND)
-    throw1(TX_DNE(std::string("notarization with hash ").append(epee::string_tools::pod_to_hex(ntz_hash)).append(" not found in db with corresponding index").c_str()));
-  else if (result)
-    throw0(DB_ERROR(lmdb_error("DB error attempting to ntzindex from hash", result).c_str()));
-
-  ntzindex* ntz_index = (ntzindex*)v.mv_data;
-
-  TXN_POSTFIX_RDONLY();
-
-  ret = ntz_index->data.ntz_id;
-  return ret;
-}
-
-crypto::hash BlockchainLMDB::get_hash_by_ntz_index(uint64_t const& ntz_id) const
-{
-  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
-  check_open();
-
-  TXN_PREFIX_RDONLY();
-
-  RCURSOR(ntz_indices)
-
-  crypto::hash ntz_hash = crypto::null_hash;
-
-  for_all_notarizations([&](const crypto::hash& hash, cryptonote::transaction const& tx) {
-    if (ntz_id == get_notarization_index(hash)) { ntz_hash = hash; return true; } return false; });
-
-
-  int result;
-
-  MDB_val v;
-
-  if (ntz_hash != crypto::null_hash) {
-    MDB_val_set(v, ntz_hash);
-    result = mdb_cursor_get(m_cur_ntz_indices, (MDB_val*)&zerokval, &v, MDB_GET_BOTH);
-    if (result == MDB_NOTFOUND)
-      throw1(TX_DNE(std::string("notarization indices for hash ").append(epee::string_tools::pod_to_hex(ntz_hash)).append(" not found in db with corresponding index").c_str()));
-    else if (result)
-      throw0(DB_ERROR(lmdb_error("DB error attempting to ntzindex from hash", result).c_str()));
-  }
-  TXN_POSTFIX_RDONLY();
-
-  return ntz_hash;
-}
-*/
 std::vector<transaction> BlockchainLMDB::get_tx_list(const std::vector<crypto::hash>& hlist) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
@@ -2944,58 +2754,6 @@ bool BlockchainLMDB::for_all_transactions(std::function<bool(const crypto::hash&
     transaction tx;
     if (!parse_and_validate_tx_from_blob(bd, tx))
       throw0(DB_ERROR("Failed to parse tx from blob retrieved from the db"));
-    if (!f(hash, tx)) {
-      fret = false;
-      break;
-    }
-  }
-
-  TXN_POSTFIX_RDONLY();
-
-  return fret;
-}
-
-bool BlockchainLMDB::for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)> f) const
-{
-  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
-  check_open();
-
-  TXN_PREFIX_RDONLY();
-  RCURSOR(ntz_txs);
-  RCURSOR(tx_indices);
-
-  MDB_val k;
-  MDB_val v;
-  bool fret = true;
-
-  MDB_cursor_op op = MDB_FIRST;
-  while (1)
-  {
-    int ret = mdb_cursor_get(m_cur_tx_indices, &k, &v, op);
-    op = MDB_NEXT;
-    if (ret == MDB_NOTFOUND)
-      break;
-    if (ret)
-      throw0(DB_ERROR(lmdb_error("Failed to enumerate transactions: ", ret).c_str()));
-
-    txindex *ni = (txindex *)v.mv_data;
-    const crypto::hash hash = ni->key;
-    k.mv_data = (void *)ni->data.tx_id;
-    k.mv_size = sizeof(ni->data.tx_id);
-    ret = mdb_cursor_get(m_cur_ntz_txs, &k, &v, MDB_SET);
-    if (ret == MDB_NOTFOUND)
-      break;
-    if (ret)
-      throw0(DB_ERROR(lmdb_error("Failed to enumerate transactions: ", ret).c_str()));
-    blobdata bd;
-    bd.assign(reinterpret_cast<char*>(v.mv_data), v.mv_size);
-    transaction tx;
-    crypto::hash tx_hash, prefix_hash;
-    if (!parse_and_validate_tx_from_blob(bd, tx, tx_hash, prefix_hash))
-      throw0(DB_ERROR("Failed to parse tx from blob retrieved from the db"));
-    if (tx.version != 2) {
-      throw0(DB_ERROR(lmdb_error("Encountered notarization with incorrect tx version: ", ret).c_str()));
-    }
     if (!f(hash, tx)) {
       fret = false;
       break;

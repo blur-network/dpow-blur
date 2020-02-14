@@ -704,7 +704,7 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res)
+/*  bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res)
   {
     PERF_TIMER(on_get_transactions);
     bool ok;
@@ -802,7 +802,7 @@ namespace cryptonote
     for(auto& tx: txs)
     {
       if (tx.version != 2) {
-        /* ignore (shouldn't happen anyway) */
+
       } else {
         res.txs.push_back(COMMAND_RPC_GET_NOTARIZATIONS::entry());
         COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
@@ -949,7 +949,7 @@ namespace cryptonote
     for(auto& tx: txs)
     {
       if (tx.version != 2) {
-        /* ignore (shouldn't happen anyway) */
+
       } else {
         res.txs.push_back(COMMAND_RPC_GET_NOTARIZATIONS::entry());
         COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
@@ -996,7 +996,7 @@ namespace cryptonote
     LOG_PRINT_L2(res.txs.size() << " transactions found, " << res.missed_tx.size() << " not found");
     res.status = CORE_RPC_STATUS_OK;
     return true;
-  }
+  }*/
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_transactions_by_heights(const COMMAND_RPC_GET_TRANSACTIONS_BY_HEIGHTS::request& req, COMMAND_RPC_GET_TRANSACTIONS_BY_HEIGHTS::response& res)
   {

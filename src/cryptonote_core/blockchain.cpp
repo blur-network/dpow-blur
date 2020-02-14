@@ -1639,44 +1639,10 @@ bool Blockchain::get_blocks(uint64_t start_offset, size_t count, std::list<std::
     return false;
   }
 
-
-  for(const auto& bl : blocks)
+  for(const auto& blk : blocks)
   {
-
-    std::list<cryptonote::blobdata> m_txs, m_ntz_txs;
-    std::vector<crypto::hash> tx_ids, ntz_ids;
-    std::list<crypto::hash> missed_tx_ids, missed_ntz_ids, missed_ids;
-
-    for (const auto& each : bl.second.tx_hashes) {
-      cryptonote::blobdata blob;
-      if (!m_db->get_tx_blob(each, blob)) {
-        if (m_db->get_ntz_tx_blob(each, blob)) {
-          ntz_ids.push_back(each);
-        } else {
-          MERROR("Failed to retrieve a blob for both regular tx, and ntz tx! Ignoring tx with hash: " << epee::string_tools::pod_to_hex(each) << " ... ");
-        }
-      } else {
-        tx_ids.push_back(each);
-      }
-    }
-    if (!tx_ids.empty()) {
-      get_transactions_blobs(tx_ids, m_txs, missed_tx_ids);
-      for (const auto& each : missed_tx_ids) {
-        missed_ids.push_back(each);
-      }
-    }
-    if (!ntz_ids.empty()) {
-      get_notarizations_blobs(ntz_ids, m_ntz_txs, missed_ntz_ids);
-      for (const auto& each : missed_ntz_ids) {
-        missed_ids.push_back(each);
-      }
-    }
-    if (!m_txs.empty()) {
-      for (const auto& each : m_txs)
-        txs.push_back(each);
-      for (const auto& each : m_ntz_txs)
-        txs.push_back(each);
-    }
+    std::list<crypto::hash> missed_ids;
+    get_transactions_blobs(blk.second.tx_hashes, txs, missed_ids);
     CHECK_AND_ASSERT_MES(!missed_ids.size(), false, "has missed transactions in own block in main blockchain");
   }
 
@@ -1720,8 +1686,8 @@ bool Blockchain::handle_get_objects(NOTIFY_REQUEST_GET_OBJECTS::request& arg, NO
 
   for (const auto& bl: blocks)
   {
-    std::list<crypto::hash> missed_tx_ids, missed_ntz_tx_ids;
-    std::list<cryptonote::blobdata> ntz_txs, txs;
+    std::list<crypto::hash> missed_tx_ids;
+    std::list<cryptonote::blobdata> txs;
 
     // FIXME: s/rsp.missed_ids/missed_tx_id/ ?  Seems like rsp.missed_ids
     //        is for missed blocks, not missed transactions as well.
@@ -2209,32 +2175,6 @@ bool Blockchain::get_transactions_blobs(const t_ids_container& txs_ids, t_tx_con
   return true;
 }
 //------------------------------------------------------------------
-//TODO: return type should be void, throw on exception
-//       alternatively, return true only if no transactions missed
-template<class t_ids_container, class t_tx_container, class t_missed_container>
-bool Blockchain::get_notarizations_blobs(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs) const
-{
-  LOG_PRINT_L3("Blockchain::" << __func__);
-  CRITICAL_REGION_LOCAL(m_blockchain_lock);
-
-  for (const auto& tx_hash : txs_ids)
-  {
-    try
-    {
-      cryptonote::blobdata tx;
-      if (m_db->get_ntz_tx_blob(tx_hash, tx))
-        txs.push_back(std::move(tx));
-      else
-        missed_txs.push_back(tx_hash);
-    }
-    catch (const std::exception& e)
-    {
-      return false;
-    }
-  }
-  return true;
-}
-//------------------------------------------------------------------
 template<class t_ids_container, class t_tx_container, class t_missed_container>
 bool Blockchain::get_transactions(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs) const
 {
@@ -2247,37 +2187,6 @@ bool Blockchain::get_transactions(const t_ids_container& txs_ids, t_tx_container
     {
       cryptonote::blobdata tx;
       if (m_db->get_tx_blob(tx_hash, tx))
-      {
-        txs.push_back(transaction());
-        if (!parse_and_validate_tx_from_blob(tx, txs.back()))
-        {
-          LOG_ERROR("Invalid transaction");
-          return false;
-        }
-      }
-      else
-        missed_txs.push_back(tx_hash);
-    }
-    catch (const std::exception& e)
-    {
-      return false;
-    }
-  }
-  return true;
-}
-//------------------------------------------------------------------
-template<class t_ids_container, class t_tx_container, class t_missed_container>
-bool Blockchain::get_notarizations(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs) const
-{
-  LOG_PRINT_L3("Blockchain::" << __func__);
-  CRITICAL_REGION_LOCAL(m_blockchain_lock);
-
-  for (const auto& tx_hash : txs_ids)
-  {
-    try
-    {
-      cryptonote::blobdata tx;
-      if (m_db->get_ntz_tx_blob(tx_hash, tx))
       {
         txs.push_back(transaction());
         if (!parse_and_validate_tx_from_blob(tx, txs.back()))
@@ -5031,21 +4940,6 @@ bool Blockchain::for_all_transactions(std::function<bool(const crypto::hash&, co
   return m_db->for_all_transactions(f);
 }
 
-bool Blockchain::for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)> f) const
-{
-  return m_db->for_all_notarizations(f);
-}
-
-/*bool Blockchain::get_hash_by_ntz_index(uint64_t const& ntz_id, crypto::hash& ntz_hash) const
-{
-  if (ntz_id < m_db->get_notarization_count()) {
-    ntz_hash = m_db->get_hash_by_ntz_index(ntz_id);
-    return true;
-  } else {
-    return false;
-  }
-}
-*/
 bool Blockchain::for_all_outputs(std::function<bool(uint64_t amount, const crypto::hash &tx_hash, uint64_t height, size_t tx_idx)> f) const
 {
   return m_db->for_all_outputs(f);;
@@ -5056,12 +4950,6 @@ bool Blockchain::for_all_outputs(uint64_t amount, std::function<bool(uint64_t he
   return m_db->for_all_outputs(amount, f);;
 }
 
-/*uint64_t Blockchain::get_notarization_index(crypto::hash const& ntz_hash) const
-{
-  return m_db->get_notarization_index(ntz_hash);
-}*/
-
 namespace cryptonote {
 template bool Blockchain::get_transactions(const std::vector<crypto::hash>&, std::list<transaction>&, std::list<crypto::hash>&) const;
-//template bool Blockchain::get_notarizations(const std::vector<crypto::hash>&, std::list<transaction>&, std::list<crypto::hash>&) const;
 }
