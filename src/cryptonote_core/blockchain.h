@@ -149,6 +149,8 @@ namespace cryptonote
      */
     bool deinit();
 
+    uint64_t get_ntz_count(std::vector<std::pair<crypto::hash,uint64_t>>& ret);
+
     /**
      * @brief assign a set of blockchain checkpoint hashes
      *
@@ -727,23 +729,6 @@ namespace cryptonote
     bool get_transactions(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs) const;
 
 
-    /**
-     * @brief gets transactions based on a list of transaction hashes
-     *
-     * @tparam t_ids_container a standard-iterable container
-     * @tparam t_tx_container a standard-iterable container
-     * @tparam t_missed_container a standard-iterable container
-     * @param txs_ids a container of hashes for which to get the corresponding transactions
-     * @param txs return-by-reference a container to store result transactions in
-     * @param missed_txs return-by-reference a container to store missed transactions in
-     *
-     * @return false if an unexpected exception occurs, else true
-     */
-    template<class t_ids_container, class t_tx_container, class t_missed_container>
-    bool get_notarizations_blobs(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs) const;
-    template<class t_ids_container, class t_tx_container, class t_missed_container>
-    bool get_notarizations(const t_ids_container& txs_ids, t_tx_container& txs, t_missed_container& missed_txs) const;
-
     //debug functions
 
     /**
@@ -913,17 +898,6 @@ namespace cryptonote
     bool for_all_transactions(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
 
     /**
-     * @brief perform a check on all transactions in the blockchain
-     *
-     * @param std::function the check to perform, pass/fail
-     *
-     * @return false if any transaction fails the check, otherwise true
-     */
-    bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
-
-//    bool get_hash_by_ntz_index(uint64_t const& ntz_id, crypto::hash& ntz_hash) const;
-
-    /**
      * @brief perform a check on all outputs in the blockchain
      *
      * @param std::function the check to perform, pass/fail
@@ -1021,7 +995,6 @@ namespace cryptonote
     bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata& ptx_blob, crypto::hash const& ptx_hash) const;
     std::pair<cryptonote::blobdata,cryptonote::blobdata> get_ntzpool_tx_blob(const crypto::hash& txid, crypto::hash const& ptx_hash) const;
     bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, crypto::hash const&, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)>, bool include_blob = true, bool include_unrelayed_txes = true) const;
- //   uint64_t get_notarization_index(crypto::hash const& ntz_hash) const;
 
     bool is_within_compiled_block_hash_area(uint64_t height) const;
     bool is_within_compiled_block_hash_area() const { return is_within_compiled_block_hash_area(m_db->height()); }

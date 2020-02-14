@@ -428,45 +428,6 @@ private:
   virtual void remove_transaction_data(const crypto::hash& tx_hash, const transaction& tx) = 0;
 
   /**
-   * @brief store the transaction and its metadata
-   *
-   * The subclass implementing this will add the specified transaction data
-   * to its backing store.  This includes only the transaction blob itself
-   * and the other data passed here, not the separate outputs of the
-   * transaction.
-   *
-   * It returns a tx ID, which is a mapping from the tx_hash. The tx ID
-   * is used in #add_tx_amount_output_indices().
-   *
-   * If any of this cannot be done, the subclass should throw the corresponding
-   * subclass of DB_EXCEPTION
-   *
-   * @param blk_hash the hash of the block containing the transaction
-   * @param tx the transaction to be added
-   * @param tx_hash the hash of the transaction
-   * @return the transaction ID
-   */
-  virtual uint64_t add_ntz_transaction_data(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash& tx_hash) = 0;
-
-  /**
-   * @brief remove data about a transaction
-   *
-   * The subclass implementing this will remove the transaction data 
-   * for the passed transaction.  The data to be removed was added in
-   * add_transaction_data().  Additionally, current subclasses have behavior
-   * which requires the transaction itself as a parameter here.  Future
-   * implementations should note that this parameter is subject to be removed
-   * at a later time.
-   *
-   * If any of this cannot be done, the subclass should throw the corresponding
-   * subclass of DB_EXCEPTION
-   *
-   * @param tx_hash the hash of the transaction to be removed
-   * @param tx the transaction
-   */
-  virtual void remove_ntz_transaction_data(const crypto::hash& tx_hash, const transaction& tx) = 0;
-
-  /**
    * @brief store an output
    *
    * The subclass implementing this will add the output data passed to its
@@ -575,17 +536,6 @@ protected:
    */
   void add_transaction(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash* tx_hash_ptr = NULL);
 
-  /**
-   * @brief helper function for add_transactions, to add each individual transaction
-   *
-   * This function is called by add_transactions() for each transaction to be
-   * added.
-   *
-   * @param blk_hash hash of the block which has the transaction
-   * @param tx the transaction to add
-   * @param tx_hash_ptr the hash of the transaction, if already calculated
-   */
-  void add_ntz_transaction(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash* tx_hash_ptr = NULL);
 
   mutable uint64_t time_tx_exists = 0;  //!< a performance metric
   uint64_t time_commit1 = 0;  //!< a performance metric
@@ -1025,8 +975,6 @@ public:
    */
   virtual crypto::hash get_block_hash_from_height(const uint64_t& height) const = 0;
 
-//  virtual crypto::hash get_hash_by_ntz_index(const uint64_t& ntz_index) const = 0;
-
   /**
    * @brief fetch a list of blocks
    *
@@ -1179,30 +1127,6 @@ public:
    */
   virtual bool get_tx_blob(const crypto::hash& h, cryptonote::blobdata &tx) const = 0;
 
-  // return tx with hash <h>
-  // throw if no such tx exists
-  /**
-   * @brief fetches the transaction with the given hash
-   *
-   * If the transaction does not exist, the subclass should throw TX_DNE.
-   *
-   * @param h the hash to look for
-   *
-   * @return the transaction with the given hash
-   */
-  virtual transaction get_ntz_tx(const crypto::hash& h) const;
-
-  /**
-   * @brief fetches the transaction with the given hash
-   *
-   * If the transaction does not exist, the subclass should return false.
-   *
-   * @param h the hash to look for
-   *
-   * @return true iff the transaction was found
-   */
-  virtual bool get_ntz_tx(const crypto::hash& h, transaction &tx) const;
-
   /**
    * @brief fetches the total number of transactions ever
    *
@@ -1212,29 +1136,6 @@ public:
    * @return the number of transactions in the blockchain
    */
   virtual uint64_t get_tx_count() const = 0;
-
-  /**
-   * @brief fetches the notarization transaction blob with the given hash
-   *
-   * The subclass should return the notarization transaction stored which has the given hash.
-   *
-   * If the notarization transaction does not exist, the subclass should return false.
-   *
-   * @param h the hash to look for
-   *
-   * @return true iff the transaction was found
-   */
-  virtual bool get_ntz_tx_blob(const crypto::hash& h, cryptonote::blobdata &tx) const = 0;
-
-  /**
-   * @brief fetches the total number of notarizations in DB
-   *
-   * The subclass should return a count of all the notarizations from
-   * all blocks.
-   *
-   * @return the number of notarizations in the blockchain
-   */
-  virtual uint64_t get_notarization_count() const = 0;
 
   /**
    * @brief fetches corresponding index for notarization
@@ -1624,24 +1525,6 @@ public:
    * @return false if the function returns false for any transaction, otherwise true
    */
   virtual bool for_all_transactions(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const = 0;
-
-  /**
-   * @brief runs a function over all transactions stored
-   *
-   * The subclass should run the passed function for each transaction it has
-   * stored, passing (transaction_hash, transaction) as its parameters.
-   *
-   * If any call to the function returns false, the subclass should return
-   * false.  Otherwise, the subclass returns true.
-   *
-   * The subclass should throw DB_ERROR if any of the expected values are
-   * not found.  Current implementations simply return false.
-   *
-   * @param std::function fn the function to run
-   *
-   * @return false if the function returns false for any transaction, otherwise true
-   */
-  virtual bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const = 0;
 
   /**
    * @brief runs a function over all outputs stored

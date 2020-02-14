@@ -316,11 +316,10 @@ At that point, the `ntz_tx_verification_context` will be converted to the standa
 To retrieve the current blockchain data, and notarization data (not yet populated):
 
 
-`curl -X POST http://localhost:52542/json_rpc -d '{"method":"get_notarization_data"}'`
+`curl -X POST http://localhost:21111/json_rpc -d '{"method":"get_notarization_data"}'`
 
 
 Output:
-
 
 ```
 {
@@ -328,13 +327,15 @@ Output:
   "jsonrpc": "2.0",
   "result": {
     "assetchains_symbol": "BLUR",
-    "current_chain_hash": "0d6b7b0de6106877972fdafb806932cdd4c30dd007fc9510dfdec4db8b5ca69c",
-    "current_chain_height": 155736,
-    "current_chain_pow": "73ab840dcb63e247df9d98988a195b2ba17def30daa835073a8377be65010000",
-    "notarized_hash": "0000000000000000000000000000000000000000000000000000000000000000",
-    "notarized_height": 0,
-    "notarized_txid": "0000000000000000000000000000000000000000000000000000000000000000"
+    "current_chain_hash": "b74a1d538e19df014e7e31e63a4ed88b5152a9eea3c85bc05cd2b1803ed5f140",
+    "current_chain_height": 2680,
+    "current_chain_pow": "7f72a3358e653d1d451664e8a5d6a7b6357676d7abfd351d3b3991e3b4321900",
+    "notarizations_completed": 13,
+    "notarized_hash": "ccd315fb0b81d538608fb9fd72deb96d06ec4b0974b0475dfc6248cc87caa3f9",
+    "notarized_height": 2678,
+    "notarized_txid": "7ab790b4d293a55369fe0d25aa5143ce041f5ac950db1b965c5ad8124b7726e9"
   }
+}
 ```
 
 
@@ -343,7 +344,7 @@ To retrieve the merkle root of a given block, by block hash or by vector of tran
 
 By block hash:
 ```
-$ curl -X POST http://localhost:52542/json_rpc -d '{"method":"get_merkle_root","params":{"block_hash":"fcef71dbd8138c1bb738df9848307bd766af11e763c9125014a023db706877d"}}'
+$ curl -X POST http://localhost:21111/json_rpc -d '{"method":"get_merkle_root","params":{"block_hash":"fcef71dbd8138c1bb738df9848307bd766af11e763c9125014a023db706877d"}}'
 {
   "id": 0,
   "jsonrpc": "2.0",
@@ -359,7 +360,7 @@ By transaction hashes:
 
 
 ```
-$ curl -X POST http://localhost:52542/json_rpc -d '{"method":"get_merkle_root","params":{"tx_hashes":["6ca1743cb1db1f4f34b132919b7941f766146b4dbf36fd6db88ff9563b7710b","abdbab0a70288fc8106de68715db988e901cf51f77696011c6479822a9236b8b"]}}'
+$ curl -X POST http://localhost:21111/json_rpc -d '{"method":"get_merkle_root","params":{"tx_hashes":["6ca1743cb1db1f4f34b132919b7941f766146b4dbf36fd6db88ff9563b7710b","abdbab0a70288fc8106de68715db988e901cf51f77696011c6479822a9236b8b"]}}'
 {
   "id": 0,
   "jsonrpc": "2.0",

@@ -704,7 +704,7 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res)
+/*  bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res)
   {
     PERF_TIMER(on_get_transactions);
     bool ok;
@@ -802,7 +802,7 @@ namespace cryptonote
     for(auto& tx: txs)
     {
       if (tx.version != 2) {
-        /* ignore (shouldn't happen anyway) */
+
       } else {
         res.txs.push_back(COMMAND_RPC_GET_NOTARIZATIONS::entry());
         COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
@@ -949,7 +949,7 @@ namespace cryptonote
     for(auto& tx: txs)
     {
       if (tx.version != 2) {
-        /* ignore (shouldn't happen anyway) */
+
       } else {
         res.txs.push_back(COMMAND_RPC_GET_NOTARIZATIONS::entry());
         COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
@@ -996,7 +996,7 @@ namespace cryptonote
     LOG_PRINT_L2(res.txs.size() << " transactions found, " << res.missed_tx.size() << " not found");
     res.status = CORE_RPC_STATUS_OK;
     return true;
-  }
+  }*/
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_transactions_by_heights(const COMMAND_RPC_GET_TRANSACTIONS_BY_HEIGHTS::request& req, COMMAND_RPC_GET_TRANSACTIONS_BY_HEIGHTS::response& res)
   {
@@ -2526,12 +2526,13 @@ namespace cryptonote
       std::string s_hash = span_to_hex(vc_hash);
       epee::span<const uint8_t> vc_pow = as_byte_span(c_pow);;
       std::string s_pow = span_to_hex(vc_pow);
-      uint64_t ntz_complete = m_core.get_blockchain_storage().get_db().get_notarization_count();
-      bool ntz = ntz_complete > 0;
+      std::vector<std::pair<crypto::hash,uint64_t>> notarizations;
+      uint64_t ntz_complete = m_core.get_blockchain_storage().get_ntz_count(notarizations);
 
-      crypto::hash ntz_txid = crypto::null_hash;
+      crypto::hash ntz_txid = notarizations[ntz_complete - 1].first;
+      uint64_t ntz_height = notarizations[ntz_complete - 1].second;
 //      bool get_by_ntz_index = m_core.get_blockchain_storage().get_hash_by_ntz_index(ntz_complete-1, ntz_txid);
-      crypto::hash ntz_hash = crypto::null_hash;
+      crypto::hash ntz_hash = m_core.get_block_id_by_height(ntz_height);
 
       res.assetchains_symbol = komodo::ASSETCHAINS_SYMBOL;
       res.current_chain_height = height;
@@ -2540,7 +2541,7 @@ namespace cryptonote
       res.notarized_hash = epee::string_tools::pod_to_hex(ntz_txid);
     /*res.notarized_pow = n_pow;*/
       res.notarized_txid = epee::string_tools::pod_to_hex(ntz_hash);
-      res.notarized_height = 0;
+      res.notarized_height = ntz_height;
       res.notarizations_completed = ntz_complete;
 /*      res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;

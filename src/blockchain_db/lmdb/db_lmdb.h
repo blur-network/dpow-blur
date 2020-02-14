@@ -61,9 +61,6 @@ typedef struct mdb_txn_cursors
   MDB_cursor *m_txc_txpool_meta;
   MDB_cursor *m_txc_txpool_blob;
 
-  MDB_cursor *m_txc_ntz_txs;
-  MDB_cursor *m_txc_ntz_indices;
-
   MDB_cursor *m_txc_ntzpool_meta;
   MDB_cursor *m_txc_ntzpool_blob;
   MDB_cursor *m_txc_ntzpool_ptx_blob;
@@ -78,8 +75,6 @@ typedef struct mdb_txn_cursors
 #define m_cur_output_txs	m_cursors->m_txc_output_txs
 #define m_cur_output_amounts	m_cursors->m_txc_output_amounts
 #define m_cur_txs               m_cursors->m_txc_txs
-#define m_cur_ntz_txs           m_cursors->m_txc_ntz_txs
-#define m_cur_ntz_indices       m_cursors->m_txc_ntz_indices
 #define m_cur_tx_indices	m_cursors->m_txc_tx_indices
 #define m_cur_tx_outputs	m_cursors->m_txc_tx_outputs
 #define m_cur_spent_keys	m_cursors->m_txc_spent_keys
@@ -99,8 +94,6 @@ typedef struct mdb_rflags
   bool m_rf_output_txs;
   bool m_rf_output_amounts;
   bool m_rf_txs;
-  bool m_rf_ntz_txs;
-  bool m_rf_ntz_indices;
   bool m_rf_tx_indices;
   bool m_rf_tx_outputs;
   bool m_rf_spent_keys;
@@ -242,12 +235,6 @@ public:
 
   virtual uint64_t get_tx_count() const;
 
-  virtual bool get_ntz_tx_blob(const crypto::hash& h, cryptonote::blobdata &tx) const;
-
-  virtual uint64_t get_notarization_count() const;
-
- // virtual uint64_t get_notarization_index(crypto::hash const& ntz_hash) const;
-
   virtual std::vector<transaction> get_tx_list(const std::vector<crypto::hash>& hlist) const;
 
   virtual uint64_t get_tx_block_height(const crypto::hash& h) const;
@@ -286,7 +273,6 @@ public:
   virtual bool remove_ntzpool_tx(const crypto::hash& txid, const crypto::hash& ptx_hash);
   virtual bool get_ntzpool_tx_meta(const crypto::hash& txid, ntzpool_tx_meta_t &meta) const;
   virtual bool get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobdata &bd, cryptonote::blobdata &ptx_blob, crypto::hash const& ptx_hash) const;
-//  virtual crypto::hash get_hash_by_ntz_index(uint64_t const& ntz_index) const;
 
   virtual std::pair<cryptonote::blobdata,cryptonote::blobdata> get_ntzpool_tx_blob(const crypto::hash& txid, crypto::hash const& ptx_hash) const;
   virtual bool for_all_ntzpool_txes(std::function<bool(const crypto::hash&, crypto::hash const&, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)> f, bool include_blob = true, bool include_unrelayed_txes = true) const;
@@ -294,7 +280,6 @@ public:
   virtual bool for_all_key_images(std::function<bool(const crypto::key_image&)>) const;
   virtual bool for_blocks_range(const uint64_t& h1, const uint64_t& h2, std::function<bool(uint64_t, const crypto::hash&, const cryptonote::block&)>) const;
   virtual bool for_all_transactions(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
-  virtual bool for_all_notarizations(std::function<bool(const crypto::hash&, const cryptonote::transaction&)>) const;
   virtual bool for_all_outputs(std::function<bool(uint64_t amount, const crypto::hash &tx_hash, uint64_t height, size_t tx_idx)> f) const;
   virtual bool for_all_outputs(uint64_t amount, const std::function<bool(uint64_t height)> &f) const;
 
@@ -351,10 +336,6 @@ private:
   virtual uint64_t add_transaction_data(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash& tx_hash);
 
   virtual void remove_transaction_data(const crypto::hash& tx_hash, const transaction& tx);
-
-  virtual uint64_t add_ntz_transaction_data(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash& tx_hash);
-
-  virtual void remove_ntz_transaction_data(const crypto::hash& tx_hash, const transaction& tx);
 
   virtual uint64_t add_output(const crypto::hash& tx_hash,
       const tx_out& tx_output,
@@ -434,9 +415,6 @@ private:
 
   MDB_dbi m_txpool_meta;
   MDB_dbi m_txpool_blob;
-
-  MDB_dbi m_ntz_txs;
-  MDB_dbi m_ntz_indices;
 
   MDB_dbi m_ntzpool_meta;
   MDB_dbi m_ntzpool_blob;
