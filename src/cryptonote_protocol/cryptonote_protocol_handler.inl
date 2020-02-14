@@ -815,13 +815,8 @@ namespace cryptonote
     relay_transactions(ag, context);
     
     if (!parse_and_validate_tx_from_blob(arg.txs.front(), tx, tx_hash, prefix_hash)) {
-       MERROR("Failed to parse tx from blob prior to set_last_notarized, in protocol!");
+       MERROR("Failed to parse tx from blob: " << epee::string_tools::pod_to_hex(tx_hash));
        return 1;
-    }
-    crypto::hash notarized_hash = m_core.get_block_id_by_height(m_core.get_blockchain_storage().get_db().height()-16);
-    if(!m_core.get_blockchain_storage().set_last_notarized_hash(notarized_hash, get_transaction_hash(tx))) {
-      MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(	notarized_hash));
-      return 1;
     }
     std::list<crypto::hash> hash_list;
     m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list

@@ -76,8 +76,8 @@ namespace cryptonote
 {
 
   namespace komodo {
-    extern int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS;
-    extern uint256 NOTARIZED_HASH, NOTARIZED_MOM, NOTARIZED_DESTTXID;
+    extern int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT;
+    extern uint256 NOTARIZED_HASH, NOTARIZED_DESTTXID;
   }
 
   //-----------------------------------------------------------------------------------
@@ -1482,11 +1482,6 @@ namespace cryptonote
    /*   for (const auto& each: signers_list) {
         r.signers_index.push_back(each);
       }*/
-      crypto::hash notarized_hash = m_core.get_block_id_by_height(m_core.get_blockchain_storage().get_db().height() - 16);
-      if (!m_core.get_blockchain_storage().set_last_notarized_hash(notarized_hash, get_transaction_hash(tx))) {
-        MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(notarized_hash));
-        return false;
-      }
       cryptonote::tx_verification_context tvc;
       std::vector<cryptonote::tx_verification_context> tvc_vec;
       tvc_vec.push_back(tvc);
@@ -2508,20 +2503,9 @@ namespace cryptonote
       }
 
 
-      std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
-      std::string n_hash = bytes256_to_hex(v_hash);
-      std::vector<uint8_t> v_txid(komodo::NOTARIZED_DESTTXID.begin(), komodo::NOTARIZED_DESTTXID.begin()+32);
-      std::string n_txid = bytes256_to_hex(v_txid);
-/*      std::vector<uint8_t> v_MoM(komodo::NOTARIZED_MOM.begin(), komodo::NOTARIZED_MOM.begin()+32);
-      std::string n_MoM = bytes256_to_hex(v_MoM);*/
-
-/*      crypto::hash hash = crypto::null_hash;
-      std::unique_ptr<komodo::komodo_core> k_core;
-      int32_t checkpoint = k_core->komodo_checkpoint(&komodo::NOTARIZED_HEIGHT, height, hash);
-*/
       cryptonote::block blk = m_core.get_blockchain_storage().get_db().get_top_block();
       crypto::hash c_hash = m_core.get_blockchain_storage().get_db().top_block_hash();
-      crypto::hash c_pow = cryptonote::get_block_longhash(blk, height);
+      crypto::hash c_pow = cryptonote::get_tx_tree_hash(blk);
       epee::span<const uint8_t> vc_hash = as_byte_span(c_hash);
       std::string s_hash = span_to_hex(vc_hash);
       epee::span<const uint8_t> vc_pow = as_byte_span(c_pow);;
@@ -2531,17 +2515,21 @@ namespace cryptonote
 
       crypto::hash ntz_txid = notarizations[ntz_complete - 1].first;
       uint64_t ntz_height = notarizations[ntz_complete - 1].second;
-//      bool get_by_ntz_index = m_core.get_blockchain_storage().get_hash_by_ntz_index(ntz_complete-1, ntz_txid);
       crypto::hash ntz_hash = m_core.get_block_id_by_height(ntz_height);
+
+      cryptonote::block b;
+      if (!m_core.get_block_by_hash(ntz_hash,b))
+        MERROR("Error getting block by hash for merkle root: " << epee::string_tools::pod_to_hex(ntz_hash));
+      crypto::hash merkle = get_tx_tree_hash(b);
 
       res.assetchains_symbol = komodo::ASSETCHAINS_SYMBOL;
       res.current_chain_height = height;
       res.current_chain_hash = s_hash;
-      res.current_chain_pow = s_pow;
-      res.notarized_hash = epee::string_tools::pod_to_hex(ntz_txid);
-    /*res.notarized_pow = n_pow;*/
-      res.notarized_txid = epee::string_tools::pod_to_hex(ntz_hash);
+      res.current_chain_merkle = s_pow;
       res.notarized_height = ntz_height;
+      res.notarized_hash = epee::string_tools::pod_to_hex(ntz_txid);
+      res.notarized_merkle = epee::string_tools::pod_to_hex(merkle);
+      res.notarized_txid = epee::string_tools::pod_to_hex(ntz_hash);
       res.notarizations_completed = ntz_complete;
 /*      res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;

@@ -1126,14 +1126,11 @@ namespace cryptonote
       std::string assetchains_symbol;
       uint64_t current_chain_height;
       std::string current_chain_hash;
-      std::string current_chain_pow;
+      std::string current_chain_merkle;
       uint64_t notarized_height;
       std::string notarized_hash;
       std::string notarized_txid;
-      int32_t notarized;
-      int32_t prevMoMheight;
-      int32_t notarized_MoMdepth;
-      std::string notarized_MoM;
+      std::string notarized_merkle;
       uint64_t notarizations_completed;
       std::string status;
 
@@ -1141,15 +1138,12 @@ namespace cryptonote
         KV_SERIALIZE(assetchains_symbol)
         KV_SERIALIZE(current_chain_height)
         KV_SERIALIZE(current_chain_hash)
-        KV_SERIALIZE(current_chain_pow)
+        KV_SERIALIZE(current_chain_merkle)
         KV_SERIALIZE(notarized_height)
         KV_SERIALIZE(notarized_hash)
+        KV_SERIALIZE(notarized_merkle)
         KV_SERIALIZE(notarized_txid)
         KV_SERIALIZE(notarizations_completed)
-/*        KV_SERIALIZE(notarized)*/
-/*        KV_SERIALIZE(prevMoMheight)
-        KV_SERIALIZE(notarized_MoMdepth)
-        KV_SERIALIZE(notarized_MoM)*/
       END_KV_SERIALIZE_MAP()
     };
   };

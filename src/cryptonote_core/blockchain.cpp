@@ -200,6 +200,22 @@ uint64_t Blockchain::get_ntz_count(std::vector<std::pair<crypto::hash,uint64_t>>
   });
 
   ret = hash_height;
+  crypto::hash ntz_hash = ret[count - 1].first;
+  uint64_t ntz_height = ret[count - 1].second;
+  std::string notarized_string = epee::string_tools::pod_to_hex(ntz_hash);
+  std::string binbuff;
+  if(!epee::string_tools::parse_hexstr_to_binbuff(notarized_string, binbuff)) {
+    MERROR("Error parsing hexstr to binbuff for notarized_hash!");
+  }
+  std::string notarized_txid_s = epee::string_tools::pod_to_hex(ntz_hash);
+  std::string txid_binbuff;
+  if(!epee::string_tools::parse_hexstr_to_binbuff(notarized_txid_s, txid_binbuff)) {
+    MERROR("Error parsing hexstr to binbuff for notarized_txid!");
+  }
+  komodo::NOTARIZED_DESTTXID = *reinterpret_cast<const uint256*>(txid_binbuff.data());
+  komodo::NOTARIZED_HASH = *reinterpret_cast<const uint256*>(binbuff.data());
+  komodo::NOTARIZED_HEIGHT = (int32_t)get_block_height(m_db->get_block(ntz_hash));
+
   return count;
 }
 //------------------------------------------------------------------
@@ -345,34 +361,6 @@ uint64_t Blockchain::get_current_blockchain_height() const
   // well as not accessing class members, even read only (ie, m_invalid_blocks). The caller must
   // lock if it is otherwise needed.
   return m_db->height();
-}
-//------------------------------------------------------------------
-bool Blockchain::set_last_notarized_hash(crypto::hash const& notarized_hash, crypto::hash const& notarized_txid) const
-{
-  LOG_PRINT_L3("Blockchain::" << __func__);
-  epee::span<const uint8_t> span_hash = epee::as_byte_span(notarized_hash);
-  bits256 hash_bits;
-  size_t i = 0;
-  for (const auto& byte : span_hash)
-  {
-    memcpy(&hash_bits.bytes[i++], &byte, sizeof(byte));
-  }
-  std::string notarized_string = epee::string_tools::pod_to_hex(hash_bits.bytes);
-  std::string binbuff;
-  if(!epee::string_tools::parse_hexstr_to_binbuff(notarized_string, binbuff)) {
-    MERROR("Error parsing hexstr to binbuff for notarized_hash!");
-    return false;
-  }
-  std::string notarized_txid_s = epee::string_tools::pod_to_hex(notarized_txid);
-  std::string txid_binbuff;
-  if(!epee::string_tools::parse_hexstr_to_binbuff(notarized_txid_s, txid_binbuff)) {
-    MERROR("Error parsing hexstr to binbuff for notarized_txid!");
-    return false;
-  }
-  komodo::NOTARIZED_DESTTXID = *reinterpret_cast<const uint256*>(txid_binbuff.data());
-  komodo::NOTARIZED_HASH = *reinterpret_cast<const uint256*>(binbuff.data());
-  komodo::NOTARIZED_HEIGHT = (int32_t)get_block_height(m_db->get_block(notarized_hash));
-  return true;
 }
 //------------------------------------------------------------------
 //FIXME: possibly move this into the constructor, to avoid accidentally
