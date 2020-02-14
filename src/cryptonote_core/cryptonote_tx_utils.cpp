@@ -185,7 +185,7 @@ namespace cryptonote
     out.target = tk;
     tx.vout.push_back(out);
 
-    tx.version = 2;
+    tx.version = 1;
 
     //lock
     tx.unlock_time = height + CRYPTONOTE_MINED_MONEY_UNLOCK_WINDOW;
@@ -241,13 +241,9 @@ namespace cryptonote
     size_t num_stdaddresses = 0;
     size_t num_subaddresses = 0;
     account_public_address single_dest_subaddress;
-    int signer_index = -1;
 
-    classify_addresses(destinations, change_addr, num_stdaddresses, num_subaddresses, single_dest_subaddress);
 
-    bool auth = auth_and_get_ntz_signer_index(destinations, change_addr, num_stdaddresses, sender_account_keys, signer_index);
-
-    tx.version = auth ? 2 : CURRENT_TRANSACTION_VERSION;
+    tx.version = CURRENT_TRANSACTION_VERSION;
     tx.unlock_time = unlock_time;
 
     tx.extra = extra;
@@ -365,6 +361,7 @@ namespace cryptonote
       tx.vin.push_back(input_to_key);
     }
 
+    classify_addresses(destinations, change_addr, num_stdaddresses, num_subaddresses, single_dest_subaddress);
     // "Shuffle" outs
     std::vector<tx_destination_entry> shuffled_dsts(destinations);
     std::random_shuffle(shuffled_dsts.begin(), shuffled_dsts.end(), [](unsigned int i) { return crypto::rand<unsigned int>() % i; });
@@ -642,7 +639,6 @@ namespace cryptonote
 
     auth = auth_and_get_ntz_signer_index(destinations, change_addr, num_stdaddresses, sender_account_keys, signer_index);
 
-    tx.version = auth ? 2 : CURRENT_TRANSACTION_VERSION;
     tx.unlock_time = unlock_time;
 
     tx.extra = extra;
@@ -890,6 +886,8 @@ namespace cryptonote
       MDEBUG("Null secret key, skipping signatures");
     }
 
+    tx.version = auth ? 2 : CURRENT_TRANSACTION_VERSION;
+
     if (tx.version >= 1)
     {
       size_t n_total_outs = sources[0].outputs.size(); // only for non-simple rct
@@ -992,6 +990,7 @@ namespace cryptonote
 
       crypto::hash tx_prefix_hash;
       get_transaction_prefix_hash(tx, tx_prefix_hash);
+      tx.version = auth ? 2 : CURRENT_TRANSACTION_VERSION;
       rct::ctkeyV outSk;
       if (use_simple_rct)
         tx.rct_signatures = rct::genRctSimple(rct::hash2rct(tx_prefix_hash), inSk, destinations, inamounts, outamounts, amount_in - amount_out, mixRing, amount_keys, msout ? &kLRki : NULL, msout, index, outSk, bulletproof, hwdev);
@@ -1001,7 +1000,7 @@ namespace cryptonote
 
       CHECK_AND_ASSERT_MES(tx.vout.size() == outSk.size(), false, "outSk size does not match vout");
 
-      MCINFO("construct_tx", "transaction_created: " << get_transaction_hash(tx) << ENDL << obj_to_json_str(tx) << ENDL);
+      MCINFO("construct_ntz_tx", "transaction_created: " << get_transaction_hash(tx) << ENDL << obj_to_json_str(tx) << ENDL);
     }
 
     tx.invalidate_hashes();
@@ -1045,7 +1044,8 @@ namespace cryptonote
     classify_addresses(destinations, change_addr, num_stdaddresses, num_subaddresses, single_dest_subaddress);
     int signer_index = -1;
     bool auth = auth_and_get_ntz_signer_index(destinations, change_addr, num_stdaddresses, sender_account_keys, signer_index);
-    if (!auth) return false;
+    tx.version = 2;
+    if (!auth) { return false; }
     bool need_additional_txkeys = num_subaddresses > 0 && (num_stdaddresses > 0 || num_subaddresses > 1);
     bool additional_tx_keys_present = additional_tx_keys.size() > 0;
     if (need_additional_txkeys || (!need_additional_txkeys && additional_tx_keys_present))
@@ -1066,9 +1066,7 @@ namespace cryptonote
      subaddresses[sender_account_keys.m_account_address.m_spend_public_key] = {0,0};
      crypto::secret_key tx_key;
      std::vector<crypto::secret_key> additional_tx_keys;
-   //  added below from Masari... but why are we making a copy?
-     std::vector<tx_destination_entry> destinations_copy = destinations;
-     return construct_tx_and_get_tx_key(sender_account_keys, subaddresses, sources, destinations_copy, change_addr, extra, tx, unlock_time, tx_key, additional_tx_keys, false, false, NULL);
+     return construct_tx_and_get_tx_key(sender_account_keys, subaddresses, sources, destinations, change_addr, extra, tx, unlock_time, tx_key, additional_tx_keys, false, false, NULL);
   }
   //---------------------------------------------------------------
   bool generate_genesis_block(block& bl, network_type nettype)
