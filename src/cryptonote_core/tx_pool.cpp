@@ -1631,17 +1631,13 @@ namespace cryptonote
       ntzpool_tx_meta_t ntz_meta;
       if (!m_blockchain.get_txpool_tx_meta(sorted_it->second, meta))
       {
-        MWARNING("  failed to find tx meta, trying for ntz meta");
-        if (!m_blockchain.get_ntzpool_tx_meta(sorted_it->second, ntz_meta))
-        {
-          MERROR("  failed to find both tx meta & ntz meta");
-          continue;
-        }
-        else
-        {
-          MWARNING("Found ntz meta, ignoring pending notarization tx.");
-          m_txs_by_fee_and_receive_time.erase(sorted_it);
-        }
+       // MWARNING("  failed to find tx meta");
+        continue;
+      }
+      else
+      {
+       // MWARNING("Found ntz meta, ignoring pending notarization tx.");
+        m_txs_by_fee_and_receive_time.erase(sorted_it);
       }
 
       LOG_PRINT_L2("Considering " << sorted_it->second << ", size " << meta.blob_size << ", current block size " << total_size << "/" << max_total_size << ", current coinbase " << print_money(best_coinbase));
@@ -1676,9 +1672,7 @@ namespace cryptonote
       }
 
       cryptonote::blobdata txblob = m_blockchain.get_txpool_tx_blob(sorted_it->second);
-   //   cryptonote::blobdata ntzblob = m_blockchain.get_ntzpool_tx_blob(sorted_it->second);
       cryptonote::transaction tx;
-   //   cryptonote::transaction ntz_tx;
 
       if (!parse_and_validate_tx_from_blob(txblob, tx))
       {
@@ -1686,13 +1680,6 @@ namespace cryptonote
         sorted_it++;
         continue;
       }
-
-     /* if (!parse_and_validate_tx_from_blob(ntzblob, ntz_tx))
-      {
-        MERROR("Failed to parse tx from ntzpool");
-        sorted_it++;
-        continue;
-      }*/
 
       // Skip transactions that are not ready to be
       // included into the blockchain or that are
@@ -1707,7 +1694,7 @@ namespace cryptonote
 	}
         catch (const std::exception &e)
 	{
-	  MERROR("Failed to update tx meta: " << e.what());
+	  LOG_PRINT_L1("Failed to update tx meta: " << e.what());
 	  // continue, not fatal
 	}
       }
