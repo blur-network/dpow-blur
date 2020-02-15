@@ -1482,11 +1482,7 @@ namespace cryptonote
    /*   for (const auto& each: signers_list) {
         r.signers_index.push_back(each);
       }*/
-      crypto::hash notarized_hash = m_core.get_block_id_by_height(m_core.get_blockchain_storage().get_db().height() - 16);
-      if (!m_core.get_blockchain_storage().set_last_notarized_hash(notarized_hash, get_transaction_hash(tx))) {
-        MERROR("Failed to set last notarized hash to: " << epee::string_tools::pod_to_hex(notarized_hash));
-        return false;
-      }
+
       cryptonote::tx_verification_context tvc;
       std::vector<cryptonote::tx_verification_context> tvc_vec;
       tvc_vec.push_back(tvc);
