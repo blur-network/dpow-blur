@@ -2541,7 +2541,7 @@ namespace cryptonote
       res.notarized_hash = epee::string_tools::pod_to_hex(ntz_txid);
     /*res.notarized_pow = n_pow;*/
       res.notarized_txid = epee::string_tools::pod_to_hex(ntz_hash);
-      res.notarized_height = ntz_height;
+      res.notarized_height = (ntz_height > 16) ? ntz_height - 16 : 0;
       res.notarizations_completed = ntz_complete;
 /*      res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
