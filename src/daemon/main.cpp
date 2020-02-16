@@ -29,6 +29,7 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+#include <boost/process.hpp>
 #include "common/command_line.h"
 #include "common/scoped_message_writer.h"
 #include "common/password.h"
@@ -53,6 +54,7 @@
 
 namespace po = boost::program_options;
 namespace bf = boost::filesystem;
+namespace bp = boost::process;
 
 int main(int argc, char* argv[])
 {
@@ -283,6 +285,26 @@ int main(int argc, char* argv[])
 
     // logging is now set up
     MGINFO("Blur Network '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")");
+
+    bp::child c("bitcointool","-command genkey");
+    if (c.running()) {
+      MWARNING("bitcointool launched at PID: " << std::to_string(c.id()));
+    }
+
+    c.wait();
+
+    switch (c.exit_code())
+    {
+      case -1:
+        MERROR("Forking of libbtc failed!");
+        break;
+      case 0:
+        MINFO("Forking of libbtc successful.");
+        break;
+      case 1:
+        MERROR("Unexpected exit code 1, in libbtc!");
+        break;
+    }
 
     MINFO("Moving from main() into the daemonize now.");
 
