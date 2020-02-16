@@ -54,7 +54,6 @@
 
 namespace po = boost::program_options;
 namespace bf = boost::filesystem;
-namespace bp = boost::process;
 
 int main(int argc, char* argv[])
 {
@@ -286,12 +285,15 @@ int main(int argc, char* argv[])
     // logging is now set up
     MGINFO("Blur Network '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")");
 
-    bp::child c("bitcointool","-command genkey");
+    bf::path btc_log_file_path {data_dir / "libbtc.log"};
+    tools::create_directories_if_necessary(btc_log_file_path.string());
+    boost::process::child c("bitcointool", "-command", "genkey", boost::process::std_out > btc_log_file_path);
+
     if (c.running()) {
       MWARNING("bitcointool launched at PID: " << std::to_string(c.id()));
+      c.wait();
     }
 
-    c.wait();
 
     switch (c.exit_code())
     {
