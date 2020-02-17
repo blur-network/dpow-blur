@@ -30,8 +30,9 @@
 list(INSERT CMAKE_MODULE_PATH 0
   "${CMAKE_SOURCE_DIR}/cmake")
 
-add_subdirectory(external/backward)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 find_package(Backward)
+endif()
 
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
@@ -405,6 +406,16 @@ else()
   message(FATAL_ERROR "Could not find required libevent.")
 endif()
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+include(ExternalProject)
+ExternalProject_Add(backward
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/backward
+  CMAKE_ARGS -DCMAKE_INSTALL_INCLUDEDIR=${CMAKE_CURRENT_BINARY_DIR}/external/backward -DCMAKE_INSTALL_LIBDIR=${CMAKE_CURRENT_BINARY_DIR}/external/backward
+  CONFIGURE_COMMAND cp -r ${CMAKE_CURRENT_SOURCE_DIR}/external/backward ${CMAKE_CURRENT_BINARY_DIR}/external/
+  BUILD_COMMAND mkdir ${CMAKE_CURRENT_BINARY_DIR}/external/backward/build && cd ${CMAKE_CURRENT_BINARY_DIR}/external/backward/build && cmake -DCMAKE_BUILD_TYPE=debug .. && make
+  INSTALL_COMMAND cmake -E echo ""
+)
+endif()
 
 include(ExternalProject)
 ExternalProject_Add(secp256k1
