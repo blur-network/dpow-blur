@@ -4,14 +4,13 @@ There are files in here from many different projects, including but not limited 
 
 ## Setup For Notary Nodes on BLUR
 
-Notary nodes can follow the procedure <a href="https://github.com/blur-network/dpow-blur/tree/dpow/docs/Blur-NN-Setup.md">located here</a>, with the guidane of a KMD administrator, to set up notary wallets for BLUR.
+Notary nodes can follow the procedure <a href="https://github.com/blur-network/dpow-blur/tree/dpow/docs/Blur-NN-Setup.md">located here</a>, with the guidance of a KMD administrator, to set up notary wallets for BLUR.
 
-## Pre-Compile Constant for Changing Qty. of DPoW Minsigs
+### Pre-Compile Constant for Changing Qty. of Signatures in DPoW Blur-Side Checkpointing
 
 Located in `src/cryptonote_config.h`, there is a pre-compile constant set for `DPOW_SIG_COUNT`...  Changing this value will change the required amount of signatures, before a notarization process is deemed complete.  Once this number of signatures is reached on a given notarization tx, the validation structs are converted to those of a standard BLUR tx, and will be sent to the network. 
 
-*Note: Currently, DB lacks support for customizable values...  But, in future, any value between 1 - 21 will work.*
-
+Any value between `1` and `21` is valid for this constant, but above `21` will require further modifications to DB.  When changing `DPOW_SIG_COUNT`, you must also change <a href="https://github.com/blur-network/dpow-blur/blob/dpow/src/blockchain_db/blockchain_db.h#L182">this line in blockchain_db.h</a> to the corresponding amount.  (i.e. for `DPOW_SIG_COUNT = 21`, set `VALX21`). 
 
 # Contents:
 
