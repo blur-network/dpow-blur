@@ -133,12 +133,29 @@ struct txpool_tx_meta_t
 };
 
 
-#define VAL     -1
-#define VALX2   VAL,    VAL
-#define VALX4   VALX2,  VALX2
-#define VALX8   VALX4,  VALX4
-#define VALX16  VALX8,  VALX8
-#define VALX32  VALX16, VALX16
+#define VALX      -1
+#define VALX2   VALX,  VALX
+#define VALX3   VALX2,  VALX
+#define VALX4   VALX3,  VALX
+#define VALX5   VALX4,  VALX
+#define VALX6   VALX5,  VALX
+#define VALX7   VALX6,  VALX
+#define VALX8   VALX7,  VALX
+#define VALX9   VALX8,  VALX
+#define VALX10  VALX9,  VALX
+#define VALX11  VALX10,  VALX
+#define VALX12  VALX11,  VALX
+#define VALX13  VALX12,  VALX
+#define VALX14  VALX13,  VALX
+#define VALX15  VALX14,  VALX
+#define VALX16  VALX15,  VALX
+#define VALX17  VALX16,  VALX
+#define VALX18  VALX17,  VALX
+#define VALX19  VALX18,  VALX
+#define VALX20  VALX19,  VALX
+#define VALX21  VALX20,  VALX
+
+#define DPOW_SIG (DPOW_SIG_COUNT + 1)
 
 /**
  * @brief a struct containing txpool per transaction metadata
@@ -162,7 +179,7 @@ struct ntzpool_tx_meta_t
 
   uint8_t  sig_count;                 /* 1  *    = 150 */
                                       /* (13)     = 163 */
-  int signers_index[DPOW_SIG_COUNT] = { VALX8, VALX2 };
+  int signers_index[DPOW_SIG] = { VALX10 };  /* for DPOW_SIG_COUNT = 10, Use VALX10, etc */
 
   uint8_t padding[(42-DPOW_SIG_COUNT)];                /* till 192 bytes */
 };

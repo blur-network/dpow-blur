@@ -1384,10 +1384,10 @@ namespace cryptonote
     }
     const crypto::hash ptx_hash =  *reinterpret_cast<const crypto::hash*>(hash_data.data());
 
-    MWARNING("In rpc: req.ptx_hash = " << req.ptx_hash);
+/*    MWARNING("In rpc: req.ptx_hash = " << req.ptx_hash);
     MWARNING("In rpc: req.tx_blob = " << req.tx_blob);
     MWARNING("In rpc: req.ptx_string = " << req.ptx_string);
-
+*/
 
     bool rs = false;
     tvc.m_signers_index = req.signers_index;
@@ -1467,9 +1467,9 @@ namespace cryptonote
       r.payment_id = req.payment_id;
       r.signers_index = req.signers_index;
 
-      MWARNING("Ptx string in RPC: " << r.ptx_string);
+//      MWARNING("Ptx string in RPC: " << r.ptx_string);
       m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
-      MWARNING("request ntz sig sent with sigs count: " << std::to_string(r.sig_count) << ", signers_index = " << signers_index << ", and payment id: " << req.payment_id);
+      MINFO("[RPC] relay_request_ntz_sig sent with sigs count: " << std::to_string(r.sig_count) << ", signers_index = " << signers_index << ", and payment id: " << req.payment_id);
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }
