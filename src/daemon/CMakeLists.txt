@@ -44,6 +44,7 @@ set(daemon_sources
   executor.cpp
   main.cpp
   rpc_command_executor.cpp
+  bitcoin_spv.cpp
 )
 
 set(daemon_headers)
@@ -58,6 +59,7 @@ set(daemon_private_headers
   protocol.h
   rpc.h
   rpc_command_executor.h
+  bitcoin_spv.h
 
   # cryptonote_protocol
   ../cryptonote_protocol/cryptonote_protocol_defs.h
