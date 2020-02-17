@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2020, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 //
@@ -29,6 +30,7 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
+#include <boost/process.hpp>
 #include "common/command_line.h"
 #include "common/scoped_message_writer.h"
 #include "common/password.h"
@@ -47,6 +49,7 @@
 #include "daemon/command_line_args.h"
 #include "blockchain_db/db_types.h"
 #include "version.h"
+#include "bitcoin_spv.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon"
@@ -283,6 +286,13 @@ int main(int argc, char* argv[])
 
     // logging is now set up
     MGINFO("Blur Network '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")");
+
+    uint32_t process_id = 0;
+    int launch = libbtc_launch("bitcointool", "-command", "genkey", data_dir, relative_path_base, process_id);
+    if (launch != 0) {
+      MERROR("Unexpected exit code in child process for libbtc!");
+      return 1;
+    }
 
     MINFO("Moving from main() into the daemonize now.");
 
