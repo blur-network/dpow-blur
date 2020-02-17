@@ -230,7 +230,7 @@ Balance: 400.000000000000
 Unlocked: 400.000000000000
 Please, wait for further signatures
 
-    [RPC0]    WARN     notary_server.rpc    src/komodo_notary_server/notary_server.cpp:1534    Signatures < 13: [request_ntz_sig] sent with sig_count: 9, signers_index =  12 35 5 61 55 47 21 20 26 -1 -1 -1 -1
+    [RPC0]    WARN     notary_server.rpc    src/komodo_notary_server/notary_server.cpp:1534    Signatures < (DPOW_SIG_COUNT): [request_ntz_sig] sent with sig_count: 9, signers_index =  12 35 5 61 55 47 21 20 26 -1
 ```
 
 
@@ -251,7 +251,7 @@ Using the `tx_blob` from terminal output, issue the following `curl` command to 
 curl -X POST http://localhost:21111/json_rpc -d '{"method":"request_ntz_sig","params":{"tx_blob":"long hex here","sig_count":1,"signers_index:[51,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1],"payment_id":"0c9a0f1fc513e0aa5d70cccb0b00e9ff924ce9c4b0e2ec373060fbde1c5cc4e0"}}'
 ```
 
-*This protocol command will not relay an actual transaction unless `sig_count` is greater than 12.* 
+*This protocol command will not relay an actual transaction unless `sig_count` is at least equal to DPOW_SIG_COUNT.* 
 
 
 ---
@@ -280,7 +280,7 @@ Pending Notarization Transactions:
 id: e5f38b36e7efd4275e32ad90d578dd36acbeae86301b7033df963f6416937419
 ptx_hash: 8c152cb5b997b6f2f299f3d625808feaa6d2aefa0a9478b8842858aa3e53eb37
 sig_count: 9
-signers_index:  16 36 60 10 21 63 47 51 00 -1 -1 -1 -1 
+signers_index:  16 36 60 10 21 63 47 51 00 -1
 blob_size: 53602
 fee: 0.059570940000
 fee/byte: 0.000001111356
@@ -301,13 +301,13 @@ last_failed_id: 0000000000000000000000000000000000000000000000000000000000000000
 
 `sig_count` is a count of signatures currently added to the transaction. 
 
-`signers_index` is an array with 13 values, each of which corresponds to a Notary Node, and their row number in the hardcoded pubkeys.
+`signers_index` is an array with `DPOW_SIG_COUNT` values, each of which corresponds to a Notary Node, and their row number in the hardcoded pubkeys.
 
 
 If a value in the `signers_index` field is not a default `-1`, the number should correspond to a notary node that has already signed and appended their transactions to the pending request. Indices are added in time-sequential order.
 
 **Regarding Validation**: Because these notarization transactions use a completely separate validation structure (located in `src/cryptonote_basic/verification_context.h`), they will not validate
-as normal transactions until `sig_count` reaches a point of being greater than `12`.
+as normal transactions until `sig_count` reaches a point of being greater than or equal to `DPOW_SIG_COUNT`.
 
 At that point, the `ntz_tx_verification_context` will be converted to the standard
 `tx_verification_context`, and relayed to the network as a normal transcation.  Prior to this point, the separate context will prevent a pending notarization from being handled as a normal transaction, or validated as such by other nodes.
@@ -319,11 +319,15 @@ At that point, the `ntz_tx_verification_context` will be converted to the standa
 <h2 id="rpc-calls"> RPC Calls for KMD-BLUR Data </h2>
 
 
-To retrieve the current blockchain data, and notarization data (not yet populated):
 
+## Retrieving Current Blockchain Notarization Data
+ 
+
+To retrieve the current blockchain data, and notarization data (not yet populated):
+ 
 
 `curl -X POST http://localhost:21111/json_rpc -d '{"method":"get_notarization_data"}'`
-
+ 
 
 Output:
 
@@ -344,11 +348,16 @@ Output:
 }
 ```
 
+---
+
+## Retrieving Merkle Data for a Given Block
 
 To retrieve the merkle root of a given block, by block hash or by vector of transaction hashes (`b.miner_tx` + `b.tx_hashes`):
 
 
-By block hash:
+**By block hash:**
+
+ 
 ```
 $ curl -X POST http://localhost:21111/json_rpc -d '{"method":"get_merkle_root","params":{"block_hash":"fcef71dbd8138c1bb738df9848307bd766af11e763c9125014a023db706877d"}}'
 {
@@ -362,7 +371,7 @@ $ curl -X POST http://localhost:21111/json_rpc -d '{"method":"get_merkle_root","
 ```
 
 
-By transaction hashes:
+**By transaction hashes:**
 
 
 ```
@@ -373,5 +382,7 @@ $ curl -X POST http://localhost:21111/json_rpc -d '{"method":"get_merkle_root","
   "result": {
     "status": "OK",
     "tree_hash": "8f85f91445345bfdc47633fb8f81002781994ace103706568f97249e5f5efee1"
+  }
+}
 ```
 
