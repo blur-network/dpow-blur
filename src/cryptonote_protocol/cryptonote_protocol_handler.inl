@@ -818,8 +818,8 @@ namespace cryptonote
        MERROR("Failed to parse tx from blob: " << epee::string_tools::pod_to_hex(tx_hash));
        return 1;
     }
-    std::list<crypto::hash> hash_list;
-    m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list
+//    std::list<crypto::hash> hash_list;
+//    m_core.flush_ntzpool_txs(hash_list); // flush all with empty list
 
     return 1;
   }
@@ -874,6 +874,37 @@ namespace cryptonote
           return 1;
         }
       }
+
+    std::vector<cryptonote::rpc::tx_in_ntzpool> tx_infos;
+    cryptonote::rpc::key_images_with_tx_hashes key_image_infos;
+
+    if (!m_core.get_ntzpool_for_rpc(tx_infos, key_image_infos))
+    {
+      if (!tx_infos.empty()) {
+        /* don't worry about scenario where no keys are returned */
+      } else {
+        MERROR("[protocol] Error retrieving ntzpool tx_infos in handle_incoming_request_ntz_sig!");
+        // not fatal
+      }
+    }
+    std::list<crypto::hash> hash_list;
+
+    for (const auto& each : tx_infos) {
+      if (epee::string_tools::pod_to_hex(each.tx_hash) == prior_tx_hex) {
+        /* leave these in pool */
+      } else if (epee::string_tools::pod_to_hex(each.tx_hash) == epee::string_tools::pod_to_hex(arg.tx_hash)) {
+        /* leave these in pool */
+      } else {
+        hash_list.push_back(each.tx_hash);
+      }
+    }
+
+    if (!hash_list.empty()) {
+      if (!m_core.flush_ntzpool_txs(hash_list)) {
+        MERROR("Error flushing ntz txs from pool!");
+        /* not fatal */
+      }
+    }
 
     ag.ptx_string = arg.ptx_string;
     ag.ptx_hash = arg.ptx_hash;

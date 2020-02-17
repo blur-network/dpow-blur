@@ -287,13 +287,13 @@ int main(int argc, char* argv[])
     // logging is now set up
     MGINFO("Blur Network '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")");
 
-    uint32_t process_id = 0;
+ /*   uint32_t process_id = 0;
     int launch = libbtc_launch("bitcointool", "-command", "genkey", data_dir, relative_path_base, process_id);
     if (launch != 0) {
       MERROR("Unexpected exit code in child process for libbtc!");
       return 1;
     }
-
+*/
     MINFO("Moving from main() into the daemonize now.");
 
     return daemonizer::daemonize(argc, argv, daemonize::t_executor{}, vm) ? 0 : 1;

@@ -558,6 +558,8 @@ namespace cryptonote
 
      bool get_ntzpool_tx_count(size_t& count, bool include_sensitive_data) const;
 
+     bool flush_ntzpool_txs(std::list<crypto::hash> const& hash_list);
+
      /**
       * @copydoc Blockchain::get_total_transactions
       *

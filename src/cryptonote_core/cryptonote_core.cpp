@@ -1541,6 +1541,11 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
+  bool core::flush_ntzpool_txs(std::list<crypto::hash> const& hash_list)
+  {
+    return m_blockchain_storage.flush_ntz_txes_from_pool(hash_list);
+  }
+  //-----------------------------------------------------------------------------------------------
   bool core::get_pool_transaction_hashes(std::vector<crypto::hash>& txs, bool include_sensitive_data) const
   {
     m_mempool.get_transaction_hashes(txs, include_sensitive_data);
