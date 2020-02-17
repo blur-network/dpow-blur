@@ -854,10 +854,10 @@ namespace tools
       bool once = false;
       int loc = -1;
       const int neg = -1;
-      const size_t count = 13 - std::count(signers_index_vec.begin(), signers_index_vec.end(), neg);
+      const size_t count = DPOW_SIG_COUNT - std::count(signers_index_vec.begin(), signers_index_vec.end(), neg);
       MWARNING("Non-negative values in signers_index (count): " << std::to_string(count));
       std::vector<int> vec_ret;
-      for (size_t i = 0; i < 13; i++) {
+      for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
         if (signer_index == signers_index_vec[i]) {
           MERROR("Found our index value in signers_index at: " << std::to_string(i) << ", we must have already signed this one!");
           return false;
@@ -1165,8 +1165,7 @@ namespace tools
       }
 */
     std::string payment_id = "";
-    std::vector<int> signers_index = { -1, -1, -1, -1, -1, -1, -1,
-                                       -1, -1, -1, -1, -1, -1 };
+    std::vector<int> signers_index(DPOW_SIG_COUNT, -1);
     if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
     {
       return false;
@@ -1183,7 +1182,7 @@ namespace tools
       MWARNING("create_ntz_transactions called with sig_count = " << std::to_string(sig_count));
 
       std::string index_vec;
-      for (int i = 0; i < 13; i++) {
+      for (int i = 0; i < DPOW_SIG_COUNT; i++) {
         std::string tmp;
         if ((signers_index[i] < 10) && (signers_index[i] > (-1)))
           tmp = "0" + std::to_string(signers_index[i]);
@@ -1208,7 +1207,7 @@ namespace tools
             break;
           }
           m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
-          MWARNING("Signatures < 10: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+          MWARNING("Signatures < " << std::to_string(DPOW_SIG_COUNT) << ": [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
         return fill_res;
       } else {
@@ -1229,7 +1228,7 @@ namespace tools
               break;
             }
             m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
-            MWARNING("Signatures < 10: [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+            MWARNING("Signatures < " << std::to_string(DPOW_SIG_COUNT) << ": [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
           }
           return fill_res;
         } else {
@@ -1299,7 +1298,7 @@ pool_recheck:
       tx_blob = ntzpool_txs[best.second].tx_blob;
       ptx_blob = ntzpool_txs[best.second].ptx_blob;
       prior_ptx_hash = ntzpool_txs[best.second].ptx_hash;
-      for (int i = 0; i < 13; i++) {
+      for (int i = 0; i < DPOW_SIG_COUNT; i++) {
         int each = -1;
         each = ntzpool_txs[best.second].signers_index.front();
         signers_index.push_back(each);
@@ -1336,7 +1335,7 @@ pool_recheck:
 
     uint64_t pk_counter = 0;
     const int neg = -1;
-    const int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
+    const int count = DPOW_SIG_COUNT - std::count(signers_index.begin(), signers_index.end(), neg);
     MWARNING("Count = " << std::to_string(count));
     std::vector<crypto::secret_key> notary_viewkeys;
     bool r = false;
@@ -1511,7 +1510,7 @@ pool_recheck:
       }
 
         std::string index_vec;
-        for (int i = 0; i < 13; i++) {
+        for (int i = 0; i < DPOW_SIG_COUNT; i++) {
           std::string tmp = std::to_string(cryptonote::get_index<int>(i, signers_index)) + " ";
           index_vec += tmp;
         }

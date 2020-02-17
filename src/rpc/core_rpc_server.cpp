@@ -1395,11 +1395,11 @@ namespace cryptonote
     const std::string signers_index = req.signers_index;
     const cryptonote::blobdata ptx_string = req.ptx_string;
     std::list<int> signers_list;
-    for (size_t i = 0; i < 13; i++) {
+    for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
       signers_list.push_back(std::stoi(signers_index.substr(i*2, 2), nullptr, 10));
     }
     int neg = -1;
-    int count = 13 - std::count(signers_list.begin(), signers_list.end(), neg);
+    int count = DPOW_SIG_COUNT - std::count(signers_list.begin(), signers_list.end(), neg);
 
     if (count != req.sig_count) {
       MERROR("Error signature count check against signers index failed!");
@@ -1446,7 +1446,7 @@ namespace cryptonote
           add_reason(res.reason, "tx is not ringct");
         if ((res.sig_count != tvc.m_sig_count))
           add_reason(res.reason, "signature count mismatch");
-        if ((tvc.m_sig_count > 13))
+        if ((tvc.m_sig_count > DPOW_SIG_COUNT))
           add_reason(res.reason, "too many signatures");
         // TODO :: add signers_index count compared to sig_count here.
         const std::string punctuation = res.reason.empty() ? "" : ": ";
@@ -1457,7 +1457,7 @@ namespace cryptonote
         }
       }
 
-    if ((req.sig_count < 10) && (req.sig_count > 0))
+    if ((req.sig_count < DPOW_SIG_COUNT) && (req.sig_count > 0))
     {
       NOTIFY_REQUEST_NTZ_SIG::request r;
       r.ptx_string = req.ptx_string;
@@ -1473,7 +1473,7 @@ namespace cryptonote
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }
-    else if (req.sig_count >= 10)
+    else if (req.sig_count >= DPOW_SIG_COUNT)
     {
       NOTIFY_NEW_TRANSACTIONS::request r;
       std::list<blobdata> verified_tx_blobs;
@@ -2999,7 +2999,7 @@ namespace cryptonote
         r.ptx_hash = meta.ptx_hash;
         r.tx_blob = txblob;
         r.sig_count = meta.sig_count;
-        for (size_t i = 0; i < 13; i++) {
+        for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
           int each_ind = meta.signers_index[i];
           r.signers_index.push_back(each_ind);
         }

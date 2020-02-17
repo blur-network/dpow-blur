@@ -5022,7 +5022,7 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
       const int neg = -1;
       std::string temp;
       int i = 0;
-      for (i = 0; i < 13; i++) {
+      for (i = 0; i < DPOW_SIG_COUNT; i++) {
         int each = signers_index[i];
         if ((each < 10) && (each > neg)) {
           std::string each_lten = "0" + std::to_string(each);
@@ -5071,7 +5071,7 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
 
         MWARNING("transaction " << txid << " generated ok and sent to request ntz sigs, key_images: [" << ptx.key_images << "]");
         //fee includes dust if dust policy specified it.
-        MWARNING("Signatures added. " << std::to_string(10 - sigs_count) << " more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <" << txid << ">" << ENDL
+        MWARNING("Signatures added. " << std::to_string(DPOW_SIG_COUNT - sigs_count) << " more needed. Relaying NOTIFY_REQUEST_NTZ_SIG <" << txid << ">" << ENDL
               << "Signatures count: " << std::to_string(sigs_count) << ", Commission: " << print_money(ptx.fee) << ENDL
               << "Balance: " << print_money(balance(ptx.construction_data.subaddr_account)) << ENDL
               << "Unlocked: " << print_money(unlocked_balance(ptx.construction_data.subaddr_account)) << ENDL

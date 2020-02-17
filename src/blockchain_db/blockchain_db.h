@@ -131,6 +131,15 @@ struct txpool_tx_meta_t
 
   uint8_t padding[76]; // till 192 bytes
 };
+
+
+#define VAL     -1
+#define VALX2   VAL,    VAL
+#define VALX4   VALX2,  VALX2
+#define VALX8   VALX4,  VALX4
+#define VALX16  VALX8,  VALX8
+#define VALX32  VALX16, VALX16
+
 /**
  * @brief a struct containing txpool per transaction metadata
  */
@@ -153,10 +162,9 @@ struct ntzpool_tx_meta_t
 
   uint8_t  sig_count;                 /* 1  *    = 150 */
                                       /* (13)     = 163 */
-  int signers_index[13] = {
-                    -1, -1, -1, -1, -1, -1, -1,
-                    -1, -1, -1, -1, -1, -1 };
-  uint8_t padding[29];                /* till 192 bytes */
+  int signers_index[DPOW_SIG_COUNT] = { VALX8, VALX2 };
+
+  uint8_t padding[(42-DPOW_SIG_COUNT)];                /* till 192 bytes */
 };
 
 #define DBF_SAFE       1

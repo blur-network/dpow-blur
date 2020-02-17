@@ -1753,17 +1753,17 @@ skip:
   bool t_cryptonote_protocol_handler<t_core>::relay_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context)
   {
     // no check for success, so tell core they're relayed unconditionally
-    if (arg.sig_count >= 13) {
+    if (arg.sig_count >= DPOW_SIG_COUNT) {
       NOTIFY_NEW_TRANSACTIONS::request r;
         m_core.on_transaction_relayed(arg.tx_blob);
         r.txs.push_back(arg.tx_blob);
         return relay_post_notify<NOTIFY_NEW_TRANSACTIONS>(r, exclude_context);
     }
-    else if (arg.sig_count > 0 && arg.sig_count < 13) {
+    else if (arg.sig_count > 0 && arg.sig_count < DPOW_SIG_COUNT) {
       return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(arg, exclude_context);
     }
     else {
-      MERROR("Could not relay_request_ntz_sig!  Sig count must be within range of 0-13");
+      MERROR("Could not relay_request_ntz_sig!  Sig count must be within range of 0 - " << std::to_string(DPOW_SIG_COUNT));
       return false;
     }
   }
@@ -1771,11 +1771,11 @@ skip:
   template<class t_core>
   bool t_cryptonote_protocol_handler<t_core>::relay_response_ntz_sig(NOTIFY_RESPONSE_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context)
   {
-    if (arg.sig_count > 0 && arg.sig_count < 13) {
+    if (arg.sig_count > 0 && arg.sig_count < DPOW_SIG_COUNT) {
       return relay_post_notify<NOTIFY_RESPONSE_NTZ_SIG>(arg, exclude_context);
     }
     else {
-      MERROR("Could not relay_response_ntz_sig!  Sig count must be within range of 0-13");
+      MERROR("Could not relay_request_ntz_sig!  Sig count must be within range of 0 - " << std::to_string(DPOW_SIG_COUNT));
       return false;
     }
   }

@@ -36,8 +36,7 @@
 #include <string>
 #include <boost/uuid/uuid.hpp>
 
-#define CRYPTONOTE_DNS_TIMEOUT_MS                       20000
-
+#define DPOW_SIG_COUNT                                  10
 #define CRYPTONOTE_MAX_BLOCK_NUMBER                     500000000
 #define CRYPTONOTE_MAX_BLOCK_SIZE                       500000000  /* block header blob limit, never used! */
 #define CRYPTONOTE_MAX_TX_SIZE                          1000000000

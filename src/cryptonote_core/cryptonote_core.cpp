@@ -859,7 +859,7 @@ namespace cryptonote
       already_have = true;
     }
 
-    if ((sig_count < 10) && (!already_have)) {
+    if ((sig_count < DPOW_SIG_COUNT) && (!already_have)) {
         res = handle_incoming_ntz_sig_post(tx_blob, tvc, tx, hash, prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count, ptx_blob);
       if (!res) {
         MERROR("Error in handle_incoming_ntz_sig_post! handle_incoming_post failed!");
@@ -1132,7 +1132,7 @@ namespace cryptonote
     }
 
     std::list<int> signers_index;
-    for (int i = 0; i < 13; i++) {
+    for (int i = 0; i < DPOW_SIG_COUNT; i++) {
       std::string si_tmp = signers_str.substr(i*2, 2);
       int s_ind = std::stoi(si_tmp, nullptr, 10);
       if ((s_ind >= 64) || (s_ind < -1)) {
@@ -1145,11 +1145,11 @@ namespace cryptonote
     uint8_t has_raw_ntz_data = 1;
 
     int neg = -1;
-    int count = 13 - std::count(signers_index.begin(), signers_index.end(), neg);
+    int count = DPOW_SIG_COUNT - std::count(signers_index.begin(), signers_index.end(), neg);
     bool ready = false;
     bool count_check = false;
 
-    ready = (sig_count >= 10);
+    ready = (sig_count >= DPOW_SIG_COUNT);
     count_check = (count == sig_count);
 
     if (ready) {
@@ -1254,7 +1254,7 @@ namespace cryptonote
         r.ptx_string = bd_pair.second;
         std::string signers_index;
         const int neg = -1;
-        for (size_t i = 0; i < 13; i++) {
+        for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
           std::string tmp;
           int each_ind = meta.signers_index[i];
           if ((each_ind < 10) && (each_ind > neg)) {
