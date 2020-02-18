@@ -152,7 +152,7 @@ namespace cryptonote
     boost::circular_buffer<size_t> m_avg_buffer = boost::circular_buffer<size_t>(10);
 
     template<class t_parameter>
-      bool post_notify(typename t_parameter::request& arg, cryptonote_connection_context& context)
+      bool post_notify(typename t_parameter::request& arg, epee::net_utils::connection_context_base& context)
       {
         LOG_PRINT_L2("[" << epee::net_utils::print_connection_context_short(context) << "] post " << typeid(t_parameter).name() << " -->");
         std::string blob;
@@ -162,7 +162,7 @@ namespace cryptonote
       }
 
       template<class t_parameter>
-      bool relay_post_notify(typename t_parameter::request& arg, cryptonote_connection_context& exclude_context)
+      bool relay_post_notify(typename t_parameter::request& arg, epee::net_utils::connection_context_base& exclude_context)
       {
         LOG_PRINT_L2("[" << epee::net_utils::print_connection_context_short(exclude_context) << "] post relay " << typeid(t_parameter).name() << " -->");
         std::string arg_buff;

@@ -326,7 +326,7 @@ namespace rpc
   {
     auto tx_blob = cryptonote::tx_to_blob(req.tx);
 
-    cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+    cryptonote_connection_context fake_context;
     tx_verification_context tvc = AUTO_VAL_INIT(tvc);
 
     if(!m_core.handle_incoming_tx(tx_blob, tvc, false, false, !req.relay) || tvc.m_verifivation_failed)

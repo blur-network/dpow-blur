@@ -1210,7 +1210,7 @@ namespace cryptonote
     std::list<std::pair<crypto::hash, cryptonote::blobdata>> txs;
     if (m_mempool.get_relayable_transactions(txs) && !txs.empty())
     {
-      cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+      cryptonote_connection_context fake_context;
       tx_verification_context tvc = AUTO_VAL_INIT(tvc);
       NOTIFY_NEW_TRANSACTIONS::request r;
       for (auto it = txs.begin(); it != txs.end(); ++it)
@@ -1234,7 +1234,7 @@ namespace cryptonote
       for (const auto& each : ntz_txs_list) {
         ntz_txs.push_back(each);
       }
-      cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+      cryptonote_connection_context fake_context;
       ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
 
       for (size_t i = 0; i < ntz_txs.size(); i++)

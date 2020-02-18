@@ -27,6 +27,8 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 # THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+find_package(Backward)
+
 set(blocksdat "")
 if(PER_BLOCK_CHECKPOINT)
   if(APPLE)
@@ -37,6 +39,18 @@ if(PER_BLOCK_CHECKPOINT)
   set(blocksdat "blocksdat.o")
 endif()
 
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+set(daemon_sources
+  command_parser_executor.cpp
+  command_server.cpp
+  daemon.cpp
+  executor.cpp
+  main.cpp
+  rpc_command_executor.cpp
+  bitcoin_spv.cpp
+  ../../external/backward/backward.cpp
+)
+else()
 set(daemon_sources
   command_parser_executor.cpp
   command_server.cpp
@@ -46,7 +60,7 @@ set(daemon_sources
   rpc_command_executor.cpp
   bitcoin_spv.cpp
 )
-
+endif()
 set(daemon_headers)
 
 set(daemon_private_headers
@@ -78,12 +92,54 @@ set(daemon_private_headers
 monero_private_headers(daemon
   ${daemon_private_headers})
 
-monero_add_executable(daemon
-  ${daemon_sources}
-  ${daemon_headers}
-  ${daemon_private_headers}
-  ${blocksdat})
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  monero_add_executable(daemon
+    ${daemon_sources}
+    ${daemon_headers}
+    ${daemon_private_headers}
+    ${blocksdat}
+    ${BACKWARD_ENABLE})
+add_backward(daemon)
+else()
+  monero_add_executable(daemon
+    ${daemon_sources}
+    ${daemon_headers}
+    ${daemon_private_headers}
+    ${blocksdat})
+endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+target_link_libraries(daemon
+  PRIVATE
+    rpc
+    blockchain_db
+    cryptonote_core
+    cncrypto
+    common
+    p2p
+    cryptonote_protocol
+    daemonizer
+    serialization
+    daemon_rpc_server
+    epee
+    ${EVENT_LIBRARY}
+    ${SECP256K1_LIBRARY}
+    ${BTC_LIBRARY}
+    ${EPEE_READLINE}
+    version
+    ${Boost_CHRONO_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_REGEX_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${GNU_READLINE_LIBRARY}
+    ${SODIUM_LIBRARY}
+    ${EXTRA_LIBRARIES}
+    ${BACKWARD_LIBRARIES}
+    ${UNWIND_LIBRARY}
+    ${UNWIND_LIBRARIES})
+else()
 target_link_libraries(daemon
   PRIVATE
     rpc
@@ -111,6 +167,8 @@ target_link_libraries(daemon
     ${GNU_READLINE_LIBRARY}
     ${SODIUM_LIBRARY}
     ${EXTRA_LIBRARIES})
+endif()
+
 set_property(TARGET daemon
   PROPERTY
     OUTPUT_NAME "blurd")

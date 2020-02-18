@@ -28,7 +28,7 @@
 #
 # Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-list(APPEND CMAKE_MODULE_PATH external/backward)
+find_package(Backward)
 
 if (WIN32 OR STATIC)
   add_definitions(-DSTATICLIB)
@@ -56,25 +56,11 @@ function (monero_add_executable name)
   source_group("${name}"
     FILES
       ${ARGN})
-if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND BUILD_SHARED_LIBRARIES)
-  find_package(Backward)
-  add_executable("${name}"
-    ${ARGN}
-    ${BACKWARD_ENABLE})
-  add_backward("${name}")
-  target_link_libraries("${name}"
-    PRIVATE
-      ${EXTRA_LIBRARIES}
-    PUBLIC
-      Backward::Backward
-     )
-else()
   add_executable("${name}"
     ${ARGN})
   target_link_libraries("${name}"
     PRIVATE
       ${EXTRA_LIBRARIES})
-endif()
   set_property(TARGET "${name}"
     PROPERTY
       FOLDER "prog")

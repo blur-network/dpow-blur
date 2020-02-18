@@ -1310,7 +1310,7 @@ namespace cryptonote
       return true;
     }
 
-    cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+    cryptonote_connection_context fake_context;
     tx_verification_context tvc = AUTO_VAL_INIT(tvc);
     if(!m_core.handle_incoming_tx(tx_blob, tvc, false, false, false) || tvc.m_verifivation_failed)
     {
@@ -1365,7 +1365,7 @@ namespace cryptonote
   {
     CHECK_CORE_READY();
 
-    cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+    cryptonote_connection_context fake_context;
     ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
     const int sig_count = req.sig_count;
     cryptonote::transaction tx;
@@ -2938,7 +2938,7 @@ namespace cryptonote
       bool r = m_core.get_pool_transaction(txid, txblob);
       if (r)
       {
-        cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+        cryptonote_connection_context fake_context;
         NOTIFY_NEW_TRANSACTIONS::request r;
         r.txs.push_back(txblob);
         m_core.get_protocol()->relay_transactions(r, fake_context);
@@ -2993,7 +2993,7 @@ namespace cryptonote
           continue;
         }
 
-        cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+        cryptonote_connection_context fake_context;
         NOTIFY_REQUEST_NTZ_SIG::request r;
         r.ptx_string = ptxblob;
         r.ptx_hash = meta.ptx_hash;
