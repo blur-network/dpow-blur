@@ -221,7 +221,6 @@
 #	if BACKWARD_HAS_DWARF == 1
 #		include <libelf.h>
 #		include <dwarf.h>
-#		include <libdwarf.h>
 #		include <map>
 #		include <algorithm>
 #		ifndef _GNU_SOURCE

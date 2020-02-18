@@ -30,6 +30,8 @@
 list(INSERT CMAKE_MODULE_PATH 0
   "${CMAKE_SOURCE_DIR}/cmake")
 
+list(APPEND CMAKE_MODULE_PATH external/backward)
+
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(CheckLinkerFlag)
@@ -930,7 +932,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS AN
   endif()
 endif()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT BUILD_SHARED_LIBRARIES)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 find_library(ELF_LIBRARY elf)
 if(ELF_LIBRARY)
   set(ELF_LIBRARY ${ELF_LIBRARY})
