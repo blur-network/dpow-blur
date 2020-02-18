@@ -63,7 +63,7 @@ Ubuntu/Debian One-Liner:
 
 Arch Linux One-Liner: 
 
-`sudo pacman -S base-devel cmake boost openssl libsodium libunwind binutils-devel libevent autoconf`
+`sudo pacman -S base-devel cmake boost openssl libsodium libunwind binutils libevent autoconf`
 
 Fedora One-Liner: 
 

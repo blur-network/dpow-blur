@@ -18,8 +18,6 @@ monero_add_executable(notary_server
   ${notary_server_headers}
   ${notary_server_private_headers})
 
-add_backward(notary_server)
-
 target_link_libraries(notary_server
   PRIVATE
     wallet

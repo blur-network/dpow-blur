@@ -41,12 +41,8 @@ set(STACK_DETAILS_BFD FALSE CACHE BOOL
 set(STACK_DETAILS_DWARF FALSE CACHE BOOL
 	"Use libdwarf/libelf to read debug info")
 
-if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR AND NOT DEFINED BACKWARD_TESTS)
-	# If this is a top level CMake project, we most lixely want the tests
-	set(BACKWARD_TESTS ON CACHE BOOL "Enable tests")
-else()
-	set(BACKWARD_TESTS OFF CACHE BOOL "Enable tests")
-endif()
+set(BACKWARD_TESTS FALSE CACHE BOOL "Enable tests")
+
 ###############################################################################
 # CONFIGS
 ###############################################################################
@@ -76,7 +72,7 @@ if (${STACK_DETAILS_AUTO_DETECT})
 		LIBDL_INCLUDE_DIR LIBDL_LIBRARY)
 
 	# find libdwarf
-	find_path(LIBDWARF_INCLUDE_DIR NAMES "libdwarf.h" PATH_SUFFIXES libdwarf)
+	find_path(LIBDWARF_INCLUDE_DIR NAMES "dwarf.h" PATH_SUFFIXES libdwarf)
 	find_path(LIBELF_INCLUDE_DIR NAMES "libelf.h")
 	find_path(LIBDL_INCLUDE_DIR NAMES "dlfcn.h")
 	find_library(LIBDWARF_LIBRARY dwarf)
@@ -115,7 +111,7 @@ if (${STACK_DETAILS_AUTO_DETECT})
 		set(STACK_DETAILS_BACKTRACE_SYMBOL FALSE)
 	elseif(LIBDWARF_FOUND)
 		LIST(APPEND _BACKWARD_INCLUDE_DIRS ${LIBDWARF_INCLUDE_DIRS})
-		LIST(APPEND _BACKWARD_LIBRARIES ${LIBDWARF_LIBRARIES})
+		LIST(APPEND BACKWARD_LIBRARIES ${LIBDWARF_LIBRARIES})
 
 		set(STACK_DETAILS_DW FALSE)
 		set(STACK_DETAILS_BFD FALSE)
@@ -204,3 +200,4 @@ if (NOT TARGET Backward::Backward)
 		)
 	endif()
 endif()
+

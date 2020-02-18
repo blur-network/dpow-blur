@@ -52,12 +52,12 @@ function (monero_install_headers subdir)
     COMPONENT   development)
 endfunction ()
 
-find_package(Backward)
 function (monero_add_executable name)
   source_group("${name}"
     FILES
       ${ARGN})
 if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND BUILD_SHARED_LIBRARIES)
+  find_package(Backward)
   add_executable("${name}"
     ${ARGN}
     ${BACKWARD_ENABLE})

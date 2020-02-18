@@ -30,10 +30,6 @@
 list(INSERT CMAKE_MODULE_PATH 0
   "${CMAKE_SOURCE_DIR}/cmake")
 
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-find_package(Backward)
-endif()
-
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
 include(CheckLinkerFlag)
@@ -222,6 +218,21 @@ endif()
 list(INSERT CMAKE_MODULE_PATH 0
   "${CMAKE_SOURCE_DIR}/cmake")
 
+if (NOT DEFINED ENV{DEVELOPER_LOCAL_TOOLS})
+  message(STATUS "Could not find DEVELOPER_LOCAL_TOOLS in env (not required)")
+  set(BOOST_IGNORE_SYSTEM_PATHS_DEFAULT OFF)
+elseif ("$ENV{DEVELOPER_LOCAL_TOOLS}" EQUAL 1)
+  message(STATUS "Found: env DEVELOPER_LOCAL_TOOLS = 1")
+  set(BOOST_IGNORE_SYSTEM_PATHS_DEFAULT ON)
+else()
+  message(STATUS "Found: env DEVELOPER_LOCAL_TOOLS = 0")
+  set(BOOST_IGNORE_SYSTEM_PATHS_DEFAULT OFF)
+endif()
+
+message(STATUS "BOOST_IGNORE_SYSTEM_PATHS defaults to ${BOOST_IGNORE_SYSTEM_PATHS_DEFAULT}")
+option(BOOST_IGNORE_SYSTEM_PATHS "Ignore boost system paths for local boost installation" ${BOOST_IGNORE_SYSTEM_PATHS_DEFAULT})
+
+
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 enable_testing()
 
@@ -279,16 +290,16 @@ endif()
 option(STATIC "Link libraries statically" ${DEFAULT_STATIC})
 
 # This is a CMake built-in switch that concerns internal libraries
-#if (NOT DEFINED BUILD_SHARED_LIBS AND NOT STATIC AND CMAKE_BUILD_TYPE_LOWER STREQUAL "Debug")
-#    set(BUILD_SHARED_LIBS ON)
-#endif()
+if (NOT DEFINED BUILD_SHARED_LIBS AND NOT STATIC AND CMAKE_BUILD_TYPE_LOWER STREQUAL "debug")
+    set(BUILD_SHARED_LIBS ON)
+endif()
 
-#if (BUILD_SHARED_LIBS)
-#  message(STATUS "Building internal libraries with position independent code")
-#  add_definitions("-DBUILD_SHARED_LIBS")
-#else()
-#  message(STATUS "Building internal libraries as static")
-#endif()
+if (BUILD_SHARED_LIBS)
+  message(STATUS "Building internal libraries with position independent code")
+  add_definitions("-DBUILD_SHARED_LIBS")
+else()
+  message(STATUS "Building internal libraries as static")
+endif()
 set(PIC_FLAG "-fPIC")
 
 if(MINGW)
@@ -346,7 +357,17 @@ add_definitions("-DBLOCKCHAIN_DB=${BLOCKCHAIN_DB}")
 # Can't install hook in static build on OSX, because OSX linker does not support --wrap
 # On ARM, having libunwind package (with .so's only) installed breaks static link.
 # When possible, avoid stack tracing using libunwind in favor of using easylogging++.
-if (UNIX AND NOT APPLE)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  find_library(UNWIND_LIBRARY unwind)
+  if(UNWIND_LIBRARY)
+    set(UNWIND_LIBRARY ${UNWIND_LIBRARY})
+    message(STATUS "Found UNWIND_LIBRARY located at: ${UNWIND_LIBRARY}.")
+  else()
+    message(FATAL_ERROR "Could not find required unwind library, when building debug type. Please recompile for release build, or install libunwind.")
+  endif()
+endif()
+
+if (UNIX AND NOT APPLE AND NOT DEPENDS)
   # Note that at the time of this writing the -Wstrict-prototypes flag added below will make this fail
   set(THREADS_PREFER_PTHREAD_FLAG ON)
   find_package(Threads)
@@ -372,7 +393,7 @@ endif()
 find_package(OpenSSL REQUIRED)
 message(STATUS "Using OpenSSL include dir at ${OPENSSL_INCLUDE_DIR}")
 include_directories(OPENSSL_INCLUDE_DIR ${OPENSSL_INCLUDE_DIR})
-set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARIES};${CMAKE_DL_LIBS};${CMAKE_THREAD_LIBS_INIT}")
+set(OPENSSL_LIBRARIES "${OPENSSL_LIBRARIES};${CMAKE_THREAD_LIBS_INIT}")
 
 add_definition_if_library_exists(c memset_s "string.h" HAVE_MEMSET_S)
 add_definition_if_library_exists(c explicit_bzero "strings.h" HAVE_EXPLICIT_BZERO)
@@ -824,19 +845,25 @@ else()
   endif()
 endif()
 
+if (${BOOST_IGNORE_SYSTEM_PATHS} STREQUAL "ON")
+  set(Boost_NO_SYSTEM_PATHS TRUE)
+endif()
+
 set(OLD_LIB_SUFFIXES ${CMAKE_FIND_LIBRARY_SUFFIXES})
 if(STATIC)
   if(MINGW)
     set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
   endif()
+
   set(Boost_USE_STATIC_LIBS ON)
   set(Boost_USE_STATIC_RUNTIME ON)
 endif()
-find_package(Boost REQUIRED COMPONENTS system filesystem thread date_time chrono regex serialization program_options locale)
-set(BOOST_INCLUDE_DIR /usr/lib/boost)
+  set(BOOST_INCLUDE_DIR /usr/lib/boost)
+  find_package(Boost REQUIRED COMPONENTS system filesystem thread date_time chrono regex serialization program_options locale)
 
 set(CMAKE_FIND_LIBRARY_SUFFIXES ${OLD_LIB_SUFFIXES})
-if(NOT Boost_FOUND)
+
+if(NOT Boost_FOUND AND NOT DEPENDS)
   message(FATAL_ERROR "Could not find Boost libraries, please make sure you have installed Boost or libboost-all-dev (1.58) or the equivalent")
 elseif(Boost_FOUND)
   message(STATUS "Found Boost Version: ${Boost_VERSION}")
@@ -879,6 +906,7 @@ endif()
 list(APPEND EXTRA_LIBRARIES ${CMAKE_DL_LIBS})
 
 option(USE_READLINE "Build with GNU readline support." ON)
+
 if(USE_READLINE)
   find_package(Readline)
   if(READLINE_FOUND)
@@ -902,6 +930,7 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS AN
   endif()
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug" AND NOT BUILD_SHARED_LIBRARIES)
 find_library(ELF_LIBRARY elf)
 if(ELF_LIBRARY)
   set(ELF_LIBRARY ${ELF_LIBRARY})
@@ -909,7 +938,6 @@ if(ELF_LIBRARY)
 endif()
 
 find_package(DWARF)
-
   if(LIBDWARF_LIBRARIES AND BACKWARD_HAS_DWARF)
     set(LIBDWARF_LIBRARIES "${LIBDWARF_LIBRARIES}")
     message(STATUS "Using LIBDWARF_LIBRARIES located at ${LIBDWARF_LIBRARIES}")
@@ -938,9 +966,9 @@ find_package(DWARF)
     set(BACKWARD_LIBRARIES "${BACKWARD_LIBRARIES} ${LIBDW_LIBRARIES}")
   endif()
 
-
 include_directories(BACKWARD_INCLUDE_DIRS ${BACKWARD_INCLUDE_DIRS})
 link_directories(BACKWARD_LIBRARIES ${BACKWARD_LIBRARIES})
+endif()
 
 
 if(NOT BTC_LIBRARY)
