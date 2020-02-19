@@ -157,6 +157,12 @@ struct txpool_tx_meta_t
 
 #define DPOW_SIG (DPOW_SIG_COUNT + 1)
 
+
+#define VALUEX(x)  VAL##XTR(x)
+#define VALXTR(x) VALX##x
+#define XTR(count) STR(count)
+#define STR(count) #count
+
 /**
  * @brief a struct containing txpool per transaction metadata
  */
@@ -179,8 +185,7 @@ struct ntzpool_tx_meta_t
 
   uint8_t  sig_count;                 /* 1  *    = 150 */
                                       /* (13)     = 163 */
-  int signers_index[DPOW_SIG] = { VALX10 };  /* for DPOW_SIG_COUNT = 10, Use VALX10, etc */
-
+  int signers_index[DPOW_SIG] = { VALUEX(DPOW_SIG_COUNT) };
   uint8_t padding[(42-DPOW_SIG_COUNT)];                /* till 192 bytes */
 };
 
