@@ -1196,6 +1196,7 @@ namespace cryptonote
       uint64_t difficulty;
       uint64_t target;
       uint64_t tx_count;
+      uint64_t ntz_count;
       uint64_t tx_pool_size;
       uint64_t alt_blocks_count;
       uint64_t outgoing_connections_count;
@@ -1226,6 +1227,7 @@ namespace cryptonote
         KV_SERIALIZE(difficulty)
         KV_SERIALIZE(target)
         KV_SERIALIZE(tx_count)
+        KV_SERIALIZE(ntz_count)
         KV_SERIALIZE(tx_pool_size)
         KV_SERIALIZE(alt_blocks_count)
         KV_SERIALIZE(outgoing_connections_count)

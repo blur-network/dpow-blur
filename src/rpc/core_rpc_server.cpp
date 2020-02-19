@@ -193,7 +193,9 @@ namespace cryptonote
     res.target_height = m_core.get_target_blockchain_height();
     res.difficulty = m_core.get_blockchain_storage().get_difficulty_for_next_block();
     res.target = m_core.get_blockchain_storage().get_difficulty_target();
-    res.tx_count = m_core.get_blockchain_storage().get_total_transactions() - res.height; //without coinbase
+    res.tx_count = m_core.get_blockchain_storage().get_total_transactions() - res.height; //without coinbase ----- TODO: This doesn't seem right
+    std::vector<std::pair<crypto::hash,uint64_t>> ntz_vec;
+    res.ntz_count = m_core.get_blockchain_storage().get_ntz_count(ntz_vec);
     res.tx_pool_size = m_core.get_pool_transactions_count();
     res.alt_blocks_count = m_core.get_blockchain_storage().get_alternative_blocks_count();
     uint64_t total_conn = m_p2p.get_connections_count();
