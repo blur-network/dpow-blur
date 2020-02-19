@@ -145,6 +145,7 @@ namespace tools
     bool sent_to_pool = false;
     m_stop = false;
     m_net_server.add_idle_handler([this](){
+
       try {
         if (m_wallet) m_wallet->refresh();
       } catch (const std::exception& ex) {

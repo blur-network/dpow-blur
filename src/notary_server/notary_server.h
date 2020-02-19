@@ -58,6 +58,7 @@ namespace tools
     notary_server();
     ~notary_server();
 
+
     bool init(const boost::program_options::variables_map *vm);
     bool run();
     void stop();

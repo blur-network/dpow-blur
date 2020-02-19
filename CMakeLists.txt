@@ -291,11 +291,6 @@ else()
 endif()
 option(STATIC "Link libraries statically" ${DEFAULT_STATIC})
 
-# This is a CMake built-in switch that concerns internal libraries
-if (NOT DEFINED BUILD_SHARED_LIBS AND NOT STATIC AND CMAKE_BUILD_TYPE_LOWER STREQUAL "debug")
-    set(BUILD_SHARED_LIBS ON)
-endif()
-
 if (BUILD_SHARED_LIBS)
   message(STATUS "Building internal libraries with position independent code")
   add_definitions("-DBUILD_SHARED_LIBS")
@@ -359,7 +354,7 @@ add_definitions("-DBLOCKCHAIN_DB=${BLOCKCHAIN_DB}")
 # Can't install hook in static build on OSX, because OSX linker does not support --wrap
 # On ARM, having libunwind package (with .so's only) installed breaks static link.
 # When possible, avoid stack tracing using libunwind in favor of using easylogging++.
-if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug" AND BUILD_SHARED_LIBS)
   find_library(UNWIND_LIBRARY unwind)
   if(UNWIND_LIBRARY)
     set(UNWIND_LIBRARY ${UNWIND_LIBRARY})
@@ -484,17 +479,6 @@ include_directories(${LMDB_INCLUDE})
 if (BERKELEY_DB)
   include_directories(${BDB_INCLUDE})
 endif()
-
-find_package(Libunwind)
-if(Libunwind_FOUND)
-  message(STATUS "Using Libunwind located at: ${LIBUNWIND_LIBRARIES}.")
-  include_directories(LIBUNWIND_INCLUDE_DIRS ${LIBUNWIND_INCLUDE_DIRS})
-  link_directories(LIBUNWIND_LIBRARIES ${LIBUNWIND_LIBRARIES})
-set(BACKWARD_HAS_UNWIND 1)
-else()
-  message(STATUS "Could not find libunwind... continuing without it.")
-endif()
-
 
 if(NOT SECP256K1_LIBRARY)
   message(FATAL_ERROR "Could not find required secp256k1 library.")
@@ -653,9 +637,6 @@ else()
     add_c_flag_if_supported(-fstack-clash-protection C_SECURITY_FLAGS)
     add_cxx_flag_if_supported(-fstack-clash-protection CXX_SECURITY_FLAGS)
   endif()
-
-  add_c_flag_if_supported(-mmitigate-rop C_SECURITY_FLAGS)
-  add_cxx_flag_if_supported(-mmitigate-rop CXX_SECURITY_FLAGS)
 
   # linker
   if (NOT WIN32)
