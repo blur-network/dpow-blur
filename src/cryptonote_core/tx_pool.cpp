@@ -285,19 +285,17 @@ namespace cryptonote
   //---------------------------------------------------------------------------------
   bool tx_memory_pool::add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t const& version, uint8_t const& has_raw_ntz_data, int const& sig_count, std::list<int> const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash)
   {
-    // locking here will screw things up, since handle_incoming can't lock,
-    // if anything in it has taken a tx_pool lock in the past
-//    CRITICAL_REGION_LOCAL(m_transactions_lock);
+    CRITICAL_REGION_LOCAL(m_transactions_lock);
 
-    if (tx.version == 0)
+    if (tx.version <= 1)
     {
-      // v0 never accepted
+      // v0 never accepted, v1 not valid for notarizations
       LOG_PRINT_L1("transaction version 0 is invalid");
       tvc.m_verifivation_failed = true;
       return false;
     }
 
-    MWARNING("Transaction version: " << std::to_string(tx.version));
+    LOG_PRINT_L1("req_ntz_sig received in mempool! transaction version: " << std::to_string(tx.version));
 
     // we do not accept transactions that timed out before
     if (m_timed_out_transactions.find(id) != m_timed_out_transactions.end())
@@ -402,6 +400,7 @@ namespace cryptonote
           if (!r)
             return false;
           m_blockchain.add_ntzpool_tx(tx, ptx_blob, ptx_hash, meta);
+          LockedTXN unlock(m_blockchain);
           if (!insert_key_images(tx, kept_by_block))
             return false;
           m_txs_by_fee_and_receive_time.emplace(std::pair<double, std::time_t>(fee / (double)blob_size, receive_time), id);
@@ -418,7 +417,6 @@ namespace cryptonote
     m_txpool_size += blob_size;
 
     MINFO("Notarization request added to pool: txid " << id << " bytes: " << blob_size << " fee/byte: " << (fee / (double)blob_size));
-
     return true;
   }
   //---------------------------------------------------------------------------------

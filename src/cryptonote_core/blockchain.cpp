@@ -3146,11 +3146,21 @@ bool Blockchain::check_ntz_req_inputs(transaction& tx, ntz_req_verification_cont
       }
       for (size_t n = 0; n < tx.vin.size(); ++n)
       {
-        if (rv.p.MGs[n].II.empty() || memcmp(&boost::get<txin_to_key>(tx.vin[n]).k_image, &rv.p.MGs[n].II[0], 32))
+        
+        if (rv.p.MGs[n].II.empty())
         {
           MERROR_VER("Failed to check ringct signatures: mismatched key image");
           return false;
         }
+        if (tx.vin[n].type() != typeid(txin_to_key)) {
+          MERROR_VER("Unexpected tx.vin.type() in handle_block_to_main_chain()!");
+          return false;
+        } else if (memcmp(&boost::get<txin_to_key>(tx.vin[n]).k_image, &rv.p.MGs[n].II[0], 32)) {
+          MERROR_VER("Failed to check ringct signatures: mismatched key image");
+          return false;
+        }
+
+
       }
 
       if (!rct::verRctSimple(rv, false))
