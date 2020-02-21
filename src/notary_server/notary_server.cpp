@@ -1176,11 +1176,11 @@ namespace tools
     try
     {
       uint64_t mixin = m_wallet->adjust_mixin(0);
-      std::vector<tools::wallet2::pending_tx> pen_tx_vec;
+      tools::wallet2::pending_tx pen_tx = AUTO_VAL_INIT(pen_tx);
       uint32_t priority = m_wallet->adjust_priority(3);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       MINFO("create_ntz_transfer calling create_ntz_transactions");
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx_vec);
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx);
       MINFO("create_ntz_transactions called with sig_count = " << std::to_string(sig_count));
 
       std::string index_vec;
@@ -1449,8 +1449,6 @@ pool_recheck:
       index_str += tmp;
     }
 
-    std::vector<wallet2::pending_tx> pen_tx_vec;
-
     try
     {
       uint64_t mixin = m_wallet->adjust_mixin(sig_count);
@@ -1459,14 +1457,12 @@ pool_recheck:
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       std::vector<wallet2::pending_tx> ptx_vector;
       if (!get_ntz_cache_count()) {
-        ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx_vec);
+        ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx);
         MINFO("create_ntz_transactions called with sig_count = " << std::to_string(sig_count) <<
           ", and signers_index = " << index_str);
-        ptx_vector.push_back(pen_tx);
       } else {
         ptx_vector = get_cached_ptx();
         LOG_PRINT_L1("Ptx loaded from cache!");
-        ptx_vector.push_back(pen_tx);
       }
       if (m_wallet->get_ntzpool_count(true) > 1) {
         std::list<std::string> hashes;

@@ -900,6 +900,85 @@ bool wallet2::get_seed(std::string& electrum_words, const epee::wipeable_string 
   return true;
 }
 //----------------------------------------------------------------------------------------------------
+bool wallet2::get_outs_from_peer_ptx(tools::wallet2::pending_tx const& ptx, std::vector<tools::wallet2::get_outs_entry>& outs_entries, int const& sig_count)
+{
+  crypto::chacha_key key;
+  generate_chacha_key_from_secret_keys(key);
+
+  MWARNING("KEY IMAGES IN get_outs_from_peer_ptx: " << ptx.key_images);
+
+  std::vector<std::string> key_images;
+  std::string each_key;
+
+
+
+  for (size_t i = 0; i < ptx.tx.vout.size(); i++) {
+    crypto::public_key outkey = boost::get<cryptonote::txout_to_key>(ptx.tx.vout[i].target).key;
+    rct::key mask = ptx.tx.rct_signatures.outPk[i].mask;
+    uint64_t amount = ptx.tx.vout[i].amount;
+    std::tuple<uint64_t,crypto::public_key,rct::key> oe = std::make_tuple(amount, outkey, mask);
+    outs_entries.push_back(oe);
+  }
+/*
+ if (ptx.key_images.length() >= 64) {
+  for (size_t i = 0; i < ptx.key_images.size(); i++) {
+    std::string each = ptx.key_images.substr(i, 1);
+    if ( each == "<")
+      continue;
+    else if (each == ">")
+      continue;
+    else if (each == " ") {
+      key_images.push_back(each_key);
+      each_key.clear();
+      continue;
+    } else {
+      each_key += each;
+    }
+  }
+ }
+
+  std::vector<crypto::key_image> ki_vector;
+  std::vector<uint64_t> ring;
+
+  for (const auto& each : key_images) {
+    crypto::key_image sizing;
+    if(each.size() == sizeof(crypto::null_pkey))
+    {
+      const crypto::key_image each_key = *reinterpret_cast<const crypto::key_image*>(each.data());
+      ki_vector.push_back(each_key);
+    } else {
+      MERROR("Data string mismatched size for conversion to key_image type! Data string = " << each);
+      return false;
+    }
+  }
+
+  for (const auto& each : ki_vector) {
+    if (get_ring(key, each, ring)) {
+      MINFO("This output has a known ring, reusing (size " << ring.size() << ")");
+      if(ring.size() > (DPOW_SIG_COUNT + 1)) {
+        MERROR("An output in this transaction was previously spent in another transaction (of ring size = " <<
+        std::to_string(ring.size()) + ") " << std::endl <<
+        "Unable to spend with smaller ring (of size  = " << std::to_string(DPOW_SIG_COUNT + 1) << ")");
+      }
+      for (const auto &out: ring)
+      {
+        MINFO("Ring has output " << out << ", using it...");
+        outs_entries.push_back(std::make_tuple( out, each, ptx.tx.rct_signatures.outPk[out].mask ));
+      }
+    } else {
+      MINFO("Unknown ring for key = " << epee::string_tools::pod_to_hex(each));
+      for (const auto &out: ring)
+      {
+        MINFO("Ring has output " << out << ", using it...");
+        outs_entries.push_back(std::make_tuple( out, each, ptx.tx.rct_signatures.outPk[out].mask ));
+      }
+    }
+  }
+*/
+  return true;
+
+}
+//----------------------------------------------------------------------------------------------------
 bool wallet2::get_multisig_seed(std::string& seed, const epee::wipeable_string &passphrase, bool raw) const
 {
   bool ready;
@@ -7330,7 +7409,7 @@ static uint32_t get_count_above(const std::vector<wallet2::transfer_details> &tr
   return count;
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon, int const& sig_count, std::vector<tools::wallet2::pending_tx>& pen_tx)
+std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon, int const& sig_count, tools::wallet2::pending_tx const& pen_tx)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
@@ -7341,6 +7420,12 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
   std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_dust_indices_per_subaddr;
   uint64_t needed_money;
   uint64_t accumulated_fee, accumulated_outputs, accumulated_change;
+
+
+  std::vector<cryptonote::tx_destination_entry> dsts_o;
+  for (const auto& dst : pen_tx.dests) {
+    dsts_o.push_back(dst);
+  }
 
   struct tx_struct
   {
@@ -7366,7 +7451,7 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
 
   std::vector<tx_struct> txes;
   bool adding_fee; // true if new outputs go towards fee, rather than destinations
-  uint64_t needed_fee, available_for_fee = 0;
+  uint64_t needed_fee, available_for_fee = pen_tx.fee;
   uint64_t upper_transaction_size_limit = get_upper_transaction_size_limit();
   const bool use_rct = true;
   const bool bulletproof = use_fork_rules(get_bulletproof_fork(), 0);
@@ -7382,7 +7467,6 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
   needed_money = 0;
   for(auto& dt: dsts)
   {
-    THROW_WALLET_EXCEPTION_IF(0 == dt.amount, error::zero_destination);
     needed_money += dt.amount;
     LOG_PRINT_L2("transfer: adding " << print_money(dt.amount) << ", for a total of " << print_money (needed_money));
     THROW_WALLET_EXCEPTION_IF(needed_money < dt.amount, error::tx_sum_overflow, dsts, 0, m_nettype);
@@ -7534,9 +7618,14 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
   std::vector<size_t>* unused_transfers_indices = &unused_transfers_indices_per_subaddr[0].second;
   std::vector<size_t>* unused_dust_indices      = &unused_dust_indices_per_subaddr[0].second;
 
+  txes.back().selected_transfers = pen_tx.selected_transfers;
+  txes.back().dsts = pen_tx.dests;
+
+
   hwdev.set_mode(hw::device::TRANSACTION_CREATE_FAKE);
   while ((!dsts.empty() && dsts[0].amount > 0) || adding_fee || !preferred_inputs.empty() || should_pick_a_second_output(use_rct, txes.back().selected_transfers.size(), *unused_transfers_indices, *unused_dust_indices)) {
     tx_struct &tx = txes.back();
+
 
     LOG_PRINT_L2("Start of loop with " << unused_transfers_indices->size() << " " << unused_dust_indices->size());
     LOG_PRINT_L2("unused_transfers_indices: " << strjoin(*unused_transfers_indices, " "));
@@ -7570,14 +7659,6 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
         }
       }
 
-      // since we're trying to add a second output which is not strictly needed,
-      // we only add it if it's unrelated enough to the first one
-      float relatedness = get_output_relatedness(m_transfers[idx], m_transfers[tx.selected_transfers.front()]);
-      if (relatedness > SECOND_OUTPUT_RELATEDNESS_THRESHOLD)
-      {
-        LOG_PRINT_L2("Second output was not strictly needed, and relatedness " << relatedness << ", not adding");
-        break;
-      }
       pop_if_present(*unused_transfers_indices, idx);
       pop_if_present(*unused_dust_indices, idx);
     } else
@@ -7777,9 +7858,6 @@ skip_tx:
   }
 
   std::vector<wallet2::pending_tx> ptx_vector;
-  for (const auto& each: pen_tx) {
-    ptx_vector.push_back(each);
-  }
   for (std::vector<tx_struct>::iterator i = txes.begin(); i != txes.end(); ++i)
   {
     tx_struct &tx = *i;
