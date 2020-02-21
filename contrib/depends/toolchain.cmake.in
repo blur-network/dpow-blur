@@ -3,7 +3,6 @@ SET(CMAKE_SYSTEM_NAME @depends@)
 SET(CMAKE_BUILD_TYPE release)
 
 SET(STATIC true)
-SET(UNBOUND_STATIC true)
 
 # where is the target environment 
 SET(CMAKE_FIND_ROOT_PATH @prefix@ /usr)
@@ -18,7 +17,9 @@ SET(LIBUNWIND_INCLUDE_DIR @prefix@/include)
 SET(LIBUNWIND_LIBRARIES @prefix@/lib/libunwind.a)
 SET(LIBUNWIND_LIBRARY_DIRS @prefix@/lib)
 
-SET(EVENT_LIBRARY @prefix@/lib/libevent.a)
+SET(EVENT_INCLUDE_DIR @prefix@/include)
+SET(EVENT_LIBRARIES @prefix@/lib/libevent.a)
+SET(EVENT_LIBRARY_DIRS @prefix@/lib)
 
 SET(BOOST_IGNORE_SYSTEM_PATHS_DEFAULT ON)
 SET(BOOST_IGNORE_SYSTEM_PATH ON)

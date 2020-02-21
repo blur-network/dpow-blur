@@ -42,7 +42,7 @@ target_link_libraries(notary_server
     version
     ${BTC_LIBRARY}
     ${SECP256K1_LIBRARY}
-    ${EVENT_LIBRARY}
+    ${EVENT_LIBRARIES}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
@@ -71,7 +71,7 @@ target_link_libraries(notary_server
     version
     ${BTC_LIBRARY}
     ${SECP256K1_LIBRARY}
-    ${EVENT_LIBRARY}
+    ${EVENT_LIBRARIES}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}

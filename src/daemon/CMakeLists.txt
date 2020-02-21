@@ -122,7 +122,7 @@ target_link_libraries(daemon
     serialization
     daemon_rpc_server
     epee
-    ${EVENT_LIBRARY}
+    ${EVENT_LIBRARIES}
     ${SECP256K1_LIBRARY}
     ${BTC_LIBRARY}
     ${EPEE_READLINE}
@@ -153,7 +153,7 @@ target_link_libraries(daemon
     serialization
     daemon_rpc_server
     epee
-    ${EVENT_LIBRARY}
+    ${EVENT_LIBRARIES}
     ${SECP256K1_LIBRARY}
     ${BTC_LIBRARY}
     ${EPEE_READLINE}
