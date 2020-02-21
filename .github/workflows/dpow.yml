@@ -17,5 +17,7 @@ jobs:
     - name: make
       run: make release-cross-linux-x86_64
       env:
-        HOST: x86_64-gnu-linux
+        HOST: x86_64-linux-gnu
         BOOST_IGNORE_SYSTEM_PATHS: ON
+        CPATH: $CPATH -I/home/runner/work/dpow-blur/dpow-blur/contrib/depends/x86_64-linux-gnu/include
+        LD_LIBRARY_PATH: $LD_LIBRARY_PATH:/home/runner/work/dpow-blur/dpow-blur/contrib/depends/x86_64-linux-gnu/lib

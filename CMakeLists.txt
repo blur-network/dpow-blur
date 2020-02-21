@@ -443,8 +443,8 @@ endif()
 include(ExternalProject)
 ExternalProject_Add(secp256k1
   SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1
-  CMAKE_ARGS -DSECP256K1_PATH=${SECP256K1_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static -DLD_FLAGS+=-llibbtc
-  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no
+  CMAKE_ARGS -DSECP256K1_PATH=${SECP256K1_PATH} -DCFLAGS="-fPIC -I${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/include" -DLD_FLAGS=-static -DLD_FLAGS+=-llibbtc
+  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ CFLAGS='-I ${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/include' --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no
   BUILD_COMMAND make
   INSTALL_COMMAND make install
   BUILD_IN_SOURCE 1
