@@ -3571,7 +3571,7 @@ bool Blockchain::flush_txes_from_pool(const std::list<crypto::hash> &txids)
 bool Blockchain::flush_ntz_txes_from_pool(const std::list<crypto::hash> &txids)
 {
   CRITICAL_REGION_LOCAL(m_tx_pool);
-
+  CRITICAL_REGION_LOCAL1(m_blockchain_lock);
   bool res = true;
   for (const auto &txid: txids)
   {
