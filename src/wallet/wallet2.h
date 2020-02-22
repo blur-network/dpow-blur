@@ -596,6 +596,7 @@ namespace tools
     cryptonote::account_base& get_account(){return m_account;}
     const cryptonote::account_base& get_account()const{return m_account;}
 
+    bool get_tx_gindexes(cryptonote::transaction const& tx, std::vector<uint64_t>& gindexes);
     void set_refresh_from_block_height(uint64_t height) {m_refresh_from_block_height = height;}
     uint64_t get_refresh_from_block_height() const {return m_refresh_from_block_height;}
 

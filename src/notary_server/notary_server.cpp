@@ -1335,7 +1335,6 @@ pool_recheck:
     boost::archive::portable_binary_iarchive ar(iss);
     ar >> pen_tx;
 
-    uint64_t pk_counter = 0;
     const int neg = -1;
     const int count = DPOW_SIG_COUNT - std::count(signers_index.begin(), signers_index.end(), neg);
     LOG_PRINT_L1("Signers index count = " << std::to_string(count));
@@ -1350,13 +1349,21 @@ pool_recheck:
       return false;
     }
     std::vector<crypto::key_derivation> recv_derivations;
-    std::vector<std::pair<crypto::public_key,size_t>> recv_outkeys;
+    typedef std::tuple<size_t,crypto::public_key,rct::key> recv_outkey; // relative offset
+    std::vector<std::pair<std::vector<uint64_t>,recv_outkey>> outs_info_pair;
     int i = -1;
-    for (int j = 0; j < count; j++) {
-      i = signers_index[count-1];
+    for (int j = (count - 1); j >= 0; j--) {
+      i = signers_index[j];
       crypto::secret_key viewkey = notary_viewkeys[i];
+      crypto::public_key spendkey = notaries_keys[i].second;
       cryptonote::transaction tx = pen_tx.tx;
+      crypto::hash tx_hash = get_transaction_hash(tx);
       //crypto::public_key real_out_tx_key = get_tx_pub_key_from_extra(tx, 0);
+      std::vector<uint64_t> gindex;
+      if (!m_wallet->get_tx_gindexes(tx, gindex)) {
+        return false;
+      }
+
 
       rct::rctSig &rv = tx.rct_signatures;
       if (rv.outPk.size() != tx.vout.size())
@@ -1372,37 +1379,33 @@ pool_recheck:
           return false;
         }
         rv.outPk[n].dest = rct::pk2rct(boost::get<cryptonote::txout_to_key>(tx.vout[n].target).key);
-        std::pair<crypto::public_key,size_t> each = std::make_pair(reinterpret_cast<const crypto::public_key&>(rv.outPk[n].dest), n);
-        recv_outkeys.push_back(each);
+        std::tuple<size_t,crypto::public_key,rct::key> each = std::make_tuple(n, reinterpret_cast<const crypto::public_key&>(rv.outPk[n].dest), rv.outPk[n].mask);
+        std::pair<std::vector<uint64_t>,recv_outkey> each_oi = std::make_pair(gindex,each);
+        outs_info_pair.push_back(each_oi);
       }
 
-    size_t pk_index = 0;
-    crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index++);
-    bool R_two = false;
-    for (const auto& each : notary_viewkeys) {
-      crypto::key_derivation recv_derivation;
-      bool R = generate_key_derivation(recv_tx_key, each, recv_derivation);
-      if (!R) {
-        MERROR("Failed to generate recv_derivation at append_ntz_sig! recv_tx_key = " << recv_tx_key << ", notary_viewkey = " << epee::string_tools::pod_to_hex(each));
-        return false;
-      } else {
-        LOG_PRINT_L1("Recv derivation = " << recv_derivation << ", for pk_index: " << std::to_string(pk_index));
-        if (epee::string_tools::pod_to_hex(recv_derivation) != "0100000000000000000000000000000000000000000000000000000000000000") {
-          LOG_PRINT_L2("Recv derivation does not equal rct identity element! Validation failed for pk_index: " << std::to_string(pk_index));
-/*          std::list<std::string> tx_strings;
-          std::string tx_hash_string = epee::string_tools::pod_to_hex(get_transaction_hash(tx));
-          tx_strings.push_back(tx_hash_string);
-          m_wallet->remove_ntzpool_txs(tx_strings);
-          break;*/
-        } else {
-          recv_derivations.push_back(recv_derivation);
-          pk_counter = pk_index;
+/*      size_t pk_index = 0;
+      bool R_two = false;
+      
+        crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index++);
+          crypto::key_derivation recv_derivation;
+          bool R = generate_key_derivation(recv_tx_key, each, recv_derivation);
+          if (!R) {
+            MERROR("Failed to generate recv_derivation at append_ntz_sig! recv_tx_key = " << recv_tx_key << ", notary_viewkey = " << epee::string_tools::pod_to_hex(each));
+            return false;
+          } else {
+            MWARNING("Recv derivation = " << recv_derivation << ", for pk_index: " << std::to_string(pk_index));
+            if (epee::string_tools::pod_to_hex(recv_derivation) != "0100000000000000000000000000000000000000000000000000000000000000") {
+              MERROR("Recv derivation does not equal rct identity element! Validation failed for pk_index: " << std::to_string(pk_index));
+           } else {
+            recv_derivations.push_back(recv_derivation);
+            MWARNING("Recv derivations passed on index: " << std::to_string(pk_index));
+            break;
+          }
         }
-      }
+      }*/
     }
-  }
 
-    LOG_PRINT_L1("Recv derivations passed on index: " << std::to_string(pk_counter));
 
     for (int i = 0; i < 64; i++)
     {

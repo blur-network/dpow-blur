@@ -371,8 +371,8 @@ namespace cryptonote
           KV_SERIALIZE(dust_threshold)
         END_KV_SERIALIZE_MAP()
       };
-    
-      
+
+
       struct output {
         uint64_t amount;
         std::string public_key;
@@ -384,7 +384,7 @@ namespace cryptonote
         std::string tx_prefix_hash;
         std::vector<std::string> spend_key_images;
         uint64_t timestamp;
-        uint64_t height;                
+        uint64_t height;
 
 
         BEGIN_KV_SERIALIZE_MAP()
@@ -432,8 +432,8 @@ namespace cryptonote
           KV_SERIALIZE(count)
         END_KV_SERIALIZE_MAP()
       };
-    
-      
+
+
       struct output {
         std::string public_key;
         uint64_t global_index;
@@ -442,20 +442,20 @@ namespace cryptonote
         BEGIN_KV_SERIALIZE_MAP()
           KV_SERIALIZE(public_key)
           KV_SERIALIZE(global_index)
-          KV_SERIALIZE(rct)                                 
+          KV_SERIALIZE(rct)
         END_KV_SERIALIZE_MAP()
       };
-      
+
       struct amount_out {
         uint64_t amount;
         std::vector<output> outputs;
         BEGIN_KV_SERIALIZE_MAP()
           KV_SERIALIZE(amount)
-          KV_SERIALIZE(outputs)                                
+          KV_SERIALIZE(outputs)
         END_KV_SERIALIZE_MAP()
-        
+
       };
-      
+
       struct response
       {
         std::vector<amount_out> amount_outs;
@@ -478,16 +478,16 @@ namespace cryptonote
         BEGIN_KV_SERIALIZE_MAP()
           KV_SERIALIZE(address)
           KV_SERIALIZE(view_key)
-          KV_SERIALIZE(tx)  
+          KV_SERIALIZE(tx)
         END_KV_SERIALIZE_MAP()
       };
-    
-      
+
+
       struct response
       {
         std::string status;
         std::string error;
-        
+
         BEGIN_KV_SERIALIZE_MAP()
           KV_SERIALIZE(status)
           KV_SERIALIZE(error)
@@ -505,18 +505,18 @@ namespace cryptonote
 
         BEGIN_KV_SERIALIZE_MAP()
           KV_SERIALIZE(address)
-          KV_SERIALIZE(view_key) 
-          KV_SERIALIZE(create_account) 
+          KV_SERIALIZE(view_key)
+          KV_SERIALIZE(create_account)
         END_KV_SERIALIZE_MAP()
       };
-    
-      
+
+
       struct response
       {
         std::string status;
         std::string reason;
         bool new_address;
-        
+
         BEGIN_KV_SERIALIZE_MAP()
           KV_SERIALIZE(status)
           KV_SERIALIZE(reason)
@@ -531,14 +531,14 @@ namespace cryptonote
       {
         std::string address;
         std::string view_key;
-        
+
         BEGIN_KV_SERIALIZE_MAP()
           KV_SERIALIZE(address)
           KV_SERIALIZE(view_key)
         END_KV_SERIALIZE_MAP()
       };
-    
-      
+
+
       struct response
       {
         std::string payment_id;
@@ -547,14 +547,14 @@ namespace cryptonote
         bool request_fulfilled;
         std::string payment_address;
         std::string status;
-        
+
         BEGIN_KV_SERIALIZE_MAP()
           KV_SERIALIZE(payment_id)
           KV_SERIALIZE(import_fee)
           KV_SERIALIZE(new_request)
           KV_SERIALIZE(request_fulfilled)
           KV_SERIALIZE(payment_address)
-          KV_SERIALIZE(status)            
+          KV_SERIALIZE(status)
         END_KV_SERIALIZE_MAP()
       };
   };

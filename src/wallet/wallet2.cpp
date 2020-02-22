@@ -6132,7 +6132,6 @@ bool wallet2::tx_add_fake_output(std::vector<std::vector<tools::wallet2::get_out
   return true;
 }
 
-
 void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs, const std::vector<size_t> &selected_transfers, size_t fake_outputs_count)
 {
   LOG_PRINT_L2("fake_outputs_count: " << fake_outputs_count);
@@ -10911,6 +10910,24 @@ std::vector<std::pair<uint64_t, uint64_t>> wallet2::estimate_backlog(const std::
     blocks.push_back(std::make_pair(nblocks_min, nblocks_max));
   }
   return blocks;
+}
+//----------------------------------------------------------------------------------------------------
+bool wallet2::get_tx_gindexes(cryptonote::transaction const& tx, std::vector<uint64_t>& gindexes)
+{
+  cryptonote::COMMAND_RPC_GET_TX_GLOBAL_OUTPUTS_INDEXES::request req = AUTO_VAL_INIT(req);
+  cryptonote::COMMAND_RPC_GET_TX_GLOBAL_OUTPUTS_INDEXES::response resp = AUTO_VAL_INIT(resp);
+  req.txid = get_transaction_hash(tx);
+  m_daemon_rpc_mutex.lock();
+  bool r = net_utils::invoke_http_bin("/get_o_indexes.bin", req, resp, m_http_client, rpc_timeout);
+  m_daemon_rpc_mutex.unlock();
+
+  if (!r || !resp.o_indexes.empty()) {
+    MERROR("Failed to get tx gindexes in m_wallet!");
+    return false;
+  }
+
+  gindexes = resp.o_indexes;
+  return true;
 }
 //----------------------------------------------------------------------------------------------------
 std::vector<std::pair<uint64_t, uint64_t>> wallet2::estimate_backlog(uint64_t min_blob_size, uint64_t max_blob_size, const std::vector<uint64_t> &fees)
