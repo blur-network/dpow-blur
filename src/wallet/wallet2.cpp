@@ -6695,7 +6695,7 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
   std::vector<crypto::secret_key> additional_tx_keys;
   rct::multisig_out msout;
   LOG_PRINT_L2("constructing tx");
-  bool r = cryptonote::construct_ntz_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sources, splitted_dsts, change_dts.addr, extra, tx, unlock_time, tx_key, additional_tx_keys, false, false, m_multisig ? &msout : NULL);
+  bool r = cryptonote::construct_tx_and_get_tx_key(m_account.get_keys(), m_subaddresses, sources, splitted_dsts, change_dts.addr, extra, tx, unlock_time, tx_key, additional_tx_keys, false, false, m_multisig ? &msout : NULL);
   LOG_PRINT_L2("constructed tx, r="<<r);
   THROW_WALLET_EXCEPTION_IF(!r, error::tx_not_constructed, sources, splitted_dsts, unlock_time, m_nettype);
   THROW_WALLET_EXCEPTION_IF(upper_transaction_size_limit <= get_object_blobsize(tx), error::tx_too_big, tx, upper_transaction_size_limit);
@@ -6742,7 +6742,7 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
 }
 
 void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry> dsts, const std::vector<size_t>& selected_transfers, size_t const& sig_count,
-  std::vector<std::vector<tools::wallet2::get_outs_entry>> &outs,
+  std::vector<std::vector<tools::wallet2::get_outs_entry>> const& outs,
   uint64_t unlock_time, uint64_t fee, const std::vector<uint8_t>& extra, cryptonote::transaction& tx, pending_tx &ptx, bool bulletproof)
 {
   using namespace cryptonote;
@@ -6812,7 +6812,7 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
   try {
     if (outs.empty())
     {
-      get_outs(outs, selected_transfers, sig_count); // may throw
+//      get_outs(outs, selected_transfers, sig_count); // may throw
     }
   } catch (std::exception& e) {
     MERROR("Error at transfer_ntz_selected: exception caught when calling get_outs!");
@@ -7329,7 +7329,7 @@ static uint32_t get_count_above(const std::vector<wallet2::transfer_details> &tr
   return count;
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon, int const& sig_count, std::vector<tools::wallet2::pending_tx>& pen_tx)
+std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon, int const& sig_count, std::vector<tools::wallet2::pending_tx>& pen_tx, std::vector<std::vector<tools::wallet2::get_outs_entry>> const& outs)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
@@ -7489,7 +7489,6 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
   accumulated_change = 0;
   adding_fee = false;
   needed_fee = 0;
-  std::vector<std::vector<tools::wallet2::get_outs_entry>> outs;
 
   // for rct, since we don't see the amounts, we will try to make all transactions
   // look the same, with 1 or 2 inputs, and 2 outputs. One input is preferable, as
@@ -7591,7 +7590,7 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
     accumulated_outputs += available_amount;
 
     // clear any fake outs we'd already gathered, since we'll need a new set
-    outs.clear();
+//    outs.clear();
 
     if (adding_fee)
     {

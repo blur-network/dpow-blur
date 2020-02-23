@@ -1173,6 +1173,7 @@ namespace tools
       return false;
     }
 
+    std::vector<std::vector<tools::wallet2::get_outs_entry>> outs;
     try
     {
       uint64_t mixin = m_wallet->adjust_mixin(0);
@@ -1180,7 +1181,7 @@ namespace tools
       uint32_t priority = m_wallet->adjust_priority(3);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       MINFO("create_ntz_transfer calling create_ntz_transactions");
-      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx_vec);
+      std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx_vec, outs);
       MINFO("create_ntz_transactions called with sig_count = " << std::to_string(sig_count));
 
       std::string index_vec;
@@ -1349,15 +1350,16 @@ pool_recheck:
       return false;
     }
     std::vector<crypto::key_derivation> recv_derivations;
-    typedef std::tuple<size_t,crypto::public_key,rct::key> recv_outkey; // relative offset
-    std::vector<std::pair<std::vector<uint64_t>,recv_outkey>> outs_info_pair;
+    typedef std::tuple<std::vector<uint64_t>,crypto::public_key,rct::key> recv_outkey; // relative offset
+    std::vector<std::pair<size_t,recv_outkey>> outs_info_pair;
     int i = -1;
+    std::vector<std::vector<tools::wallet2::get_outs_entry>> outs;
     for (int j = (count - 1); j >= 0; j--) {
       i = signers_index[j];
       crypto::secret_key viewkey = notary_viewkeys[i];
-      crypto::public_key spendkey = notaries_keys[i].second;
+//      crypto::public_key spendkey = notaries_keys[i].second;
       cryptonote::transaction tx = pen_tx.tx;
-      crypto::hash tx_hash = get_transaction_hash(tx);
+//      crypto::hash tx_hash = get_transaction_hash(tx);
       //crypto::public_key real_out_tx_key = get_tx_pub_key_from_extra(tx, 0);
       std::vector<uint64_t> gindex;
       if (!m_wallet->get_tx_gindexes(tx, gindex)) {
@@ -1379,10 +1381,39 @@ pool_recheck:
           return false;
         }
         rv.outPk[n].dest = rct::pk2rct(boost::get<cryptonote::txout_to_key>(tx.vout[n].target).key);
-        std::tuple<size_t,crypto::public_key,rct::key> each = std::make_tuple(n, reinterpret_cast<const crypto::public_key&>(rv.outPk[n].dest), rv.outPk[n].mask);
-        std::pair<std::vector<uint64_t>,recv_outkey> each_oi = std::make_pair(gindex,each);
+        std::tuple<std::vector<uint64_t>,crypto::public_key,rct::key> each = std::make_tuple(gindex, reinterpret_cast<const crypto::public_key&>(rv.outPk[n].dest), rv.outPk[n].mask);
+        std::pair<size_t,recv_outkey> each_oi = std::make_pair(n,each);
+        // relative index and tuple
         outs_info_pair.push_back(each_oi);
       }
+
+      std::vector<tools::wallet2::get_outs_entry> outs_entries;
+      std::vector<size_t> selected_transfers;
+      size_t i = 0;
+      for (const auto & each : outs_info_pair) {
+        for (const auto& each_ind : std::get<0>(each.second)) {
+           std::tuple<uint64_t,crypto::public_key,rct::key> outs_entry = std::make_tuple(each_ind, std::get<1>(each.second), std::get<2>(each.second));
+           outs_entries.push_back(outs_entry);
+           selected_transfers.push_back(each.first);
+        }
+      }
+
+      std::vector<tools::wallet2::get_outs_entry> outs_entries_vec;
+      for(size_t i = 0; i < selected_transfers.size(); i++) {
+        if (i > 0) {
+          if (selected_transfers[i] != selected_transfers[i-1]) {
+            outs_entries_vec.push_back(outs_entries[i]);
+            outs.push_back(outs_entries_vec);
+            outs.resize(outs.size()+1);
+            outs_entries_vec.clear();
+          } else {
+            outs_entries_vec.push_back(outs_entries[i]);
+          }
+        } else {
+          outs_entries_vec.push_back(outs_entries[i]);
+        }
+      }
+
 
 /*      size_t pk_index = 0;
       bool R_two = false;
@@ -1462,7 +1493,7 @@ pool_recheck:
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       std::vector<wallet2::pending_tx> ptx_vector;
       if (!get_ntz_cache_count()) {
-        ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx_vec);
+        ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx_vec, outs);
         MINFO("create_ntz_transactions called with sig_count = " << std::to_string(sig_count) <<
           ", and signers_index = " << index_str);
         ptx_vector.push_back(pen_tx);
