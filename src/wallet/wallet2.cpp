@@ -6742,7 +6742,7 @@ void wallet2::transfer_selected(const std::vector<cryptonote::tx_destination_ent
 }
 
 void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry> dsts, const std::vector<size_t>& selected_transfers, size_t const& sig_count,
-  std::vector<std::vector<tools::wallet2::get_outs_entry>> const& outs,
+  std::vector<std::vector<tools::wallet2::get_outs_entry>>& outs,
   uint64_t unlock_time, uint64_t fee, const std::vector<uint8_t>& extra, cryptonote::transaction& tx, pending_tx &ptx, bool bulletproof)
 {
   using namespace cryptonote;
@@ -6812,7 +6812,7 @@ void wallet2::transfer_selected_ntz(std::vector<cryptonote::tx_destination_entry
   try {
     if (outs.empty())
     {
-//      get_outs(outs, selected_transfers, sig_count); // may throw
+      get_outs(outs, selected_transfers, sig_count); // may throw
     }
   } catch (std::exception& e) {
     MERROR("Error at transfer_ntz_selected: exception caught when calling get_outs!");
@@ -7329,7 +7329,7 @@ static uint32_t get_count_above(const std::vector<wallet2::transfer_details> &tr
   return count;
 }
 
-std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon, int const& sig_count, std::vector<tools::wallet2::pending_tx>& pen_tx, std::vector<std::vector<tools::wallet2::get_outs_entry>> const& outs)
+std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cryptonote::tx_destination_entry> dsts, const uint64_t unlock_time, uint32_t priority, const std::vector<uint8_t>& extra, uint32_t subaddr_account, std::set<uint32_t> subaddr_indices, bool trusted_daemon, int const& sig_count, std::vector<tools::wallet2::pending_tx>& pen_tx, std::vector<std::vector<tools::wallet2::get_outs_entry>>& outs)
 {
   //ensure device is let in NONE mode in any case
   hw::device &hwdev = m_account.get_device();
