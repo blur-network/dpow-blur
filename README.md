@@ -45,7 +45,15 @@ Once Downloaded, run `./configure` or `./bootstrap`, then `make && sudo make ins
 
 Minimal Dependencies: `sudo apt-get install autotools-dev curl cmake build-essential`
 
+#### Release Build
+  
 **The following will chain-build dependencies and then all binaries in source:** `make release-cross-linux-x86_64`
+  
+#### Debug Build (with full stack traces on abnormal exit codes, i.e. segfault, and etc.)
+
+**Download dependencies:**  `sudo apt install libdw-dev libfd-dev binutils-dev build-essential cmake pkg-config libssl-dev libunwind-dev libevent-dev libsodium-dev binutils-dev libboost-all-dev autoconf`
+
+**Compile from source:** `make debug-all`
 
 
 ---
