@@ -1093,6 +1093,8 @@ namespace wallet_rpc
       KV_SERIALIZE(timestamp);
       KV_SERIALIZE(amount);
       KV_SERIALIZE(fee);
+      KV_SERIALIZE(confirmations);
+      KV_SERIALIZE(rawconfirmations);
       KV_SERIALIZE(note);
       KV_SERIALIZE(destinations);
       KV_SERIALIZE(type);

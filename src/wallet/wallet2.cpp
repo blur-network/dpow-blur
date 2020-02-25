@@ -10947,6 +10947,18 @@ uint64_t wallet2::get_segregation_fork_height() const
   return SEGREGATION_FORK_HEIGHT;
 }
 //----------------------------------------------------------------------------------------------------
+uint64_t wallet2::get_notarized_height()
+{
+  cryptonote::COMMAND_RPC_GET_NTZ_DATA::request req = AUTO_VAL_INIT(req);
+  cryptonote::COMMAND_RPC_GET_NTZ_DATA::response res = AUTO_VAL_INIT(res);
+  m_daemon_rpc_mutex.lock();
+  bool re = net_utils::invoke_http_json_rpc("/json_rpc", "get_notarization_data", req, res, m_http_client);
+  m_daemon_rpc_mutex.unlock();
+  THROW_WALLET_EXCEPTION_IF(!re, tools::error::wallet_internal_error, "Failed to get notarization data from daemon!");
+  return res.notarized_height;
+}
+
+
 void wallet2::generate_genesis(cryptonote::block& b, cryptonote::network_type const& m_nettype) const {
   cryptonote::generate_genesis_block(b, m_nettype);
 }

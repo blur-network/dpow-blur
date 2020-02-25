@@ -1083,6 +1083,7 @@ namespace tools
     bool set_blackballed_outputs(const std::vector<crypto::public_key> &outputs, bool add = false);
     bool unblackball_output(const crypto::public_key &output);
     bool is_output_blackballed(const crypto::public_key &output) const;
+    uint64_t get_notarized_height();
 
   private:
     /*!
