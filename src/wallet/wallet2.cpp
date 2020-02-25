@@ -9059,22 +9059,25 @@ void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_de
       confirmations = rawconfirmations;
     }
   }
-#ifdef KOMODO_NOTARIZATIONS
+  COMMAND_RPC_GET_NTZ_DATA::request req_ntz;
   COMMAND_RPC_GET_NTZ_DATA::response res_ntz;
-  if (res_ntz.notarized < (res.txs.front().block_height + 1))
+  m_daemon_rpc_mutex.lock();
+  bool ntz_ok = net_utils::invoke_http_json_rpc("/json_rpc", "get_notarization_data", req_ntz, res_ntz, m_http_client);
+  m_daemon_rpc_mutex.unlock();
+
+  if (res_ntz.notarized_height < (res.txs.front().block_height + 1))
   {
     confirmations = 0;
     if (rawconfirmations > 0)
     {
       confirmations = 1;
       // bool dpowconf_ntz = (res_ntz.notarized_hash == block_hash) TODO: not sufficient enough of a check
-      if (res_ntz.notarized >= (res.txs.front().block_height + 1) // && dpowconf_ntz
+      if (res_ntz.notarized_height >= (res.txs.front().block_height + 1)) // && dpowconf_ntz
       {
         confirmations = rawconfirmations;
       }
     }
   }
-#endif
 }
 
 std::string wallet2::get_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message)

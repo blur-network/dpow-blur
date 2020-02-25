@@ -1076,6 +1076,8 @@ namespace wallet_rpc
     uint64_t timestamp;
     uint64_t amount;
     uint64_t fee;
+    uint64_t confirmations;
+    uint64_t rawconfirmations;
     std::string note;
     std::list<transfer_destination> destinations;
     std::string type;
