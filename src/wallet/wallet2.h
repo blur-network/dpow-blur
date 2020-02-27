@@ -261,8 +261,6 @@ namespace tools
       uint64_t m_amount;
       uint64_t m_fee;
       uint64_t m_block_height;
-      uint64_t m_confirmations;
-      uint64_t m_rawconfirmations;
       uint64_t m_unlock_time;
       uint64_t m_timestamp;
       cryptonote::subaddress_index m_subaddr_index;
