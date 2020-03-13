@@ -380,7 +380,7 @@ namespace cryptonote
       tmp.push_back(each);
       extra += epee::string_tools::pod_to_hex(each);
     }
-//    MWARNING("Full extra field: " << extra);
+    MWARNING("Full extra field: " << extra);
     std::vector<tx_extra_field> fields;
     tx_extra_nonce ex_nonce;
     tx_extra_pub_key pk_primary;
@@ -394,7 +394,7 @@ namespace cryptonote
       for (size_t j = 0; j < (size_t)(ex_nonce_size+2); j++) {
         ex_nonce_string += epee::string_tools::pod_to_hex(tx_extra[j]);
       }
-//      MWARNING("Found extra nonce with size = " << std::to_string(ex_nonce_size) << ", Full Extra nonce = " << ex_nonce_string);
+      MWARNING("Found extra nonce with size = " << std::to_string(ex_nonce_size) << ", Full Extra nonce = " << ex_nonce_string);
       for (size_t j = 0; j < (size_t)(ex_nonce_size + 2); j++) {
         new_extra.push_back(tx_extra[j]);
         ++i;
@@ -406,7 +406,7 @@ namespace cryptonote
         std::string tmp_string = epee::string_tools::pod_to_hex(each);
         ss << tmp_string;
       }
-//      MWARNING("Remainder of tx_extra after popping fronts: " << ss.str());
+      MWARNING("Remainder of tx_extra after popping fronts: " << ss.str());
     }
     size_t ii = 0;
     if (tmp.front() == TX_EXTRA_NTZ_TXN_TAG) {
@@ -427,7 +427,7 @@ namespace cryptonote
       ntz_ss << std::hex << byte_two;
       size_t ii = i++;
       size_t ntz_size = stoi(ntz_ss.str(), nullptr, 16);
-//     MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
+     MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
       for (size_t j = i; j < (size_t)(i + ntz_size + 1); j++) {
         ntz_data.push_back(tx_extra[j]);
         ntz_str += epee::string_tools::pod_to_hex(tx_extra[j]);
@@ -441,25 +441,26 @@ namespace cryptonote
         std::string tmp_string = epee::string_tools::pod_to_hex(each);
         oss << std::hex << tmp_string;
       }
-//      MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
+      MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
     } else {
       return false;
     }
     if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) {
       do {
-//      MWARNING("Found pubkey or additional!");
+        MWARNING("Found pubkey or additional!");
         std::ostringstream oss;
-        size_t o = i;
-        for (size_t j = o; j < (o + 33); j++) {
+        size_t o = i - 1;
+        for (size_t j = o; j < (o + 34); j++) {
            new_extra.push_back(tx_extra[j]);
-           tmp.pop_front();
+           if (!tmp.empty())
+             tmp.pop_front();
            i++;
         }
         for (const auto& each: tmp) {
           std::string tmp_string = epee::string_tools::pod_to_hex(each);
           oss << tmp_string;
         }
-//      MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
+        MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
       } while ((tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) && !tmp.empty());
     }
 
