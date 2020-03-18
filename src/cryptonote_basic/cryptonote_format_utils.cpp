@@ -386,9 +386,12 @@ namespace cryptonote
     tx_extra_pub_key pk_primary;
     tx_extra_additional_pub_keys pk_additional;
     std::ostringstream ss, ntz_ss;
+
     bool has_ex_nonce = tmp.empty() ? 0 : (tx_extra[0] == TX_EXTRA_NONCE);
     size_t i = 0;
-    if (has_ex_nonce) {
+
+    if (has_ex_nonce)
+    {
       ex_nonce_size = tx_extra[1];
       std::string ex_nonce_string;
       for (size_t j = 0; j < (size_t)(ex_nonce_size+2); j++) {
@@ -408,12 +411,16 @@ namespace cryptonote
       }
       MWARNING("Remainder of tx_extra after popping fronts: " << ss.str());
     }
+
     size_t ii = 0;
-    if (tmp.front() == TX_EXTRA_NTZ_TXN_TAG) {
+
+    if (tmp.front() == TX_EXTRA_NTZ_TXN_TAG)
+    {
       tmp.pop_front();
       ntz_data.push_back(tx_extra[i]);
       i++;
-      while (tmp.front() == 0) {
+      while (tmp.front() == 0)
+      {
         ntz_data.push_back(tx_extra[i]);
         tmp.pop_front();
         i++;
@@ -425,10 +432,14 @@ namespace cryptonote
       std::ostringstream oss, n_ss;
       ntz_ss << std::hex << byte_one;
       ntz_ss << std::hex << byte_two;
+
       size_t ii = i++;
       size_t ntz_size = stoi(ntz_ss.str(), nullptr, 16);
-     MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
-      for (size_t j = i; j < (size_t)(i + ntz_size + 1); j++) {
+
+      MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
+
+      for (size_t j = i; j < (size_t)(i + ntz_size + 1); j++)
+      {
         ntz_data.push_back(tx_extra[j]);
         ntz_str += epee::string_tools::pod_to_hex(tx_extra[j]);
         if (!tmp.empty()) {
@@ -436,16 +447,23 @@ namespace cryptonote
         }
         ii++;
       }
+
       i = ii;
-      for (const auto& each: tmp) {
+      for (const auto& each: tmp)
+      {
         std::string tmp_string = epee::string_tools::pod_to_hex(each);
         oss << std::hex << tmp_string;
       }
+
       MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
-    } else {
+    }
+    else
+    {
       return false;
     }
-    if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) {
+
+    if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS))
+    {
       do {
         MWARNING("Found pubkey or additional!");
         std::ostringstream oss;
@@ -464,7 +482,7 @@ namespace cryptonote
       } while ((tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) && !tmp.empty());
     }
 
-  return true;
+    return true;
   }
   //---------------------------------------------------------------
   bool parse_tx_extra(const std::vector<uint8_t>& full_tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
