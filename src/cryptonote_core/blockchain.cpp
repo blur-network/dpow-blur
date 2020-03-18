@@ -185,6 +185,8 @@ bool Blockchain::have_tx_keyimg_as_spent(const crypto::key_image &key_im) const
 //------------------------------------------------------------------
 uint64_t Blockchain::get_ntz_count(std::vector<std::pair<crypto::hash,uint64_t>>& ret)
 {
+  // return-by-reference: vector of hash, height pair for all notarizations in DB
+  // actual return value is total count
   LOG_PRINT_L3("Blockchain::" << __func__);
   uint64_t count = 0;
   std::vector<std::pair<crypto::hash,uint64_t>> hash_height;
@@ -201,6 +203,18 @@ uint64_t Blockchain::get_ntz_count(std::vector<std::pair<crypto::hash,uint64_t>>
 
   ret = hash_height;
   return count;
+}
+//------------------------------------------------------------------
+crypto::hash Blockchain::get_ntz_tree_root(std::vector<std::pair<crypto::hash,uint64_t>> const& notarizations)
+{
+  crypto::hash merkle_root = crypto::null_hash;
+  std::vector<crypto::hash> hashes;
+  for (const auto& each : notarizations)
+    hashes.push_back(each.first);
+  if (!hashes.empty()) {
+    merkle_root = get_tx_tree_hash(hashes);
+  }
+  return merkle_root;
 }
 //------------------------------------------------------------------
 // This function makes sure that each "input" in an input (mixins) exists
@@ -779,6 +793,9 @@ crypto::hash Blockchain::get_block_id_by_height(uint64_t height) const
 //------------------------------------------------------------------
 bool Blockchain::get_block_by_hash(const crypto::hash &h, block &blk, bool *orphan) const
 {
+
+  //TODO: What is the "orphan" pointer doing here, and why are we pointing to a boolean?
+  // Probably bad with so many catch blocks.  Could be up the stack
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
 
