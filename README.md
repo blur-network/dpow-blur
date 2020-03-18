@@ -1,6 +1,6 @@
 # This repository is under contruction
   
-![DPoW Default Branch](https://github.com/blur-network/dpow-blur/workflows/DPoW%20Default%20Branch/badge.svg?branch=dpow)
+![DPoW Default Branch](https://github.com/blur-network/dpow-blur/workflows/DPoW%20Default%20Branch/badge.svg?branch=dpow) ![DPoW Testnet Branch](https://github.com/blur-network/dpow-blur/workflows/DPoW%20Testnet%20Branch/badge.svg?branch=testnet)
   
 There are files in here from many different projects, including but not limited to BLUR, BTC, KMD, and XMR. Please retain proper licensing if you reuse any files, and be aware that this repo is under heavy development... So files will not yet be in their proper homes.
 
