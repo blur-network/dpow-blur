@@ -205,12 +205,20 @@ uint64_t Blockchain::get_ntz_count(std::vector<std::pair<crypto::hash,uint64_t>>
   return count;
 }
 //------------------------------------------------------------------
-crypto::hash Blockchain::get_ntz_tree_root(std::vector<std::pair<crypto::hash,uint64_t>> const& notarizations)
+crypto::hash Blockchain::get_ntz_merkle(std::vector<std::pair<crypto::hash,uint64_t>> const& notarizations)
 {
   crypto::hash merkle_root = crypto::null_hash;
   std::vector<crypto::hash> hashes;
-  for (const auto& each : notarizations)
-    hashes.push_back(each.first);
+  std::vector<cryptonote::block> blocks;
+  for (const auto& each : notarizations) {
+    cryptonote::block b;
+    crypto::hash each_hash = crypto::null_hash;
+    if (!get_block_by_hash(each.first, b))
+      return each_hash;
+    else {
+      hashes.push_back(get_tx_tree_hash(b));
+    }
+  }
   if (!hashes.empty()) {
     merkle_root = get_tx_tree_hash(hashes);
   }

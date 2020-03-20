@@ -2526,6 +2526,8 @@ namespace cryptonote
       std::string s_pow = span_to_hex(vc_pow);
       std::vector<std::pair<crypto::hash,uint64_t>> notarizations;
       uint64_t ntz_complete = m_core.get_blockchain_storage().get_ntz_count(notarizations);
+      crypto::hash ntz_merkle = m_core.get_blockchain_storage().get_ntz_merkle(notarizations);
+      std::string notarizations_merkle = epee::string_tools::pod_to_hex(ntz_merkle);
 
       crypto::hash ntz_txid = notarizations[ntz_complete - 1].first;
       uint64_t ntz_height = notarizations[ntz_complete - 1].second;
@@ -2541,6 +2543,7 @@ namespace cryptonote
       res.notarized_txid = epee::string_tools::pod_to_hex(ntz_txid);
       res.notarized_height = (ntz_height > 16) ? ntz_height - 16 : 0;
       res.notarizations_completed = ntz_complete;
+      res.notarizations_merkle = notarizations_merkle;
 /*      res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
       res.notarized_MoM = n_MoM;*/
