@@ -213,8 +213,9 @@ crypto::hash Blockchain::get_ntz_merkle(std::vector<std::pair<crypto::hash,uint6
   for (const auto& each : notarizations) {
     cryptonote::block b;
     crypto::hash each_hash = crypto::null_hash;
-    if (!get_block_by_hash(each.first, b))
-      return each_hash;
+    each_hash = get_block_id_by_height(each.second);
+    if (!get_block_by_hash(each_hash, b))
+      return crypto::null_hash;
     else {
       hashes.push_back(get_tx_tree_hash(b));
     }
