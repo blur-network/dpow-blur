@@ -1531,18 +1531,27 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
   // if we have notarizations in DB
   if (b.major_version >= 11)
   {
-    if (ntz_count >= 1)
-    {
-      if (bei.height > ntz_height)
-      {
+    if (ntz_count >= 1) {
+      if (bei.height > ntz_height) {
         LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
-      }
-      else
-      {
+      }  else if (bei.height < ntz_height) {
         // we need to add the logic back here that skips the first seen notarization, and looks for a second one to confirm failure
         MERROR("Notarization error! Forked chain's top block at height: " << std::to_string(bei.height) << " older than last notarized height: " << std::to_string(ntz_height));
         bvc.m_verifivation_failed = true;
         return false;
+      } else {
+        bool tx_present = false;
+        MWARNING("This block comes at the same height as a notarization.  Checking integrity...");
+        for (const auto& each : b.tx_hashes) {
+          if (epee::string_tools::pod_to_hex(each) == epee::string_tools::pod_to_hex(ntz_hash_height[ntz_count-1].first)) {
+            tx_present = true;
+          }
+        }
+        if (!tx_present) {
+          MERROR("This block does not contain the latest notarization! Validation failed!");
+          bvc.m_verifivation_failed = true;
+          return false;
+        }
       }
     }
   }
@@ -3785,24 +3794,34 @@ leave:
   uint64_t ntz_height = ntz_hash_height[ntz_count-1].second;
   uint64_t m_height = get_block_height(bl);
 
-  // if we have notarizations in DB
-  if (bl.major_version >= 11) {
-    if (ntz_count >= 1)
-    {
-      if (m_height > ntz_height)
-      {
+  if (bl.major_version >= 11)
+  {
+    if (ntz_count >= 1) {
+      if (m_height > ntz_height) {
+       // height greater than last notarized height
         LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
-      }
-      else
-      {
-        // we need to add the logic back here that skips the first seen notarization, and looks for a second one to confirm failure
+      } else if (m_height < ntz_height) {
+       // height less than last notarized height
         MERROR("Notarization error! Forked chain's top block at height: " << std::to_string(m_height) << " older than last notarized height: " << std::to_string(ntz_height));
         bvc.m_verifivation_failed = true;
         return false;
+      } else {
+       // height equal to last notarized height
+        bool tx_present = false;
+        MWARNING("This block comes at the same height as a notarization.  Checking integrity...");
+        for (const auto& each : bl.tx_hashes) {
+          if (epee::string_tools::pod_to_hex(each) == epee::string_tools::pod_to_hex(ntz_hash_height[ntz_count-1].first)) {
+            tx_present = true;
+          }
+        }
+        if (!tx_present) {
+          MERROR("This block does not contain the latest notarization! Validation failed!");
+          bvc.m_verifivation_failed = true;
+          return false;
+        }
       }
     }
   }
-
     // validate proof_of_work versus difficulty target
     if(!check_hash(proof_of_work, current_diffic))
     {
