@@ -1523,24 +1523,30 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       return false;
     }
 
-/*  int32_t notarized_height = komodo::NOTARIZED_HEIGHT;
-  uint64_t nHeight = bei.height;
-  crypto::hash hash = m_db->get_block_hash_from_height(nHeight);
+  std::vector<std::pair<crypto::hash,uint64_t>> ntz_hash_height;
+  uint64_t ntz_count = get_ntz_count(ntz_hash_height);
+//  crypto::hash ntz_merkle = get_ntz_merkle(ntz_hash_height);
+  uint64_t ntz_height = ntz_hash_height[ntz_count-1].second;
 
-  if ( m_komodo_core->komodo_checkpoint(&notarized_height, nHeight, hash) < 0 )
+  // if we have notarizations in DB
+  if (b.major_version >= 11)
   {
-    if ( (b.major_version >= 11) && (epee::string_tools::pod_to_hex(m_db->get_block_hash_from_height(m_db->height()-1)) == epee::string_tools::pod_to_hex(hash)))
+    if (ntz_count >= 1)
     {
-       MERROR("Encountered pre-notarization block that matches height: " << std::to_string(notarized_height));
-       return true;
-    } else {
-      // we need to add the logic back here that skips the first seen notarization, and looks for a second one to confirm failure
-      LOG_ERROR("Notarization error! Forked chain's top block: " << hash << " older than last notarized height: " << std::to_string(notarized_height) << ". Failed height: " << std::to_string(nHeight));
-      bvc.m_verifivation_failed = true;
-      return false;
+      if (bei.height > ntz_height)
+      {
+        LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
+      }
+      else
+      {
+        // we need to add the logic back here that skips the first seen notarization, and looks for a second one to confirm failure
+        MERROR("Notarization error! Forked chain's top block at height: " << std::to_string(bei.height) << " older than last notarized height: " << std::to_string(ntz_height));
+        bvc.m_verifivation_failed = true;
+        return false;
+      }
     }
   }
-*/
+
     // Check the block's hash against the difficulty target for its alt chain
     difficulty_type current_diff = get_next_difficulty_for_alternative_chain(alt_chain, bei);
     CHECK_AND_ASSERT_MES(current_diff, false, "!!!!!!! DIFFICULTY OVERHEAD !!!!!!!");
@@ -3772,6 +3778,30 @@ leave:
     merkle = komodo::iguana_merkle(&merkle_bits, txn_count);
     MWARNING("bitcoinified merkle-ator txid: " << std::to_string(merkle_bits.txid));
 */
+
+  std::vector<std::pair<crypto::hash,uint64_t>> ntz_hash_height;
+  uint64_t ntz_count = get_ntz_count(ntz_hash_height);
+//  crypto::hash ntz_merkle = get_ntz_merkle(ntz_hash_height);
+  uint64_t ntz_height = ntz_hash_height[ntz_count-1].second;
+  uint64_t m_height = get_block_height(bl);
+
+  // if we have notarizations in DB
+  if (bl.major_version >= 11) {
+    if (ntz_count >= 1)
+    {
+      if (m_height > ntz_height)
+      {
+        LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
+      }
+      else
+      {
+        // we need to add the logic back here that skips the first seen notarization, and looks for a second one to confirm failure
+        MERROR("Notarization error! Forked chain's top block at height: " << std::to_string(m_height) << " older than last notarized height: " << std::to_string(ntz_height));
+        bvc.m_verifivation_failed = true;
+        return false;
+      }
+    }
+  }
 
     // validate proof_of_work versus difficulty target
     if(!check_hash(proof_of_work, current_diffic))
