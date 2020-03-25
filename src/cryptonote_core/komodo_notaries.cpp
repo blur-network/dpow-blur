@@ -277,35 +277,6 @@ namespace komodo {
     return(0);
   }
   //------------------------------------------------------------------
-  bool komodo_core::komodo_chainactive(uint64_t &height, cryptonote::block &tipindex)
-  {
-    crypto::hash hash = m_core.get_blockchain_storage().get_db().get_block_hash_from_height(height);
-    LOG_PRINT_L3("KomodoValidation::" << __func__);
-    cryptonote::block b = m_core.get_blockchain_storage().get_db().get_block(hash);
-    crypto::hash tiphash = m_core.get_blockchain_storage().get_db().top_block_hash();
-    tipindex = m_core.get_blockchain_storage().get_db().get_block(tiphash);
-    uint64_t tipheight = m_core.get_blockchain_storage().get_db().get_block_height(tiphash);
-    if (m_core.get_blockchain_storage().get_db().height() != 0)
-    {
-        if ( height <= m_core.get_blockchain_storage().get_db().height()-1)
-          return true;
-        else fprintf(stderr,"komodo_chainactive height %lu > active.%lu\n",height,tipheight);
-    }
-    fprintf(stderr,"komodo_chainactive null chainActive.Tip() height %lu\n",height);
-    return false;
-  }
-  //------------------------------------------------------------------
-  int32_t komodo_core::komodo_heightstamp(uint64_t height)
-  {
-    uint64_t top_block_height = m_core.get_blockchain_storage().get_db().height()-1;
-    cryptonote::block *b = nullptr;
-    bool activechain = komodo_chainactive(height, *b);
-    if (activechain && (top_block_height > 0))
-        return(b->timestamp);
-    else fprintf(stderr,"komodo_heightstamp null ptr for block.%lu\n",height);
-    return(0);
-  }
-  //------------------------------------------------------------------
   int32_t komodo_core::komodo_init(BlockchainDB* db)
   {
     return(0);
