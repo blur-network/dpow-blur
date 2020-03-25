@@ -70,8 +70,6 @@
 
 using namespace crypto;
 
-//#include "serialization/json_archive.h"
-
 /* TODO:
  *  Clean up code:
  *    Possibly change how outputs are referred to/indexed in blockchain and wallets
@@ -226,6 +224,22 @@ crypto::hash Blockchain::get_ntz_merkle(std::vector<std::pair<crypto::hash,uint6
     merkle_root = get_tx_tree_hash(hashes);
   }
   return merkle_root;
+}
+//------------------------------------------------------------------
+bool Blockchain::is_block_notarized(std::vector<std::pair<crypto::hash,uint64_t>> const& ntz_txs, cryptonote::block const& b)
+{
+  std::pair<crypto::hash,uint64_t> hash_height = ntz_txs.back();
+  uint64_t const b_height = get_block_height(b);
+  uint64_t notarized_height = 0;
+  if (hash_height.second >= 16) {
+    notarized_height = hash_height.second - 16;
+  }
+  if (b_height <= notarized_height) {
+    return true;
+  }
+  // TODO: Do we neeed to check if block is the notarized block itself?
+  // Probably the reason for necessary lag window...
+  return false;
 }
 //------------------------------------------------------------------
 // This function makes sure that each "input" in an input (mixins) exists
