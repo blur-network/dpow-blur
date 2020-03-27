@@ -1551,10 +1551,15 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       if (bei.height > ntz_height) {
         LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
       }  else if (bei.height < ntz_height) {
-        // we need to add the logic back here that skips the first seen notarization, and looks for a second one to confirm failure
-        MERROR("Notarization error! Forked chain's top block at height: " << std::to_string(bei.height) << " older than last notarized height: " << std::to_string(ntz_height));
-        bvc.m_verifivation_failed = true;
-        return false;
+
+        if (is_block_notarized(ntz_hash_height, bei.bl)) {
+          MERROR("Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
+          bvc.m_verifivation_failed = true;
+          return false;
+        } else {
+          LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
+        }
+
       } else {
         bool tx_present = false;
         MWARNING("This block comes at the same height as a notarization.  Checking integrity...");
@@ -3818,9 +3823,15 @@ leave:
         LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
       } else if (m_height < ntz_height) {
        // height less than last notarized height
-        MERROR("Notarization error! Forked chain's top block at height: " << std::to_string(m_height) << " older than last notarized height: " << std::to_string(ntz_height));
-        bvc.m_verifivation_failed = true;
-        return false;
+
+        if (is_block_notarized(ntz_hash_height, bl)) {
+          MERROR("Attempting to add a block in previously notarized area, at block height: " << std::to_string(m_height));
+          bvc.m_verifivation_failed = true;
+          return false;
+        } else {
+          LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
+        }
+
       } else {
        // height equal to last notarized height
         bool tx_present = false;
