@@ -2529,11 +2529,13 @@ namespace cryptonote
       crypto::hash ntz_merkle = m_core.get_blockchain_storage().get_ntz_merkle(notarizations);
       std::string notarizations_merkle = epee::string_tools::pod_to_hex(ntz_merkle);
 
-      crypto::hash ntz_txid = notarizations.back().first;
+      crypto::hash ntz_txid = crypto::null_hash;
       uint64_t greatest_height = 0;
       for (const auto& each: notarizations) {
-        if (each.second > greatest_height)
+        if (each.second > greatest_height) {
           greatest_height = each.second;
+          ntz_txid = each.first;
+        }
       }
       uint64_t ntz_height = greatest_height;
 //      bool get_by_ntz_index = m_core.get_blockchain_storage().get_hash_by_ntz_index(ntz_complete-1, ntz_txid);
