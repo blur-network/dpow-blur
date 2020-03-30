@@ -151,7 +151,8 @@ namespace cryptonote
 
     uint64_t get_ntz_count(std::vector<std::pair<crypto::hash,uint64_t>>& ret);
     crypto::hash get_ntz_merkle(std::vector<std::pair<crypto::hash,uint64_t>> const& notarizations);
-    bool is_block_notarized(std::vector<std::pair<crypto::hash,uint64_t>> const& ntz_txs, cryptonote::block const& b);
+    bool is_block_notarized(cryptonote::block const& b);
+    uint64_t get_notarized_height();
 
     /**
      * @brief assign a set of blockchain checkpoint hashes

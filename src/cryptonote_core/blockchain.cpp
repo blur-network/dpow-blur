@@ -58,17 +58,17 @@
 #include "ringct/rctSigs.h"
 #include "common/perf_timer.h"
 #include "libhydrogen/hydrogen.h"
-
 #if defined(PER_BLOCK_CHECKPOINT)
 #include "blocks/blocks.h"
 #endif
-
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "blockchain"
 
 #define FIND_BLOCKCHAIN_SUPPLEMENT_MAX_SIZE (100*1024*1024) // 100 MB
 
 using namespace crypto;
+
+//#include "serialization/json_archive.h"
 
 /* TODO:
  *  Clean up code:
@@ -226,14 +226,27 @@ crypto::hash Blockchain::get_ntz_merkle(std::vector<std::pair<crypto::hash,uint6
   return merkle_root;
 }
 //------------------------------------------------------------------
-bool Blockchain::is_block_notarized(std::vector<std::pair<crypto::hash,uint64_t>> const& ntz_txs, cryptonote::block const& b)
+uint64_t Blockchain::get_notarized_height()
 {
-  std::pair<crypto::hash,uint64_t> hash_height = ntz_txs.back();
-  uint64_t const b_height = get_block_height(b);
+  std::vector<std::pair<crypto::hash,uint64_t>> ntz_txs;
+  uint64_t ntz_count = get_ntz_count(ntz_txs);
+  uint64_t greatest_height = 0;
   uint64_t notarized_height = 0;
-  if (hash_height.second >= 16) {
-    notarized_height = hash_height.second - 16;
+  for (const auto& each : ntz_txs) {
+    if (each.second > greatest_height)
+      greatest_height = each.second;
   }
+  if (greatest_height >= 16) {
+    notarized_height = greatest_height - 16;
+  }
+  return notarized_height;
+}
+//------------------------------------------------------------------
+bool Blockchain::is_block_notarized(cryptonote::block const& b)
+{
+  uint64_t greatest_height = 0;
+  uint64_t const b_height = get_block_height(b);
+  uint64_t notarized_height = get_notarized_height();
   if (b_height <= notarized_height) {
     return true;
   }
@@ -1539,20 +1552,17 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       return false;
     }
 
-  std::vector<std::pair<crypto::hash,uint64_t>> ntz_hash_height;
-  uint64_t ntz_count = get_ntz_count(ntz_hash_height);
-//  crypto::hash ntz_merkle = get_ntz_merkle(ntz_hash_height);
-  uint64_t ntz_height = ntz_hash_height[ntz_count-1].second;
+  uint64_t const ntz_height = get_notarized_height();
 
   // if we have notarizations in DB
   if (b.major_version >= 11)
   {
-    if (ntz_count >= 1) {
+    if (ntz_height >= 1) {
       if (bei.height > ntz_height) {
         LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
       }  else if (bei.height < ntz_height) {
 
-        if (is_block_notarized(ntz_hash_height, bei.bl)) {
+        if (is_block_notarized(bei.bl)) {
           MERROR("Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
           bvc.m_verifivation_failed = true;
           return false;
@@ -1560,7 +1570,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
           LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
         }
 
-      } else {
+      }/* else {
         bool tx_present = false;
         MWARNING("This block comes at the same height as a notarization.  Checking integrity...");
         for (const auto& each : b.tx_hashes) {
@@ -1573,7 +1583,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
           bvc.m_verifivation_failed = true;
           return false;
         }
-      }
+      }*/
     }
   }
 
@@ -3809,22 +3819,19 @@ leave:
     MWARNING("bitcoinified merkle-ator txid: " << std::to_string(merkle_bits.txid));
 */
 
-  std::vector<std::pair<crypto::hash,uint64_t>> ntz_hash_height;
-  uint64_t ntz_count = get_ntz_count(ntz_hash_height);
-//  crypto::hash ntz_merkle = get_ntz_merkle(ntz_hash_height);
-  uint64_t ntz_height = ntz_hash_height[ntz_count-1].second;
+  uint64_t ntz_height = get_notarized_height();
   uint64_t m_height = get_block_height(bl);
 
   if (bl.major_version >= 11)
   {
-    if (ntz_count >= 1) {
+    if (ntz_height >= 1) {
       if (m_height > ntz_height) {
        // height greater than last notarized height
         LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
       } else if (m_height < ntz_height) {
        // height less than last notarized height
 
-        if (is_block_notarized(ntz_hash_height, bl)) {
+        if (is_block_notarized(bl)) {
           MERROR("Attempting to add a block in previously notarized area, at block height: " << std::to_string(m_height));
           bvc.m_verifivation_failed = true;
           return false;
@@ -3832,7 +3839,7 @@ leave:
           LOG_PRINT_L0("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
         }
 
-      } else {
+      } /*else {
        // height equal to last notarized height
         bool tx_present = false;
         MWARNING("This block comes at the same height as a notarization.  Checking integrity...");
@@ -3846,7 +3853,7 @@ leave:
           bvc.m_verifivation_failed = true;
           return false;
         }
-      }
+      }*/
     }
   }
     // validate proof_of_work versus difficulty target
