@@ -1626,10 +1626,19 @@ namespace cryptonote
     while (sorted_it != m_txs_by_fee_and_receive_time.end())
     {
       txpool_tx_meta_t meta;
+      ntzpool_tx_meta_t ntz_meta;
       if (!m_blockchain.get_txpool_tx_meta(sorted_it->second, meta))
       {
-        MERROR("  failed to find tx meta");
-        continue;
+        LOG_PRINT_L0("Failed to find txpool tx meta for tx: " << epee::string_tools::pod_to_hex(sorted_it->second));
+        if (m_blockchain.get_ntzpool_tx_meta(sorted_it->second, ntz_meta)) {
+          LOG_PRINT_L0("But, found in ntzpool. Ignoring...");
+          sorted_it++;
+          continue;
+        } else {
+          MERROR("Failed to find meta for tx in txpool and ntzpool! Tx: " << epee::string_tools::pod_to_hex(sorted_it->second));
+         // sorted_it++;
+          continue;
+        }
       }
       LOG_PRINT_L2("Considering " << sorted_it->second << ", size " << meta.blob_size << ", current block size " << total_size << "/" << max_total_size << ", current coinbase " << print_money(best_coinbase));
 
