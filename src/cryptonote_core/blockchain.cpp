@@ -230,17 +230,13 @@ uint64_t Blockchain::get_notarized_height(crypto::hash& ntz_hash)
 {
   std::vector<std::pair<crypto::hash,uint64_t>> ntz_txs;
   uint64_t ntz_count = get_ntz_count(ntz_txs);
-  uint64_t greatest_height = 0;
   uint64_t notarized_height = 0;
   ntz_hash = crypto::null_hash;
   for (const auto& each : ntz_txs) {
-    if (each.second > greatest_height) {
-      greatest_height = each.second;
+    if (each.second > notarized_height) {
+      notarized_height = each.second;
       ntz_hash = each.first;
     }
-  }
-  if (greatest_height >= 16) {
-    notarized_height = greatest_height - 16;
   }
   return notarized_height;
 }
