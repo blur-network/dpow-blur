@@ -339,14 +339,14 @@ Output:
   "jsonrpc": "2.0",
   "result": {
     "assetchains_symbol": "BLUR",
-    "current_chain_hash": "65ff15b6931dac9311b0c96b5c29d65da02239e59d9137cd8dab9fd2c13f2aea",
-    "current_chain_height": 2856,
-    "current_chain_pow": "86f0bbd5d2fdcac109284c35b7bdee682698a7299fd50872b2ef81673e564500",
-    "notarizations_completed": 5,
-    "notarizations_merkle": "656905f93af4a6cb937145efda570ebd61cd2fe041d4c8f4b30b55a2a5a4524c",
-    "notarized_hash": "7b83939c65d6477444ba08b1e6cf68e02f8d4a0c24433904ef5d75cd90b2410b",
-    "notarized_height": 2648,
-    "notarized_txid": "e9516cc509f8c74c62f953e19ba2fbc12defb17e0315930114dcd3596d930bb7"
+    "current_chain_hash": "0873d25c15a0ec2e08af077113a939a07ee8d87caea3c13680d3ef18fcd0ba06",
+    "current_chain_height": 2939,
+    "current_chain_pow": "303e4e06828a4c8f20e5a56207f5c665013b0b2e2aeacc5099b930f3bf521901",
+    "notarizations_completed": 7,
+    "notarizations_merkle": "92fbf297fb1ba553f37a9bcaab93ba34b3bb352ae99a190852804a21a7e4a343",
+    "notarized_hash": "0873d25c15a0ec2e08af077113a939a07ee8d87caea3c13680d3ef18fcd0ba06",
+    "notarized_height": 2923,
+    "notarized_txid": "a85701183ace0baa3334c327ee3e871422615fa4f65e35df889ff4ad3aea4e13"
   }
 }
 ```
