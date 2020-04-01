@@ -279,20 +279,21 @@ Output of a pending ntz tx with 9 signatures:
 ```
 Pending Notarization Transactions: 
 =======================================================
-id: e5f38b36e7efd4275e32ad90d578dd36acbeae86301b7033df963f6416937419
-ptx_hash: 8c152cb5b997b6f2f299f3d625808feaa6d2aefa0a9478b8842858aa3e53eb37
+id: d17476f2d859cc5e87fb372b48b48297ed8f9efdea307a357fc633279715efef
+ptx_hash: 47e529efadeba129cc4269cd04c4403f8ac04478d68e4ce4b48b46a976a37f35
 sig_count: 9
-signers_index:  16 36 60 10 21 63 47 51 00 -1
-blob_size: 53602
-fee: 0.059570940000
-fee/byte: 0.000001111356
-receive_time: 1572956332 (33 minutes ago)
-relayed: no
+signers_index:  20 04 03 21 18 51 61 47 60 -1 
+blob_size: 54355
+fee: 0.100000000000
+fee/byte: 0.000001839757
+receive_time: 1585684867 (2 hours ago)
+relayed: 1585684867 (2 hours ago)
+has_ntz_data: T
 do_not_relay: F
 kept_by_block: F
 double_spend_seen: F
-max_used_block_height: 2546
-max_used_block_id: b56701d1d774e070aebd8366489cc63ec75e8c4bac4e37475f090f253a01e304
+max_used_block_height: 2918
+max_used_block_id: b1f7d5d0af36311c52e9a432af87a1c60332b122daf83bf4b3e0b7d1f5f44a90
 last_failed_height: 0
 last_failed_id: 0000000000000000000000000000000000000000000000000000000000000000
 ```
@@ -305,6 +306,7 @@ last_failed_id: 0000000000000000000000000000000000000000000000000000000000000000
 
 `signers_index` is an array with `DPOW_SIG_COUNT` values, each of which corresponds to a Notary Node, and their row number in the hardcoded pubkeys.
 
+`has_ntz_data` indicates whether or not the transaction has upstream (KMD/BTC) notarization data embedded in the `tx_extra` field of the BLUR transaction in question.
 
 If a value in the `signers_index` field is not a default `-1`, the number should correspond to a notary node that has already signed and appended their transactions to the pending request. Indices are added in time-sequential order.
 
