@@ -15,6 +15,6 @@ jobs:
     - name: submodules
       run: git submodule update --init
     - name: install-deps
-      run: sudo apt-get update && sudo apt-get install libevent-dev libssl-dev libboost-all-dev libunwind-dev libsodium-dev binutils-dev autoconf
+      run: sudo apt-get update && sudo apt-get install libevent-dev libssl-dev libboost-all-dev libunwind-dev libsodium-dev binutils-dev autoconf libreadline-dev
     - name: make
       run: make release-static-linux-x86_64
