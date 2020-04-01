@@ -10252,56 +10252,6 @@ crypto::public_key wallet2::get_multisig_signer_public_key() const
   return signer;
 }
 //----------------------------------------------------------------------------------------------------
-bool wallet2::is_notary_node()
-{
-  crypto::public_key viewkey_pub = crypto::null_pkey;
-  std::vector<std::pair<crypto::public_key,crypto::public_key>> notary_pubkeys;
-  bool r = crypto::secret_key_to_public_key(get_account().get_keys().m_view_secret_key, viewkey_pub);
-  if (!r) {
-    MERROR("Failed to generate local public viewkey");
-    return false;
-  }
-  r = false;
-  r = get_notary_pubkeys(notary_pubkeys);
-  if (!r) {
-    MERROR("Error: Couldn't retrieve notary pubkeys!");
-    return false;
-  }
-  crypto::public_key local_pubkey;
-  r = crypto::secret_key_to_public_key(get_account().get_keys().m_spend_secret_key, local_pubkey);
-  if (!r) {
-    MERROR("Failed to generate local public spendkey");
-    return false;
-  }
-
-  std::vector<crypto::secret_key> viewkeys;
-  bool vk = get_notary_secret_viewkeys(viewkeys);
-  if (!vk) {
-    MERROR("Failed to populate notary secret viewkeys!");
-    return false;
-  }
-  r = false;
-  bool R = false;
-  bool pubkeys_check = false;
-  bool secret_viewkey_check = false;
-  for (int i = 0; i < 64; i++) {
-    r = epee::string_tools::pod_to_hex(notary_pubkeys[i].first) == epee::string_tools::pod_to_hex(viewkey_pub);
-    if (r) {
-      R = epee::string_tools::pod_to_hex(notary_pubkeys[i].second) == epee::string_tools::pod_to_hex(local_pubkey);
-      if (R) {
-        MWARNING("Found our pubkey in notary keys! Pubkey: " << epee::string_tools::pod_to_hex(notary_pubkeys[i].second));
-        pubkeys_check = true;
-        secret_viewkey_check = (epee::string_tools::pod_to_hex(viewkeys[i]) == epee::string_tools::pod_to_hex(get_account().get_keys().m_view_secret_key));
-        if (secret_viewkey_check) {
-          MWARNING("Found our viewkey in notary keys! Viewkey: " << epee::string_tools::pod_to_hex(viewkeys[i]));
-          break;
-        }
-      }
-    }
-  }
-    return (pubkeys_check && secret_viewkey_check);
-}
-//----------------------------------------------------------------------------------------------------
 crypto::public_key wallet2::get_multisig_signing_public_key(const crypto::secret_key &msk) const
 {
   CHECK_AND_ASSERT_THROW_MES(m_multisig, "Wallet is not multisig");

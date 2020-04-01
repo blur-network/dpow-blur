@@ -165,9 +165,6 @@ namespace tools
         if (m_wallet)
         {
           std::list<cryptonote::transaction> txs;
- //         bool notary = m_wallet->is_notary_node();
- //         if (notary)
- //         {
           if (get_ntz_cache_count() <= 1)
           {
             bool r = on_create_ntz_transfer(req, res, e);
