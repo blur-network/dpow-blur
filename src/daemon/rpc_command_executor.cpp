@@ -921,6 +921,7 @@ bool t_rpc_command_executor::print_transaction_pool_long() {
                           << "fee/byte: " << cryptonote::print_money(ntz_tx_info.fee / (double)ntz_tx_info.blob_size) << std::endl
                           << "receive_time: " << ntz_tx_info.receive_time << " (" << get_human_time_ago(ntz_tx_info.receive_time, now) << ")" << std::endl
                           << "relayed: " << boost::lexical_cast<std::string>(ntz_tx_info.last_relayed_time) + " (" + get_human_time_ago(ntz_tx_info.last_relayed_time, now) + ")" << std::endl
+                          << "has_ntz_data: " << (ntz_tx_info.has_ntz_data ? 'T' : 'F')  << std::endl
                           << "do_not_relay: " << (ntz_tx_info.do_not_relay ? 'T' : 'F')  << std::endl
                           << "kept_by_block: " << (ntz_tx_info.kept_by_block ? 'T' : 'F') << std::endl
                           << "double_spend_seen: " << (ntz_tx_info.double_spend_seen ? 'T' : 'F')  << std::endl
