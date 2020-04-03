@@ -1130,6 +1130,18 @@ namespace cryptonote
       MERROR("Encountered ntz sig request with incorrect tx version! Failing validation...");
       return false;
     }
+    std::vector<uint8_t> new_extra;
+    std::vector<uint8_t> ntz_data;
+    std::string ntz_string_rem;
+
+    remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_string_rem);
+    bool empty = ntz_string_rem.empty();
+    uint8_t has_raw_ntz_data = 0;
+
+    if (!empty) {
+      has_raw_ntz_data = 1;
+      bool added = add_ntz_txn_to_extra(tx.extra, ntz_string_rem);
+    }
 
     std::list<int> signers_index;
     for (int i = 0; i < DPOW_SIG_COUNT; i++) {
@@ -1142,7 +1154,6 @@ namespace cryptonote
       signers_index.push_back(s_ind);
     }
 
-    uint8_t has_raw_ntz_data = 1;
 
     int neg = -1;
     int count = DPOW_SIG_COUNT - std::count(signers_index.begin(), signers_index.end(), neg);
