@@ -220,7 +220,7 @@ namespace komodo {
    int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS;
    uint256 NOTARIZED_HASH, NOTARIZED_MOM, NOTARIZED_DESTTXID;
 
-ollowing is ported from libtom
+// following is ported from libtom
 /* LibTomCrypt, modular cryptographic library -- Tom St Denis
  *
  * LibTomCrypt is a library that provides various cryptographic
@@ -454,7 +454,7 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
 }
 // end libtom
 
-  void vcalc_sha256(char deprecated[(256 >> 3) * 2 + 1],uint8_t hash[256 >> 3],uint8_t *src,int32_t len)
+  void vcalc_sha256(uint8_t hash[256 >> 3],uint8_t *src,int32_t len)
   {
     struct sha256_vstate md;
     sha256_vinit(&md);
@@ -462,17 +462,16 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
     sha256_vdone(&md,hash);
   }
   //------------------------------------------------------------------
-  bits256 bits256_doublesha256(char *deprecated,uint8_t *data,int32_t datalen)
+  bits256 bits256_doublesha256(uint8_t *data,int32_t datalen)
   {
     bits256 hash,hash2; int32_t i;
-    vcalc_sha256(0,hash.bytes,data,datalen);
-    vcalc_sha256(0,hash2.bytes,hash.bytes,sizeof(hash));
+    vcalc_sha256(hash.bytes,data,datalen);
+    vcalc_sha256(hash2.bytes,hash.bytes,sizeof(hash));
     for (i=0; i<(int32_t)sizeof(hash); i++)
       hash.bytes[i] = hash2.bytes[sizeof(hash) - 1 - i];
     return(hash);
   }
   //------------------------------------------------------------------
-
   struct notarized_checkpoint
   {
     uint256 notarized_hash,notarized_desttxid,MoM,MoMoM;
