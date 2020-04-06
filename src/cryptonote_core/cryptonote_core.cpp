@@ -1138,11 +1138,8 @@ namespace cryptonote
     bool empty = ntz_string_rem.empty();
     uint8_t has_raw_ntz_data = 0;
 
-    if (!empty) {
+    if (!empty)
       has_raw_ntz_data = 1;
-      bool added = add_ntz_txn_to_extra(new_extra, ntz_string_rem);
-      if (added) tx.extra = new_extra;
-    }
 
     std::list<int> signers_index;
     for (int i = 0; i < DPOW_SIG_COUNT; i++) {
