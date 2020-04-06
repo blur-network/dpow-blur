@@ -57,8 +57,6 @@
 
 #pragma once
 
-union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4];};
-typedef union _bits256 bits256;
 struct sha256_vstate { uint64_t length; uint32_t state[8],curlen; uint8_t buf[64]; };
 
 namespace cryptonote {

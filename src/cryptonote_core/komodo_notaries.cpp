@@ -452,23 +452,6 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
 }
 // end libtom
 
-  void vcalc_sha256(uint8_t hash[256 >> 3],uint8_t *src,int32_t len)
-  {
-    struct sha256_vstate md;
-    sha256_vinit(&md);
-    sha256_vprocess(&md,src,len);
-    sha256_vdone(&md,hash);
-  }
-  //------------------------------------------------------------------
-  bits256 bits256_doublesha256(uint8_t *data,int32_t datalen)
-  {
-    bits256 hash,hash2; int32_t i;
-    vcalc_sha256(hash.bytes,data,datalen);
-    vcalc_sha256(hash2.bytes,hash.bytes,sizeof(hash));
-    for (i=0; i<(int32_t)sizeof(hash); i++)
-      hash.bytes[i] = hash2.bytes[sizeof(hash) - 1 - i];
-    return(hash);
-  }
   //------------------------------------------------------------------
   struct notarized_checkpoint
   {
@@ -858,6 +841,24 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
     }
     komodo_core& k_core = get_k_core();
     return k_core.komodo_init(db);
+  }
+
+  void komodo_core::vcalc_sha256(uint8_t hash[256 >> 3],uint8_t *src,int32_t len)
+  {
+    struct sha256_vstate md;
+    sha256_vinit(&md);
+    sha256_vprocess(&md,src,len);
+    sha256_vdone(&md,hash);
+  }
+  //------------------------------------------------------------------
+  bits256 komodo_core::bits256_doublesha256(uint8_t *data,int32_t datalen)
+  {
+    bits256 hash,hash2; int32_t i;
+    vcalc_sha256(hash.bytes,data,datalen);
+    vcalc_sha256(hash2.bytes,hash.bytes,sizeof(hash));
+    for (i=0; i<(int32_t)sizeof(hash); i++)
+      hash.bytes[i] = hash2.bytes[sizeof(hash) - 1 - i];
+    return(hash);
   }
 
 } // namespace komodo
