@@ -416,18 +416,12 @@ namespace cryptonote
 
     if (tmp.front() == TX_EXTRA_NTZ_TXN_TAG)
     {
-      tmp.pop_front();
-      ntz_data.push_back(tx_extra[i]);
-      i++;
-      while (tmp.front() == 0)
-      {
-        ntz_data.push_back(tx_extra[i]);
+      for (size_t n = 0; n < 7; n++) {
         tmp.pop_front();
         i++;
       }
-      ntz_data.push_back(tx_extra[i]);
+      tmp.pop_front();
       byte_one = epee::string_tools::pod_to_hex(tx_extra[i++]);
-      ntz_data.push_back(tx_extra[i]);
       byte_two = epee::string_tools::pod_to_hex(tx_extra[i]);
       std::ostringstream oss, n_ss;
       ntz_ss << std::hex << byte_one;
@@ -438,7 +432,7 @@ namespace cryptonote
 
       MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
 
-      for (size_t j = i; j < (size_t)(i + ntz_size + 1); j++)
+      for (size_t j = i; j < (size_t)(i + ntz_size); j++)
       {
         ntz_data.push_back(tx_extra[j]);
         ntz_str += epee::string_tools::pod_to_hex(tx_extra[j]);
