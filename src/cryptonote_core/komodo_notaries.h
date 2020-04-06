@@ -75,8 +75,8 @@ class komodo_core
 
   komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p);
 
-  void vcalc_sha256(char deprecated[(256 >> 3) * 2 + 1],uint8_t hash[256 >> 3],uint8_t *src,int32_t len);
-  bits256 bits256_doublesha256(char *deprecated,uint8_t *data,int32_t datalen);
+  void vcalc_sha256(uint8_t hash[256 >> 3],uint8_t *src,int32_t len);
+  bits256 bits256_doublesha256(uint8_t *data,int32_t datalen);
   int32_t komodo_chainactive_timestamp();
   bool komodo_chainactive(uint64_t &height, cryptonote::block &b);
   int32_t komodo_heightstamp(uint64_t height);
