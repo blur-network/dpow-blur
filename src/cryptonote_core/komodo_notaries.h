@@ -59,6 +59,7 @@
 
 union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4];};
 typedef union _bits256 bits256;
+struct sha256_vstate { uint64_t length; uint32_t state[8],curlen; uint8_t buf[64]; };
 
 namespace cryptonote {
   bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys);
@@ -74,7 +75,8 @@ class komodo_core
 
   komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p);
 
-  int32_t komodo_chainactive_timestamp();
+  void vcalc_sha256(char deprecated[(256 >> 3) * 2 + 1],uint8_t hash[256 >> 3],uint8_t *src,int32_t len);
+  bits256 bits256_doublesha256(char *deprecated,uint8_t *data,int32_t datalen);  int32_t komodo_chainactive_timestamp();
   bool komodo_chainactive(uint64_t &height, cryptonote::block &b);
   int32_t komodo_heightstamp(uint64_t height);
   void komodo_disconnect(uint64_t height,cryptonote::block block);
