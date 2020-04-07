@@ -37,7 +37,7 @@
 using namespace epee;
 
 #include <unordered_set>
-#include "cryptonote_core.h"
+#include <csignal>
 #include "common/command_line.h"
 #include "common/util.h"
 #include "common/threadpool.h"
@@ -49,14 +49,13 @@ using namespace epee;
 #include "cryptonote_tx_utils.h"
 #include "misc_language.h"
 #include "file_io_utils.h"
-#include <csignal>
 #include "checkpoints/checkpoints.h"
 #include "ringct/rctTypes.h"
 #include "blockchain_db/blockchain_db.h"
+#include "cryptonote_core.h"
 #include "komodo_notaries.h"
 #include "ringct/rctSigs.h"
 #include "version.h"
-#include "komodo_notaries.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "cn"
