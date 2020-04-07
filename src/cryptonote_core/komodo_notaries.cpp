@@ -61,7 +61,6 @@ static uint64_t const  KOMODO_ASSETCHAIN_MAXLEN = 64;
 static uint64_t const  KOMODO_NOTARIES_TIMESTAMP1 = 1525132800; // May 1st 2018 1530921600 // 7/7/2017
 static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP) * KOMODO_ELECTION_GAP);
 
-
   const char* Notaries_elected[64][3] =
   {
     {"madmax_NA",         "02ef81a360411adf71184ff04d0c5793fc41fd1d7155a28dd909f21f35f4883ac1", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
@@ -454,23 +453,6 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
 }
 // end libtom
 
-  void vcalc_sha256(uint8_t hash[256 >> 3],uint8_t *src,int32_t len)
-  {
-    struct sha256_vstate md;
-    sha256_vinit(&md);
-    sha256_vprocess(&md,src,len);
-    sha256_vdone(&md,hash);
-  }
-  //------------------------------------------------------------------
-  bits256 bits256_doublesha256(uint8_t *data,int32_t datalen)
-  {
-    bits256 hash,hash2; int32_t i;
-    vcalc_sha256(hash.bytes,data,datalen);
-    vcalc_sha256(hash2.bytes,hash.bytes,sizeof(hash));
-    for (i=0; i<(int32_t)sizeof(hash); i++)
-      hash.bytes[i] = hash2.bytes[sizeof(hash) - 1 - i];
-    return(hash);
-  }
   //------------------------------------------------------------------
   struct notarized_checkpoint
   {
@@ -527,35 +509,6 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
         cryptonote::block b = m_core.get_blockchain_storage().get_db().get_top_block();
         return(b.timestamp);
     }
-    return(0);
-  }
-  //------------------------------------------------------------------
-  bool komodo_core::komodo_chainactive(uint64_t &height, cryptonote::block &tipindex)
-  {
-    crypto::hash hash = m_core.get_blockchain_storage().get_db().get_block_hash_from_height(height);
-    LOG_PRINT_L3("KomodoValidation::" << __func__);
-    cryptonote::block b = m_core.get_blockchain_storage().get_db().get_block(hash);
-    crypto::hash tiphash = m_core.get_blockchain_storage().get_db().top_block_hash();
-    tipindex = m_core.get_blockchain_storage().get_db().get_block(tiphash);
-    uint64_t tipheight = m_core.get_blockchain_storage().get_db().get_block_height(tiphash);
-    if (m_core.get_blockchain_storage().get_db().height() != 0)
-    {
-        if ( height <= m_core.get_blockchain_storage().get_db().height()-1)
-          return true;
-        else fprintf(stderr,"komodo_chainactive height %lu > active.%lu\n",height,tipheight);
-    }
-    fprintf(stderr,"komodo_chainactive null chainActive.Tip() height %lu\n",height);
-    return false;
-  }
-  //------------------------------------------------------------------
-  int32_t komodo_core::komodo_heightstamp(uint64_t height)
-  {
-    uint64_t top_block_height = m_core.get_blockchain_storage().get_db().height()-1;
-    cryptonote::block *b = nullptr;
-    bool activechain = komodo_chainactive(height, *b);
-    if (activechain && (top_block_height > 0))
-        return(b->timestamp);
-    else fprintf(stderr,"komodo_heightstamp null ptr for block.%lu\n",height);
     return(0);
   }
   //------------------------------------------------------------------
@@ -889,6 +842,24 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
     }
     komodo_core& k_core = get_k_core();
     return k_core.komodo_init(db);
+  }
+
+  void komodo_core::vcalc_sha256(uint8_t hash[256 >> 3],uint8_t *src,int32_t len)
+  {
+    struct sha256_vstate md;
+    sha256_vinit(&md);
+    sha256_vprocess(&md,src,len);
+    sha256_vdone(&md,hash);
+  }
+  //------------------------------------------------------------------
+  bits256 komodo_core::bits256_doublesha256(uint8_t *data,int32_t datalen)
+  {
+    bits256 hash,hash2; int32_t i;
+    vcalc_sha256(hash.bytes,data,datalen);
+    vcalc_sha256(hash2.bytes,hash.bytes,sizeof(hash));
+    for (i=0; i<(int32_t)sizeof(hash); i++)
+      hash.bytes[i] = hash2.bytes[sizeof(hash) - 1 - i];
+    return(hash);
   }
 
 } // namespace komodo

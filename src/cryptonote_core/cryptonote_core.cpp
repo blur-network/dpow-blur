@@ -42,6 +42,7 @@ using namespace epee;
 #include "common/util.h"
 #include "common/threadpool.h"
 #include "common/command_line.h"
+#include "common/hex_str.h"
 #include "warnings.h"
 #include "crypto/crypto.h"
 #include "cryptonote_config.h"
@@ -55,6 +56,7 @@ using namespace epee;
 #include "komodo_notaries.h"
 #include "ringct/rctSigs.h"
 #include "version.h"
+#include "komodo_notaries.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "cn"
@@ -1130,16 +1132,6 @@ namespace cryptonote
       MERROR("Encountered ntz sig request with incorrect tx version! Failing validation...");
       return false;
     }
-    std::vector<uint8_t> new_extra;
-    std::vector<uint8_t> ntz_data;
-    std::string ntz_string_rem;
-
-    remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_string_rem);
-    bool empty = ntz_string_rem.empty();
-    uint8_t has_raw_ntz_data = 0;
-
-    if (!empty)
-      has_raw_ntz_data = 1;
 
     std::list<int> signers_index;
     for (int i = 0; i < DPOW_SIG_COUNT; i++) {
@@ -1152,6 +1144,25 @@ namespace cryptonote
       signers_index.push_back(s_ind);
     }
 
+
+    std::vector<uint8_t> new_extra, new_vec, ntz_data;
+    std::string ntz_string_rem;
+    remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_string_rem);
+    uint8_t* ntz_data_ptr = ntz_data.data();
+    bool empty = ntz_string_rem.empty();
+
+    uint8_t has_raw_ntz_data = 0;
+
+    bits256 bits = m_blockchain_storage.get_k_core().bits256_doublesha256(ntz_data_ptr, ntz_data.size());
+    for (const auto& each : bits.bytes) {
+      new_vec.push_back(each);
+    }
+    std::string hex_from_bits = bytes256_to_hex(new_vec);
+
+    MWARNING("Bits from doublesha = " << hex_from_bits);
+
+    if (!empty)
+      has_raw_ntz_data = 1;
 
     int neg = -1;
     int count = DPOW_SIG_COUNT - std::count(signers_index.begin(), signers_index.end(), neg);
