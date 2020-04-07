@@ -342,6 +342,7 @@ Output:
     "current_chain_hash": "0873d25c15a0ec2e08af077113a939a07ee8d87caea3c13680d3ef18fcd0ba06",
     "current_chain_height": 2939,
     "current_chain_pow": "303e4e06828a4c8f20e5a56207f5c665013b0b2e2aeacc5099b930f3bf521901",
+    "embedded_btc_hash": "313031a1ed2dbe12a20706dff48d3dffb0e39d15e3e4ff936d01f091fb3b8556",
     "notarizations_completed": 7,
     "notarizations_merkle": "92fbf297fb1ba553f37a9bcaab93ba34b3bb352ae99a190852804a21a7e4a343",
     "notarized_hash": "0873d25c15a0ec2e08af077113a939a07ee8d87caea3c13680d3ef18fcd0ba06",
@@ -350,6 +351,10 @@ Output:
   }
 }
 ```
+
+Note: `embedded_btc_hash` is a hash of the KMD/BTC data found in the BLUR `tx_extra` field.  The embedded KMD/BTC transaction is hashed using `doublesha256`, to yield a bitcoin txid.
+
+*One may cross-reference the above transaction hash <a href="https://www.blockchain.com/btc/tx/313031a1ed2dbe12a20706dff48d3dffb0e39d15e3e4ff936d01f091fb3b8556">on a BTC blockchain explorer</a>.*
 
 ---
 
