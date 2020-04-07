@@ -1145,23 +1145,18 @@ namespace cryptonote
     }
 
 
-    std::vector<uint8_t> new_extra;
-    std::vector<uint8_t> ntz_data;
+    std::vector<uint8_t> new_extra, new_vec, ntz_data;
     std::string ntz_string_rem;
     remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_string_rem);
+    uint8_t* ntz_data_ptr = ntz_data.data();
     bool empty = ntz_string_rem.empty();
+
     uint8_t has_raw_ntz_data = 0;
 
-    uint8_t* ntz_data_ptr = ntz_data.data();
-
     bits256 bits = m_blockchain_storage.get_k_core().bits256_doublesha256(ntz_data_ptr, ntz_data.size());
-
-    std::vector<uint8_t> new_vec;
-
     for (const auto& each : bits.bytes) {
       new_vec.push_back(each);
     }
-
     std::string hex_from_bits = bytes256_to_hex(new_vec);
 
     MWARNING("Bits from doublesha = " << hex_from_bits);
