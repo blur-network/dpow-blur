@@ -1131,6 +1131,7 @@ namespace cryptonote
       std::string notarized_hash;
       std::string notarized_txid;
       int32_t notarized;
+      std::string embedded_btc_hash;
 /*      int32_t prevMoMheight;
       int32_t notarized_MoMdepth;
       std::string notarized_MoM;*/
@@ -1145,6 +1146,7 @@ namespace cryptonote
         KV_SERIALIZE(current_chain_pow)
         KV_SERIALIZE(notarized_height)
         KV_SERIALIZE(notarized_hash)
+        KV_SERIALIZE(embedded_btc_hash)
         KV_SERIALIZE(notarized_txid)
         KV_SERIALIZE(notarizations_completed)
         KV_SERIALIZE(notarizations_merkle)
