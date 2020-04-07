@@ -1753,6 +1753,7 @@ namespace cryptonote
     uint64_t last_relayed_time;
     bool do_not_relay;
     bool double_spend_seen;
+    bool has_ntz_data;
     std::string tx_blob;
     std::string ptx_blob;
     std::string ptx_hash;
@@ -1772,6 +1773,7 @@ namespace cryptonote
       KV_SERIALIZE(last_failed_id_hash)
       KV_SERIALIZE(receive_time)
       KV_SERIALIZE(relayed)
+      KV_SERIALIZE(has_ntz_data)
       KV_SERIALIZE(last_relayed_time)
       KV_SERIALIZE(do_not_relay)
       KV_SERIALIZE(double_spend_seen)
