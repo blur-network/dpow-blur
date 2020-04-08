@@ -356,7 +356,7 @@ Output:
 
 Note: `embedded_btc_hash` is a hash of the KMD/BTC data found in the BLUR `tx_extra` field.  The embedded KMD/BTC transaction is hashed using `doublesha256`, to yield a bitcoin txid.
 
-*One may cross-reference the above transaction hash <a href="https://www.blockchain.com/btc/tx/313031a1ed2dbe12a20706dff48d3dffb0e39d15e3e4ff936d01f091fb3b8556">on a BTC blockchain explorer</a>.*
+*One may cross-reference the above transaction hash <a href="https://learnmeabitcoin.com/explorer/transaction/313031a1ed2dbe12a20706dff48d3dffb0e39d15e3e4ff936d01f091fb3b8556">on a BTC blockchain explorer</a>.*
 
 ---
 
