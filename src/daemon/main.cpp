@@ -30,7 +30,7 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-#include <boost/process.hpp>
+//#include <boost/process.hpp>
 #include "common/command_line.h"
 #include "common/scoped_message_writer.h"
 #include "common/password.h"
