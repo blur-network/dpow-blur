@@ -422,7 +422,21 @@ namespace cryptonote
      */
     bool find_blockchain_supplement(const std::list<crypto::hash>& qblock_ids, uint64_t& starter_offset) const;
 
-    /**
+      /**
+     * @brief reverts the blockchain to its previous state following a failed switch
+     *
+     * If Blockchain fails to switch to an alternate chain when it means
+     * to do so, this function reverts the blockchain to how it was before
+     * the attempted switch.
+     *
+     * @param original_chain the chain to switch back to
+     * @param rollback_height the height to revert to before appending the original chain
+     *
+     * @return false if something goes wrong with reverting (very bad), otherwise true
+     */
+    bool rollback_blockchain_switching(std::list<block>& original_chain, uint64_t rollback_height);
+
+  /**
      * @brief get recent blocks for a foreign chain
      *
      * This function gets recent blocks relative to a foreign chain, starting either at
@@ -1284,20 +1298,6 @@ namespace cryptonote
      * @return false if anything is found wrong with the miner transaction, otherwise true
      */
     bool validate_miner_transaction(const block& b, size_t cumulative_block_size, uint64_t fee, uint64_t& base_reward, uint64_t already_generated_coins, bool &partial_block_reward, uint8_t version);
-
-    /**
-     * @brief reverts the blockchain to its previous state following a failed switch
-     *
-     * If Blockchain fails to switch to an alternate chain when it means
-     * to do so, this function reverts the blockchain to how it was before
-     * the attempted switch.
-     *
-     * @param original_chain the chain to switch back to
-     * @param rollback_height the height to revert to before appending the original chain
-     *
-     * @return false if something goes wrong with reverting (very bad), otherwise true
-     */
-    bool rollback_blockchain_switching(std::list<block>& original_chain, uint64_t rollback_height);
 
     /**
      * @brief gets recent block sizes for median calculation
