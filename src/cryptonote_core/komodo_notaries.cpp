@@ -215,7 +215,7 @@ namespace komodo {
 
    std::string NOTARY_PUBKEY;
    uint8_t NOTARY_PUBKEY33[33];
-   int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS;
+   int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS,NOTARIZED_PREVHEIGHT;
    uint256 NOTARIZED_HASH, NOTARIZED_MOM, NOTARIZED_DESTTXID;
 
 // following is ported from libtom
@@ -613,6 +613,58 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
     std::fill(notarized_desttxidp->begin(),notarized_desttxidp->begin()+32,0);
     return(0);
   }
+
+  void komodo_core::komodo_update(cryptonote::core& m_core)
+  {
+    std::vector<std::pair<crypto::hash,uint64_t>> notarizations;
+    uint64_t ntz_count = m_core.get_blockchain_storage().get_ntz_count(notarizations);
+
+    crypto::hash ntz_txid = crypto::null_hash;
+    uint64_t greatest_height = 0;
+    uint64_t previous_height = 0;
+    for (const auto& each: notarizations) {
+      if (each.second > greatest_height) {
+        greatest_height = each.second;
+        ntz_txid = each.first;
+      }
+    }
+    for (const auto& each : notarizations) {
+      if (each.second > previous_height) {
+        if (each.second == greatest_height) {
+          /* ignore */
+        } else {
+          previous_height = each.second;
+        }
+      }
+    }
+
+    crypto::hash ntz_merkle = m_core.get_blockchain_storage().get_ntz_merkle(notarizations);
+
+    epee::span<const uint8_t> span_desttxid = epee::as_byte_span(ntz_txid);
+    epee::span<const uint8_t> span_notarizedhash = epee::as_byte_span(m_core.get_block_id_by_height(greatest_height));
+    epee::span<const uint8_t> span_merkle = epee::as_byte_span(ntz_merkle);
+
+    size_t i = 0;
+    for (const auto& each: span_desttxid) {
+      memcpy((NOTARIZED_DESTTXID.begin() + (i++)), &each, sizeof(each));
+    }
+
+    i = 0;
+    for (const auto& each: span_notarizedhash) {
+      memcpy((NOTARIZED_HASH.begin() + (i++)), &each, sizeof(each));
+    }
+
+    i = 0;
+    for (const auto& each: span_merkle) {
+      memcpy((NOTARIZED_MOM.begin() + (i++)), &each, sizeof(each));
+    }
+
+    NUM_NPOINTS = ntz_count;
+    NOTARIZED_HEIGHT = greatest_height;
+    NOTARIZED_PREVHEIGHT = previous_height;
+  }
+
+
   //------------------------------------------------------------------
 /*  void komodo_core::komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 notarized_hash,uint256 notarized_desttxid,uint256 MoM,int32_t MoMdepth)
   {
