@@ -191,16 +191,31 @@ namespace cryptonote
 
     crypto::hash ntz_txid = crypto::null_hash;
     uint64_t greatest_height = 0;
+    uint64_t previous_height = 0;
     for (const auto& each: notarizations) {
       if (each.second > greatest_height) {
         greatest_height = each.second;
         ntz_txid = each.first;
       }
     }
+    for (const auto& each : notarizations) {
+      if (each.second > previous_height) {
+        if (each.second == greatest_height) {
+          /* ignore */
+        } else {
+          previous_height = each.second;
+        }
+      }
+    }
+
+    crypto::hash ntz_merkle = m_core.get_blockchain_storage().get_ntz_merkle(notarizations);
+
     res.notarized = greatest_height;
     res.notarizedhash = epee::string_tools::pod_to_hex(m_core.get_block_id_by_height(greatest_height));
     res.notarizedtxid = epee::string_tools::pod_to_hex(ntz_txid);
     res.notarization_count = ntz_count;
+    res.notarized_MoM = epee::string_tools::pod_to_hex(ntz_merkle);
+    res.prevMoMheight = previous_height;
 
     crypto::hash top_hash;
     m_core.get_blockchain_top(res.height, top_hash);
@@ -2343,16 +2358,31 @@ namespace cryptonote
 
     crypto::hash ntz_txid = crypto::null_hash;
     uint64_t greatest_height = 0;
+    uint64_t previous_height = 0;
     for (const auto& each: notarizations) {
       if (each.second > greatest_height) {
         greatest_height = each.second;
         ntz_txid = each.first;
       }
     }
+    for (const auto& each : notarizations) {
+      if (each.second > previous_height) {
+        if (each.second == greatest_height) {
+          /* ignore */
+        } else {
+          previous_height = each.second;
+        }
+      }
+    }
+
+    crypto::hash ntz_merkle = m_core.get_blockchain_storage().get_ntz_merkle(notarizations);
+
     res.notarized = greatest_height;
     res.notarizedhash = epee::string_tools::pod_to_hex(m_core.get_block_id_by_height(greatest_height));
     res.notarizedtxid = epee::string_tools::pod_to_hex(ntz_txid);
     res.notarization_count = ntz_count;
+    res.prevMoMheight = previous_height;
+    res.notarized_MoM = epee::string_tools::pod_to_hex(ntz_merkle);
 
     crypto::hash top_hash;
     m_core.get_blockchain_top(res.height, top_hash);
