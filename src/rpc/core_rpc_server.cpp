@@ -186,6 +186,21 @@ namespace cryptonote
       return r;
     }
 
+    std::vector<std::pair<crypto::hash,uint64_t>> notarizations;
+    uint64_t ntz_count = m_core.get_blockchain_storage().get_ntz_count(notarizations);
+
+    crypto::hash ntz_txid = crypto::null_hash;
+    uint64_t greatest_height = 0;
+    for (const auto& each: notarizations) {
+      if (each.second > greatest_height) {
+        greatest_height = each.second;
+        ntz_txid = each.first;
+      }
+    }
+    res.notarized = greatest_height;
+    res.notarizedhash = epee::string_tools::pod_to_hex(m_core.get_block_id_by_height(greatest_height));
+    res.notarizedtxid = epee::string_tools::pod_to_hex(ntz_txid);
+
     crypto::hash top_hash;
     m_core.get_blockchain_top(res.height, top_hash);
     ++res.height; // turn top block height into blockchain height
@@ -2524,6 +2539,7 @@ namespace cryptonote
       std::string s_hash = span_to_hex(vc_hash);
       epee::span<const uint8_t> vc_pow = as_byte_span(c_pow);;
       std::string s_pow = span_to_hex(vc_pow);
+
       std::vector<std::pair<crypto::hash,uint64_t>> notarizations;
       uint64_t ntz_complete = m_core.get_blockchain_storage().get_ntz_count(notarizations);
       crypto::hash ntz_merkle = m_core.get_blockchain_storage().get_ntz_merkle(notarizations);
@@ -2539,6 +2555,7 @@ namespace cryptonote
       }
       uint64_t ntz_height = greatest_height;
       crypto::hash ntz_hash = m_core.get_block_id_by_height(ntz_height);
+
       cryptonote::blobdata tx_blob;
       cryptonote::transaction tx;
       std::string ntz_rem, embedded_btc_data_hash;
