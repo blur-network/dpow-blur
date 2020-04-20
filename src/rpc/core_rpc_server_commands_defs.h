@@ -1204,6 +1204,9 @@ namespace cryptonote
       std::string notarizedhash;
       std::string notarizedtxid;
       int notarized;
+      int prevMoMheight;
+      int notarized_MoMdepth;
+      std::string notarized_MoM;
       uint64_t tx_pool_size;
       uint64_t alt_blocks_count;
       uint64_t outgoing_connections_count;
@@ -1238,6 +1241,9 @@ namespace cryptonote
         KV_SERIALIZE(notarizedhash)
         KV_SERIALIZE(notarizedtxid)
         KV_SERIALIZE(notarized)
+        KV_SERIALIZE(prevMoMheight)
+//        KV_SERIALIZE(notarized_MoMdepth)
+        KV_SERIALIZE(notarized_MoM)
         KV_SERIALIZE(tx_pool_size)
         KV_SERIALIZE(alt_blocks_count)
         KV_SERIALIZE(outgoing_connections_count)
@@ -1259,7 +1265,7 @@ namespace cryptonote
         KV_SERIALIZE(bootstrap_daemon_address)
         KV_SERIALIZE(height_without_bootstrap)
         KV_SERIALIZE(was_bootstrap_ever_used)
-	KV_SERIALIZE(version)
+        KV_SERIALIZE(version)
       END_KV_SERIALIZE_MAP()
     };
   };
