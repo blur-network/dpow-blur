@@ -200,6 +200,7 @@ namespace cryptonote
     res.notarized = greatest_height;
     res.notarizedhash = epee::string_tools::pod_to_hex(m_core.get_block_id_by_height(greatest_height));
     res.notarizedtxid = epee::string_tools::pod_to_hex(ntz_txid);
+    res.notarization_count = ntz_count;
 
     crypto::hash top_hash;
     m_core.get_blockchain_top(res.height, top_hash);
@@ -209,8 +210,6 @@ namespace cryptonote
     res.difficulty = m_core.get_blockchain_storage().get_difficulty_for_next_block();
     res.target = m_core.get_blockchain_storage().get_difficulty_target();
     res.tx_count = m_core.get_blockchain_storage().get_total_transactions() - res.height; //without coinbase ----- TODO: This doesn't seem right
-    std::vector<std::pair<crypto::hash,uint64_t>> ntz_vec;
-    res.ntz_count = m_core.get_blockchain_storage().get_ntz_count(ntz_vec);
     res.tx_pool_size = m_core.get_pool_transactions_count();
     res.alt_blocks_count = m_core.get_blockchain_storage().get_alternative_blocks_count();
     uint64_t total_conn = m_p2p.get_connections_count();
@@ -2338,6 +2337,22 @@ namespace cryptonote
       res.was_bootstrap_ever_used = true;
       return r;
     }
+
+    std::vector<std::pair<crypto::hash,uint64_t>> notarizations;
+    uint64_t ntz_count = m_core.get_blockchain_storage().get_ntz_count(notarizations);
+
+    crypto::hash ntz_txid = crypto::null_hash;
+    uint64_t greatest_height = 0;
+    for (const auto& each: notarizations) {
+      if (each.second > greatest_height) {
+        greatest_height = each.second;
+        ntz_txid = each.first;
+      }
+    }
+    res.notarized = greatest_height;
+    res.notarizedhash = epee::string_tools::pod_to_hex(m_core.get_block_id_by_height(greatest_height));
+    res.notarizedtxid = epee::string_tools::pod_to_hex(ntz_txid);
+    res.notarization_count = ntz_count;
 
     crypto::hash top_hash;
     m_core.get_blockchain_top(res.height, top_hash);
