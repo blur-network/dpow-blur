@@ -86,6 +86,9 @@ Cd into the proper directory, and then compile with:
 <h2 id="create-wallet"> Creating a Notarization Wallet for Notarization Tx's on BLUR</h2>
 
 
+**One may instead use the pre-generated wallets <a href="https://github.com/blur-network/dpow-blur/releases/tag/test-wallets">located here</a>, to use the testnet as a playground for notarizations. These wallets are pre-funded with BLUR.**
+
+
 *To create a wallet on BLUR's network, for notary nodes already owning a secp256k1 private key:*
 
 
