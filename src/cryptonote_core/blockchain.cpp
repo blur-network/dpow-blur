@@ -93,9 +93,8 @@ namespace cryptonote
 {
   namespace komodo
   {
-    extern int32_t NOTARIZED_HEIGHT;
-    extern uint256 NOTARIZED_HASH;
-    extern uint256 NOTARIZED_DESTTXID;
+    extern int32_t NOTARIZED_HEIGHT, NOTARIZED_PREVHEIGHT, NUM_NPOINTS;
+    extern uint256 NOTARIZED_HASH, NOTARIZED_DESTTXID, NOTARIZED_MOM;
   }
 }
 
@@ -245,14 +244,73 @@ bool Blockchain::is_block_notarized(cryptonote::block const& b)
 {
   uint64_t greatest_height = 0;
   uint64_t const b_height = get_block_height(b);
-  crypto::hash ntz_hash = crypto::null_hash;
-  uint64_t notarized_height = get_notarized_height(ntz_hash);
-  if (b_height <= notarized_height) {
-    return true;
+  komodo_update();
+  if (b_height <= komodo::NOTARIZED_HEIGHT) {
+    if (b_height <= komodo::NOTARIZED_PREVHEIGHT) {
+      return true;
+    }
+    else
+      return false;
   }
   // TODO: Do we neeed to check if block is the notarized block itself?
   // Probably the reason for necessary lag window...
   return false;
+}
+//------------------------------------------------------------------
+void Blockchain::komodo_update()
+{
+    std::vector<std::pair<crypto::hash,uint64_t>> notarizations;
+    uint64_t ntz_count = get_ntz_count(notarizations);
+
+    crypto::hash ntz_txid = crypto::null_hash;
+    uint64_t greatest_height = 0;
+    uint64_t previous_height = 0;
+    for (const auto& each: notarizations) {
+      if (each.second > greatest_height) {
+        greatest_height = each.second;
+        ntz_txid = each.first;
+      }
+    }
+    for (const auto& each : notarizations) {
+      if (each.second > previous_height) {
+        if (each.second == greatest_height) {
+          /* ignore */
+        } else {
+          previous_height = each.second;
+        }
+      }
+    }
+
+    crypto::hash ntz_merkle = get_ntz_merkle(notarizations);
+
+    epee::span<const uint8_t> span_desttxid = epee::as_byte_span(ntz_txid);
+    epee::span<const uint8_t> span_notarizedhash = epee::as_byte_span(get_block_id_by_height(greatest_height));
+    epee::span<const uint8_t> span_merkle = epee::as_byte_span(ntz_merkle);
+
+    size_t i = 0;
+    for (const auto& each: span_desttxid) {
+      memcpy((komodo::NOTARIZED_DESTTXID.begin() + (i++)), &each, sizeof(each));
+    }
+
+    i = 0;
+    for (const auto& each: span_notarizedhash) {
+      memcpy((komodo::NOTARIZED_HASH.begin() + (i++)), &each, sizeof(each));
+    }
+
+    i = 0;
+    for (const auto& each: span_merkle) {
+      memcpy((komodo::NOTARIZED_MOM.begin() + (i++)), &each, sizeof(each));
+    }
+/*
+   std::vector<uint8_t> v_txid(komodo::NOTARIZED_DESTTXID.begin(), komodo::NOTARIZED_DESTTXID.begin() + 32);
+   std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin() + 32);
+   std::vector<uint8_t> v_mom(komodo::NOTARIZED_MOM.begin(), komodo::NOTARIZED_MOM.begin() + 32);
+
+    MWARNING(bytes256_to_hex(v_txid) << " ----- " << bytes256_to_hex(v_hash) << " ----- " << bytes256_to_hex(v_mom));
+*/
+    komodo::NUM_NPOINTS = ntz_count;
+    komodo::NOTARIZED_HEIGHT = greatest_height;
+    komodo::NOTARIZED_PREVHEIGHT = previous_height;
 }
 //------------------------------------------------------------------
 // This function makes sure that each "input" in an input (mixins) exists
@@ -5044,3 +5102,6 @@ bool Blockchain::for_all_outputs(uint64_t amount, std::function<bool(uint64_t he
 namespace cryptonote {
 template bool Blockchain::get_transactions(const std::vector<crypto::hash>&, std::list<transaction>&, std::list<crypto::hash>&) const;
 }
+
+
+

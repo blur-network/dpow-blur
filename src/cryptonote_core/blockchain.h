@@ -157,6 +157,7 @@ namespace cryptonote
     crypto::hash get_ntz_merkle(std::vector<std::pair<crypto::hash,uint64_t>> const& notarizations);
     bool is_block_notarized(cryptonote::block const& b);
     uint64_t get_notarized_height(crypto::hash& ntz_hash);
+    void komodo_update();
 
     /**
      * @brief assign a set of blockchain checkpoint hashes
