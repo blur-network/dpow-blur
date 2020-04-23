@@ -245,15 +245,16 @@ bool Blockchain::is_block_notarized(cryptonote::block const& b)
   uint64_t greatest_height = 0;
   uint64_t const b_height = get_block_height(b);
   komodo_update();
-  if (b_height <= komodo::NOTARIZED_HEIGHT) {
-    if (b_height <= komodo::NOTARIZED_PREVHEIGHT) {
+  uint64_t ntz_height = (komodo::NOTARIZED_HEIGHT >= 0) ? ((uint64_t)komodo::NOTARIZED_HEIGHT) : 0;
+  uint64_t prev_ntz_height = (komodo::NOTARIZED_PREVHEIGHT >= 0) ? ((uint64_t)komodo::NOTARIZED_PREVHEIGHT) : 0;
+  if (b_height <= ntz_height) {
+    if (b_height <= prev_ntz_height) {
+      // two notarization delay
       return true;
     }
     else
       return false;
   }
-  // TODO: Do we neeed to check if block is the notarized block itself?
-  // Probably the reason for necessary lag window...
   return false;
 }
 //------------------------------------------------------------------
