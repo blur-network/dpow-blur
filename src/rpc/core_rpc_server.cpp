@@ -2586,7 +2586,7 @@ namespace cryptonote
     /*res.notarized_pow = n_pow;*/
       res.notarized_txid = bytes256_to_hex(v_txid);
       res.embedded_btc_hash = embedded_btc_data_hash;
-      res.notarized_height = (ntz_height > 16) ? ntz_height - 16 : 0;
+      res.notarized_height = ntz_height;
       res.notarizations_completed = ntz_complete;
       res.notarizations_merkle = bytes256_to_hex(v_MoM);
 /*      res.prevMoMheight = komodo::komodo_prevMoMheight();

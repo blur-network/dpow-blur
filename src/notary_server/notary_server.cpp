@@ -159,8 +159,11 @@ namespace tools
      try
      {
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
-        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res = AUTO_VAL_INIT(res);;
+        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res = AUTO_VAL_INIT(res);
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res2 = AUTO_VAL_INIT(res2);
+        std::string error;
+        uint64_t height = m_wallet->get_daemon_blockchain_height(error);
+        uint64_t notarization_wait = m_wallet->get_notarized_height() + 16;
         epee::json_rpc::error e;
         if (m_wallet)
         {
@@ -175,22 +178,24 @@ namespace tools
               }
             }
           }
-          const size_t count = m_wallet->get_ntzpool_count(true);
-          if ((count >= 1) && (get_ntz_cache_count() >= 2) && !sent_to_pool) {
-            notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
-            notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response = AUTO_VAL_INIT(response);
-            epee::json_rpc::error err;
-            bool R = on_append_ntz_sig(request, response, err);
-            if (!R) {
-              MERROR("Something went wrong when calling append_ntz_sig from idle handler!");
-            } else {
-              sent_to_pool = true;
-            }
-          } else {
-            if (!sent_to_pool) {
-              bool r = on_create_ntz_transfer(req, res, e);
-              if (r) {
+          if (height >= (notarization_wait)) {
+            const size_t count = m_wallet->get_ntzpool_count(true);
+            if ((count >= 1) && (get_ntz_cache_count() >= 2) && !sent_to_pool) {
+              notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
+              notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response = AUTO_VAL_INIT(response);
+              epee::json_rpc::error err;
+              bool R = on_append_ntz_sig(request, response, err);
+              if (!R) {
+                MERROR("Something went wrong when calling append_ntz_sig from idle handler!");
+              } else {
                 sent_to_pool = true;
+              }
+            } else {
+              if (!sent_to_pool) {
+                bool r = on_create_ntz_transfer(req, res, e);
+                if (r) {
+                  sent_to_pool = true;
+                }
               }
             }
           }
