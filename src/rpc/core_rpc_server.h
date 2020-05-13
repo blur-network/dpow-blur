@@ -128,6 +128,7 @@ namespace cryptonote
       MAP_URI_AUTO_JON2("/get_outs", on_get_outs, COMMAND_RPC_GET_OUTPUTS)
       BEGIN_JSON_RPC_MAP("/json_rpc")
         MAP_JON_RPC("get_block_count",           on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
+        MAP_JON_RPC("getbestblockhash",           on_get_best_block_hash,        COMMAND_RPC_GET_BEST_BLOCK_HASH)
         MAP_JON_RPC("getblockcount",             on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
         MAP_JON_RPC("request_ntz_sig",           on_request_ntz_sig,            COMMAND_RPC_REQUEST_NTZ_SIG)
         MAP_JON_RPC_WE("on_get_block_hash",      on_getblockhash,               COMMAND_RPC_GETBLOCKHASH)
@@ -206,6 +207,7 @@ namespace cryptonote
     bool on_get_pending_ntz_pool_hashes(const COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::request& req, COMMAND_RPC_GET_PENDING_NTZ_POOL_HASHES::response& res, bool request_has_rpc_origin = true);
     bool on_get_pending_ntz_pool_stats(const COMMAND_RPC_GET_PENDING_NTZ_POOL_STATS::request& req, COMMAND_RPC_GET_PENDING_NTZ_POOL_STATS::response& res, bool request_has_rpc_origin = true);
     bool on_stop_daemon(const COMMAND_RPC_STOP_DAEMON::request& req, COMMAND_RPC_STOP_DAEMON::response& res);
+    bool on_get_best_block_hash(const COMMAND_RPC_GET_BEST_BLOCK_HASH::request& req, COMMAND_RPC_GET_BEST_BLOCK_HASH::response& res);
     bool on_get_limit(const COMMAND_RPC_GET_LIMIT::request& req, COMMAND_RPC_GET_LIMIT::response& res);
     bool on_set_limit(const COMMAND_RPC_SET_LIMIT::request& req, COMMAND_RPC_SET_LIMIT::response& res);
     bool on_out_peers(const COMMAND_RPC_OUT_PEERS::request& req, COMMAND_RPC_OUT_PEERS::response& res);
