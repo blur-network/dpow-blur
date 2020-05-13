@@ -2631,7 +2631,7 @@ namespace cryptonote
     };
   };
 
-/*
+
   struct COMMAND_RPC_CALC_MOM
   {
     struct request
@@ -2648,8 +2648,8 @@ namespace cryptonote
     struct response
     {
       std::string coin;
-      int32_t notarized_height;
-      int32_t notarized_MoMdepth;
+      uint64_t notarized_height;
+      uint64_t notarized_MoMdepth;
       std::string notarized_MoM;
       std::string status;
 
@@ -2662,7 +2662,7 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
   };
-*/
+
   struct COMMAND_RPC_HEIGHT_MOM
   {
     struct request
