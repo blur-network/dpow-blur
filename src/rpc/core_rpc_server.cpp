@@ -1872,9 +1872,10 @@ namespace cryptonote
     if(m_core.get_current_blockchain_height() <= req.height)
     {
       res.status = std::string("Failed! Requested block height: ") + std::to_string(req.height) + " greater than current top block height: " +  std::to_string(m_core.get_current_blockchain_height() - 1);
-      return false;
+      res.hash = epee::string_tools::pod_to_hex(crypto::null_hash);
+      return true;
     }
-    res.hash = string_tools::pod_to_hex(m_core.get_block_id_by_height(req.height));
+    res.hash = epee::string_tools::pod_to_hex(m_core.get_block_id_by_height(req.height));
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
