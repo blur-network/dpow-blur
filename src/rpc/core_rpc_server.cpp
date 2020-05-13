@@ -1866,6 +1866,19 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_block_hash(const COMMAND_RPC_GET_BLOCK_HASH::request& req, COMMAND_RPC_GET_BLOCK_HASH::response& res)
+  {
+    res.status = "Failed";
+    if(m_core.get_current_blockchain_height() <= req.height)
+    {
+      res.status = std::string("Failed! Requested block height: ") + std::to_string(req.height) + " greater than current top block height: " +  std::to_string(m_core.get_current_blockchain_height() - 1);
+      return false;
+    }
+    res.hash = string_tools::pod_to_hex(m_core.get_block_id_by_height(req.height));
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   // equivalent of strstr, but with arbitrary bytes (ie, NULs)
   // This does not differentiate between "not found" and "found at offset 0"
   uint64_t slow_memmem(const void* start_buff, size_t buflen,const void* pat,size_t patlen)
