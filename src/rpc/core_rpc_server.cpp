@@ -2628,10 +2628,10 @@ namespace cryptonote
      return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-/*  bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error&  error_resp)
+  bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error&  error_resp)
   {
     uint64_t height;
-    int32_t MoMdepth;
+    uint64_t MoMdepth;
     uint256 MoM;
 
     height = req.height;
@@ -2650,9 +2650,12 @@ namespace cryptonote
       return false;
     }
 
-      MoM = komodo::komodo_calcMoM(height,MoMdepth);
+/*      MoM = komodo::komodo_calcMoM(height,MoMdepth);
       std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin()+32);
-      std::string str_MoM = bytes256_to_hex(v_MoM);
+      std::string str_MoM = bytes256_to_hex(v_MoM);*/
+
+    std::string str_MoM = epee::string_tools::pod_to_hex(crypto::null_hash);
+    // use null hash as placeholder - Can change if we need this call
 
     char* coin = (char*)(komodo::ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : "BLUR");
     res.coin = coin;
@@ -2662,7 +2665,7 @@ namespace cryptonote
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
-  //------------------------------------------------------------------------------------------------------------------------------
+/*  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error_resp)
   {
     std::string coin = (char*)(komodo::ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : komodo::ASSETCHAINS_SYMBOL);
