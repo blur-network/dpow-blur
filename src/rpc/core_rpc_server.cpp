@@ -2655,7 +2655,11 @@ namespace cryptonote
       std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin()+32);
       std::string str_MoM = bytes256_to_hex(v_MoM);*/
 
-    std::string str_MoM = epee::string_tools::pod_to_hex(crypto::null_hash);
+    m_core.get_blockchain_storage().get_k_core().komodo_update(m_core);
+
+    std::vector<uint8_t> v_mom(komodo::NOTARIZED_MOM.begin(), komodo::NOTARIZED_MOM.begin()+32);
+
+    std::string str_MoM = bytes256_to_hex(v_mom);
     // use null hash as placeholder - Can change if we need this call
 
     char* coin = (char*)(komodo::ASSETCHAINS_SYMBOL[0] == 0 ? "KMD" : "BLUR");
