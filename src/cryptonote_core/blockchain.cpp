@@ -5080,6 +5080,12 @@ bool Blockchain::for_all_key_images(std::function<bool(const crypto::key_image&)
   return m_db->for_all_key_images(f);
 }
 
+crypto::hash Blockchain::get_best_block_hash() const
+{
+  const crypto::hash top_id = m_db->top_block_hash();
+  return top_id;
+}
+
 bool Blockchain::for_blocks_range(const uint64_t& h1, const uint64_t& h2, std::function<bool(uint64_t, const crypto::hash&, const block&)> f) const
 {
   return m_db->for_blocks_range(h1, h2, f);

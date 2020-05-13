@@ -2783,4 +2783,26 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_GET_BEST_BLOCK_HASH
+  {
+    struct request
+    {
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string hex;
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(hex)
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+
+
 }

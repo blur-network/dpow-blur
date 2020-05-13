@@ -480,6 +480,24 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_best_block_hash(const COMMAND_RPC_GET_BEST_BLOCK_HASH::request& req, COMMAND_RPC_GET_BEST_BLOCK_HASH::response& res)
+  {
+
+    res.status = "Failed";
+
+    const crypto::hash bestblockhash = m_core.get_blockchain_storage().get_best_block_hash();
+
+    if (epee::string_tools::pod_to_hex(bestblockhash) == epee::string_tools::pod_to_hex(crypto::null_hash))
+    {
+      return false;
+    }
+
+    res.hex = epee::string_tools::pod_to_hex(bestblockhash);
+
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_outs(const COMMAND_RPC_GET_OUTPUTS::request& req, COMMAND_RPC_GET_OUTPUTS::response& res)
   {
     PERF_TIMER(on_get_outs);

@@ -1040,6 +1040,10 @@ namespace cryptonote
      */
     bool check_ntz_req_inputs(transaction& tx, ntz_req_verification_context &tvc, uint64_t* pmax_used_block_height = NULL);
 
+    crypto::hash get_best_block_hash() const;
+
+
+
   private:
 
     // TODO: evaluate whether or not each of these typedefs are left over from blockchain_storage
