@@ -1408,6 +1408,35 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_VALIDATE_ADDRESS
+  {
+    struct request
+    {
+      std::string address;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(address)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      bool isvalid;
+      std::string address;
+      bool ismine;
+      bool iswatchonly;
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(isvalid)
+        KV_SERIALIZE(address)
+        KV_SERIALIZE(ismine)
+        KV_SERIALIZE(iswatchonly)
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
   struct COMMAND_RPC_GETBLOCKHASH
   {
     typedef std::vector<uint64_t> request;

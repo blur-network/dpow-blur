@@ -131,9 +131,10 @@ namespace cryptonote
         MAP_JON_RPC("getbestblockhash",          on_get_best_block_hash,        COMMAND_RPC_GET_BEST_BLOCK_HASH)
         MAP_JON_RPC("getblockcount",             on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
         MAP_JON_RPC("request_ntz_sig",           on_request_ntz_sig,            COMMAND_RPC_REQUEST_NTZ_SIG)
+        MAP_JON_RPC("getblockhash",              on_get_block_hash,             COMMAND_RPC_GET_BLOCK_HASH)
+        MAP_JON_RPC("validateaddress",           on_validateaddress,            COMMAND_RPC_VALIDATE_ADDRESS)
         MAP_JON_RPC_WE("on_get_block_hash",      on_getblockhash,               COMMAND_RPC_GETBLOCKHASH)
         MAP_JON_RPC_WE("on_getblockhash",        on_getblockhash,               COMMAND_RPC_GETBLOCKHASH)
-        MAP_JON_RPC("getblockhash",              on_get_block_hash,          COMMAND_RPC_GET_BLOCK_HASH)
         MAP_JON_RPC_WE("get_block_template",     on_getblocktemplate,           COMMAND_RPC_GETBLOCKTEMPLATE)
         MAP_JON_RPC_WE("getblocktemplate",       on_getblocktemplate,           COMMAND_RPC_GETBLOCKTEMPLATE)
         MAP_JON_RPC_WE("submit_block",           on_submitblock,                COMMAND_RPC_SUBMITBLOCK)
@@ -217,6 +218,7 @@ namespace cryptonote
     //json_rpc
     bool on_getblockcount(const COMMAND_RPC_GETBLOCKCOUNT::request& req, COMMAND_RPC_GETBLOCKCOUNT::response& res);
     bool on_getblockhash(const COMMAND_RPC_GETBLOCKHASH::request& req, COMMAND_RPC_GETBLOCKHASH::response& res, epee::json_rpc::error& error_resp);
+    bool on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res);
     bool on_getblocktemplate(const COMMAND_RPC_GETBLOCKTEMPLATE::request& req, COMMAND_RPC_GETBLOCKTEMPLATE::response& res, epee::json_rpc::error& error_resp);
     bool on_submitblock(const COMMAND_RPC_SUBMITBLOCK::request& req, COMMAND_RPC_SUBMITBLOCK::response& res, epee::json_rpc::error& error_resp);
     bool on_get_last_block_header(const COMMAND_RPC_GET_LAST_BLOCK_HEADER::request& req, COMMAND_RPC_GET_LAST_BLOCK_HEADER::response& res, epee::json_rpc::error& error_resp);
