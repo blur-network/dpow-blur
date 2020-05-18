@@ -1880,6 +1880,16 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res)
+  {
+    res.address = req.address;
+    res.ismine = true;
+    res.iswatchonly = false;
+    res.isvalid = true;
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   // equivalent of strstr, but with arbitrary bytes (ie, NULs)
   // This does not differentiate between "not found" and "found at offset 0"
   uint64_t slow_memmem(const void* start_buff, size_t buflen,const void* pat,size_t patlen)
