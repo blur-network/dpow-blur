@@ -1883,6 +1883,9 @@ namespace cryptonote
   bool core_rpc_server::on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res)
   {
     res.address = req[0];
+    res.scriptPubKey = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
+    res.segid = 4;
+    res.isscript = false;
     res.ismine = true;
     res.iswatchonly = false;
     res.isvalid = true;
