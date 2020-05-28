@@ -1410,14 +1410,7 @@ namespace cryptonote
 
   struct COMMAND_RPC_VALIDATE_ADDRESS
   {
-    struct request
-    {
-      std::string address;
-
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(address)
-      END_KV_SERIALIZE_MAP()
-    };
+    typedef std::string request;
 
     struct response
     {
@@ -2663,16 +2656,7 @@ namespace cryptonote
 
   struct COMMAND_RPC_CALC_MOM
   {
-    struct request
-    {
-      int32_t height;
-      int32_t MoMdepth;
-
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(height)
-        KV_SERIALIZE(MoMdepth)
-      END_KV_SERIALIZE_MAP()
-    };
+    typedef std::vector<int32_t> request;
 
     struct response
     {
