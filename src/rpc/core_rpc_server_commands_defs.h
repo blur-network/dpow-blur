@@ -1416,15 +1416,21 @@ namespace cryptonote
     {
       bool isvalid;
       std::string address;
+      std::string scriptPubKey;
+      int32_t segid;
       bool ismine;
       bool iswatchonly;
+      bool isscript;
       std::string status;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(isvalid)
         KV_SERIALIZE(address)
+        KV_SERIALIZE(scriptPubKey)
+        KV_SERIALIZE(segid)
         KV_SERIALIZE(ismine)
         KV_SERIALIZE(iswatchonly)
+        KV_SERIALIZE(isscript)
         KV_SERIALIZE(status)
       END_KV_SERIALIZE_MAP()
     };
