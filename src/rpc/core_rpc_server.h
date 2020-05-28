@@ -129,12 +129,14 @@ namespace cryptonote
       BEGIN_JSON_RPC_MAP("/")
         MAP_JON_RPC("getblockhash",              on_get_block_hash,             COMMAND_RPC_GET_BLOCK_HASH)
         MAP_JON_RPC("getbestblockhash",          on_get_best_block_hash,        COMMAND_RPC_GET_BEST_BLOCK_HASH)
+        MAP_JON_RPC("calc_MoM",                  on_calc_MoM,                   COMMAND_RPC_CALC_MOM)
+        MAP_JON_RPC("getblockchaininfo",         on_get_info,                   COMMAND_RPC_GET_INFO)
+        MAP_JON_RPC("validateaddress",           on_validateaddress,            COMMAND_RPC_VALIDATE_ADDRESS)
       END_JSON_RPC_MAP()
       BEGIN_JSON_RPC_MAP("/json_rpc")
         MAP_JON_RPC("get_block_count",           on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
         MAP_JON_RPC("getblockcount",             on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
         MAP_JON_RPC("request_ntz_sig",           on_request_ntz_sig,            COMMAND_RPC_REQUEST_NTZ_SIG)
-        MAP_JON_RPC("validateaddress",           on_validateaddress,            COMMAND_RPC_VALIDATE_ADDRESS)
         MAP_JON_RPC_WE("on_get_block_hash",      on_getblockhash,               COMMAND_RPC_GETBLOCKHASH)
         MAP_JON_RPC_WE("on_getblockhash",        on_getblockhash,               COMMAND_RPC_GETBLOCKHASH)
         MAP_JON_RPC_WE("get_block_template",     on_getblocktemplate,           COMMAND_RPC_GETBLOCKTEMPLATE)
@@ -168,7 +170,6 @@ namespace cryptonote
         MAP_JON_RPC_WE_IF("sync_info",           on_sync_info,                  COMMAND_RPC_SYNC_INFO, !m_restricted)
         MAP_JON_RPC_WE("get_txpool_backlog",     on_get_txpool_backlog,         COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG)
         MAP_JON_RPC_WE("get_output_distribution", on_get_output_distribution,   COMMAND_RPC_GET_OUTPUT_DISTRIBUTION)
-        MAP_JON_RPC_WE("calc_MoM",              on_calc_MoM,                   COMMAND_RPC_CALC_MOM)
 //        MAP_JON_RPC_WE_IF("height_MoM",            on_height_MoM,                 COMMAND_RPC_HEIGHT_MOM, !m_restricted)
 //        MAP_JON_RPC_WE("get_notarizations", on_get_notarizations,               COMMAND_RPC_GET_NOTARIZATIONS)
         MAP_JON_RPC_WE_IF("get_notarization_data", on_get_ntz_data,               COMMAND_RPC_GET_NTZ_DATA, !m_restricted)
@@ -246,7 +247,7 @@ namespace cryptonote
     bool on_sync_info(const COMMAND_RPC_SYNC_INFO::request& req, COMMAND_RPC_SYNC_INFO::response& res, epee::json_rpc::error& error_resp);
     bool on_get_txpool_backlog(const COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG::request& req, COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG::response& res, epee::json_rpc::error& error_resp);
     bool on_get_output_distribution(const COMMAND_RPC_GET_OUTPUT_DISTRIBUTION::request& req, COMMAND_RPC_GET_OUTPUT_DISTRIBUTION::response& res, epee::json_rpc::error& error_resp);
-    bool on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error& error);
+    bool on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res);
 //    bool on_height_MoM(const COMMAND_RPC_HEIGHT_MOM::request& req, COMMAND_RPC_HEIGHT_MOM::response& res, epee::json_rpc::error& error);
     bool on_get_ntz_data(const COMMAND_RPC_GET_NTZ_DATA::request& req, COMMAND_RPC_GET_NTZ_DATA::response& res, epee::json_rpc::error& error);
     bool on_get_merkle_root(const COMMAND_RPC_GET_MERKLE_ROOT::request& req, COMMAND_RPC_GET_MERKLE_ROOT::response& res, epee::json_rpc::error& error);

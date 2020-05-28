@@ -1882,7 +1882,7 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res)
   {
-    res.address = req.address;
+    res.address = req;
     res.ismine = true;
     res.iswatchonly = false;
     res.isvalid = true;
@@ -2639,26 +2639,18 @@ namespace cryptonote
      return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res, epee::json_rpc::error&  error_resp)
+  bool core_rpc_server::on_calc_MoM(const COMMAND_RPC_CALC_MOM::request& req, COMMAND_RPC_CALC_MOM::response& res)
   {
     uint64_t height;
     uint64_t MoMdepth;
     uint256 MoM;
 
-    height = req.height;
-    MoMdepth = req.MoMdepth;
-
-    bool req_filled = (height != 0 && MoMdepth != 0);
-    if (!req_filled) {
-      error_resp.code = CORE_RPC_ERROR_CODE_WRONG_PARAM;
-      error_resp.message = "Wrong parameters: calc_MoM, height, MoMdepth";
-      return false;
-    }
+    height = req[0];
+    MoMdepth = req[1];
 
     if ( MoMdepth >= height ) {
-      error_resp.code = CORE_RPC_ERROR_CODE_INTERNAL_ERROR;
-      error_resp.message = "calc_MoM illegal height or MoMdepth";
-      return false;
+      res.status = "Failed! calc_MoM illegal height or MoMdepth";
+      return true;
     }
 
 /*      MoM = komodo::komodo_calcMoM(height,MoMdepth);
