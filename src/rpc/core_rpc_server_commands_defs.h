@@ -1410,7 +1410,7 @@ namespace cryptonote
 
   struct COMMAND_RPC_VALIDATE_ADDRESS
   {
-    typedef std::string request;
+    typedef std::vector<std::string> request;
 
     struct response
     {

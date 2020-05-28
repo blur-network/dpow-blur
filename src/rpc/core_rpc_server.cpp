@@ -1882,7 +1882,7 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res)
   {
-    res.address = req;
+    res.address = req[0];
     res.ismine = true;
     res.iswatchonly = false;
     res.isvalid = true;
