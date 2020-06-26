@@ -35,7 +35,15 @@ namespace epee
         KV_SERIALIZE(message)
       END_KV_SERIALIZE_MAP()
     };
-    
+
+    struct error_one
+    {
+      int64_t code;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(code)
+      END_KV_SERIALIZE_MAP()
+    };
+
     struct dummy_error
     {
       BEGIN_KV_SERIALIZE_MAP()
@@ -89,7 +97,43 @@ namespace epee
       END_KV_SERIALIZE_MAP()
     };
 
+    template<typename t_param, typename t_error>
+    struct response_one
+    {
+      t_param     result;
+      t_error     error;
+      epee::serialization::storage_entry id;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(result)
+        KV_SERIALIZE(error)
+        KV_SERIALIZE(id)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    template<typename t_param>
+    struct response_one<t_param, dummy_error>
+    {
+      t_param     result;
+      epee::serialization::storage_entry id;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(result)
+        KV_SERIALIZE(id)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    template<typename t_error>
+    struct response_one<dummy_result, t_error>
+    {
+      t_error     error;
+      epee::serialization::storage_entry id;
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(error)
+        KV_SERIALIZE(id)
+      END_KV_SERIALIZE_MAP()
+    };
+
     typedef response<dummy_result, error> error_response;
+    typedef response<dummy_result, error_one> error_response_one;
   }
 }
 
