@@ -164,7 +164,7 @@ namespace tools
         std::string error;
         uint64_t const height = m_wallet->get_daemon_blockchain_height(error);
         uint64_t const notarization_wait = m_wallet->get_notarized_height() + 26;
-        MWARNING("Height = " << std::to_string(height) << ", notarization_wait = " << std::to_string(notarization_wait) << " ---- ");
+        //MWARNING("Height = " << std::to_string(height) << ", notarization_wait = " << std::to_string(notarization_wait) << " ---- ");
         epee::json_rpc::error e;
         if (m_wallet)
         {
