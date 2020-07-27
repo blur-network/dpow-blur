@@ -1117,7 +1117,7 @@ namespace cryptonote
       MLOG_YELLOW(el::Level::Debug, context << " Got NEW BLOCKS inside of " << __FUNCTION__ << ": size: " << arg.blocks.size()
           << ", blocks: " << start_height << " - " << (start_height + arg.blocks.size() - 1));
 
-      std::list<cryptonote::block> blocks_list;
+/*      std::list<cryptonote::block> blocks_list;
 
       for (const auto& each : arg.blocks) {
         cryptonote::block each_b;
@@ -1128,7 +1128,7 @@ namespace cryptonote
       }
 
       m_core.get_blockchain_storage().rollback_blockchain_switching(blocks_list, start_height);
-
+*/
       // add that new span to the block queue
       const boost::posix_time::time_duration dt = now - context.m_last_request_time;
       const float rate = size * 1e6 / (dt.total_microseconds() + 1);
