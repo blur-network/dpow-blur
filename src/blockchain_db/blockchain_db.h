@@ -134,6 +134,7 @@ struct txpool_tx_meta_t
 
 
 #define VALX      -1
+#define VALX1   VALX
 #define VALX2   VALX,  VALX
 #define VALX3   VALX2,  VALX
 #define VALX4   VALX3,  VALX
