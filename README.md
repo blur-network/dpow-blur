@@ -12,7 +12,7 @@ Notary nodes can follow the procedure <a href="https://github.com/blur-network/d
 
 Located in `src/cryptonote_config.h`, there is a pre-compile constant set for `DPOW_SIG_COUNT`...  Changing this value will change the required amount of signatures, before a notarization process is deemed complete.  Once this number of signatures is reached on a given notarization tx, the validation structs are converted to those of a standard BLUR tx, and will be sent to the network. 
 
-Any value between `1` and `21` is valid for this constant, but above `21` will require further modifications to DB.
+Any value between `2` and `21` is valid for this constant, but above `21` will require further modifications to DB.
 
 # Contents:
 
