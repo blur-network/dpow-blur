@@ -63,7 +63,7 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
 
   const char* Notaries_elected[64][3] =
   {
-    {"tonyL_2",            "033ac7d60d65246a59524d8cb83e2f7be9209c763650547cbd882bb4d6ba7769e1", "24cef8f4a400910fafc598c6ab92b574acb96d212fda8af1284412a7964d7c88" }, // 0
+    {"tonyL_2",            "033ac7d60d65246a59524d8cb83e2f7be9209c763650547cbd882bb4d6ba7769e1", "4896933c13adc197b7d0cc571559247eccbd11ed3d470acdf2853106df5b5205" }, // 0
     {"alright_AR",         "020566fe2fb3874258b2d3cf1809a5d650e0edc7ba746fa5eec72750c5188c9cc9", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
     {"strob_NA",           "0206f7a2e972d9dfef1c424c731503a0a27de1ba7a15a91a362dc7ec0d0fb47685", "60f2567a6b0a1ab57db5d55b581369b9dd05ee32f8a39f5b8cf213c22fb092e8" },
     {"dwy_EU",             "021c7cf1f10c4dc39d13451123707ab780a741feedab6ac449766affe37515a29e", "b70dff34c690235ecb33f961450afbfca429baf1a91e7ceee57881a50c4feba7" },
@@ -91,7 +91,7 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
     {"madmax_AR",          "03c5941fe49d673c094bc8e9bb1a95766b4670c88be76d576e915daf2c30a454d3", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
     {"lukechilds_NA",      "03f1051e62c2d280212481c62fe52aab0a5b23c95de5b8e9ad5f80d8af4277a64b", "964bf5389aa488a5848526c0bbbdcad30a8f53c140cc6b78a0f06a97259fca2b" },
     {"cipi_AR",            "02c4f89a5b382750836cb787880d30e23502265054e1c327a5bfce67116d757ce8", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
-    {"tonyl_AR",           "02cc8bc862f2b65ad4f99d5f68d3011c138bf517acdc8d4261166b0be8f64189e1", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
+    {"tonyl_AR",           "03a8db38075c80348889871b4318b0a79a1fd7e9e21daefb4ca6e4f05e5963569c", "d9bd811bf5d28fd2c0389fe322a9ef1bb8eb19ca4e4e3d693385f88de5ef2c1d" },
     {"infotech_DEV",       "0345ad4ab5254782479f6322c369cec77a7535d2f2162d103d666917d5e4f30c4c", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
     {"fullmoon_NA",        "032c716701fe3a6a3f90a97b9d874a9d6eedb066419209eed7060b0cc6b710c60b", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },  // 30
     {"etszombi_AR",        "02e55e104aa94f70cde68165d7df3e162d4410c76afd4643b161dea044aa6d06ce", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
