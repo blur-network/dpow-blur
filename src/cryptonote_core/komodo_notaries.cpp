@@ -64,7 +64,7 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
   const char* Notaries_elected[64][3] =
   {
     {"tonyL_2",            "033ac7d60d65246a59524d8cb83e2f7be9209c763650547cbd882bb4d6ba7769e1", "4896933c13adc197b7d0cc571559247eccbd11ed3d470acdf2853106df5b5205" }, // 0
-    {"alright_AR",         "020566fe2fb3874258b2d3cf1809a5d650e0edc7ba746fa5eec72750c5188c9cc9", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
+    {"alright_AR",         "020566fe2fb3874258b2d3cf1809a5d650e0edc7ba746fa5eec72750c5188c9cc9", "b28ac995dd3a6a21c4d95a5a7b6c9f8bc32dd76c023b8d2c07a2264d8f7a54d8" },
     {"strob_NA",           "0206f7a2e972d9dfef1c424c731503a0a27de1ba7a15a91a362dc7ec0d0fb47685", "60f2567a6b0a1ab57db5d55b581369b9dd05ee32f8a39f5b8cf213c22fb092e8" },
     {"dwy_EU",             "021c7cf1f10c4dc39d13451123707ab780a741feedab6ac449766affe37515a29e", "b70dff34c690235ecb33f961450afbfca429baf1a91e7ceee57881a50c4feba7" },
     {"phm87_SH",           "021773a38db1bc3ede7f28142f901a161c7b7737875edbb40082a201c55dcf0add", "b78a8dc587333a527a3c41d189d7ccdcff5854bbfb1333761bc3cffeb4a0b3cd" },
