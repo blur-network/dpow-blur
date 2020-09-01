@@ -1453,7 +1453,7 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
 
-    struct response
+    struct unspent_entry
     {
       std::string txid;
       uint64_t vout;
@@ -1465,7 +1465,6 @@ namespace cryptonote
       bool spendable;
       bool solvable;
       bool safe;
-      std::string status;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(txid)
@@ -1478,6 +1477,16 @@ namespace cryptonote
         KV_SERIALIZE(spendable)
         KV_SERIALIZE(solvable)
         KV_SERIALIZE(safe)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::list<unspent_entry> entries;
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(entries)
         KV_SERIALIZE(status)
       END_KV_SERIALIZE_MAP()
     };

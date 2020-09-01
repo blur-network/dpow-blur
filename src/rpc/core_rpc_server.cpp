@@ -1895,16 +1895,21 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_listunspent(const COMMAND_RPC_LIST_UNSPENT::request& req, COMMAND_RPC_LIST_UNSPENT::response& res)
   {
-    res.address = req.addresses.back();
-    res.scriptPubKey = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
-    res.txid = epee::string_tools::pod_to_hex(m_core.get_blockchain_storage().get_tail_id());
-    res.vout = 2;
-    res.amount = 100;
-    res.confirmations = 1000;
-    res.redeemScript = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
-    res.spendable = true;
-    res.solvable = true;
-    res.safe = true;
+    std::list<std::string> addrs = req.addresses;
+    for (const auto& each : addrs) {
+      COMMAND_RPC_LIST_UNSPENT::unspent_entry e;
+      e.address = each;
+      e.scriptPubKey = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
+      e.txid = epee::string_tools::pod_to_hex(m_core.get_blockchain_storage().get_tail_id());
+      e.vout = 1;
+      e.amount = 100;
+      e.confirmations = 1000;
+      e.redeemScript = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
+      e.spendable = true;
+      e.solvable = true;
+      e.safe = true;
+      res.entries.push_back(e);
+    }
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
