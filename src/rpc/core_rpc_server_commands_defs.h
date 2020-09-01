@@ -1436,6 +1436,53 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_LIST_UNSPENT
+  {
+    struct request
+    {
+      uint64_t minconf;
+      uint64_t maxconf;
+      std::list<std::string> addresses;
+      bool include_unsafe;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(minconf)
+        KV_SERIALIZE(maxconf)
+        KV_SERIALIZE(addresses)
+        KV_SERIALIZE(include_unsafe)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string txid;
+      uint64_t vout;
+      std::string address;
+      std::string scriptPubKey;
+      uint64_t amount;
+      uint64_t confirmations;
+      std::string redeemScript;
+      bool spendable;
+      bool solvable;
+      bool safe;
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(txid)
+        KV_SERIALIZE(vout)
+        KV_SERIALIZE(address)
+        KV_SERIALIZE(scriptPubKey)
+        KV_SERIALIZE(amount)
+        KV_SERIALIZE(confirmations)
+        KV_SERIALIZE(redeemScript)
+        KV_SERIALIZE(spendable)
+        KV_SERIALIZE(solvable)
+        KV_SERIALIZE(safe)
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
   struct COMMAND_RPC_GETBLOCKHASH
   {
     typedef std::vector<uint64_t> request;

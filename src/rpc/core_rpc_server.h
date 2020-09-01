@@ -132,6 +132,7 @@ namespace cryptonote
         MAP_JON_RPC("calc_MoM",                  on_calc_MoM,                   COMMAND_RPC_CALC_MOM)
         MAP_JON_RPC("getblockchaininfo",         on_get_info,                   COMMAND_RPC_GET_INFO)
         MAP_JON_RPC("validateaddress",           on_validateaddress,            COMMAND_RPC_VALIDATE_ADDRESS)
+        MAP_JON_RPC("listunspent",               on_listunspent,                COMMAND_RPC_LIST_UNSPENT)
         MAP_JON_RPC("get_block_count",           on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
         MAP_JON_RPC("getblockcount",             on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
         MAP_JON_RPC("request_ntz_sig",           on_request_ntz_sig,            COMMAND_RPC_REQUEST_NTZ_SIG)
@@ -220,6 +221,7 @@ namespace cryptonote
     bool on_getblockcount(const COMMAND_RPC_GETBLOCKCOUNT::request& req, COMMAND_RPC_GETBLOCKCOUNT::response& res);
     bool on_getblockhash(const COMMAND_RPC_GETBLOCKHASH::request& req, COMMAND_RPC_GETBLOCKHASH::response& res, epee::json_rpc::error& error_resp);
     bool on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res);
+    bool on_listunspent(const COMMAND_RPC_LIST_UNSPENT::request& req, COMMAND_RPC_LIST_UNSPENT::response& res);
     bool on_getblocktemplate(const COMMAND_RPC_GETBLOCKTEMPLATE::request& req, COMMAND_RPC_GETBLOCKTEMPLATE::response& res, epee::json_rpc::error& error_resp);
     bool on_submitblock(const COMMAND_RPC_SUBMITBLOCK::request& req, COMMAND_RPC_SUBMITBLOCK::response& res, epee::json_rpc::error& error_resp);
     bool on_get_last_block_header(const COMMAND_RPC_GET_LAST_BLOCK_HEADER::request& req, COMMAND_RPC_GET_LAST_BLOCK_HEADER::response& res, epee::json_rpc::error& error_resp);

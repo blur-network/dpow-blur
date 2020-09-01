@@ -1893,6 +1893,22 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_listunspent(const COMMAND_RPC_LIST_UNSPENT::request& req, COMMAND_RPC_LIST_UNSPENT::response& res)
+  {
+    res.address = req.addresses.back();
+    res.scriptPubKey = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
+    res.txid = epee::string_tools::pod_to_hex(m_core.get_blockchain_storage().get_tail_id());
+    res.vout = 2;
+    res.amount = 100;
+    res.confirmations = 1000;
+    res.redeemScript = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
+    res.spendable = true;
+    res.solvable = true;
+    res.safe = true;
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   // equivalent of strstr, but with arbitrary bytes (ie, NULs)
   // This does not differentiate between "not found" and "found at offset 0"
   uint64_t slow_memmem(const void* start_buff, size_t buflen,const void* pat,size_t patlen)
