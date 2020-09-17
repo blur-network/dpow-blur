@@ -1895,29 +1895,28 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_send_raw_btc_tx(const COMMAND_RPC_SEND_RAW_BTC_TX::request& req, COMMAND_RPC_SEND_RAW_BTC_TX::response& res)
   {
-    MWARNING("------ Called send_raw_btc_tx, req[0] = " << req[0] << " ----------");
     std::string hexreq = req[0];
     if (hexreq.empty()) {
       res.status = "Error: input hex empty!";
       res.hex = "null";
       return true;
     }
-    std::vector<uint8_t> hex_input; std::string temp;
-    for (size_t i = 0; i < hexreq.length(); i += 2) {
-      std::string byte = hexreq.substr(i, 2);
-      hex_input.push_back(strtoull(byte.c_str(), 0, 10));
-      temp.append(std::to_string(strtoull(byte.c_str(),0,10)));
+
+    std::string bintxdata;
+    if (!epee::string_tools::parse_hexstr_to_binbuff(hexreq, bintxdata)) {
+      res.status = "Error: failed to parse hexstr to binbuff in send_raw_btc_tx";
+      res.hex = "null";
+      return true;
     }
 
-    MWARNING("\n --------- temp string append = " << temp << " ----------------");
-    uint8_t* txdata = hex_input.data();
-    bits256 btc_hash = m_core.get_blockchain_storage().get_k_core().bits256_doublesha256(txdata, hex_input.size());
+    uint8_t const* txdata = reinterpret_cast<uint8_t const*>(bintxdata.data());
+    bits256 btc_hash = m_core.get_blockchain_storage().get_k_core().bits256_doublesha256(txdata, bintxdata.size());
     std::vector<uint8_t> bitscontainer;
     for (const auto& each : btc_hash.bytes) {
       bitscontainer.push_back(each);
     }
     std::string hex_output = bytes256_to_hex(bitscontainer);
-    MWARNING("Hex_output from bitscontainer = " << hex_output);
+
     res.hex = hex_output;
     res.status = CORE_RPC_STATUS_OK;
     return true;
