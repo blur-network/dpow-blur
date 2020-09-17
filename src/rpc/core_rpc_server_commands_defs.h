@@ -1408,6 +1408,8 @@ namespace cryptonote
     };
   };
 
+/* dummy calls for bitcoind rpc compat */
+
   struct COMMAND_RPC_VALIDATE_ADDRESS
   {
     typedef std::vector<std::string> request;
@@ -1436,8 +1438,25 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_SEND_RAW_BTC_TX
+  {
+    typedef std::vector<std::string> request;
+
+    struct response
+    {
+      std::string hex;
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(hex)
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
   struct COMMAND_RPC_LIST_UNSPENT
   {
+    // needs modified to avoid remapping in blurapiserver
     struct request
     {
       uint64_t minconf;
@@ -1491,6 +1510,11 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
   };
+
+
+
+/* end btc compat dummy calls */
+
 
   struct COMMAND_RPC_GETBLOCKHASH
   {
