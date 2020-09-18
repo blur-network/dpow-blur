@@ -1462,13 +1462,11 @@ namespace cryptonote
       uint64_t minconf;
       uint64_t maxconf;
       std::list<std::string> addresses;
-      bool include_unsafe;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(minconf)
         KV_SERIALIZE(maxconf)
         KV_SERIALIZE(addresses)
-        KV_SERIALIZE(include_unsafe)
       END_KV_SERIALIZE_MAP()
     };
 
