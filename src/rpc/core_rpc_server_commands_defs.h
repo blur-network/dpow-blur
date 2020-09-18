@@ -1440,7 +1440,14 @@ namespace cryptonote
 
   struct COMMAND_RPC_SEND_RAW_BTC_TX
   {
-    typedef std::vector<std::string> request;
+    struct request
+    {
+      std::string hexstring;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(hexstring);
+      END_KV_SERIALIZE_MAP()
+    };
 
     struct response
     {

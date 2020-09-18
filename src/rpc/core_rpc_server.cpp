@@ -1895,7 +1895,7 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_send_raw_btc_tx(const COMMAND_RPC_SEND_RAW_BTC_TX::request& req, COMMAND_RPC_SEND_RAW_BTC_TX::response& res)
   {
-    std::string hexreq = req[0];
+    std::string hexreq = req.hexstring;
     if (hexreq.empty()) {
       res.status = "Error: input hex empty!";
       res.hex = "null";
