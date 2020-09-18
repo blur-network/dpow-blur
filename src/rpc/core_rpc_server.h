@@ -133,6 +133,7 @@ namespace cryptonote
         MAP_JON_RPC("btc_getblockchaininfo",         on_get_info,                   COMMAND_RPC_GET_INFO)
         MAP_JON_RPC("btc_validateaddress",           on_validateaddress,            COMMAND_RPC_VALIDATE_ADDRESS)
         MAP_JON_RPC("btc_sendrawtransaction",        on_send_raw_btc_tx,            COMMAND_RPC_SEND_RAW_BTC_TX)
+        MAP_JON_RPC("btc_signrawtransaction",        on_sign_raw_btc_tx,            COMMAND_RPC_SIGN_RAW_BTC_TX)
         MAP_JON_RPC("btc_listunspent",               on_listunspent,                COMMAND_RPC_LIST_UNSPENT)
         MAP_JON_RPC("get_block_count",           on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
         MAP_JON_RPC("getblockcount",             on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
@@ -223,6 +224,7 @@ namespace cryptonote
     bool on_getblockhash(const COMMAND_RPC_GETBLOCKHASH::request& req, COMMAND_RPC_GETBLOCKHASH::response& res, epee::json_rpc::error& error_resp);
     bool on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res);
     bool on_send_raw_btc_tx(const COMMAND_RPC_SEND_RAW_BTC_TX::request& req, COMMAND_RPC_SEND_RAW_BTC_TX::response& res);
+    bool on_sign_raw_btc_tx(const COMMAND_RPC_SIGN_RAW_BTC_TX::request& req, COMMAND_RPC_SIGN_RAW_BTC_TX::response& res);
     bool on_listunspent(const COMMAND_RPC_LIST_UNSPENT::request& req, COMMAND_RPC_LIST_UNSPENT::response& res);
     bool on_getblocktemplate(const COMMAND_RPC_GETBLOCKTEMPLATE::request& req, COMMAND_RPC_GETBLOCKTEMPLATE::response& res, epee::json_rpc::error& error_resp);
     bool on_submitblock(const COMMAND_RPC_SUBMITBLOCK::request& req, COMMAND_RPC_SUBMITBLOCK::response& res, epee::json_rpc::error& error_resp);

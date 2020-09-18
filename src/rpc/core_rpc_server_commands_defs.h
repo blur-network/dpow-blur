@@ -1454,6 +1454,52 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_SIGN_RAW_BTC_TX
+  {
+    struct prevtx
+    {
+      std::string txid;
+      uint16_t vout;
+      std::string scriptPubKey;
+      std::string redeemScript;
+      uint64_t amount;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(txid)
+        KV_SERIALIZE(vout)
+        KV_SERIALIZE(scriptPubKey)
+        KV_SERIALIZE(redeemScript)
+        KV_SERIALIZE(amount)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct request
+    {
+      std::string hexstring;
+      std::vector<prevtx> prevtxs;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(hexstring)
+        KV_SERIALIZE(prevtxs)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string hex;
+      bool complete;
+      //TODO: Figure out if we need "errors" field in response
+      // unsure of effect on iguana's use of result
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(hex)
+        KV_SERIALIZE(complete)
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
   struct COMMAND_RPC_CALC_MOM
   {
     typedef std::vector<int32_t> request;
