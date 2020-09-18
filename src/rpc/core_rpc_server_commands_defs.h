@@ -1408,7 +1408,7 @@ namespace cryptonote
     };
   };
 
-/* dummy calls for bitcoind rpc compat */
+// ------- dummy calls for bitcoind rpc compat -------
 
   struct COMMAND_RPC_VALIDATE_ADDRESS
   {
@@ -1454,9 +1454,75 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_CALC_MOM
+  {
+    typedef std::vector<int32_t> request;
+
+    struct response
+    {
+      std::string coin;
+      uint64_t notarized_height;
+      uint64_t notarized_MoMdepth;
+      std::string notarized_MoM;
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(coin)
+        KV_SERIALIZE(notarized_height)
+        KV_SERIALIZE(notarized_MoMdepth)
+        KV_SERIALIZE(notarized_MoM);
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
+  struct COMMAND_RPC_HEIGHT_MOM
+  {
+    struct request
+    {
+      int32_t height;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(height)
+      END_KV_SERIALIZE_MAP()
+     };
+
+    struct response
+    {
+      std::string coin;
+      int32_t prevMoMheight;
+      int32_t timestamp;
+      int32_t notarized_MoMdepth;
+      int32_t notarized_height;
+      std::string notarized_MoM;
+      std::string notarized_desttxid;
+      std::string MoMoM;
+      int32_t MoMoMoffset;
+      int32_t MoMoMdepth;
+      int32_t kmdstarti;
+      int32_t kmdendi;
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(coin)
+        KV_SERIALIZE(prevMoMheight)
+        KV_SERIALIZE(timestamp)
+        KV_SERIALIZE(notarized_MoMdepth)
+        KV_SERIALIZE(notarized_height)
+        KV_SERIALIZE(notarized_MoM)
+        KV_SERIALIZE(notarized_desttxid)
+        KV_SERIALIZE(MoMoM)
+        KV_SERIALIZE(MoMoMoffset)
+        KV_SERIALIZE(MoMoMdepth)
+        KV_SERIALIZE(kmdstarti)
+        KV_SERIALIZE(kmdendi)
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+     };
+   };
+
   struct COMMAND_RPC_LIST_UNSPENT
   {
-    // needs modified to avoid remapping in blurapiserver
     struct request
     {
       uint64_t minconf;
@@ -1509,9 +1575,7 @@ namespace cryptonote
     };
   };
 
-
-
-/* end btc compat dummy calls */
+// ---------  end btc compat dummy calls ------------
 
 
   struct COMMAND_RPC_GETBLOCKHASH
@@ -2736,74 +2800,6 @@ namespace cryptonote
       END_KV_SERIALIZE_MAP()
     };
   };
-
-
-  struct COMMAND_RPC_CALC_MOM
-  {
-    typedef std::vector<int32_t> request;
-
-    struct response
-    {
-      std::string coin;
-      uint64_t notarized_height;
-      uint64_t notarized_MoMdepth;
-      std::string notarized_MoM;
-      std::string status;
-
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(coin)
-        KV_SERIALIZE(notarized_height)
-        KV_SERIALIZE(notarized_MoMdepth)
-        KV_SERIALIZE(notarized_MoM);
-        KV_SERIALIZE(status)
-      END_KV_SERIALIZE_MAP()
-    };
-  };
-
-  struct COMMAND_RPC_HEIGHT_MOM
-  {
-    struct request
-    {
-      int32_t height;
-
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(height)
-      END_KV_SERIALIZE_MAP()
-     };
-
-    struct response
-    {
-      std::string coin;
-      int32_t prevMoMheight;
-      int32_t timestamp;
-      int32_t notarized_MoMdepth;
-      int32_t notarized_height;
-      std::string notarized_MoM;
-      std::string notarized_desttxid;
-      std::string MoMoM;
-      int32_t MoMoMoffset;
-      int32_t MoMoMdepth;
-      int32_t kmdstarti;
-      int32_t kmdendi;
-      std::string status;
-
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(coin)
-        KV_SERIALIZE(prevMoMheight)
-        KV_SERIALIZE(timestamp)
-        KV_SERIALIZE(notarized_MoMdepth)
-        KV_SERIALIZE(notarized_height)
-        KV_SERIALIZE(notarized_MoM)
-        KV_SERIALIZE(notarized_desttxid)
-        KV_SERIALIZE(MoMoM)
-        KV_SERIALIZE(MoMoMoffset)
-        KV_SERIALIZE(MoMoMdepth)
-        KV_SERIALIZE(kmdstarti)
-        KV_SERIALIZE(kmdendi)
-        KV_SERIALIZE(status)
-      END_KV_SERIALIZE_MAP()
-     };
-   };
 
   struct COMMAND_RPC_SYNC_INFO
   {
