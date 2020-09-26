@@ -127,14 +127,15 @@ namespace cryptonote
       MAP_URI_AUTO_JON2_IF("/in_peers", on_in_peers, COMMAND_RPC_IN_PEERS, !m_restricted)
       MAP_URI_AUTO_JON2("/get_outs", on_get_outs, COMMAND_RPC_GET_OUTPUTS)
       BEGIN_JSON_RPC_MAP("/json_rpc")
-        MAP_JON_RPC("btc_getblockhash",              on_get_block_hash,             COMMAND_RPC_GET_BLOCK_HASH)
-        MAP_JON_RPC("btc_getbestblockhash",          on_get_best_block_hash,        COMMAND_RPC_GET_BEST_BLOCK_HASH)
-        MAP_JON_RPC("btc_calc_MoM",                  on_calc_MoM,                   COMMAND_RPC_CALC_MOM)
-        MAP_JON_RPC("btc_getblockchaininfo",         on_get_info,                   COMMAND_RPC_GET_INFO)
-        MAP_JON_RPC("btc_validateaddress",           on_validateaddress,            COMMAND_RPC_VALIDATE_ADDRESS)
-        MAP_JON_RPC("btc_sendrawtransaction",        on_send_raw_btc_tx,            COMMAND_RPC_SEND_RAW_BTC_TX)
-        MAP_JON_RPC("btc_signrawtransaction",        on_sign_raw_btc_tx,            COMMAND_RPC_SIGN_RAW_BTC_TX)
-        MAP_JON_RPC("btc_listunspent",               on_listunspent,                COMMAND_RPC_LIST_UNSPENT)
+        MAP_JON_RPC("btc_getblock",              on_btc_get_block,              COMMAND_RPC_BTC_GET_BLOCK)
+        MAP_JON_RPC("btc_getblockhash",          on_get_block_hash,             COMMAND_RPC_GET_BLOCK_HASH)
+        MAP_JON_RPC("btc_getbestblockhash",      on_get_best_block_hash,        COMMAND_RPC_GET_BEST_BLOCK_HASH)
+        MAP_JON_RPC("btc_calc_MoM",              on_calc_MoM,                   COMMAND_RPC_CALC_MOM)
+        MAP_JON_RPC("btc_getblockchaininfo",     on_get_info,                   COMMAND_RPC_GET_INFO)
+        MAP_JON_RPC("btc_validateaddress",       on_validateaddress,            COMMAND_RPC_VALIDATE_ADDRESS)
+        MAP_JON_RPC("btc_sendrawtransaction",    on_send_raw_btc_tx,            COMMAND_RPC_SEND_RAW_BTC_TX)
+        MAP_JON_RPC("btc_signrawtransaction",    on_sign_raw_btc_tx,            COMMAND_RPC_SIGN_RAW_BTC_TX)
+        MAP_JON_RPC("btc_listunspent",           on_listunspent,                COMMAND_RPC_LIST_UNSPENT)
         MAP_JON_RPC("get_block_count",           on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
         MAP_JON_RPC("getblockcount",             on_getblockcount,              COMMAND_RPC_GETBLOCKCOUNT)
         MAP_JON_RPC("request_ntz_sig",           on_request_ntz_sig,            COMMAND_RPC_REQUEST_NTZ_SIG)
@@ -222,6 +223,7 @@ namespace cryptonote
     //json_rpc
     bool on_getblockcount(const COMMAND_RPC_GETBLOCKCOUNT::request& req, COMMAND_RPC_GETBLOCKCOUNT::response& res);
     bool on_getblockhash(const COMMAND_RPC_GETBLOCKHASH::request& req, COMMAND_RPC_GETBLOCKHASH::response& res, epee::json_rpc::error& error_resp);
+    bool on_btc_get_block(const COMMAND_RPC_BTC_GET_BLOCK::request& req, COMMAND_RPC_BTC_GET_BLOCK::response& res);
     bool on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res);
     bool on_send_raw_btc_tx(const COMMAND_RPC_SEND_RAW_BTC_TX::request& req, COMMAND_RPC_SEND_RAW_BTC_TX::response& res);
     bool on_sign_raw_btc_tx(const COMMAND_RPC_SIGN_RAW_BTC_TX::request& req, COMMAND_RPC_SIGN_RAW_BTC_TX::response& res);

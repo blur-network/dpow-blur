@@ -1893,6 +1893,31 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_btc_get_block(const COMMAND_RPC_BTC_GET_BLOCK::request& req, COMMAND_RPC_BTC_GET_BLOCK::response& res)
+  {
+    std::string reqhash = req.blockhash;
+    cryptonote::block b; crypto::hash blockhash;
+    res.data = "null";
+
+    if (reqhash.empty()) {
+      res.status = "Error: input hash empty!";
+      return true;
+    }
+    if(!parse_hash256(reqhash, blockhash)) {
+      res.status = "Failed to parse hex representation of block hash. Hex = " + reqhash;
+      return true;
+    }
+    if(!m_core.get_blockchain_storage().get_block_by_hash(blockhash, b)) {
+      res.status = "Failed to get block for hash = " + req.blockhash;
+      return true;
+    }
+
+    std::string blob = block_to_blob(b);
+    res.data = epee::string_tools::buff_to_hex_nodelimer(blob);
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_send_raw_btc_tx(const COMMAND_RPC_SEND_RAW_BTC_TX::request& req, COMMAND_RPC_SEND_RAW_BTC_TX::response& res)
   {
     std::string hexreq = req.hexstring;

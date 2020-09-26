@@ -1408,6 +1408,29 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_BTC_GET_BLOCK
+  {
+    struct request
+    {
+      std::string blockhash;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(blockhash)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string data;
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(data)
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
 // ------- dummy calls for bitcoind rpc compat -------
 
   struct COMMAND_RPC_VALIDATE_ADDRESS
