@@ -1895,7 +1895,7 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_btc_get_block(const COMMAND_RPC_BTC_GET_BLOCK::request& req, COMMAND_RPC_BTC_GET_BLOCK::response& res)
   {
-    std::string reqhash = req[0];
+    std::string reqhash = req.blockhash;
     cryptonote::block b; crypto::hash blockhash;
     res.data = "null";
 
@@ -1903,15 +1903,34 @@ namespace cryptonote
       res.status = "Error: input hash empty!";
       return true;
     }
-    parse_hash256(reqhash, blockhash);
-
-    if(!m_core.get_blockchain_storage().get_block_by_hash(blockhash, b)) {
-      res.status = "Failed to get block for hash = " + reqhash;
+    std::string binhash;
+    if(!epee::string_tools::parse_hexstr_to_binbuff(reqhash, binhash)) {
+      res.status = "Failed to parse hex representation of block hash. Hex = " + reqhash;
       return true;
     }
 
+    blockhash = *reinterpret_cast<const crypto::hash*>(binhash.data());
+
+    if(!m_core.get_blockchain_storage().get_block_by_hash(blockhash, b)) {
+      res.status = "Failed to get block for hash = " + req.blockhash;
+      return true;
+    }
+
+    uint64_t height = get_block_height(b);
+    for (const auto& each : b.tx_hashes) {
+      res.tx.push_back(epee::string_tools::pod_to_hex(each));
+    }
+
+    m_core.get_blockchain_storage().get_k_core().komodo_update(m_core);
+
+    res.last_notarized_height = komodo::NOTARIZED_HEIGHT;
+    res.chainwork = string_tools::pod_to_hex(get_block_longhash(b, height));
+    res.difficulty = m_core.get_blockchain_storage().block_difficulty(height);
+    res.size = m_core.get_blockchain_storage().get_db().get_block_size(height);
+
     std::string blob = block_to_blob(b);
     res.data = epee::string_tools::buff_to_hex_nodelimer(blob);
+    res.solution = epee::string_tools::buff_to_hex_nodelimer(blob);
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
