@@ -1927,6 +1927,7 @@ namespace cryptonote
     res.chainwork = string_tools::pod_to_hex(get_block_longhash(b, height));
     res.difficulty = m_core.get_blockchain_storage().block_difficulty(height);
     res.size = m_core.get_blockchain_storage().get_db().get_block_size(height);
+    res.previousblockhash = epee::string_tools::pod_to_hex(m_core.get_blockchain_storage().get_tail_id(height));
 
     std::string blob = block_to_blob(b);
     res.data = epee::string_tools::buff_to_hex_nodelimer(blob);
