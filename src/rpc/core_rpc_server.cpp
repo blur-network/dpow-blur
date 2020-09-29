@@ -1916,16 +1916,17 @@ namespace cryptonote
       return true;
     }
 
-    uint64_t height = get_block_height(b);
+    res.tx.push_back(epee::string_tools::pod_to_hex(get_transaction_hash(b.miner_tx)));
     for (const auto& each : b.tx_hashes) {
       res.tx.push_back(epee::string_tools::pod_to_hex(each));
     }
 
     m_core.get_blockchain_storage().get_k_core().komodo_update(m_core);
+    uint64_t height = get_block_height(b);
 
     res.rawconfirmations = (m_core.get_blockchain_storage().get_current_blockchain_height() - 1) - height;
     res.confirmations = (komodo::NOTARIZED_HEIGHT >= (int32_t)(height)) ? res.rawconfirmations : 1;
-    tree_hash = get_tx_tree_hash(b.tx_hashes);
+    tree_hash = get_tx_tree_hash(b);
     res.merkleroot = epee::string_tools::pod_to_hex(tree_hash);
     res.hash = epee::string_tools::pod_to_hex(m_core.get_blockchain_storage().get_block_id_by_height(height));
     res.version = b.major_version;
