@@ -1895,7 +1895,7 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_btc_get_block(const COMMAND_RPC_BTC_GET_BLOCK::request& req, COMMAND_RPC_BTC_GET_BLOCK::response& res)
   {
-    std::string reqhash = req[0];
+    std::string reqhash = req.blockhash;
     cryptonote::block b; crypto::hash blockhash = crypto::null_hash; crypto::hash tree_hash = crypto::null_hash;
     res.data = "null";
 
@@ -1912,7 +1912,7 @@ namespace cryptonote
     blockhash = *reinterpret_cast<const crypto::hash*>(binhash.data());
 
     if(!m_core.get_blockchain_storage().get_block_by_hash(blockhash, b)) {
-      res.status = "Failed to get block for hash = " + req[0];
+      res.status = "Failed to get block for hash = " + reqhash;
       return true;
     }
 
