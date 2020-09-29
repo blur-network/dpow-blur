@@ -1415,14 +1415,14 @@ namespace cryptonote
 
     struct response
     {
-      std::string last_notarized_height;
+      uint64_t last_notarized_height;
       std::string hash;
       uint64_t confirmations;
       uint64_t rawconfirmations;
       uint64_t size;
       uint64_t height;
       uint64_t version;
-      uint64_t merkleroot;
+      std::string merkleroot;
       std::vector<std::string> tx;
       std::string chainwork;
       uint64_t difficulty;
