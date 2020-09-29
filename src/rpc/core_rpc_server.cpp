@@ -1895,7 +1895,7 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_btc_get_block(const COMMAND_RPC_BTC_GET_BLOCK::request& req, COMMAND_RPC_BTC_GET_BLOCK::response& res)
   {
-    std::string reqhash = req.blockhash;
+    std::string reqhash = req[0];
     cryptonote::block b; crypto::hash blockhash;
     res.data = "null";
 

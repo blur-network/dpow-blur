@@ -1410,14 +1410,8 @@ namespace cryptonote
 
   struct COMMAND_RPC_BTC_GET_BLOCK
   {
-    struct request
-    {
-      std::string blockhash;
 
-      BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(blockhash)
-      END_KV_SERIALIZE_MAP()
-    };
+    typedef std::vector<std::string> request;
 
     struct response
     {
