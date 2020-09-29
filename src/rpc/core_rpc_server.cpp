@@ -1912,7 +1912,7 @@ namespace cryptonote
     blockhash = *reinterpret_cast<const crypto::hash*>(binhash.data());
 
     if(!m_core.get_blockchain_storage().get_block_by_hash(blockhash, b)) {
-      res.status = "Failed to get block for hash = " + req.blockhash;
+      res.status = "Failed to get block for hash = " + req[0];
       return true;
     }
 
