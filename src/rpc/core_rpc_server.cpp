@@ -1932,6 +1932,7 @@ namespace cryptonote
     res.version = b.major_version;
     res.last_notarized_height = komodo::NOTARIZED_HEIGHT;
     res.chainwork = string_tools::pod_to_hex(get_block_longhash(b, height));
+    res.time = b.timestamp;
     res.difficulty = m_core.get_blockchain_storage().block_difficulty(height);
     res.size = m_core.get_blockchain_storage().get_db().get_block_size(height);
     res.previousblockhash = epee::string_tools::pod_to_hex(m_core.get_blockchain_storage().get_tail_id(height));

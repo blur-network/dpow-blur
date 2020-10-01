@@ -1432,6 +1432,7 @@ namespace cryptonote
       std::string merkleroot;
       std::vector<std::string> tx;
       std::string chainwork;
+      uint32_t time;
       uint64_t difficulty;
       std::string solution;
       std::string data;
@@ -1448,6 +1449,7 @@ namespace cryptonote
         KV_SERIALIZE(merkleroot)
         KV_SERIALIZE(tx)
         KV_SERIALIZE(chainwork)
+        KV_SERIALIZE(time)
         KV_SERIALIZE(difficulty)
         KV_SERIALIZE(previousblockhash)
         KV_SERIALIZE(solution)
