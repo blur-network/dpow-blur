@@ -1924,7 +1924,7 @@ namespace cryptonote
     m_core.get_blockchain_storage().get_k_core().komodo_update(m_core);
     uint64_t height = get_block_height(b);
 
-    res.rawconfirmations = (m_core.get_blockchain_storage().get_current_blockchain_height() - 1) - height;
+    res.rawconfirmations = (m_core.get_blockchain_storage().get_current_blockchain_height()) - height;
     res.confirmations = (komodo::NOTARIZED_HEIGHT >= (int32_t)(height)) ? res.rawconfirmations : 1;
     tree_hash = get_tx_tree_hash(b);
     res.merkleroot = epee::string_tools::pod_to_hex(tree_hash);
