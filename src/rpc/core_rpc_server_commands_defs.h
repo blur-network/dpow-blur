@@ -1560,7 +1560,7 @@ namespace cryptonote
 
   struct COMMAND_RPC_CALC_MOM
   {
-    typedef std::vector<int32_t> request;
+    typedef std::vector<std::string> request;
 
     struct response
     {
