@@ -201,6 +201,7 @@ namespace cryptonote
 
     crypto::hash top_hash;
     m_core.get_blockchain_top(res.height, top_hash);
+    res.blocks = res.height;
     ++res.height; // turn top block height into blockchain height
     res.top_block_hash = string_tools::pod_to_hex(top_hash);
     res.target_height = m_core.get_target_blockchain_height();
@@ -1940,6 +1941,7 @@ namespace cryptonote
 
     std::string blob = block_to_blob(b);
     res.data = epee::string_tools::buff_to_hex_nodelimer(blob);
+    res.solution = epee::string_tools::buff_to_hex_nodelimer(blob);
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
@@ -2513,6 +2515,7 @@ namespace cryptonote
 
     crypto::hash top_hash;
     m_core.get_blockchain_top(res.height, top_hash);
+    res.blocks = res.height;
     ++res.height; // turn top block height into blockchain height
     res.top_block_hash = string_tools::pod_to_hex(top_hash);
     res.target_height = m_core.get_target_blockchain_height();

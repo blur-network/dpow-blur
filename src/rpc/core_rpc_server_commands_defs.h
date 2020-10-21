@@ -1196,6 +1196,7 @@ namespace cryptonote
     {
       std::string status;
       uint64_t height;
+      uint64_t blocks;  // same as height
       uint64_t target_height;
       uint64_t difficulty;
       uint64_t target;
@@ -1233,6 +1234,7 @@ namespace cryptonote
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(status)
         KV_SERIALIZE(height)
+        KV_SERIALIZE(blocks)
         KV_SERIALIZE(target_height)
         KV_SERIALIZE(difficulty)
         KV_SERIALIZE(target)
@@ -1434,6 +1436,7 @@ namespace cryptonote
       std::string chainwork;
       uint32_t time;
       uint64_t difficulty;
+      std::string solution;
       std::string data;
       std::string previousblockhash;
       std::string status;
@@ -1452,6 +1455,7 @@ namespace cryptonote
         KV_SERIALIZE(time)
         KV_SERIALIZE(difficulty)
         KV_SERIALIZE(previousblockhash)
+        KV_SERIALIZE(solution)
         KV_SERIALIZE(data)
         KV_SERIALIZE(status)
       END_KV_SERIALIZE_MAP()
