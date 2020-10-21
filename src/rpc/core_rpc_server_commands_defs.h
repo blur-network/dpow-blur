@@ -1442,6 +1442,7 @@ namespace cryptonote
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(last_notarized_height)
         KV_SERIALIZE(hash)
+        KV_SERIALIZE(height)
         KV_SERIALIZE(confirmations)
         KV_SERIALIZE(rawconfirmations)
         KV_SERIALIZE(size)
