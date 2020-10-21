@@ -1940,7 +1940,6 @@ namespace cryptonote
 
     std::string blob = block_to_blob(b);
     res.data = epee::string_tools::buff_to_hex_nodelimer(blob);
-    res.solution = epee::string_tools::buff_to_hex_nodelimer(blob);
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }

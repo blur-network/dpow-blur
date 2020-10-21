@@ -1434,7 +1434,6 @@ namespace cryptonote
       std::string chainwork;
       uint32_t time;
       uint64_t difficulty;
-      std::string solution;
       std::string data;
       std::string previousblockhash;
       std::string status;
@@ -1453,7 +1452,6 @@ namespace cryptonote
         KV_SERIALIZE(time)
         KV_SERIALIZE(difficulty)
         KV_SERIALIZE(previousblockhash)
-        KV_SERIALIZE(solution)
         KV_SERIALIZE(data)
         KV_SERIALIZE(status)
       END_KV_SERIALIZE_MAP()
