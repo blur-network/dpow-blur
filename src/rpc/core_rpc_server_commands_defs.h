@@ -1563,7 +1563,16 @@ namespace cryptonote
 
   struct COMMAND_RPC_CALC_MOM
   {
-    typedef std::vector<std::string> request;
+    struct request
+    {
+      std::string height;
+      std::string MoMdepth;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(height)
+        KV_SERIALIZE(MoMdepth)
+      END_KV_SERIALIZE_MAP()
+    };
 
     struct response
     {

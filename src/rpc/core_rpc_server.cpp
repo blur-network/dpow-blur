@@ -2768,8 +2768,8 @@ namespace cryptonote
     uint64_t MoMdepth;
     uint256 MoM;
 
-    std::string s_height = req[0];
-    std::string s_MoMdepth = req[1];
+    std::string s_height = req.height;
+    std::string s_MoMdepth = req.MoMdepth;
     MoMdepth = std::stoull(s_height, 0, 10);
     height = std::stoull(s_MoMdepth, 0, 10);
 
