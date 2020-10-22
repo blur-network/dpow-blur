@@ -2000,7 +2000,7 @@ namespace cryptonote
       e.scriptPubKey = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
       e.txid = epee::string_tools::pod_to_hex(m_core.get_blockchain_storage().get_tail_id());
       e.vout = 1;
-      e.amount = 100;
+      e.amount = 10000;
       e.confirmations = 1000;
       e.redeemScript = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
       e.spendable = true;
