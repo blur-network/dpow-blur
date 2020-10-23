@@ -2770,17 +2770,13 @@ namespace cryptonote
 
     std::string s_height = req.height;
     std::string s_MoMdepth = req.MoMdepth;
-    MoMdepth = std::stoull(s_height, 0, 10);
-    height = std::stoull(s_MoMdepth, 0, 10);
+    MoMdepth = std::stoull(s_MoMdepth, 0, 10);
+    height = std::stoull(s_height, 0, 10);
 
     if ( MoMdepth >= height ) {
       res.status = "Failed! calc_MoM illegal height or MoMdepth";
       return true;
     }
-
-/*      MoM = komodo::komodo_calcMoM(height,MoMdepth);
-      std::vector<uint8_t> v_MoM(MoM.begin(), MoM.begin()+32);
-      std::string str_MoM = bytes256_to_hex(v_MoM);*/
 
     m_core.get_blockchain_storage().get_k_core().komodo_update(m_core);
 
