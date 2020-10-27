@@ -69,7 +69,7 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
     {"dwy_EU",             "021c7cf1f10c4dc39d13451123707ab780a741feedab6ac449766affe37515a29e", "b70dff34c690235ecb33f961450afbfca429baf1a91e7ceee57881a50c4feba7" },
     {"phm87_SH",           "021773a38db1bc3ede7f28142f901a161c7b7737875edbb40082a201c55dcf0add", "b78a8dc587333a527a3c41d189d7ccdcff5854bbfb1333761bc3cffeb4a0b3cd" },
     {"chainmakers_NA",     "02285d813c30c0bf7eefdab1ff0a8ad08a07a0d26d8b95b3943ce814ac8e24d885", "6ad4d48ab844084b2207512b7c082ebb9cc363ae0747893a1aaab2041ecbf190" },
-    {"daemonfox_test",     "022d6f4885f53cbd668ad7d03d4f8e830c233f74e3a918da1ed247edfc71820b3d", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
+    {"daemonfox_test",     "022d6f4885f53cbd668ad7d03d4f8e830c233f74e3a918da1ed247edfc71820b3d", "2822c2a65f424246826d5afed861449979bf1cb1038d9608d7e34cf6ff4eefab" },
     {"blackjok3r_SH",      "021eac26dbad256cbb6f74d41b10763183ee07fb609dbd03480dd50634170547cc", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
     {"chainmakers_EU",     "03fdf5a3fce8db7dee89724e706059c32e5aa3f233a6b6cc256fea337f05e3dbf7", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
     {"biz_test",           "037db090cbbe154b7e0a0742032208250537e42ad822968cd5419ce5913a4d8afb", "89db1c9b679ad4cf891b59dff91e03c88961f90bc51040eec70cbdbe8b738572" },
