@@ -10,7 +10,7 @@ In coins that use the CryptoNote protocol, you will have two sets of keys.  Thes
 
 Since we are shooting for transparency and auditable txs by all onlookers for DPoW, your viewkeys are automatically generated from your existing secp256k1 public keys.  So, your transactions will not be private! It is therefore imperative that you only use your notary wallet to create notarization transactions.
 
-In the following steps, you will create a json-formatted file with your secp256k1 public key.  You'll provide a password within this file as well, that will be used to login to your notary server wallet, via both RPC and CLI interfaces.  In return, you will receive a private keypair.  After those are generated, we will need you to submit your public key to kolo, so that it can be hardcoded.
+In the following steps, you will create a json-formatted file with your secp256k1 public key.  You'll provide a password within this file as well, that will be used to login to your notary server wallet, via both RPC and CLI interfaces.  In return, you will receive a private keypair.  After those are generated, we will need you to submit your public key to kolo, so that it can be <a href="https://github.com/blur-network/dpow-blur/blob/bdc1eee031077ac4029a3270150488c90e2b932f/src/cryptonote_core/komodo_notaries.cpp#L64">hardcoded into Blur's codebase</a>.
 
 **To summarize:**
 
