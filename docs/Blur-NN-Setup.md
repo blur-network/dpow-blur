@@ -40,7 +40,7 @@ The resulting binaries will be located in `dpow-blur/build/release/bin`.
 
 *If you get an error about packages, install whichever of the packages you are missing from here:*
 
-`sudo apt install build-essential cmake pkg-config libssl-dev libunwind-dev libevent-dev libsodium-dev binutils-dev libboost-all-dev autoconf`
+`sudo apt install build-essential cmake pkg-config libssl-dev libunwind-dev libevent-dev libsodium-dev binutils-dev libboost-all-dev autoconf libreadline-dev`
 
 
 
