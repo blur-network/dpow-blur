@@ -684,10 +684,9 @@ namespace cryptonote
     tx_prefixt_hash = htwo;
 
     const size_t max_tx_version = 2;
-    uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
-    if (tx.version == 0 || tx.version > max_tx_version)
+    if (tx.version != 2)
     {
-      // v2 is the latest one we know
+      MERROR("Received ntz_sig request with incorrect tx verion = " << std::to_string(tx.version));
       tvc.m_verifivation_failed = true;
       return false;
     }
@@ -874,14 +873,14 @@ namespace cryptonote
       get_blockchain_storage().on_new_tx_from_block(tx);
     }
     if (res) {
-      ok = add_new_tx(tx, hash, prefix_hash, tx_blob.size(), tvc, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blob, ptx_hash, prior_tx_hash, prior_ptx_hash);
+      ok = add_new_ntz_req(tx, hash, prefix_hash, tx_blob.size(), tvc, keeped_by_block, relayed, do_not_relay, sig_count, signers_index, ptx_blob, ptx_hash, prior_tx_hash, prior_ptx_hash);
       if(tvc.m_verifivation_failed) {
         MERROR("Notarization verification failed: " << hash);
       } else if(tvc.m_verifivation_impossible) {
         MERROR("Notarization verification impossible: " << hash);
       }
       if(tvc.m_added_to_pool) {
-        MDEBUG("Notarization request added: " << hash);
+        MWARNING("Notarization request added: " << hash);
       }
     }
     //relay_ntzpool_transactions();
@@ -1119,7 +1118,7 @@ namespace cryptonote
     return m_mempool.add_tx(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version);
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::add_new_tx(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_str, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash)
+  bool core::add_new_ntz_req(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_str, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash)
   {
     if(m_mempool.have_tx(tx_hash))
     {

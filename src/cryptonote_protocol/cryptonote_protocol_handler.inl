@@ -791,8 +791,10 @@ namespace cryptonote
         return 1;
       }
     }
+*/
 
-     insert notarized hash and merkle hash check here */
+   //insert notarized hash and merkle hash check here
+
     cryptonote::transaction tx;
     crypto::hash tx_hash, prefix_hash;
     std::list<cryptonote::blobdata> tx_blobs;
@@ -831,8 +833,7 @@ namespace cryptonote
       int const& s_count = arg.sig_count;
       std::string signers_index = arg.signers_index;
 
-    MERROR("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index << ", payment id: " << arg.payment_id);
-    //error solely for visibility
+    LOG_PRINT_L1("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index << ", payment id: " << arg.payment_id);
 
     NOTIFY_REQUEST_NTZ_SIG::request ag;
     cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
@@ -868,11 +869,12 @@ namespace cryptonote
         drop_connection(context, false, false);
         return 1;
       } else {
-        bool cached = req_ntz_sig_to_cache(arg, signers_index);
-        if (!cached) {
-          LOG_ERROR_CCONTEXT("Error adding data from req_ntz_sig to cache!");
-          return 1;
-        }
+        //bool cached = req_ntz_sig_to_cache(arg, signers_index);
+        //if (!cached) {
+        //  LOG_ERROR_CCONTEXT("Error adding data from req_ntz_sig to cache!");
+        //  return 1;
+        //}
+        /* req_ntz_sig_to_cache is causing core dump -- disabling for now */
       }
 
     std::vector<cryptonote::rpc::tx_in_ntzpool> tx_infos;
@@ -902,7 +904,6 @@ namespace cryptonote
     if (!hash_list.empty()) {
       if (!m_core.flush_ntzpool_txs(hash_list)) {
         MERROR("Error flushing ntz txs from pool!");
-        /* not fatal */
       }
     }
 
