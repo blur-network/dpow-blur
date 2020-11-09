@@ -36,6 +36,16 @@ if(APPLE)
   endif()
 endif()
 
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+set(cryptonote_basic_sources
+  account.cpp
+  cryptonote_basic_impl.cpp
+  cryptonote_format_utils.cpp
+  difficulty.cpp
+  hardfork.cpp
+  miner.cpp
+  ../../external/backward/backward.cpp)
+else()
 set(cryptonote_basic_sources
   account.cpp
   cryptonote_basic_impl.cpp
@@ -43,6 +53,7 @@ set(cryptonote_basic_sources
   difficulty.cpp
   hardfork.cpp
   miner.cpp)
+endif()
 
 set(cryptonote_basic_headers)
 
@@ -63,6 +74,30 @@ set(cryptonote_basic_private_headers
 
 monero_private_headers(cryptonote_basic
   ${cryptonote_basic_private_headers})
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+monero_add_library(cryptonote_basic
+  ${cryptonote_basic_sources}
+  ${cryptonote_basic_headers}
+  ${cryptonote_basic_private_headers}
+  ${BACKWARD_ENABLE})
+add_backward(cryptonote_basic)
+target_link_libraries(cryptonote_basic
+  PUBLIC
+    common
+    cncrypto
+    checkpoints
+    device
+    hydrogen
+    ${Boost_DATE_TIME_LIBRARY}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+    ${Boost_SERIALIZATION_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
+    ${Boost_THREAD_LIBRARY}
+    ${BACKWARD_LIBRARIES}
+  PRIVATE
+    ${EXTRA_LIBRARIES})
+else()
 monero_add_library(cryptonote_basic
   ${cryptonote_basic_sources}
   ${cryptonote_basic_headers}
@@ -82,3 +117,4 @@ target_link_libraries(cryptonote_basic
     ${Boost_THREAD_LIBRARY}
   PRIVATE
     ${EXTRA_LIBRARIES})
+endif()
