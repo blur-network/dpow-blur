@@ -820,8 +820,8 @@ namespace cryptonote
        MERROR("Failed to parse tx from blob: " << epee::string_tools::pod_to_hex(tx_hash));
        return 1;
     }
-//    std::list<crypto::hash> hash_list;
-//    m_core.flush_ntzpool_txs(hash_list); // flush all with empty list
+    std::list<crypto::hash> hash_list;
+    m_core.flush_ntzpool_txs(hash_list); // flush all with empty list
 
     return 1;
   }
@@ -869,12 +869,15 @@ namespace cryptonote
         drop_connection(context, false, false);
         return 1;
       } else {
+
         //bool cached = req_ntz_sig_to_cache(arg, signers_index);
         //if (!cached) {
         //  LOG_ERROR_CCONTEXT("Error adding data from req_ntz_sig to cache!");
         //  return 1;
         //}
+
         /* req_ntz_sig_to_cache is causing core dump -- disabling for now */
+
       }
 
     std::vector<cryptonote::rpc::tx_in_ntzpool> tx_infos;
@@ -901,24 +904,7 @@ namespace cryptonote
       }
     }
 
-    if (!hash_list.empty()) {
-      if (!m_core.flush_ntzpool_txs(hash_list)) {
-        MERROR("Error flushing ntz txs from pool!");
-      }
-    }
-
-    ag.ptx_string = arg.ptx_string;
-    ag.ptx_hash = arg.ptx_hash;
-    ag.prior_tx_hash = arg.prior_tx_hash;
-    ag.prior_ptx_hash = arg.prior_ptx_hash;
-    ag.tx_hash = arg.tx_hash;
-    ag.sig_count = arg.sig_count;
-    ag.payment_id = arg.payment_id;
-    ag.signers_index = arg.signers_index;
-    ag.tx_blob = arg.tx_blob;
-    return relay_post_notify<NOTIFY_REQUEST_NTZ_SIG>(ag, context);
-
-   return 1;
+    return 1;
   }
   //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>

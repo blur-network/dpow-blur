@@ -1511,9 +1511,6 @@ namespace cryptonote
       std::list<blobdata> verified_tx_blobs;
       verified_tx_blobs.push_back(req.tx_blob);
       r.txs = verified_tx_blobs;
-   /*   for (const auto& each: signers_list) {
-        r.signers_index.push_back(each);
-      }*/
 
       cryptonote::tx_verification_context tvc;
       std::vector<cryptonote::tx_verification_context> tvc_vec;
@@ -1523,8 +1520,16 @@ namespace cryptonote
         return false;
       }
       m_core.get_protocol()->relay_transactions(r, fake_context);
-//      std::list<crypto::hash> hash_list;
-//      m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list); // flush all with empty list
+      std::vector<cryptonote::rpc::tx_in_ntzpool> tx_info;
+      cryptonote::rpc::key_images_with_tx_hashes key_image_info;
+      if(!m_core.get_ntzpool_for_rpc(tx_info, key_image_info)) {
+        MERROR("[RPC] Failed to get_ntzpool_for_rpc()!");
+      }
+      std::list<crypto::hash> hash_list;
+      for (const auto& each : tx_info) {
+        hash_list.push_back(each.tx_hash);
+      }
+      m_core.get_blockchain_storage().flush_ntz_txes_from_pool(hash_list);
       res.status = CORE_RPC_STATUS_OK;
       return true;
     }
