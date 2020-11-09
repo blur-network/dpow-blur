@@ -287,10 +287,9 @@ namespace cryptonote
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
 
-    if (tx.version <= 1)
+    if (tx.version != 2)
     {
-      // v0 never accepted, v1 not valid for notarizations
-      LOG_PRINT_L1("transaction version 0 is invalid");
+      LOG_PRINT_L0("transaction version: " << std::to_string(tx.version) << " is invalid.");
       tvc.m_verifivation_failed = true;
       return false;
     }
@@ -384,13 +383,12 @@ namespace cryptonote
       meta.sig_count = sig_count;
       int i = 0;
       for (const auto& each : signers_index) {
-         if (each != (-1) && i < DPOW_SIG_COUNT) {
+         if ((each != (-1)) && (i < DPOW_SIG_COUNT)) {
            memcpy(&meta.signers_index[i], &each, sizeof(each));
         }
         i++;
       }
       memset(meta.padding, 0, sizeof(meta.padding));
-
 
         try
         {
@@ -400,7 +398,6 @@ namespace cryptonote
           if (!r)
             return false;
           m_blockchain.add_ntzpool_tx(tx, ptx_blob, ptx_hash, meta);
-          LockedTXN unlock(m_blockchain);
           if (!insert_key_images(tx, kept_by_block))
             return false;
           m_txs_by_fee_and_receive_time.emplace(std::pair<double, std::time_t>(fee / (double)blob_size, receive_time), id);
@@ -416,7 +413,7 @@ namespace cryptonote
     tvc.m_verifivation_failed = false;
     m_txpool_size += blob_size;
 
-    MINFO("Notarization request added to pool: txid " << id << " bytes: " << blob_size << " fee/byte: " << (fee / (double)blob_size));
+    LOG_PRINT_L0("Notarization request added to pool: txid " << id << " bytes: " << blob_size << " fee/byte: " << (fee / (double)blob_size));
     return true;
   }
   //---------------------------------------------------------------------------------
