@@ -409,7 +409,7 @@ namespace cryptonote
         std::string tmp_string = epee::string_tools::pod_to_hex(each);
         ss << tmp_string;
       }
-//      MWARNING("Remainder of tx_extra after popping fronts: " << ss.str());
+      //MWARNING("Remainder of tx_extra after popping fronts: " << ss.str());
     }
 
     if (tmp.front() == TX_EXTRA_NTZ_TXN_TAG)
@@ -426,7 +426,7 @@ namespace cryptonote
       size_t ii = i;
 
       size_t ntz_size = stoi(ntz_ss.str(), nullptr, 16);
-      MWARNING("ntz_size (hex): " << ntz_ss.str() << ", ntz_size (decimal): " << std::to_string(ntz_size));
+      //MWARNING("ntz_size (hex): " << ntz_ss.str() << ", ntz_size (decimal): " << std::to_string(ntz_size));
 
       for (size_t j = ii; j < (size_t)(ii + ntz_size); j++)
       {
@@ -460,7 +460,7 @@ namespace cryptonote
     if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS))
     {
       do {
-        MWARNING("Found pubkey or additional!");
+        //MWARNING("Found pubkey or additional!");
         std::ostringstream oss;
         size_t o = i - 1;
         for (size_t j = o; j < (o + 1 + sizeof(crypto::public_key)); j++) {
@@ -561,7 +561,7 @@ namespace cryptonote
     std::vector<uint8_t> ntz_data;
     std::string ntzbin;
     epee::string_tools::parse_hexstr_to_binbuff(ntzstr,ntzbin);
-    MWARNING("in add_ntz_txn_to_extra: [NTZ STRING]: " << ntzstr);
+    //MWARNING("in add_ntz_txn_to_extra: [NTZ STRING]: " << ntzstr);
     const char* x = ntzbin.data();
     for (size_t i = 0; i < ntzbin.size(); i++) {
       uint8_t each = x[i];
@@ -572,7 +572,7 @@ namespace cryptonote
     for(const auto& each : ntz_data) {
       s_ntz << epee::string_tools::pod_to_hex(each);
     }
-    MWARNING("in add_ntz_txn_to_extra: [NTZ_DATA]: " << s_ntz.str());
+    //MWARNING("in add_ntz_txn_to_extra: [NTZ_DATA]: " << s_ntz.str());
 
     uint16_t size = 0;
     std::vector<uint8_t> temp_vec;
@@ -595,7 +595,7 @@ namespace cryptonote
       byte_one = two_byte_hex.substr(0,2);
       byte_two = two_byte_hex.substr(2,2);
     }
-    MWARNING("Two byte hex value when adding ntz_txn to extra: " << two_byte_hex << ", byte one: " << byte_one << ", byte_two: " << byte_two);
+    //MWARNING("Two byte hex value when adding ntz_txn to extra: " << two_byte_hex << ", byte one: " << byte_one << ", byte_two: " << byte_two);
     uint8_t first_byte = stoi(byte_one, nullptr, 16);
     uint8_t second_byte = stoi(byte_two, nullptr, 16);
     tx_extra.push_back(first_byte);
@@ -607,7 +607,7 @@ namespace cryptonote
     for(const auto& each : tx_extra) {
       tx_extra_ss << epee::string_tools::pod_to_hex(each);
     }
-    MWARNING("in add_ntz_txn_to_extra: [BEFORE RETURN TRUE]: " << tx_extra_ss.str());
+    //MWARNING("in add_ntz_txn_to_extra: [BEFORE RETURN TRUE]: " << tx_extra_ss.str());
 
     return true;
   }

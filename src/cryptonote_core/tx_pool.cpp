@@ -1626,9 +1626,9 @@ namespace cryptonote
       ntzpool_tx_meta_t ntz_meta;
       if (!m_blockchain.get_txpool_tx_meta(sorted_it->second, meta))
       {
-        LOG_PRINT_L0("Failed to find txpool tx meta for tx: " << epee::string_tools::pod_to_hex(sorted_it->second));
+        LOG_PRINT_L2("Failed to find txpool tx meta for tx: " << epee::string_tools::pod_to_hex(sorted_it->second));
         if (m_blockchain.get_ntzpool_tx_meta(sorted_it->second, ntz_meta)) {
-          LOG_PRINT_L0("But, found in ntzpool. Ignoring...");
+          LOG_PRINT_L2("But, found in ntzpool. Ignoring...");
           sorted_it++;
           continue;
         } else {
