@@ -1184,6 +1184,10 @@ namespace tools
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       MINFO("create_ntz_transfer calling create_ntz_transactions");
       std::vector<wallet2::pending_tx> ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx_vec);
+      if (ptx_vector.empty()) {
+        MERROR("Returned empty ptx in create_ntz_transfer(), probably failed to authenticate in wallet2...");
+        return false;
+      }
       MINFO("create_ntz_transactions called with sig_count = " << std::to_string(sig_count));
 
       std::string index_vec;

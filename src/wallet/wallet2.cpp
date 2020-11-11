@@ -7336,6 +7336,21 @@ std::vector<wallet2::pending_tx> wallet2::create_ntz_transactions(std::vector<cr
   hw::device &hwdev = m_account.get_device();
   boost::unique_lock<hw::device> hwdev_lock (hwdev);
   hw::reset_mode rst(hwdev);
+  cryptonote::address_parse_info info;
+  if (!get_account_address_from_str(info, nettype(), get_account().get_public_address_str(nettype()))) {
+     MERROR("Unable to get our own address info from str!");
+     std::vector<pending_tx> ptx;
+     return ptx;
+  }
+  cryptonote::account_public_address const& own_address = info.address;
+  size_t num_s_addr = 0;
+  cryptonote::account_keys const& own_keys = get_account().get_keys();
+  int sindex = -1;
+  if (!auth_and_get_ntz_signer_index(dsts, own_address, num_s_addr, own_keys, sindex)) {
+     MERROR("Failed to authenticate and get signers index in create_ntz_transactions!");
+     std::vector<pending_tx> ptx;
+     return ptx;
+  }
 
   std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_transfers_indices_per_subaddr;
   std::vector<std::pair<uint32_t, std::vector<size_t>>> unused_dust_indices_per_subaddr;
