@@ -462,8 +462,8 @@ namespace cryptonote
       do {
         MWARNING("Found pubkey or additional!");
         std::ostringstream oss;
-        size_t o = i;
-        for (size_t j = o; j < (o + sizeof(crypto::public_key)); j++) {
+        size_t o = i - 1;
+        for (size_t j = o; j < (o + 1 + sizeof(crypto::public_key)); j++) {
            new_extra.push_back(tx_extra[j]);
            if (!tmp.empty())
              tmp.pop_front();
