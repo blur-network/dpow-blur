@@ -416,22 +416,20 @@ namespace cryptonote
 
     if (tmp.front() == TX_EXTRA_NTZ_TXN_TAG)
     {
-      for (size_t n = 0; n < 7; n++) {
-        tmp.pop_front();
-        i++;
-      }
+      tmp.pop_front(); // remove tag
+      byte_one = epee::string_tools::pod_to_hex(tmp.front());
       tmp.pop_front();
-      byte_one = epee::string_tools::pod_to_hex(tx_extra[i++]);
+      byte_two = epee::string_tools::pod_to_hex(tmp.front());
       tmp.pop_front();
-      byte_two = epee::string_tools::pod_to_hex(tx_extra[i]);
       std::ostringstream oss, n_ss;
-      ntz_ss << std::hex << byte_one;
-      ntz_ss << std::hex << byte_two;
+      ntz_ss << byte_one;
+      ntz_ss << byte_two;
+      i+=2;
 
       size_t ii = i++;
       size_t ntz_size = stoi(ntz_ss.str(), nullptr, 16);
 
-//      MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
+      MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
 
       for (size_t j = i; j < (size_t)(i + ntz_size - 1); j++)
       {
@@ -468,7 +466,7 @@ namespace cryptonote
     if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS))
     {
       do {
-//        MWARNING("Found pubkey or additional!");
+        MWARNING("Found pubkey or additional!");
         std::ostringstream oss;
         size_t o = i - 1;
         for (size_t j = o; j < (o + 34); j++) {
@@ -481,7 +479,7 @@ namespace cryptonote
           std::string tmp_string = epee::string_tools::pod_to_hex(each);
           oss << tmp_string;
         }
-//        MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
+        MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
       } while ((tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) && !tmp.empty());
     }
 
@@ -500,7 +498,7 @@ namespace cryptonote
     std::string ntz_str;
     tx_extra_field field;
     bool ntz = remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
-//      MWARNING("Ntz_txn_data string: " << ntz_str);
+  //  MWARNING("Ntz_txn_data string: " << ntz_str);
     std::vector<uint8_t> const tx_extra = ntz ? new_tx_extra : full_tx_extra;
     std::string extra_str(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size());
     std::istringstream iss(extra_str);
@@ -564,17 +562,25 @@ namespace cryptonote
   //---------------------------------------------------------------
   bool add_ntz_txn_to_extra(std::vector<uint8_t>& tx_extra, std::string const& ntzstr)
   {
-    tx_extra.resize(tx_extra.size() + 3 + sizeof(TX_EXTRA_NTZ_MAX_COUNT));
-    tx_extra[tx_extra.size() - 3 - sizeof(TX_EXTRA_NTZ_MAX_COUNT)] = TX_EXTRA_NTZ_TXN_TAG;
+    std::string tx_exss;
+    tx_extra.push_back(TX_EXTRA_NTZ_TXN_TAG);
     std::vector<uint8_t> ntz_data;
     std::string ntzbin;
     epee::string_tools::parse_hexstr_to_binbuff(ntzstr,ntzbin);
+    MWARNING("in add_ntz_txn_to_extra: [NTZ STRING]: " << ntzstr);
     const char* x = ntzbin.data();
     for (size_t i = 0; i < ntzbin.size(); i++) {
       uint8_t each = x[i];
       ntz_data.push_back(each);
     }
-    uint16_t size = 1;
+
+    std::stringstream s_ntz;
+    for(const auto& each : ntz_data) {
+      s_ntz << epee::string_tools::pod_to_hex(each);
+    }
+    MWARNING("in add_ntz_txn_to_extra: [NTZ_DATA]: " << s_ntz.str());
+
+    uint16_t size = 0;
     std::vector<uint8_t> temp_vec;
     for (const auto& character : ntz_data)
     {
@@ -603,6 +609,12 @@ namespace cryptonote
     for (const auto& each : temp_vec) {
       tx_extra.push_back(each);
     }
+    std::stringstream tx_extra_ss;
+    for(const auto& each : tx_extra) {
+      tx_extra_ss << epee::string_tools::pod_to_hex(each);
+    }
+    MWARNING("in add_ntz_txn_to_extra: [BEFORE RETURN TRUE]: " << tx_extra_ss.str());
+
     return true;
   }
   //---------------------------------------------------------------
@@ -670,16 +682,20 @@ namespace cryptonote
   {
     if (full_tx_extra.empty())
       return true;
-    std::string extra_str(reinterpret_cast<const char*>(full_tx_extra.data()), full_tx_extra.size());
-    std::istringstream iss(extra_str);
+    std::stringstream tx_extra_stream;
+    for (const auto& each : full_tx_extra) {
+      tx_extra_stream << epee::string_tools::pod_to_hex(each);
+    }
+    std::istringstream iss(tx_extra_stream.str());
     binary_archive<false> ar(iss);
     std::ostringstream oss;
     binary_archive<true> newar(oss);
     std::string ntz_str;
     std::vector<uint8_t> new_tx_extra, ntz_tx_data, tx_extra;
 
-    if (!remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str)) {
-//      MWARNING("Ntz_txn_data string: " << ntz_str);
+    bool rem = remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
+//    MWARNING("----- remove_field_from_tx_extra() [full_extra]: " << tx_extra_stream.str());
+    if (!rem) {
       tx_extra = full_tx_extra;
     } else {
       tx_extra = new_tx_extra;
