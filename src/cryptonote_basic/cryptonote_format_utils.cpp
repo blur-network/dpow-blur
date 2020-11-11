@@ -397,7 +397,7 @@ namespace cryptonote
       for (size_t j = 0; j < (size_t)(ex_nonce_size+2); j++) {
         ex_nonce_string += epee::string_tools::pod_to_hex(tx_extra[j]);
       }
-//      MWARNING("Found extra nonce with size = " << std::to_string(ex_nonce_size) << ", Full Extra nonce = " << ex_nonce_string);
+      //MWARNING("Found extra nonce with size = " << std::to_string(ex_nonce_size) << ", Full Extra nonce = " << ex_nonce_string);
       for (size_t j = 0; j < (size_t)(ex_nonce_size + 2); j++) {
         new_extra.push_back(tx_extra[j]);
         ++i;
@@ -412,8 +412,6 @@ namespace cryptonote
 //      MWARNING("Remainder of tx_extra after popping fronts: " << ss.str());
     }
 
-    size_t ii = 0;
-
     if (tmp.front() == TX_EXTRA_NTZ_TXN_TAG)
     {
       tmp.pop_front(); // remove tag
@@ -424,24 +422,21 @@ namespace cryptonote
       std::ostringstream oss, n_ss;
       ntz_ss << byte_one;
       ntz_ss << byte_two;
-      i+=2;
+      i+=4;
+      size_t ii = i;
 
-      size_t ii = i++;
       size_t ntz_size = stoi(ntz_ss.str(), nullptr, 16);
+      MWARNING("ntz_size (hex): " << ntz_ss.str() << ", ntz_size (decimal): " << std::to_string(ntz_size));
 
-      MWARNING("Ntz_ss: " << ntz_ss.str() << ", ntz_size: " << std::to_string(ntz_size));
-
-      for (size_t j = i; j < (size_t)(i + ntz_size - 1); j++)
+      for (size_t j = ii; j < (size_t)(ii + ntz_size); j++)
       {
         ntz_data.push_back(tx_extra[j]);
         ntz_str += epee::string_tools::pod_to_hex(tx_extra[j]);
         if (!tmp.empty()) {
           tmp.pop_front();
         }
-        ii++;
+        i++;
       }
-
-      i = ii;
 
       for (const auto& each: tmp)
       {
@@ -455,8 +450,7 @@ namespace cryptonote
         n_ss << std::hex << tmp_string;
       }
 
-//      MWARNING("Ntz_data vector: " << n_ss.str());
-//      MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
+      //MWARNING("Remainder of tx_extra [AFTER NTZ TX REMOVAL]: " << oss.str());
     }
     else
     {
@@ -468,8 +462,8 @@ namespace cryptonote
       do {
         MWARNING("Found pubkey or additional!");
         std::ostringstream oss;
-        size_t o = i - 1;
-        for (size_t j = o; j < (o + 34); j++) {
+        size_t o = i;
+        for (size_t j = o; j < (o + sizeof(crypto::public_key)); j++) {
            new_extra.push_back(tx_extra[j]);
            if (!tmp.empty())
              tmp.pop_front();
@@ -479,7 +473,7 @@ namespace cryptonote
           std::string tmp_string = epee::string_tools::pod_to_hex(each);
           oss << tmp_string;
         }
-        MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
+        //MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
       } while ((tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) && !tmp.empty());
     }
 
