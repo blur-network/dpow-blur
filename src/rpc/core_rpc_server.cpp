@@ -2736,6 +2736,12 @@ namespace cryptonote
       } else {
         bool rem = remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_rem);
         if (rem) {
+          /*std::string string_ntz_data;
+          for (const auto& each : ntz_data) {
+            string_ntz_data += epee::string_tools::pod_to_hex(each);
+          }
+          MWARNING("string_ntz_data: " << string_ntz_data);
+          MWARNING("ntz_rem: " << ntz_rem);*/
           uint8_t* ntz_data_ptr = ntz_data.data();
           bits256 bits = m_core.get_blockchain_storage().get_k_core().bits256_doublesha256(ntz_data_ptr, ntz_data.size());
           for (const auto& each : bits.bytes) {
@@ -2753,13 +2759,13 @@ namespace cryptonote
       res.current_chain_hash = s_hash;
       res.current_chain_pow = s_pow;
       res.notarized_hash = bytes256_to_hex(v_hash);
-    /*res.notarized_pow = n_pow;*/
+      /*res.notarized_pow = n_pow;*/
       res.notarized_txid = bytes256_to_hex(v_txid);
       res.embedded_btc_hash = embedded_btc_data_hash;
       res.notarized_height = ntz_height;
       res.notarizations_completed = ntz_complete;
       res.notarizations_merkle = bytes256_to_hex(v_MoM);
-/*      res.prevMoMheight = komodo::komodo_prevMoMheight();
+      /*res.prevMoMheight = komodo::komodo_prevMoMheight();
       res.notarized_MoMdepth = komodo::NOTARIZED_MOMDEPTH;
       res.notarized_MoM = n_MoM;*/
 

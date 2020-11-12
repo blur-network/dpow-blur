@@ -422,8 +422,8 @@ namespace cryptonote
       std::ostringstream oss, n_ss;
       ntz_ss << byte_one;
       ntz_ss << byte_two;
-      i+=4;
-      size_t ii = i;
+      i+=3;
+      size_t ii = i++;
 
       size_t ntz_size = stoi(ntz_ss.str(), nullptr, 16);
       //MWARNING("ntz_size (hex): " << ntz_ss.str() << ", ntz_size (decimal): " << std::to_string(ntz_size));
