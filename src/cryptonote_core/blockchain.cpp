@@ -1038,10 +1038,8 @@ bool Blockchain::rollback_blockchain_switching(std::list<block>& original_chain,
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
 
   // fail if rollback_height passed is too high
-  if (rollback_height > m_db->height())
-  {
-    return true;
-  }
+  bool height_check = rollback_height > m_db->height();
+  CHECK_AND_ASSERT_MES(height_check, false, "Error when rolling back blockchain! Rollback height cannot be greater than chain height!");
 
   m_timestamps_and_difficulties_height = 0;
 
@@ -1059,7 +1057,7 @@ bool Blockchain::rollback_blockchain_switching(std::list<block>& original_chain,
   {
     block_verification_context bvc = boost::value_initialized<block_verification_context>();
     bool r = handle_block_to_main_chain(bl, bvc);
-    CHECK_AND_ASSERT_MES(r && bvc.m_added_to_main_chain, false, "PANIC! failed to add (again) block while chain switching during the rollback!");
+    CHECK_AND_ASSERT_MES((r && bvc.m_added_to_main_chain), false, "PANIC! failed to add (again) block while chain switching during the rollback!");
   }
 
   m_hardfork->reorganize_from_chain_height(rollback_height);
