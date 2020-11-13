@@ -2061,8 +2061,7 @@ void wallet2::get_ntzpool_txs_and_keys(std::vector<cryptonote::ntz_tx_info>& txs
   txs = nres.transactions;
   spent_key_images = nres.spent_key_images;
   if (txs.empty() || spent_key_images.empty()) {
-    MERROR("Wallet failed to retrieve transaction vector, or spent key vector from ntzpool!");
-    return;
+    LOG_PRINT_L1("Wallet failed to retrieve transaction vector, or spent key vector from ntzpool!");
   }
   return;
 }
@@ -4884,7 +4883,36 @@ crypto::hash wallet2::get_payment_id(const pending_tx &ptx) const
   }
   return payment_id;
 }
+//----------------------------------------------------------------------------------------------------
+void wallet2::relay_ntzpool()
+{
+  //MWARNING("Relay ntzpool called in wallet2");
+  cryptonote::COMMAND_RPC_RELAY_NTZPOOL_TX::request req;
+  cryptonote::COMMAND_RPC_RELAY_NTZPOOL_TX::response res;
+  std::vector<cryptonote::ntz_tx_info> txs;
+  std::vector<cryptonote::spent_key_image_info> spent_key_images;
 
+  get_ntzpool_txs_and_keys(txs, spent_key_images);
+  std::list<std::string> txids;
+
+  for (const auto& each : txs) {
+    txids.push_back(each.id_hash);
+  }
+
+  if (txids.empty()) {
+    LOG_PRINT_L1("Relay ntzpool called from wallet, but found no pending ntz sig requests in pool");
+    return;
+  }
+
+  req.txids = txids;
+  m_daemon_rpc_mutex.lock();
+  bool r = epee::net_utils::invoke_http_json("/relay_ntzpool", req, res, m_http_client, rpc_timeout);
+  m_daemon_rpc_mutex.unlock();
+  THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "relay_ntzpool_tx");
+  THROW_WALLET_EXCEPTION_IF(res.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "relay_ntzpool_tx");
+  THROW_WALLET_EXCEPTION_IF(res.status != CORE_RPC_STATUS_OK, error::get_tx_pool_error)
+   return;
+}
 //----------------------------------------------------------------------------------------------------
 // take a pending tx and actually send it to the daemon
 void wallet2::commit_tx(pending_tx& ptx)

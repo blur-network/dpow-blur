@@ -162,10 +162,11 @@ namespace tools
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res = AUTO_VAL_INIT(res);
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res2 = AUTO_VAL_INIT(res2);
         std::string error;
-        uint64_t const height = m_wallet->get_daemon_blockchain_height(error);
-        uint64_t const notarization_wait = m_wallet->get_notarized_height() + 26;
         //MWARNING("Height = " << std::to_string(height) << ", notarization_wait = " << std::to_string(notarization_wait) << " ---- ");
         epee::json_rpc::error e;
+        uint64_t const height = m_wallet->get_daemon_blockchain_height(error);
+        uint64_t const notarization_wait = m_wallet->get_notarized_height() + 26;
+        m_wallet->relay_ntzpool();
         if (m_wallet)
         {
           std::list<cryptonote::transaction> txs;
