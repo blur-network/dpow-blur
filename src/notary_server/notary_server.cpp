@@ -166,7 +166,7 @@ namespace tools
         epee::json_rpc::error e;
         uint64_t const height = m_wallet->get_daemon_blockchain_height(error);
         uint64_t const notarization_wait = m_wallet->get_notarized_height() + 26;
-        m_wallet->relay_ntzpool();
+        //m_wallet->relay_ntzpool();
         if (m_wallet)
         {
           std::list<cryptonote::transaction> txs;
