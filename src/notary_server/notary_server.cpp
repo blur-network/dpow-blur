@@ -143,6 +143,7 @@ namespace tools
   bool notary_server::run()
   {
     bool sent_to_pool = false;
+    bool cycle_complete = false;
     m_stop = false;
     m_net_server.add_idle_handler([this](){
 
@@ -155,7 +156,7 @@ namespace tools
     }, 20000);
 
 
-    m_net_server.add_idle_handler([this, &sent_to_pool](){
+    m_net_server.add_idle_handler([this, &sent_to_pool, &cycle_complete](){
      try
      {
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
@@ -169,7 +170,6 @@ namespace tools
         //m_wallet->relay_ntzpool();
         if (m_wallet)
         {
-          std::list<cryptonote::transaction> txs;
           if (get_ntz_cache_count() <= 1)
           {
             bool r = on_create_ntz_transfer(req, res, e);
