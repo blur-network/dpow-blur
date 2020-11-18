@@ -697,6 +697,7 @@ namespace tools
     void commit_tx(pending_tx& ptx_vector);
     void request_ntz_sig(std::string const& ptx_string, crypto::hash const& ptx_hash, std::vector<pending_tx> ptxs, int const& sigs_count, std::string const& payment_id, std::vector<int> const& sig_index, std::string const& prior_tx_hash, std::string const& prior_ptx_hash);
     uint64_t get_ntz_count();
+    void flush_ntzpool();
     void relay_ntzpool();
     void get_ntzpool_tx(std::vector<pending_tx>& ptx_vector);
     void get_ntzpool_txs_and_keys(std::vector<cryptonote::ntz_tx_info>& txs, std::vector<cryptonote::spent_key_image_info>& spent_key_images);

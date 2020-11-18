@@ -2052,8 +2052,8 @@ void wallet2::flush_ntzpool()
   m_daemon_rpc_mutex.lock();
   bool r = epee::net_utils::invoke_http_json("/flush_ntzpool", req, res, m_http_client, rpc_timeout);
   m_daemon_rpc_mutex.unlock();
-  THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "flush_ntzpool");
-  THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "flush_ntzpool");
+  THROW_WALLET_EXCEPTION_IF(!r, error::no_connection_to_daemon, "flush_ntzpool");
+  THROW_WALLET_EXCEPTION_IF(res.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "flush_ntzpool");
   return;
 }
 //----------------------------------------------------------------------------------------------------
