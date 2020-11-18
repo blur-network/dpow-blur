@@ -2979,6 +2979,39 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_flush_ntzpool(const COMMAND_RPC_FLUSH_NTZ_POOL::request& req, COMMAND_RPC_FLUSH_NTZ_POOL::response& res)
+  {
+    std::vector<cryptonote::rpc::tx_in_ntzpool> ntz_tx_info;
+    cryptonote::rpc::key_images_with_tx_hashes ntz_key_image_info;
+    m_core.get_ntzpool_for_rpc(ntz_tx_info, ntz_key_image_info);
+
+    std::list<crypto::hash> ntz_txids;
+    for (const auto each: ntz_tx_info)
+    {
+      cryptonote::blobdata txblob;
+      cryptonote::blobdata ptxblob;
+      ntzpool_tx_meta_t meta = AUTO_VAL_INIT(meta);
+      bool r = m_core.get_ntzpool_transaction(each.tx_hash, txblob, ptxblob);
+      if (r)
+      {
+        if (!m_core.get_blockchain_storage().get_ntzpool_tx_meta(each.tx_hash, meta)) {
+          continue;
+        }
+        ntz_txids.push_back(each.tx_hash);
+      } else {
+        continue;
+      }
+    }
+    if (!m_core.get_blockchain_storage().flush_ntz_txes_from_pool(ntz_txids))
+    {
+        res.status = "Failed to remove one or more tx(es)";
+        return true;
+    }
+
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_output_histogram(const COMMAND_RPC_GET_OUTPUT_HISTOGRAM::request& req, COMMAND_RPC_GET_OUTPUT_HISTOGRAM::response& res, epee::json_rpc::error& error_resp)
   {
     PERF_TIMER(on_get_output_histogram);
