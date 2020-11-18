@@ -2045,6 +2045,18 @@ uint64_t wallet2::get_ntz_count()
 
 }
 //----------------------------------------------------------------------------------------------------
+void wallet2::flush_ntzpool()
+{
+  cryptonote::COMMAND_RPC_FLUSH_NTZ_POOL::request req;
+  cryptonote::COMMAND_RPC_FLUSH_NTZ_POOL::response res;
+  m_daemon_rpc_mutex.lock();
+  bool r = epee::net_utils::invoke_http_json("/flush_ntzpool", req, res, m_http_client, rpc_timeout);
+  m_daemon_rpc_mutex.unlock();
+  THROW_WALLET_EXCEPTION_IF(!nr, error::no_connection_to_daemon, "flush_ntzpool");
+  THROW_WALLET_EXCEPTION_IF(nres.status == CORE_RPC_STATUS_BUSY, error::daemon_busy, "flush_ntzpool");
+  return;
+}
+//----------------------------------------------------------------------------------------------------
 size_t wallet2::get_ntzpool_count(bool include_unrelayed)
 {
   cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL_COUNT::request nreq;

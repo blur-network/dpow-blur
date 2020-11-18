@@ -2979,7 +2979,7 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_flush_ntzpool(const COMMAND_RPC_FLUSH_NTZ_POOL::request& req, COMMAND_RPC_FLUSH_NTZ_POOL::response& res)
+  bool core_rpc_server::on_flush_ntzpool_bin(const COMMAND_RPC_FLUSH_NTZ_POOL::request& req, COMMAND_RPC_FLUSH_NTZ_POOL::response& res)
   {
     std::vector<cryptonote::rpc::tx_in_ntzpool> ntz_tx_info;
     cryptonote::rpc::key_images_with_tx_hashes ntz_key_image_info;
