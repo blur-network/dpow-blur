@@ -179,6 +179,7 @@ namespace tools
           if (bound_ntz_count < m_wallet->get_ntz_count()) {
             cycle_complete = true;
             bound_ntz_count = m_wallet->get_ntz_count();
+            sent_to_pool = false;
           }
           if (get_ntz_cache_count() <= 1)
           {
