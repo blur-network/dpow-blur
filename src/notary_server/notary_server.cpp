@@ -175,6 +175,7 @@ namespace tools
           } else {
             m_wallet->flush_ntzpool(); // need to double check and make sure we aren't flushing valid pool txs
           }
+          bound_ntz_count = (bound_ntz_count == 0) ? m_wallet->get_ntz_count() : bound_ntz_count;
           if (bound_ntz_count < m_wallet->get_ntz_count()) {
             cycle_complete = true;
             bound_ntz_count = m_wallet->get_ntz_count();
