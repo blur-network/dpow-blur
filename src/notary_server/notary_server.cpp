@@ -172,13 +172,12 @@ namespace tools
         {
           if (!cycle_complete) {
             m_wallet->relay_ntzpool(); // re-relay whole pool
+          } else {
+            m_wallet->flush_ntzpool(); // need to double check and make sure we aren't flushing valid pool txs
           }
           if (bound_ntz_count < m_wallet->get_ntz_count()) {
             cycle_complete = true;
             bound_ntz_count = m_wallet->get_ntz_count();
-          }
-          if (cycle_complete) {
-            // flush_ntzpool
           }
           if (get_ntz_cache_count() <= 1)
           {
