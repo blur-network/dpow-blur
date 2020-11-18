@@ -2981,7 +2981,7 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_flush_ntzpool_bin(const COMMAND_RPC_FLUSH_NTZ_POOL::request& req, COMMAND_RPC_FLUSH_NTZ_POOL::response& res)
   {
-    //std::string logging;
+    std::string logging;
     std::vector<cryptonote::rpc::tx_in_ntzpool> ntz_tx_info;
     cryptonote::rpc::key_images_with_tx_hashes ntz_key_image_info;
     m_core.get_ntzpool_for_rpc(ntz_tx_info, ntz_key_image_info);
@@ -2992,7 +2992,7 @@ namespace cryptonote
       cryptonote::blobdata txblob;
       cryptonote::blobdata ptxblob;
       ntzpool_tx_meta_t meta = AUTO_VAL_INIT(meta);
-      //logging += (epee::string_tools::pod_to_hex(each.tx_hash) + " ");
+      logging += (epee::string_tools::pod_to_hex(each.tx_hash) + " ");
       bool r = m_core.get_ntzpool_transaction(each.tx_hash, txblob, ptxblob);
       if (r)
       {
