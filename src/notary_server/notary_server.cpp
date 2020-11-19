@@ -175,38 +175,41 @@ namespace tools
           } else {
             m_wallet->flush_ntzpool(); // need to double check and make sure we aren't flushing valid pool txs
           }
+
           bound_ntz_count = (bound_ntz_count == 0) ? m_wallet->get_ntz_count() : bound_ntz_count;
+
           if (bound_ntz_count < m_wallet->get_ntz_count()) {
             cycle_complete = true;
             bound_ntz_count = m_wallet->get_ntz_count();
             sent_to_pool = false;
+          } else {
+            cycle_complete = false;
           }
+
           if (get_ntz_cache_count() <= 1)
           {
-            bool r = on_create_ntz_transfer(req, res, e);
-            if(r) {
-              r = false;
+            if (on_create_ntz_transfer(req, res, e)) {
               if (get_ntz_cache_count() == 1) {
-                r = on_create_ntz_transfer(req, res, e);
+                on_create_ntz_transfer(req, res, e);
               }
             }
           }
+
           if (height >= (notarization_wait)) {
             const size_t count = m_wallet->get_ntzpool_count(true);
             if ((count >= 1) && (get_ntz_cache_count() >= 2) && !sent_to_pool) {
+
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response = AUTO_VAL_INIT(response);
               epee::json_rpc::error err;
-              bool R = on_append_ntz_sig(request, response, err);
-              if (!R) {
+              if (!on_append_ntz_sig(request, response, err)) {
                 MERROR("Something went wrong when calling append_ntz_sig from idle handler!");
               } else {
                 sent_to_pool = true;
               }
             } else {
               if (!sent_to_pool) {
-                bool r = on_create_ntz_transfer(req, res, e);
-                if (r) {
+                if (on_create_ntz_transfer(req, res, e)) {
                   sent_to_pool = true;
                 }
               }
