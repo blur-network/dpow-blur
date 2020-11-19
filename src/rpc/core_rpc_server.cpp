@@ -3020,7 +3020,7 @@ namespace cryptonote
         res.status = "Failed to remove one or more tx(es): " + logging;
         return true;
     }
-    MWARNING("flush_ntzpool successful from RPC, for txids: " << logging);
+    //MWARNING("flush_ntzpool successful from RPC, for txids: " << logging);
 
     res.status = CORE_RPC_STATUS_OK;
     return true;
@@ -3338,7 +3338,7 @@ namespace cryptonote
         continue;
       }
     }
-    MWARNING("Relay ntzpool tx successful in daemon, for txids: " << logging);
+    //MWARNING("Relay ntzpool tx successful in daemon, for txids: " << logging);
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
