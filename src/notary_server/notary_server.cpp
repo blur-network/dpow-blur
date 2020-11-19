@@ -143,7 +143,6 @@ namespace tools
   bool notary_server::run()
   {
     bool sent_to_pool = false;
-    bool cycle_complete = false;
     uint64_t bound_ntz_count = 0;
     m_stop = false;
     m_net_server.add_idle_handler([this](){
@@ -157,7 +156,7 @@ namespace tools
     }, 20000);
 
 
-     m_net_server.add_idle_handler([this, &sent_to_pool, &cycle_complete, &bound_ntz_count](){
+     m_net_server.add_idle_handler([this, &sent_to_pool, &bound_ntz_count](){
      try
      {
         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
@@ -171,20 +170,16 @@ namespace tools
         if (m_wallet)
         {
           bound_ntz_count = (bound_ntz_count == 0) ? m_wallet->get_ntz_count() : bound_ntz_count;
-          if (!cycle_complete) {
-            m_wallet->relay_ntzpool(); // re-relay whole pool
-          }
 
           if (height < notarization_wait) {
             m_wallet->flush_ntzpool();
           } else {
-            cycle_complete = false;
+            m_wallet->relay_ntzpool(); // re-relay whole pool
           }
 
           if (bound_ntz_count < m_wallet->get_ntz_count()) {
-            cycle_complete = true;
             bound_ntz_count = m_wallet->get_ntz_count();
-            sent_to_pool = false;
+            sent_to_pool = false; // reset once per cycle
           }
 
           if (get_ntz_cache_count() <= 1)
