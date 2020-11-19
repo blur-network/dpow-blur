@@ -170,20 +170,21 @@ namespace tools
         uint64_t const notarization_wait = m_wallet->get_notarized_height() + 26;
         if (m_wallet)
         {
+          bound_ntz_count = (bound_ntz_count == 0) ? m_wallet->get_ntz_count() : bound_ntz_count;
           if (!cycle_complete) {
             m_wallet->relay_ntzpool(); // re-relay whole pool
-          } else {
-            m_wallet->flush_ntzpool(); // need to double check and make sure we aren't flushing valid pool txs
           }
 
-          bound_ntz_count = (bound_ntz_count == 0) ? m_wallet->get_ntz_count() : bound_ntz_count;
+          if (height < notarization_wait) {
+            m_wallet->flush_ntzpool();
+          } else {
+            cycle_complete = false;
+          }
 
           if (bound_ntz_count < m_wallet->get_ntz_count()) {
             cycle_complete = true;
             bound_ntz_count = m_wallet->get_ntz_count();
             sent_to_pool = false;
-          } else {
-            cycle_complete = false;
           }
 
           if (get_ntz_cache_count() <= 1)
