@@ -2982,25 +2982,36 @@ namespace cryptonote
   bool core_rpc_server::on_flush_ntzpool_bin(const COMMAND_RPC_FLUSH_NTZ_POOL::request& req, COMMAND_RPC_FLUSH_NTZ_POOL::response& res)
   {
     std::string logging;
-    std::vector<cryptonote::rpc::tx_in_ntzpool> ntz_tx_info;
+    std::vector<ntz_tx_info> ntz_tx_info;
+    std::vector<spent_key_image_info> ntzpool_key_image_info;
+
     cryptonote::rpc::key_images_with_tx_hashes ntz_key_image_info;
-    m_core.get_ntzpool_for_rpc(ntz_tx_info, ntz_key_image_info);
+    m_core.get_pending_ntz_pool_and_spent_keys_info(ntz_tx_info, ntzpool_key_image_info);
 
     std::list<crypto::hash> ntz_txids;
     for (const auto each: ntz_tx_info)
     {
+      cryptonote::blobdata txid_data;
+      if(!epee::string_tools::parse_hexstr_to_binbuff(each.id_hash, txid_data))
+      {
+        continue;
+      }
+      crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_data.data());
+
       cryptonote::blobdata txblob;
       cryptonote::blobdata ptxblob;
       ntzpool_tx_meta_t meta = AUTO_VAL_INIT(meta);
-      logging += (epee::string_tools::pod_to_hex(each.tx_hash) + " ");
-      bool r = m_core.get_ntzpool_transaction(each.tx_hash, txblob, ptxblob);
+      logging += (each.id_hash + " ");
+      bool r = m_core.get_ntzpool_transaction(txid, txblob, ptxblob);
+      ntz_txids.push_back(txid);
       if (r)
       {
-        if (!m_core.get_blockchain_storage().get_ntzpool_tx_meta(each.tx_hash, meta)) {
+        if (!m_core.get_blockchain_storage().get_ntzpool_tx_meta(txid, meta)) {
+          MERROR("Failed to get ntzpool meta for tx: " << each.id_hash);
           continue;
         }
-        ntz_txids.push_back(each.tx_hash);
       } else {
+        MERROR("Failed to get ntzpool transaction: " << each.id_hash);
         continue;
       }
     }
@@ -3009,7 +3020,7 @@ namespace cryptonote
         res.status = "Failed to remove one or more tx(es): " + logging;
         return true;
     }
-    //MWARNING("flush_ntzpool successful from RPC, for txids: " << logging);
+    MWARNING("flush_ntzpool successful from RPC, for txids: " << logging);
 
     res.status = CORE_RPC_STATUS_OK;
     return true;
@@ -3288,10 +3299,10 @@ namespace cryptonote
 
     bool failed = false;
     res.status = "";
-    //std::string logging;
+    std::string logging;
     for (const auto &str: req.txids)
     {
-      //logging += (str + " ");
+      logging += (str + " ");
       cryptonote::blobdata txid_data;
       if(!epee::string_tools::parse_hexstr_to_binbuff(str, txid_data))
       {
@@ -3327,7 +3338,7 @@ namespace cryptonote
         continue;
       }
     }
-    //MWARNING("Relay ntzpool tx successful in daemon, for txids: " << logging);
+    MWARNING("Relay ntzpool tx successful in daemon, for txids: " << logging);
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
