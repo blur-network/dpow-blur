@@ -1,6 +1,6 @@
 # This repository is under contruction
   
-![DPoW Default Branch](https://github.com/blur-network/dpow-blur/workflows/DPoW%20Default%20Branch/badge.svg?branch=dpow) ![DPoW Testnet Branch](https://github.com/blur-network/dpow-blur/workflows/DPoW%20Testnet%20Branch/badge.svg?branch=testnet)
+![DPoW Testnet Branch](https://github.com/blur-network/dpow-blur/workflows/DPoW%20Testnet%20Branch/badge.svg?branch=testnet)
   
 There are files in here from many different projects, including but not limited to BLUR, BTC, KMD, and XMR. Please retain proper licensing if you reuse any files, and be aware that this repo is under heavy development... So files will not yet be in their proper homes.
 
@@ -8,11 +8,11 @@ There are files in here from many different projects, including but not limited 
 
 Notary nodes can follow the procedure <a href="https://github.com/blur-network/dpow-blur/tree/dpow/docs/Blur-NN-Setup.md">located here</a>, with the guidance of a KMD administrator, to set up notary wallets for BLUR.
 
-### Pre-Compile Constant for Changing Qty. of Signatures in DPoW Blur-Side Checkpointing
+### Modify Required Signatures in DPoW Blur-Side Checkpointing
 
 Located in `src/cryptonote_config.h`, there is a pre-compile constant set for `DPOW_SIG_COUNT`...  Changing this value will change the required amount of signatures, before a notarization process is deemed complete.  Once this number of signatures is reached on a given notarization tx, the validation structs are converted to those of a standard BLUR tx, and will be sent to the network. 
 
-Any value between `2` and `21` is valid for this constant, but above `21` will require further modifications to DB.
+Any value between `2` and `21` is valid for this constant (but above `21` will require further modifications to database due to size constraints).
 
 # Contents:
 
