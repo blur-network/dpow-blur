@@ -3020,7 +3020,8 @@ namespace cryptonote
         res.status = "Failed to remove one or more tx(es): " + logging;
         return true;
     }
-    //MWARNING("flush_ntzpool successful from RPC, for txids: " << logging);
+    if (req.txids.size() > 0)
+      MWARNING("flush_ntzpool successful from RPC, for txids: " << logging);
 
     res.status = CORE_RPC_STATUS_OK;
     return true;
@@ -3314,31 +3315,24 @@ namespace cryptonote
       cryptonote::blobdata ptxblob;
       ntzpool_tx_meta_t meta = AUTO_VAL_INIT(meta);
       bool r = m_core.get_ntzpool_transaction(txid, txblob, ptxblob);
-      if (r)
-      {
-        if (!m_core.get_blockchain_storage().get_ntzpool_tx_meta(txid, meta)) {
-          continue;
-        }
+      if (!m_core.get_blockchain_storage().get_ntzpool_tx_meta(txid, meta)) {
+        MERROR("Failed to get_ntzpool_tx_meta for tx: " << str);
+      }
 
-        cryptonote_connection_context fake_context;
-        NOTIFY_REQUEST_NTZ_SIG::request r;
-        r.ptx_string = ptxblob;
-        r.ptx_hash = meta.ptx_hash;
-        r.tx_blob = txblob;
-        r.sig_count = meta.sig_count;
-        for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
-          int each_ind = meta.signers_index[i];
-          r.signers_index.push_back(each_ind);
-        }
-        m_core.get_protocol()->relay_request_ntz_sig(r, fake_context);
-        //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
+      cryptonote_connection_context fake_context;
+      NOTIFY_REQUEST_NTZ_SIG::request notify_req;
+      notify_req.ptx_string = ptxblob;
+      notify_req.ptx_hash = meta.ptx_hash;
+      notify_req.tx_blob = txblob;
+      notify_req.sig_count = meta.sig_count;
+      for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {
+        int each_ind = meta.signers_index[i];
+        notify_req.signers_index.push_back(each_ind);
       }
-      else
-      {
-        continue;
-      }
+      m_core.get_protocol()->relay_request_ntz_sig(notify_req, fake_context);
+      MWARNING("Relay ntzpool tx successful in daemon, for txids: " << logging);
+      logging = "";
     }
-    //MWARNING("Relay ntzpool tx successful in daemon, for txids: " << logging);
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
