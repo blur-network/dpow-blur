@@ -529,6 +529,7 @@ namespace notary_rpc
       std::list<std::string> tx_blob_list;
       std::list<std::string> tx_metadata_list;
       std::string multisig_txset;
+      bool sent_to_pool;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(tx_hash_list)
@@ -538,6 +539,7 @@ namespace notary_rpc
         KV_SERIALIZE(tx_blob_list)
         KV_SERIALIZE(tx_metadata_list)
         KV_SERIALIZE(multisig_txset)
+        KV_SERIALIZE(sent_to_pool)
       END_KV_SERIALIZE_MAP()
     };
   };
@@ -570,6 +572,7 @@ namespace notary_rpc
       std::list<std::string> tx_blob_list;
       std::list<std::string> tx_metadata_list;
       std::string multisig_txset;
+      bool sent_to_pool;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(tx_hash_list)
@@ -579,6 +582,7 @@ namespace notary_rpc
         KV_SERIALIZE(tx_blob_list)
         KV_SERIALIZE(tx_metadata_list)
         KV_SERIALIZE(multisig_txset)
+        KV_SERIALIZE(sent_to_pool)
       END_KV_SERIALIZE_MAP()
     };
   };
