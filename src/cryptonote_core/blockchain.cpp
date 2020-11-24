@@ -2686,7 +2686,7 @@ bool Blockchain::check_ntz_req_outputs(const transaction& tx, ntz_req_verificati
 
  if (hf_version < 11) {
    std::string s(std::to_string(11 - hf_version) + " forks from now!");
-   MERROR("Notarizations are not enabled until " << hf_version == 10 ? "after the next hardfork!" : s);
+   MERROR("Notarizations are not enabled until " << (hf_version == 10 ? "after the next hardfork!" : s));
    return false;
  }
 

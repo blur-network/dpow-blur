@@ -868,18 +868,7 @@ namespace cryptonote
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
         drop_connection(context, false, false);
         return 1;
-      } else {
-
-        //bool cached = req_ntz_sig_to_cache(arg, signers_index);
-        //if (!cached) {
-        //  LOG_ERROR_CCONTEXT("Error adding data from req_ntz_sig to cache!");
-        //  return 1;
-        //}
-
-        /* req_ntz_sig_to_cache is causing core dump -- disabling for now */
-
       }
-
     std::vector<cryptonote::rpc::tx_in_ntzpool> tx_infos;
     cryptonote::rpc::key_images_with_tx_hashes key_image_infos;
 
@@ -1808,12 +1797,6 @@ skip:
       MERROR("Could not relay_request_ntz_sig!  Sig count must be within range of 0 - " << std::to_string(DPOW_SIG_COUNT));
       return false;
     }
-  }
-//------------------------------------------------------------------------------------------------------------------------
-  template<class t_core>
-  bool t_cryptonote_protocol_handler<t_core>::req_ntz_sig_to_cache(NOTIFY_REQUEST_NTZ_SIG::request& arg, std::string const& signers_index_str)
-  {
-      return req_ntz_sig_to_cache(arg, signers_index_str);
   }
 //------------------------------------------------------------------------------------------------------------------------
   template<class t_core>

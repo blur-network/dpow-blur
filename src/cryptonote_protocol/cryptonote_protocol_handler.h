@@ -126,7 +126,6 @@ namespace cryptonote
  //   virtual bool relay_notarization(NOTIFY_NEW_NOTARIZATION::request& arg, cryptonote_connection_context& exclude_context);
     virtual bool relay_request_ntz_sig(NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context);
     virtual bool relay_response_ntz_sig(NOTIFY_RESPONSE_NTZ_SIG::request& arg, cryptonote_connection_context& exclude_context);
-    virtual bool req_ntz_sig_to_cache(NOTIFY_REQUEST_NTZ_SIG::request& arg, std::string const& signers_index);
     //----------------------------------------------------------------------------------
     //bool get_payload_sync_data(HANDSHAKE_DATA::request& hshd, cryptonote_connection_context& context);
     bool request_missing_objects(cryptonote_connection_context& context, bool check_having_blocks);

@@ -457,7 +457,7 @@ namespace cryptonote
       return false;
     }
 
-    if (tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS))
+    if ((tmp.front() == TX_EXTRA_TAG_PUBKEY) || (tmp.front() == TX_EXTRA_TAG_ADDITIONAL_PUBKEYS))
     {
       do {
         //MWARNING("Found pubkey or additional!");
@@ -474,7 +474,7 @@ namespace cryptonote
           oss << tmp_string;
         }
         //MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
-      } while ((tmp.front() == (TX_EXTRA_TAG_PUBKEY || TX_EXTRA_TAG_ADDITIONAL_PUBKEYS)) && !tmp.empty());
+      } while ((tmp.front() == TX_EXTRA_TAG_PUBKEY) || (tmp.front() == TX_EXTRA_TAG_ADDITIONAL_PUBKEYS) || (!tmp.empty()));
     }
 
     return true;
