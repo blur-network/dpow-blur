@@ -173,6 +173,7 @@ namespace tools
           if (height < notarization_wait) {
             m_wallet->flush_ntzpool();
           } else {
+            m_wallet->relay_txpool();
             m_wallet->relay_ntzpool(); // re-relay whole pool
           }
 
