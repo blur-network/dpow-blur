@@ -699,8 +699,10 @@ namespace tools
     uint64_t get_ntz_count();
     void flush_ntzpool();
     void relay_ntzpool();
+    void relay_txpool();
     void get_ntzpool_tx(std::vector<pending_tx>& ptx_vector);
     void get_ntzpool_txs_and_keys(std::vector<cryptonote::ntz_tx_info>& txs, std::vector<cryptonote::spent_key_image_info>& spent_key_images);
+    void get_txpool_txs_and_keys(std::vector<cryptonote::tx_info>& txs, std::vector<cryptonote::spent_key_image_info>& spent_key_images);
     void commit_tx(std::vector<pending_tx>& ptx_vector);
     bool save_tx(const std::vector<pending_tx>& ptx_vector, const std::string &filename) const;
     std::string save_multisig_tx(multisig_tx_set txs);
