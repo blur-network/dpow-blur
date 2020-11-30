@@ -3337,6 +3337,42 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_relay_txpool(const COMMAND_RPC_RELAY_TX::request& req, COMMAND_RPC_RELAY_TX::response& res)
+  {
+    PERF_TIMER(on_relay_txpool);
+
+    bool failed = false;
+    res.status = "";
+    std::string logging;
+    for (const auto &str: req.txids)
+    {
+      logging += (str + " ");
+      cryptonote::blobdata txid_data;
+      if(!epee::string_tools::parse_hexstr_to_binbuff(str, txid_data))
+      {
+        MERROR("Failed to parse hexstr to binbuff in relay_txpool!");
+        continue;
+      }
+      crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_data.data());
+
+      cryptonote::blobdata txblob;
+      bool r = m_core.get_pool_transaction(txid, txblob);
+      if (r) {
+        cryptonote_connection_context fake_context;
+        NOTIFY_NEW_TRANSACTIONS::request r;
+        r.txs.push_back(txblob);
+        m_core.get_protocol()->relay_transactions(r, fake_context);
+        //TODO: make sure that tx has reached other nodes here, probably wait to receive reflections from other nodes
+        MWARNING("Relay txpool successful in daemon, for txids: " << logging);
+      } else {
+        MERROR("Failed to m_core.get_pool_transaction() in relay_txpool!");
+      }
+      logging = "";
+    }
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_sync_info(const COMMAND_RPC_SYNC_INFO::request& req, COMMAND_RPC_SYNC_INFO::response& res, epee::json_rpc::error& error_resp)
   {
     PERF_TIMER(on_sync_info);

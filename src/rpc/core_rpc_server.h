@@ -79,6 +79,7 @@ namespace cryptonote
 
     BEGIN_URI_MAP2()
       MAP_URI_AUTO_JON2("/relay_ntzpool", on_relay_ntzpool_tx, COMMAND_RPC_RELAY_NTZPOOL_TX)
+      MAP_URI_AUTO_JON2("/relay_txpool", on_relay_txpool, COMMAND_RPC_RELAY_TX)
       MAP_URI_AUTO_JON2("/flush_ntzpool",  on_flush_ntzpool_bin, COMMAND_RPC_FLUSH_NTZ_POOL)
       MAP_URI_AUTO_JON2("/get_height", on_get_height, COMMAND_RPC_GET_HEIGHT)
       MAP_URI_AUTO_JON2("/getheight", on_get_height, COMMAND_RPC_GET_HEIGHT)
@@ -252,6 +253,7 @@ namespace cryptonote
     bool on_get_per_kb_fee_estimate(const COMMAND_RPC_GET_PER_KB_FEE_ESTIMATE::request& req, COMMAND_RPC_GET_PER_KB_FEE_ESTIMATE::response& res, epee::json_rpc::error& error_resp);
     bool on_get_alternate_chains(const COMMAND_RPC_GET_ALTERNATE_CHAINS::request& req, COMMAND_RPC_GET_ALTERNATE_CHAINS::response& res, epee::json_rpc::error& error_resp);
     bool on_relay_tx(const COMMAND_RPC_RELAY_TX::request& req, COMMAND_RPC_RELAY_TX::response& res, epee::json_rpc::error& error_resp);
+    bool on_relay_txpool(const COMMAND_RPC_RELAY_TX::request& req, COMMAND_RPC_RELAY_TX::response& res);
     bool on_relay_ntzpool_tx(const COMMAND_RPC_RELAY_NTZPOOL_TX::request& req, COMMAND_RPC_RELAY_NTZPOOL_TX::response& res, epee::json_rpc::error& error_resp);
     bool on_relay_ntzpool_tx(const COMMAND_RPC_RELAY_NTZPOOL_TX::request& req, COMMAND_RPC_RELAY_NTZPOOL_TX::response& res);
     bool on_sync_info(const COMMAND_RPC_SYNC_INFO::request& req, COMMAND_RPC_SYNC_INFO::response& res, epee::json_rpc::error& error_resp);
