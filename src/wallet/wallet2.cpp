@@ -4979,7 +4979,7 @@ void wallet2::relay_txpool()
   }
 
   if (txids.empty()) {
-    LOG_PRINT_L1("Relay txpool called from wallet, but found no pending ntz sig requests in pool");
+    LOG_PRINT_L1("Relay txpool called from wallet, but found no txs found in pool");
     return;
   }
 
