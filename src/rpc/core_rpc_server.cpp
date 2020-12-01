@@ -3006,12 +3006,13 @@ namespace cryptonote
         LOG_PRINT_L1("Failed to get ntzpool transaction: " << each.id_hash);
       }
     }
+
     if (!m_core.get_blockchain_storage().flush_ntz_txes_from_pool(ntz_txids))
     {
       MERROR("Failed to remove one or more tx(es): " << logging);
-    }
-    if (req.txids.size() > 0)
+    } else {
       MWARNING("flush_ntzpool successful from RPC, for txids: " << logging);
+    }
 
     res.status = CORE_RPC_STATUS_OK;
     return true;
