@@ -2985,40 +2985,30 @@ namespace cryptonote
     std::vector<ntz_tx_info> ntz_tx_info;
     std::vector<spent_key_image_info> ntzpool_key_image_info;
 
-    cryptonote::rpc::key_images_with_tx_hashes ntz_key_image_info;
     m_core.get_pending_ntz_pool_and_spent_keys_info(ntz_tx_info, ntzpool_key_image_info);
 
     std::list<crypto::hash> ntz_txids;
     for (const auto each: ntz_tx_info)
     {
-      cryptonote::blobdata txid_data;
-      if(!epee::string_tools::parse_hexstr_to_binbuff(each.id_hash, txid_data))
-      {
-        continue;
-      }
+      cryptonote::blobdata txid_data, txblob, ptxblob;
+      epee::string_tools::parse_hexstr_to_binbuff(each.id_hash, txid_data);
       crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_data.data());
-
-      cryptonote::blobdata txblob;
-      cryptonote::blobdata ptxblob;
-      ntzpool_tx_meta_t meta = AUTO_VAL_INIT(meta);
       logging += (each.id_hash + " ");
       bool r = m_core.get_ntzpool_transaction(txid, txblob, ptxblob);
       ntz_txids.push_back(txid);
       if (r)
       {
+        ntzpool_tx_meta_t meta = AUTO_VAL_INIT(meta);
         if (!m_core.get_blockchain_storage().get_ntzpool_tx_meta(txid, meta)) {
           LOG_PRINT_L1("Failed to get ntzpool meta for tx: " << each.id_hash);
-          continue;
         }
       } else {
         LOG_PRINT_L1("Failed to get ntzpool transaction: " << each.id_hash);
-        continue;
       }
     }
     if (!m_core.get_blockchain_storage().flush_ntz_txes_from_pool(ntz_txids))
     {
-        res.status = "Failed to remove one or more tx(es): " + logging;
-        return true;
+      MERROR("Failed to remove one or more tx(es): " << logging);
     }
     if (req.txids.size() > 0)
       MWARNING("flush_ntzpool successful from RPC, for txids: " << logging);
