@@ -3007,11 +3007,11 @@ namespace cryptonote
       if (r)
       {
         if (!m_core.get_blockchain_storage().get_ntzpool_tx_meta(txid, meta)) {
-          MERROR("Failed to get ntzpool meta for tx: " << each.id_hash);
+          LOG_PRINT_L1("Failed to get ntzpool meta for tx: " << each.id_hash);
           continue;
         }
       } else {
-        MERROR("Failed to get ntzpool transaction: " << each.id_hash);
+        LOG_PRINT_L1("Failed to get ntzpool transaction: " << each.id_hash);
         continue;
       }
     }
