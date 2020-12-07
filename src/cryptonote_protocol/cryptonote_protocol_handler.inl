@@ -862,7 +862,7 @@ namespace cryptonote
       return false;
     }
 
-      m_core.handle_incoming_ntz_sig(arg.tx_blob, hone, tvc, false, true, false, s_count, signers_index, arg.ptx_string, arg.ptx_hash, prior_tx_hash, prior_ptx_hash);
+      m_core.handle_incoming_ntz_sig(arg.tx_blob, hone, tvc, false, true, false, s_count, signers_index, arg.ptx_string, arg.ptx_hash, prior_tx_hash, prior_ptx_hash, context);
       if(tvc.m_verifivation_failed)
       {
         LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");

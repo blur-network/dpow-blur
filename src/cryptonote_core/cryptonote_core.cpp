@@ -653,7 +653,7 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig_pre(const blobdata& tx_blob, ntz_req_verification_context& tvc, cryptonote::transaction &tx, crypto::hash&tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count)
+  bool core::handle_incoming_ntz_sig_pre(const blobdata& tx_blob, ntz_req_verification_context& tvc, cryptonote::transaction &tx, crypto::hash&tx_hash, crypto::hash &tx_prefixt_hash, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, cryptonote_connection_context const& context)
   {
     // TODO: this is a placeholder for verification
 
@@ -665,7 +665,7 @@ namespace cryptonote
       tvc.m_verifivation_failed = true;
       return false;
     }
-    MWARNING("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(hone));
+    MWARNING("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(hone) << ", connection context: " << context);
     cryptonote::transaction const tx_output_check = tx;
     bool check_out = m_blockchain_storage.check_ntz_req_outputs(tx_output_check, tvc);
     if (!check_out) {
@@ -841,12 +841,12 @@ namespace cryptonote
     return r;
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, crypto::hash const& tx_hash, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash)
+  bool core::handle_incoming_ntz_sig(const blobdata& tx_blob, crypto::hash const& tx_hash, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash, cryptonote_connection_context const& context)
   {
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
 
     bool res = false; cryptonote::transaction tx; crypto::hash hash = crypto::null_hash; crypto::hash prefix_hash = crypto::null_hash; bool in_txpool = false; bool in_blockchain = false;
-    res = handle_incoming_ntz_sig_pre(tx_blob, tvc, tx, hash, prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count);
+    res = handle_incoming_ntz_sig_pre(tx_blob, tvc, tx, hash, prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count, context);
     bool already_have = false;
     if(m_mempool.have_tx(hash))
     {

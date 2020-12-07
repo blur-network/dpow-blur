@@ -1427,11 +1427,11 @@ namespace cryptonote
     const std::string signers_index = req.signers_index;
     const cryptonote::blobdata ptx_string = req.ptx_string;
     std::list<int> signers_list;
-    for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
+    for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {
       signers_list.push_back(std::stoi(signers_index.substr(i*2, 2), nullptr, 10));
     }
     int neg = -1;
-    int count = DPOW_SIG_COUNT - std::count(signers_list.begin(), signers_list.end(), neg);
+    int count = (DPOW_SIG_COUNT) - std::count(signers_list.begin(), signers_list.end(), neg);
 
     if (count != req.sig_count) {
       MERROR("Error signature count check against signers index failed!");
@@ -1455,7 +1455,7 @@ namespace cryptonote
     }
     const crypto::hash prior_ptx_hash =  *reinterpret_cast<const crypto::hash*>(prior_ptx_hash_data.data());
 
-      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tx_hash, tvc, false, true, false, sig_count, req.signers_index, ptx_string, ptx_hash, prior_tx_hash, prior_ptx_hash);
+      rs = m_core.handle_incoming_ntz_sig(req.tx_blob, tx_hash, tvc, false, true, false, sig_count, req.signers_index, ptx_string, ptx_hash, prior_tx_hash, prior_ptx_hash, fake_context);
       if (rs == false)
       {
         res.status = "Failed";
