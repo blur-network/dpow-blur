@@ -686,7 +686,7 @@ namespace cryptonote
     const size_t max_tx_version = 2;
     if (tx.version != 2)
     {
-      MERROR("Received ntz_sig request with incorrect tx verion = " << std::to_string(tx.version));
+      MERROR("Received ntz_sig request with incorrect tx version = " << std::to_string(tx.version));
       tvc.m_verifivation_failed = true;
       return false;
     }

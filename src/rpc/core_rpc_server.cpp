@@ -3011,7 +3011,8 @@ namespace cryptonote
     {
       MERROR("Failed to remove one or more tx(es): " << logging);
     } else {
-      MWARNING("flush_ntzpool successful from RPC, for txids: " << logging);
+      if (!ntz_txids.empty())
+        MWARNING("flush_ntzpool successful from RPC, for txids: " << logging);
     }
 
     res.status = CORE_RPC_STATUS_OK;
