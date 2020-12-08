@@ -738,11 +738,6 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res)
   {
-    PERF_TIMER(on_get_notarizations);
-    bool ok;
-    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_NOTARIZATIONS>(invoke_http_mode::JON, "/get_notarizations", req, res, ok))
-      return ok;
-
     std::vector<crypto::hash> vh;
     std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> ntz_hash_height_index;
     uint64_t ntz_count = m_core.get_blockchain_storage().get_ntz_count(ntz_hash_height_index);
@@ -758,6 +753,7 @@ namespace cryptonote
             ntz_hi.first = ntz_hashstr;
             ntz_hi.second = ntz_index;
             ntz_hexs_index.push_back(ntz_hi);
+            ntz_hexs.push_back(ntz_hashstr);
           }
         }
       } else {
@@ -766,6 +762,7 @@ namespace cryptonote
         ntz_hi.first = epee::string_tools::pod_to_hex(std::get<0>(each));
         ntz_hi.second = ntz_index;
         ntz_hexs_index.push_back(ntz_hi);
+        ntz_hexs.push_back(epee::string_tools::pod_to_hex(std::get<0>(each)));
       }
     }
     for(const auto& tx_hex_str: ntz_hexs_index)
