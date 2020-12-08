@@ -176,7 +176,6 @@ namespace cryptonote
         MAP_JON_RPC_WE("get_txpool_backlog",     on_get_txpool_backlog,         COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG)
         MAP_JON_RPC_WE("get_output_distribution", on_get_output_distribution,   COMMAND_RPC_GET_OUTPUT_DISTRIBUTION)
 //        MAP_JON_RPC_WE_IF("height_MoM",            on_height_MoM,                 COMMAND_RPC_HEIGHT_MOM, !m_restricted)
-//        MAP_JON_RPC_WE("get_notarizations", on_get_notarizations,               COMMAND_RPC_GET_NOTARIZATIONS)
         MAP_JON_RPC_WE_IF("get_notarization_data", on_get_ntz_data,               COMMAND_RPC_GET_NTZ_DATA, !m_restricted)
         MAP_JON_RPC_WE_IF("get_merkle_root",       on_get_merkle_root,            COMMAND_RPC_GET_MERKLE_ROOT, !m_restricted)
       END_JSON_RPC_MAP()
@@ -238,7 +237,6 @@ namespace cryptonote
     bool on_get_block_header_by_height(const COMMAND_RPC_GET_BLOCK_HEADER_BY_HEIGHT::request& req, COMMAND_RPC_GET_BLOCK_HEADER_BY_HEIGHT::response& res, epee::json_rpc::error& error_resp);
     bool on_get_block_headers_range(const COMMAND_RPC_GET_BLOCK_HEADERS_RANGE::request& req, COMMAND_RPC_GET_BLOCK_HEADERS_RANGE::response& res, epee::json_rpc::error& error_resp);
     bool on_get_block(const COMMAND_RPC_GET_BLOCK::request& req, COMMAND_RPC_GET_BLOCK::response& res, epee::json_rpc::error& error_resp);
- //   bool on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res, epee::json_rpc::error& error_response);
     bool on_get_connections(const COMMAND_RPC_GET_CONNECTIONS::request& req, COMMAND_RPC_GET_CONNECTIONS::response& res, epee::json_rpc::error& error_resp);
     bool on_get_info_json(const COMMAND_RPC_GET_INFO::request& req, COMMAND_RPC_GET_INFO::response& res, epee::json_rpc::error& error_resp);
     bool on_hard_fork_info(const COMMAND_RPC_HARD_FORK_INFO::request& req, COMMAND_RPC_HARD_FORK_INFO::response& res, epee::json_rpc::error& error_resp);
