@@ -2401,10 +2401,10 @@ void wallet2::update_pool_state(bool refreshed)
     bool r = epee::net_utils::invoke_http_json("/gettransactions", req, res, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
     m_daemon_rpc_mutex.lock();
-    bool nr = epee::net_utils::invoke_http_json("/getnotarizations", nreq, nres, m_http_client, rpc_timeout);
+    bool nr = epee::net_utils::invoke_http_json("/get_notarizations", nreq, nres, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
     MDEBUG("Got " << r << " and " << res.status << ", from gettransactions");
-    MDEBUG("Got " << nr << " and " << nres.status << ", from getnotarizations");
+    MDEBUG("Got " << nr << " and " << nres.status << ", from get_notarizations");
     if ((r && res.status == CORE_RPC_STATUS_OK) || (nr && nres.status == CORE_RPC_STATUS_OK))
     {
       struct entry
