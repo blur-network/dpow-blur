@@ -3165,7 +3165,7 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_relay_ntzpool_tx(const COMMAND_RPC_RELAY_NTZPOOL_TX::request& req, COMMAND_RPC_RELAY_NTZPOOL_TX::response& res)
+  bool core_rpc_server::on_relay_ntzpool_tx_bin(const COMMAND_RPC_RELAY_NTZPOOL_TX::request& req, COMMAND_RPC_RELAY_NTZPOOL_TX::response& res)
   {
     PERF_TIMER(on_relay_ntzpool_tx);
 
@@ -3188,12 +3188,14 @@ namespace cryptonote
       bool r = m_core.get_ntzpool_transaction(txid, txblob, ptxblob);
       if (!m_core.get_blockchain_storage().get_ntzpool_tx_meta(txid, meta)) {
         MERROR("Failed to get_ntzpool_tx_meta for tx: " << str);
+        continue;
       }
 
       cryptonote_connection_context fake_context;
       NOTIFY_REQUEST_NTZ_SIG::request notify_req;
       notify_req.ptx_string = ptxblob;
       notify_req.ptx_hash = meta.ptx_hash;
+      notify_req.tx_hash = str;
       notify_req.tx_blob = txblob;
       notify_req.sig_count = meta.sig_count;
       for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {

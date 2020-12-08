@@ -78,7 +78,7 @@ namespace cryptonote
     CHAIN_HTTP_TO_MAP2(connection_context); //forward http requests to uri map
 
     BEGIN_URI_MAP2()
-      MAP_URI_AUTO_JON2("/relay_ntzpool", on_relay_ntzpool_tx, COMMAND_RPC_RELAY_NTZPOOL_TX)
+      MAP_URI_AUTO_JON2("/relay_ntzpool", on_relay_ntzpool_tx_bin, COMMAND_RPC_RELAY_NTZPOOL_TX)
       MAP_URI_AUTO_JON2("/relay_txpool", on_relay_txpool, COMMAND_RPC_RELAY_TX)
       MAP_URI_AUTO_JON2("/flush_ntzpool",  on_flush_ntzpool_bin, COMMAND_RPC_FLUSH_NTZ_POOL)
       MAP_URI_AUTO_JON2("/get_height", on_get_height, COMMAND_RPC_GET_HEIGHT)
@@ -253,7 +253,7 @@ namespace cryptonote
     bool on_relay_tx(const COMMAND_RPC_RELAY_TX::request& req, COMMAND_RPC_RELAY_TX::response& res, epee::json_rpc::error& error_resp);
     bool on_relay_txpool(const COMMAND_RPC_RELAY_TX::request& req, COMMAND_RPC_RELAY_TX::response& res);
     bool on_relay_ntzpool_tx(const COMMAND_RPC_RELAY_NTZPOOL_TX::request& req, COMMAND_RPC_RELAY_NTZPOOL_TX::response& res, epee::json_rpc::error& error_resp);
-    bool on_relay_ntzpool_tx(const COMMAND_RPC_RELAY_NTZPOOL_TX::request& req, COMMAND_RPC_RELAY_NTZPOOL_TX::response& res);
+    bool on_relay_ntzpool_tx_bin(const COMMAND_RPC_RELAY_NTZPOOL_TX::request& req, COMMAND_RPC_RELAY_NTZPOOL_TX::response& res);
     bool on_sync_info(const COMMAND_RPC_SYNC_INFO::request& req, COMMAND_RPC_SYNC_INFO::response& res, epee::json_rpc::error& error_resp);
     bool on_get_txpool_backlog(const COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG::request& req, COMMAND_RPC_GET_TRANSACTION_POOL_BACKLOG::response& res, epee::json_rpc::error& error_resp);
     bool on_get_output_distribution(const COMMAND_RPC_GET_OUTPUT_DISTRIBUTION::request& req, COMMAND_RPC_GET_OUTPUT_DISTRIBUTION::response& res, epee::json_rpc::error& error_resp);
