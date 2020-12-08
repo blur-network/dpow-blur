@@ -627,11 +627,11 @@ namespace cryptonote
   {
     struct request
     {
-      std::list<std::string> ntz_hashes;
+      std::list<std::string> txs_hashes;
       bool decode_as_json;
 
       BEGIN_KV_SERIALIZE_MAP()
-        KV_SERIALIZE(ntz_hashes)
+        KV_SERIALIZE(txs_hashes)
         KV_SERIALIZE(decode_as_json)
       END_KV_SERIALIZE_MAP()
     };

@@ -736,18 +736,42 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-/*  bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res)
+  bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res)
   {
-    PERF_TIMER(on_get_transactions);
+    PERF_TIMER(on_get_notarizations);
     bool ok;
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_NOTARIZATIONS>(invoke_http_mode::JON, "/get_notarizations", req, res, ok))
       return ok;
 
     std::vector<crypto::hash> vh;
-    for(const auto& tx_hex_str: req.ntz_hashes)
+    std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> ntz_hash_height_index;
+    uint64_t ntz_count = m_core.get_blockchain_storage().get_ntz_count(ntz_hash_height_index);
+    std::vector<std::string> ntz_hexs;
+    std::vector<std::pair<std::string,uint64_t>> ntz_hexs_index;
+    for (const auto& each : ntz_hash_height_index) {
+      if (!req.txs_hashes.empty()) {
+        for (const auto& req_each : req.txs_hashes) {
+          std::string ntz_hashstr = epee::string_tools::pod_to_hex(std::get<0>(each));
+          if (ntz_hashstr == req_each) {
+            uint64_t ntz_index = std::get<2>(each);
+            std::pair<std::string,uint64_t> ntz_hi;
+            ntz_hi.first = ntz_hashstr;
+            ntz_hi.second = ntz_index;
+            ntz_hexs_index.push_back(ntz_hi);
+          }
+        }
+      } else {
+        uint64_t ntz_index = std::get<2>(each);
+        std::pair<std::string,uint64_t> ntz_hi;
+        ntz_hi.first = epee::string_tools::pod_to_hex(std::get<0>(each));
+        ntz_hi.second = ntz_index;
+        ntz_hexs_index.push_back(ntz_hi);
+      }
+    }
+    for(const auto& tx_hex_str: ntz_hexs_index)
     {
       blobdata b;
-      if(!string_tools::parse_hexstr_to_binbuff(tx_hex_str, b))
+      if(!string_tools::parse_hexstr_to_binbuff(tx_hex_str.first, b))
       {
         res.status = "Failed to parse hex representation of transaction hash";
         return true;
@@ -763,7 +787,7 @@ namespace cryptonote
     std::list<transaction> txs;
     for (const auto& each : vh) {
       cryptonote::transaction each_tx;
-      bool r = m_core.get_blockchain_storage().get_db().get_ntz_tx(each, each_tx);
+      bool r = m_core.get_blockchain_storage().get_db().get_tx(each, each_tx);
       if (!r) {
         missed_txs.push_back(get_transaction_hash(each_tx));
       } else {
@@ -829,10 +853,11 @@ namespace cryptonote
     }
     LOG_PRINT_L2("Found " << txs.size() << "/" << vh.size() << " transactions on the blockchain");
 
-    std::list<std::string>::const_iterator txhi = req.ntz_hashes.begin();
+    std::vector<std::string>::const_iterator txhi = ntz_hexs.begin();
     std::vector<crypto::hash>::const_iterator vhi = vh.begin();
     for(auto& tx: txs)
     {
+      uint64_t ntz_index = 1;
       if (tx.version != 2) {
 
       } else {
@@ -840,9 +865,13 @@ namespace cryptonote
         COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
 
         crypto::hash tx_hash = *vhi++;
+        for (const auto& each : ntz_hexs_index) {
+          if (epee::string_tools::pod_to_hex(tx_hash) == each.first) {
+            e.notarization_index = each.second;
+          }
+        }
         e.ntz_tx_hash = *txhi++;
         // TODO: Change below to grab an index, not count. Placeholder for now
-        e.notarization_index = m_core.get_blockchain_storage().get_db().get_notarization_count();
         blobdata blob = t_serializable_object_to_blob(tx);
         e.as_hex = string_tools::buff_to_hex_nodelimer(blob);
         if (req.decode_as_json)
@@ -883,7 +912,7 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res, epee::json_rpc::error& error_resp)
+/*  bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res, epee::json_rpc::error& error_resp)
   {
     PERF_TIMER(on_get_transactions);
     bool ok;
@@ -989,7 +1018,6 @@ namespace cryptonote
         crypto::hash tx_hash = *vhi++;
         e.ntz_tx_hash = *txhi++;
         // TODO: Change below to grab an index, not count. Placeholder for now
-        e.notarization_index = m_core.get_blockchain_storage().get_db().get_notarization_count();
         blobdata blob = t_serializable_object_to_blob(tx);
         e.as_hex = string_tools::buff_to_hex_nodelimer(blob);
         if (req.decode_as_json)

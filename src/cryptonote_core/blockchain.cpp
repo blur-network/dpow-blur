@@ -182,25 +182,26 @@ bool Blockchain::have_tx_keyimg_as_spent(const crypto::key_image &key_im) const
   return  m_db->has_key_image(key_im);
 }
 //------------------------------------------------------------------
-uint64_t Blockchain::get_ntz_count(std::vector<std::pair<crypto::hash,uint64_t>>& ret)
+uint64_t Blockchain::get_ntz_count(std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>>& ret)
 {
-  // return-by-reference: vector of hash, height pair for all notarizations in DB
-  // actual return value is total count
+  // vector of hash, height pair for all notarizations in DB
+  // return value is total count
   LOG_PRINT_L3("Blockchain::" << __func__);
   uint64_t count = 0;
-  std::vector<std::pair<crypto::hash,uint64_t>> hash_height;
-  for_all_transactions([this, &hash_height, &count](const crypto::hash &hash, const cryptonote::transaction &tx)->bool
+  std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> hash_height_index;
+  for_all_transactions([this, &hash_height_index, &count](const crypto::hash &hash, const cryptonote::transaction &tx)->bool
   {
     if ((tx.version == 2) && (tx.vin[0].type() != typeid(txin_gen))) {
+      uint64_t ntz_index = count;
       const uint64_t height = m_db->get_tx_block_height(hash);
-      auto each = std::make_pair(hash,height);
-      hash_height.push_back(each);
+      auto each = std::make_tuple(hash,height,ntz_index);
+      hash_height_index.push_back(each);
       count += 1;
     }
     return true;
   });
 
-  ret = hash_height;
+  ret = hash_height_index;
   return count;
 }
 //------------------------------------------------------------------
@@ -227,14 +228,14 @@ crypto::hash Blockchain::get_ntz_merkle(std::vector<std::pair<crypto::hash,uint6
 //------------------------------------------------------------------
 uint64_t Blockchain::get_notarized_height(crypto::hash& ntz_hash)
 {
-  std::vector<std::pair<crypto::hash,uint64_t>> ntz_txs;
+  std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> ntz_txs;
   uint64_t ntz_count = get_ntz_count(ntz_txs);
   uint64_t notarized_height = 0;
   ntz_hash = crypto::null_hash;
   for (const auto& each : ntz_txs) {
-    if (each.second > notarized_height) {
-      notarized_height = each.second;
-      ntz_hash = each.first;
+    if (std::get<1>(each) > notarized_height) {
+      notarized_height = std::get<1>(each);
+      ntz_hash = std::get<0>(each);
     }
   }
   return notarized_height;
@@ -271,29 +272,36 @@ bool Blockchain::is_block_notarized(cryptonote::block const& b)
 //------------------------------------------------------------------
 void Blockchain::komodo_update()
 {
-    std::vector<std::pair<crypto::hash,uint64_t>> notarizations;
+    std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> notarizations;
     uint64_t ntz_count = get_ntz_count(notarizations);
 
     crypto::hash ntz_txid = crypto::null_hash;
     uint64_t greatest_height = 0;
     uint64_t previous_height = 0;
     for (const auto& each: notarizations) {
-      if (each.second > greatest_height) {
-        greatest_height = each.second;
-        ntz_txid = each.first;
+      if (std::get<1>(each) > greatest_height) {
+        greatest_height = std::get<1>(each);
+        ntz_txid = std::get<0>(each);
       }
     }
     for (const auto& each : notarizations) {
-      if (each.second > previous_height) {
-        if (each.second == greatest_height) {
+      if (std::get<1>(each) > previous_height) {
+        if (std::get<1>(each) == greatest_height) {
           /* ignore */
         } else {
-          previous_height = each.second;
+          previous_height = std::get<1>(each);
         }
       }
     }
 
-    crypto::hash ntz_merkle = get_ntz_merkle(notarizations);
+    std::vector<std::pair<crypto::hash,uint64_t>> ntzs;
+    for (const auto& each: notarizations) {
+      std::pair<crypto::hash,uint64_t> hh;
+      hh.first = std::get<0>(each);
+      hh.second = std::get<1>(each);
+      ntzs.push_back(hh);
+    }
+    crypto::hash ntz_merkle = get_ntz_merkle(ntzs);
 
     epee::span<const uint8_t> span_desttxid = epee::as_byte_span(ntz_txid);
     epee::span<const uint8_t> span_notarizedhash = epee::as_byte_span(get_block_id_by_height(greatest_height));
@@ -1625,16 +1633,46 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
   // if we have notarizations in DB
   if (b.major_version >= 11)
   {
-    if (ntz_height >= 1) {
-      if (bei.height > ntz_height) {
+    if (ntz_height >= 1)
+    {
+      if (bei.height > ntz_height)
+      {
         LOG_PRINT_L1("Blockchain::handle_alternative_block() >> Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
-      }  else if (bei.height < ntz_height) {
-
-        if (is_block_notarized(bei.bl)) {
+        std::vector<cryptonote::transaction> nota_txs;
+        for (const auto& each: bei.bl.tx_hashes)
+        {
+          cryptonote::blobdata tx_blob;
+          if (m_db->get_tx_blob(each, tx_blob))
+          {
+            cryptonote::transaction tx;
+            if (!parse_and_validate_tx_from_blob(tx_blob, tx)) {
+              MERROR("Failed to parse and validate tx from blob in handle_alternative_block_to_main_chain()!");
+              bvc.m_verifivation_failed = true;
+              return false;
+            } else {
+              if (tx.version == 2) {
+                nota_txs.push_back(tx);
+              }
+            }
+          }
+        }
+        if (nota_txs.size() > 1) {
+          MERROR("Error: encountered two notarization txs in a single block!");
+          bvc.m_verifivation_failed = true;
+          return false;
+        }
+      }
+      else if (bei.height < ntz_height)
+      {
+        if (is_block_notarized(bei.bl))
+        {
           MERROR("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
           bvc.m_verifivation_failed = true;
           return false;
-        } else {
+        }
+        else
+        {
+          // TODO: This case should never happen, logging should probably indicate unexpected behavior
           LOG_PRINT_L1("Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
         }
 
@@ -3896,6 +3934,29 @@ leave:
       if (m_height > ntz_height) {
        // height greater than last notarized height
         LOG_PRINT_L1("Blockchain::handle_block_to_main_chain() >> Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
+        std::vector<cryptonote::transaction> nota_txs;
+        for (const auto& each: bl.tx_hashes)
+        {
+          cryptonote::blobdata tx_blob;
+          if (m_db->get_tx_blob(each, tx_blob))
+          {
+            cryptonote::transaction tx;
+            if (!parse_and_validate_tx_from_blob(tx_blob, tx)) {
+              MERROR("Failed to parse and validate tx from blob in handle_alternative_block_to_main_chain()!");
+              bvc.m_verifivation_failed = true;
+              return false;
+            } else {
+              if (tx.version == 2) {
+                nota_txs.push_back(tx);
+              }
+            }
+          }
+        }
+        if (nota_txs.size() > 1) {
+          MERROR("Error: encountered two notarization txs in a single block!");
+          bvc.m_verifivation_failed = true;
+          return false;
+        }
       } else if (m_height < ntz_height) {
        // height less than last notarized height
 

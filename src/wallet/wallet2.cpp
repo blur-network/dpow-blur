@@ -2391,7 +2391,6 @@ void wallet2::update_pool_state(bool refreshed)
     cryptonote::COMMAND_RPC_GET_NOTARIZATIONS::response nres;
     for (const auto &p: txids) {
       req.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
-      nreq.ntz_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
     }
     MDEBUG("asking for " << txids.size() << " transactions");
     req.decode_as_json = false;
