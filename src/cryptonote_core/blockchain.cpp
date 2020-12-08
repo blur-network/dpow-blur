@@ -240,6 +240,17 @@ uint64_t Blockchain::get_notarized_height(crypto::hash& ntz_hash)
   return notarized_height;
 }
 //------------------------------------------------------------------
+uint64_t Blockchain::get_notarization_wait()
+{
+  crypto::hash ntz_hash = crypto::null_hash;
+  uint64_t ntz_height = get_notarized_height(ntz_hash);
+  uint64_t ret = 0;
+  if (ntz_height) {
+    ret = (ntz_height + 26);
+  }
+  return ret;
+}
+//------------------------------------------------------------------
 bool Blockchain::is_block_notarized(cryptonote::block const& b)
 {
   uint64_t greatest_height = 0;
