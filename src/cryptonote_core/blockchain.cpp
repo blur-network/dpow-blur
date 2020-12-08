@@ -247,7 +247,7 @@ uint64_t Blockchain::get_notarization_wait()
   uint64_t ntz_height = get_notarized_height(ntz_hash);
   uint64_t ret = 0;
   if (ntz_height) {
-    ret = (ntz_height + 26);
+    ret = (ntz_height + (DPOW_NOTARIZATION_WINDOW));
   }
   return ret;
 }

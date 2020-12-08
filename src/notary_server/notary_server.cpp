@@ -157,68 +157,66 @@ namespace tools
 
 
      m_net_server.add_idle_handler([this, &sent_to_pool, &bound_ntz_count](){
-     try
-     {
-        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
-        notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res = AUTO_VAL_INIT(res);
-        std::string error;
-        //MWARNING("Height = " << std::to_string(height) << ", notarization_wait = " << std::to_string(notarization_wait) << " ---- ");
-        epee::json_rpc::error e;
-        uint64_t const height = m_wallet->get_daemon_blockchain_height(error);
-        uint64_t const notarization_wait = m_wallet->get_notarized_height() + 26;
-        if (m_wallet)
-        {
-          bound_ntz_count = (bound_ntz_count == 0) ? m_wallet->get_ntz_count() : bound_ntz_count;
+       try
+       {
+         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
+         notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::response res = AUTO_VAL_INIT(res);
+         std::string error;
+         epee::json_rpc::error e;
+         uint64_t const height = m_wallet->get_daemon_blockchain_height(error);
+         uint64_t const notarization_wait = m_wallet->get_notarized_height() + (DPOW_NOTARIZATION_WINDOW);
+         //MWARNING("Height = " << std::to_string(height) << ", notarization_wait = " << std::to_string(notarization_wait) << " ---- ");
+         if (m_wallet)
+         {
+           bound_ntz_count = (bound_ntz_count == 0) ? m_wallet->get_ntz_count() : bound_ntz_count;
+           if (height < notarization_wait) {
+             m_wallet->flush_ntzpool();
+           } else {
+             m_wallet->relay_txpool();
+             m_wallet->relay_ntzpool(); // re-relay whole pool
+           }
 
-          if (height < notarization_wait) {
-            m_wallet->flush_ntzpool();
-          } else {
-            m_wallet->relay_txpool();
-            m_wallet->relay_ntzpool(); // re-relay whole pool
-          }
+           if (bound_ntz_count < m_wallet->get_ntz_count()) {
+             bound_ntz_count = m_wallet->get_ntz_count();
+             sent_to_pool = false; // reset once per cycle
+           }
 
-          if (bound_ntz_count < m_wallet->get_ntz_count()) {
-            bound_ntz_count = m_wallet->get_ntz_count();
-            sent_to_pool = false; // reset once per cycle
-          }
+           if (get_ntz_cache_count() <= 1)
+           {
+             if (on_create_ntz_transfer(req, res, e)) {
+               sent_to_pool = res.sent_to_pool;
+               if (get_ntz_cache_count() == 1) {
+                 on_create_ntz_transfer(req, res, e);
+                 sent_to_pool = res.sent_to_pool;
+               }
+             }
+           }
 
-          if (get_ntz_cache_count() <= 1)
-          {
-            if (on_create_ntz_transfer(req, res, e)) {
-              sent_to_pool = res.sent_to_pool;
-              if (get_ntz_cache_count() == 1) {
-                on_create_ntz_transfer(req, res, e);
-                sent_to_pool = res.sent_to_pool;
-              }
-            }
-          }
-
-          if (height >= (notarization_wait)) {
-            const size_t count = m_wallet->get_ntzpool_count(true);
-            if ((count >= 1) && (get_ntz_cache_count() >= 2) && !sent_to_pool) {
-
-              notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
-              notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response = AUTO_VAL_INIT(response);
-              epee::json_rpc::error err;
-              if (!on_append_ntz_sig(request, response, err)) {
-                MERROR("Something went wrong when calling append_ntz_sig from idle handler!");
-              } else {
-                sent_to_pool = response.sent_to_pool;
-              }
-            } else {
-              if (!sent_to_pool) {
-                if (on_create_ntz_transfer(req, res, e)) {
-                  sent_to_pool = res.sent_to_pool;
-                }
-              }
-            }
-          }
-        }
-      } catch (const std::exception& ex) {
-        MERROR("Exception while executing notarization idle handler sequence, what=" << ex.what());
-      }
-    return true;
-  }, 20000);
+           if (height >= (notarization_wait)) {
+             const size_t count = m_wallet->get_ntzpool_count(true);
+             if ((count >= 1) && (get_ntz_cache_count() >= 2) && !sent_to_pool) {
+               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
+               notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response = AUTO_VAL_INIT(response);
+               epee::json_rpc::error err;
+               if (!on_append_ntz_sig(request, response, err)) {
+                 MERROR("Something went wrong when calling append_ntz_sig from idle handler!");
+               } else {
+                 sent_to_pool = response.sent_to_pool;
+               }
+             } else {
+               if (!sent_to_pool) {
+                 if (on_create_ntz_transfer(req, res, e)) {
+                   sent_to_pool = res.sent_to_pool;
+                 }
+               }
+             }
+           }
+         }
+       } catch (const std::exception& ex) {
+         MERROR("Exception while executing notarization idle handler sequence, what=" << ex.what());
+       }
+       return true;
+     }, 20000);
 
     m_net_server.add_idle_handler([this](){
       if (m_stop.load(std::memory_order_relaxed))
