@@ -3195,7 +3195,7 @@ namespace cryptonote
       NOTIFY_REQUEST_NTZ_SIG::request notify_req;
       notify_req.ptx_string = ptxblob;
       notify_req.ptx_hash = meta.ptx_hash;
-      notify_req.tx_hash = str;
+      notify_req.tx_hash = txid;
       notify_req.tx_blob = txblob;
       notify_req.sig_count = meta.sig_count;
       for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {
