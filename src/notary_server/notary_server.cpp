@@ -875,8 +875,7 @@ namespace tools
       std::vector<int> vec_ret;
       for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
         if (signer_index == signers_index_vec[i]) {
-          MERROR("Found our index value in signers_index at: " << std::to_string(i) << ", we must have already signed this one!");
-          return false;
+          LOG_PRINT_L1("Found our index value in signers_index at: " << std::to_string(i) << ", we must have already signed this one!");
         } else if ((signers_index_vec[i] == neg) && (vec_ret.size() == count)) {
           MINFO("Adding our index value: " << std::to_string(signer_index) << ", to signers_index at location: " << std::to_string(i));
           vec_ret.push_back(signer_index);
@@ -1453,7 +1452,7 @@ pool_recheck:
 
     if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
     {
-      MERROR("Transfer failed validation in validate_ntz_transfer!");
+      LOG_PRINT_L1("Transfer failed validation in validate_ntz_transfer!");
       std::list<std::string> tx_hashes;
       tx_hashes.push_back(tx_hash);
       if (!m_wallet->remove_ntzpool_txs(tx_hashes)) {
