@@ -3172,7 +3172,7 @@ namespace cryptonote
 
     bool failed = false;
     res.status = "";
-    std::string logging;
+/*    std::string logging;
     for (const auto &str: req.txids)
     {
       logging += (str + " ");
@@ -3206,9 +3206,9 @@ namespace cryptonote
       m_core.get_protocol()->relay_request_ntz_sig(notify_req, fake_context);
       MWARNING("Relay ntzpool tx successful in daemon, for txids: " << logging);
       logging = "";
-    }
+    }*/
     res.status = CORE_RPC_STATUS_OK;
-    return true;
+    return m_core.relay_ntzpool_transactions();
   }
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_relay_txpool(const COMMAND_RPC_RELAY_TX::request& req, COMMAND_RPC_RELAY_TX::response& res)
