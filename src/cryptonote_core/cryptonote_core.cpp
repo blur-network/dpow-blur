@@ -665,7 +665,7 @@ namespace cryptonote
       tvc.m_verifivation_failed = true;
       return false;
     }
-    MWARNING("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(hone) << ", connection context: " << context);
+    MINFO("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(hone) << ", connection context: " << context);
     cryptonote::transaction const tx_output_check = tx;
     bool check_out = m_blockchain_storage.check_ntz_req_outputs(tx_output_check, tvc);
     if (!check_out) {
@@ -1244,35 +1244,28 @@ namespace cryptonote
   bool core::relay_ntzpool_transactions()
   {
     // we attempt to relay txes that should be relayed, but were not
-    std::list<std::pair<crypto::hash,cryptonote::blobdata>> ntz_txs_list;
-    if ((m_mempool.get_relayable_ntz_transactions(ntz_txs_list)) && (!ntz_txs_list.empty()))
-    {
-      MWARNING("Called relay_ntzpool_transactions()!");
-      std::vector<std::pair<crypto::hash,cryptonote::blobdata>> ntz_txs;
-      for (const auto& each : ntz_txs_list) {
-        ntz_txs.push_back(each);
-      }
-      cryptonote_connection_context fake_context;
+    //MWARNING("Called relay_ntzpool_transactions()!");
+    std::list<std::pair<transaction,blobdata>> txs;
+    m_mempool.get_pending_ntz_pool_transactions(txs, true);
+    if (!txs.empty()) {
+      cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
       ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
-
-      for (size_t i = 0; i < ntz_txs.size(); i++)
+      for (const auto& each : txs)
       {
         NOTIFY_REQUEST_NTZ_SIG::request r = AUTO_VAL_INIT(r);
         ntzpool_tx_meta_t meta;
-        crypto::hash ntz_hash = ntz_txs[i].first;
-        MWARNING("Prior to calling get ntzpool tx meta....");
+        crypto::hash ntz_hash = get_transaction_hash(each.first);
         if (!m_blockchain_storage.get_ntzpool_tx_meta(ntz_hash, meta)) {
           MERROR("Error fetching ntzpool meta in relay_ntzpool_transactions()!");
-          return false;
         }
-        r.tx_hash = ntz_txs[i].first;
-        r.tx_blob = ntz_txs[i].second;
+        r.tx_hash = ntz_hash;
+        r.tx_blob = each.second;
         crypto::hash ptx_hash = meta.ptx_hash;
         std::pair<cryptonote::blobdata,cryptonote::blobdata> bd_pair = m_blockchain_storage.get_ntzpool_tx_blob(ntz_hash, ptx_hash);
         r.ptx_string = bd_pair.second;
         std::string signers_index;
         const int neg = -1;
-        for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
+        for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {
           std::string tmp;
           int each_ind = meta.signers_index[i];
           if ((each_ind < 10) && (each_ind > neg)) {
@@ -1284,12 +1277,11 @@ namespace cryptonote
         }
         r.ptx_hash = ptx_hash;
         get_protocol()->relay_request_ntz_sig(r, fake_context);
-        MWARNING("New incoming_ntz_sig relayed!");
-        //m_mempool.set_relayed(ntz_txs_list);
-        return true;
+        std::string logging = epee::string_tools::pod_to_hex(ntz_hash);
+        MWARNING("Ntzpool relay successful for transaction: " << logging);
       }
     }
-    return false;
+    return true;
   }
   //-----------------------------------------------------------------------------------------------
   void core::on_transaction_relayed(const cryptonote::blobdata& tx_blob)

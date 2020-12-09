@@ -619,8 +619,8 @@ namespace cryptonote
       do_not_relay = meta.do_not_relay;
       double_spend_seen = meta.double_spend_seen;
       sig_count = meta.sig_count;
-      for (int i = 0; i < DPOW_SIG_COUNT; i++) {
-        signers_index.push_back(get_index<int>(i, meta.signers_index));
+      for (int i = 0; i < (DPOW_SIG_COUNT); i++) {
+        signers_index.push_back(meta.signers_index[i]);
       }
 
       // remove first, in case this throws, so key images aren't removed

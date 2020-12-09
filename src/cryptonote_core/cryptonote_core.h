@@ -87,6 +87,8 @@ namespace cryptonote
        */
      core(i_cryptonote_protocol* pprotocol);
 
+     bool relay_ntzpool_transactions();
+
     /**
      * @copydoc Blockchain::handle_get_objects
      *
@@ -1031,7 +1033,6 @@ namespace cryptonote
       * @return true
       */
      bool relay_txpool_transactions();
-     bool relay_ntzpool_transactions();
 
      /**
       * @brief checks free disk space
