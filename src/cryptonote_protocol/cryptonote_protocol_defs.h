@@ -286,20 +286,6 @@ namespace cryptonote
   /*                                                                      */
   /************************************************************************/
 
-//#define S_INDEX(i) s##i
-
-  template<class T, class Tt>
-  T get_index(T i, Tt j) {
-    std::string I = std::to_string(i);
-/*    decltype(i) S_INDEX(I);
-    S_INDEX(I) = j[i];
-    return S_INDEX(I);*/
-    decltype(i) s;
-    s = j[i];
-    return s;
-  }
-
-
   struct NOTIFY_REQUEST_NTZ_SIG
   {
     const static int ID = BC_COMMANDS_POOL_BASE + 10;

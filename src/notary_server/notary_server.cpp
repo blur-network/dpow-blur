@@ -1502,7 +1502,7 @@ pool_recheck:
 
         std::string index_vec;
         for (int i = 0; i < DPOW_SIG_COUNT; i++) {
-          std::string tmp = std::to_string(cryptonote::get_index<int>(i, signers_index)) + " ";
+          std::string tmp = std::to_string(signers_index[i]);
           index_vec += tmp;
         }
 

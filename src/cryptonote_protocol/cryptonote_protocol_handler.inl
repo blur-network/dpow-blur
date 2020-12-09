@@ -830,10 +830,10 @@ namespace cryptonote
   int t_cryptonote_protocol_handler<t_core>::handle_request_ntz_sig(int command, NOTIFY_REQUEST_NTZ_SIG::request& arg, cryptonote_connection_context& context)
   {
 
-      int const& s_count = arg.sig_count;
-      std::string signers_index = arg.signers_index;
+    int const& s_count = arg.sig_count;
+    std::string signers_index = arg.signers_index;
 
-    LOG_PRINT_L1("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index << ", payment id: " << arg.payment_id);
+    MWARNING("Received NOTIFY_REQUEST_NTZ_SIG (signature count: " << std::to_string(arg.sig_count) << ", signers_index: "<< signers_index);
 
     NOTIFY_REQUEST_NTZ_SIG::request ag;
     cryptonote::ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
@@ -843,7 +843,7 @@ namespace cryptonote
     std::string prior_ptx_hex = epee::string_tools::pod_to_hex(arg.prior_ptx_hash);
     if (!epee::string_tools::parse_hexstr_to_binbuff(prior_tx_hex, prior_tx_hash_data))
     {
-      MERROR("Failed in converting prior tx hash to binbuff!");
+      LOG_ERROR_CCONTEXT("Failed in converting prior tx hash to binbuff!");
       return false;
     }
     const crypto::hash prior_tx_hash = *reinterpret_cast<const crypto::hash*>(prior_tx_hash_data.data());
@@ -851,24 +851,25 @@ namespace cryptonote
     std::string prior_ptx_hash_data;
     if (!epee::string_tools::parse_hexstr_to_binbuff(prior_ptx_hex, prior_ptx_hash_data))
     {
-      MERROR("Failed in converting prior ptx hash to binbuff!");
+      LOG_ERROR_CCONTEXT("Failed in converting prior ptx hash to binbuff!");
       return false;
     }
     const crypto::hash prior_ptx_hash = *reinterpret_cast<const crypto::hash*>(prior_ptx_hash_data.data());
 
     crypto::hash hone; crypto::hash htwo; cryptonote::transaction tx;
     if (!parse_and_validate_tx_from_blob(arg.tx_blob, tx, hone, htwo)) {
-      MERROR("Failed to parse and validate tx in protocol!");
+      LOG_ERROR_CCONTEXT("Failed to parse and validate tx in protocol!");
       return false;
     }
 
-      m_core.handle_incoming_ntz_sig(arg.tx_blob, hone, tvc, false, true, false, s_count, signers_index, arg.ptx_string, arg.ptx_hash, prior_tx_hash, prior_ptx_hash, context);
-      if(tvc.m_verifivation_failed)
-      {
-        LOG_PRINT_CCONTEXT_L1("Pre-notarization tx verification failed, dropping connection");
-        drop_connection(context, false, false);
-        return 1;
-      }
+    m_core.handle_incoming_ntz_sig(arg.tx_blob, hone, tvc, false, true, false, s_count, signers_index, arg.ptx_string, arg.ptx_hash, prior_tx_hash, prior_ptx_hash, context);
+    if(tvc.m_verifivation_failed)
+    {
+      LOG_ERROR_CCONTEXT("Pre-notarization tx verification failed, dropping connection");
+      drop_connection(context, false, false);
+      return 1;
+    }
+
     std::vector<cryptonote::rpc::tx_in_ntzpool> tx_infos;
     cryptonote::rpc::key_images_with_tx_hashes key_image_infos;
 
