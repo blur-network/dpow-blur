@@ -1374,6 +1374,7 @@ namespace cryptonote
       r.ptx_string = req.ptx_string;
       r.ptx_hash = ptx_hash;
       r.tx_blob = req.tx_blob;
+      r.tx_hash = tx_hash;
       r.sig_count = req.sig_count;
       r.payment_id = req.payment_id;
       r.signers_index = req.signers_index;
