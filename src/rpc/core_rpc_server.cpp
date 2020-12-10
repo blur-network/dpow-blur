@@ -1616,7 +1616,7 @@ namespace cryptonote
     if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_PENDING_NTZ_POOL>(invoke_http_mode::JON, "/get_pending_ntz_pool", req, res, r))
       return r;
 
-    m_core.get_pending_ntz_pool_and_spent_keys_info(res.transactions, res.spent_key_images, !request_has_rpc_origin || !m_restricted);
+    m_core.get_pending_ntz_pool_and_spent_keys_info(res.transactions, res.spent_key_images, (!request_has_rpc_origin || !m_restricted));
 
     res.status = CORE_RPC_STATUS_OK;
     return true;

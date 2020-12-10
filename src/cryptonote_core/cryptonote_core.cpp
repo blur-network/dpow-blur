@@ -1243,39 +1243,47 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------
   bool core::relay_ntzpool_transactions()
   {
-    // we attempt to relay txes that should be relayed, but were not
     //MWARNING("Called relay_ntzpool_transactions()!");
-    std::list<std::pair<transaction,blobdata>> txs;
-    m_mempool.get_pending_ntz_pool_transactions(txs, true);
-    if (!txs.empty()) {
-      cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
-      ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
-      for (const auto& each : txs)
+    std::vector<ntz_tx_info> tx_infos;
+    std::vector<spent_key_image_info> key_image_infos;
+    get_pending_ntz_pool_and_spent_keys_info(tx_infos, key_image_infos);
+    if (!tx_infos.empty()) {
+      for (const auto& each : tx_infos)
       {
+        cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
+        ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
+        //MWARNING("transaction blob: " << tx_to_blob(each.first));
         NOTIFY_REQUEST_NTZ_SIG::request r = AUTO_VAL_INIT(r);
         ntzpool_tx_meta_t meta;
-        crypto::hash ntz_hash = get_transaction_hash(each.first);
+        crypto::hash ntz_hash;
+        if (!string_to_hash(each.id_hash, ntz_hash)) {
+          return false;
+        }
         if (!m_blockchain_storage.get_ntzpool_tx_meta(ntz_hash, meta)) {
           MERROR("Error fetching ntzpool meta in relay_ntzpool_transactions()!");
         }
-        r.sig_count = meta.sig_count;
+        r.sig_count = each.sig_count;
         r.tx_hash = ntz_hash;
-        r.tx_blob = each.second;
-        crypto::hash ptx_hash = meta.ptx_hash;
-        std::pair<cryptonote::blobdata,cryptonote::blobdata> bd_pair = m_blockchain_storage.get_ntzpool_tx_blob(ntz_hash, ptx_hash);
-        r.ptx_string = bd_pair.second;
+        r.tx_blob = each.tx_blob;
+        MWARNING("transaction blob: " << each.tx_blob);
+        crypto::hash ptx_hash;
+        if (!string_to_hash(each.ptx_hash, ptx_hash)) {
+          return false;
+        }
+        r.ptx_string = each.ptx_blob;
         std::string signers_index;
         const int neg = -1;
-        for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {
+        for (const auto& sig : each.signers_index) {
           std::string tmp;
-          int each_ind = meta.signers_index[i];
-          if ((each_ind < 10) && (each_ind > neg)) {
-            tmp = "0" + std::to_string(each_ind);
+          if ((sig < 10) && (sig > neg)) {
+            tmp = "0" + std::to_string(sig);
           } else {
-            tmp = std::to_string(each_ind);
+            tmp = std::to_string(sig);
           }
           signers_index += tmp;
         }
+
+        r.signers_index = signers_index;
         r.ptx_hash = ptx_hash;
         if (get_protocol()->relay_request_ntz_sig(r, fake_context)) {
           std::string logging = epee::string_tools::pod_to_hex(ntz_hash);
