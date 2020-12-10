@@ -2448,7 +2448,7 @@ void wallet2::update_pool_state(bool refreshed)
         e.output_indices = each.output_indices;
         collective_txs.push_back(e);
       }
-      if (collective_txs.size() == (txids.size() - ntzpool_hashes.size()))
+      if (collective_txs.size() == txids.size())
       {
         for (const auto &tx_entry: collective_txs)
         {
@@ -2496,7 +2496,7 @@ void wallet2::update_pool_state(bool refreshed)
       }
       else
       {
-        LOG_PRINT_L0("Expected " << txids.size() << " tx(es), got " << (nres.txs.size() + res.txs.size()));
+        LOG_PRINT_L0("Expected " << txids.size() << " tx(es), got " << collective_txs.size());
       }
     }
     else
