@@ -295,7 +295,7 @@ namespace cryptonote
     }
 
     if (have_tx(id)) {
-      LOG_PRINT_L1("Transaction with id: " << epee::string_tools::pod_to_hex(id) << " already in pool or blockchain"
+      LOG_PRINT_L1("Transaction with id: " << epee::string_tools::pod_to_hex(id) << " already in pool or blockchain");
       return true;
     }
 
