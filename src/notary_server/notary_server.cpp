@@ -145,8 +145,9 @@ namespace tools
     bool sent_to_pool = false;
     uint64_t bound_ntz_count = 0;
     m_stop = false;
-    m_net_server.add_idle_handler([this](){
+    bool first_run = true;
 
+    m_net_server.add_idle_handler([this](){
       try {
         if (m_wallet) m_wallet->refresh();
       } catch (const std::exception& ex) {
@@ -156,7 +157,7 @@ namespace tools
     }, 20000);
 
 
-     m_net_server.add_idle_handler([this, &sent_to_pool, &bound_ntz_count](){
+     m_net_server.add_idle_handler([this, &sent_to_pool, &bound_ntz_count, &first_run](){
        try
        {
          notary_rpc::COMMAND_RPC_CREATE_NTZ_TRANSFER::request req;
@@ -168,6 +169,11 @@ namespace tools
          //MWARNING("Height = " << std::to_string(height) << ", notarization_wait = " << std::to_string(notarization_wait) << " ---- ");
          if (m_wallet)
          {
+           if (first_run) {
+             m_wallet->flush_ntzpool();
+             first_run = false;
+           }
+
            bound_ntz_count = (bound_ntz_count == 0) ? m_wallet->get_ntz_count() : bound_ntz_count;
            if (height < notarization_wait) {
              m_wallet->flush_ntzpool();
