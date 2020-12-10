@@ -3170,43 +3170,6 @@ namespace cryptonote
   {
     PERF_TIMER(on_relay_ntzpool_tx);
 
-    bool failed = false;
-    res.status = "";
-/*    std::string logging;
-    for (const auto &str: req.txids)
-    {
-      logging += (str + " ");
-      cryptonote::blobdata txid_data;
-      if(!epee::string_tools::parse_hexstr_to_binbuff(str, txid_data))
-      {
-        continue;
-      }
-      crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_data.data());
-
-      cryptonote::blobdata txblob;
-      cryptonote::blobdata ptxblob;
-      ntzpool_tx_meta_t meta = AUTO_VAL_INIT(meta);
-      bool r = m_core.get_ntzpool_transaction(txid, txblob, ptxblob);
-      if (!m_core.get_blockchain_storage().get_ntzpool_tx_meta(txid, meta)) {
-        MERROR("Failed to get_ntzpool_tx_meta for tx: " << str);
-        continue;
-      }
-
-      cryptonote_connection_context fake_context;
-      NOTIFY_REQUEST_NTZ_SIG::request notify_req;
-      notify_req.ptx_string = ptxblob;
-      notify_req.ptx_hash = meta.ptx_hash;
-      notify_req.tx_hash = txid;
-      notify_req.tx_blob = txblob;
-      notify_req.sig_count = meta.sig_count;
-      for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {
-        int each_ind = meta.signers_index[i];
-        notify_req.signers_index.push_back(each_ind);
-      }
-      m_core.get_protocol()->relay_request_ntz_sig(notify_req, fake_context);
-      MWARNING("Relay ntzpool tx successful in daemon, for txids: " << logging);
-      logging = "";
-    }*/
     res.status = CORE_RPC_STATUS_OK;
     return m_core.relay_ntzpool_transactions();
   }
