@@ -289,12 +289,17 @@ namespace cryptonote
 
     if (tx.version != 2)
     {
-      LOG_PRINT_L0("transaction version: " << std::to_string(tx.version) << " is invalid.");
+      MERROR("transaction version: " << std::to_string(tx.version) << " is invalid.");
       tvc.m_verifivation_failed = true;
       return false;
     }
 
-    LOG_PRINT_L1("req_ntz_sig received in mempool! transaction version: " << std::to_string(tx.version));
+    if (have_tx(id)) {
+      LOG_PRINT_L1("Transaction with id: " << epee::string_tools::pod_to_hex(id) << " already in pool or blockchain"
+      return true;
+    }
+
+    MWARNING("req_ntz_sig received in mempool! transaction version: " << std::to_string(tx.version));
 
     // we do not accept transactions that timed out before
     if (m_timed_out_transactions.find(id) != m_timed_out_transactions.end())
@@ -325,7 +330,7 @@ namespace cryptonote
     size_t tx_size_limit = get_transaction_size_limit(version);
     if (blob_size > tx_size_limit)
     {
-      LOG_PRINT_L1("transaction is too big: " << blob_size << " bytes, maximum size: " << tx_size_limit);
+      MERROR("transaction is too big: " << blob_size << " bytes, maximum size: " << tx_size_limit);
       tvc.m_verifivation_failed = true;
       tvc.m_too_big = true;
       return false;
@@ -334,7 +339,7 @@ namespace cryptonote
     if(have_tx_keyimges_as_spent(tx))
     {
       mark_double_spend(tx);
-      LOG_PRINT_L1("Transaction with id= "<< id << " used already spent key images");
+      MERROR("Transaction with id= "<< id << " used already spent key images");
       tvc.m_verifivation_failed = true;
       tvc.m_double_spend = true;
       return false;
@@ -342,7 +347,7 @@ namespace cryptonote
 
     if (!m_blockchain.check_ntz_req_outputs(tx, tvc))
     {
-      LOG_PRINT_L1("Transaction with id= "<< id << " has at least one invalid output");
+      MERROR("Transaction with id= "<< id << " has at least one invalid output");
       tvc.m_verifivation_failed = true;
       tvc.m_invalid_output = true;
       return false;
@@ -359,7 +364,7 @@ namespace cryptonote
     bool ch_inp_res = m_blockchain.check_ntz_req_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
     if(!ch_inp_res)
     {
-        LOG_PRINT_L1("tx used wrong inputs, rejected");
+        MERROR("tx used wrong inputs, rejected");
         tvc.m_verifivation_failed = true;
         tvc.m_invalid_input = true;
         return false;
