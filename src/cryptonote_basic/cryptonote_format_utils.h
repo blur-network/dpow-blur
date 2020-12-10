@@ -51,6 +51,7 @@ namespace cryptonote
   crypto::hash get_transaction_prefix_hash(const transaction_prefix& tx);
   bool parse_and_validate_tx_from_blob(const blobdata& tx_blob, transaction& tx, crypto::hash& tx_hash, crypto::hash& tx_prefix_hash);
   bool parse_and_validate_tx_from_blob(const blobdata& tx_blob, transaction& tx);
+  bool string_to_hash(std::string const& strhash, crypto::hash& hash);
   bool parse_and_validate_tx_base_from_blob(const blobdata& tx_blob, transaction& tx);
 
   template<typename T>
