@@ -2149,6 +2149,8 @@ void wallet2::update_pool_state(bool refreshed)
   THROW_WALLET_EXCEPTION_IF(res.status != CORE_RPC_STATUS_OK, error::get_tx_pool_error);
   MDEBUG("update_pool_state got pool");
 
+  std::vector<crypto::hash> ntzpool_hashes;
+
   // remove any pending tx that's not in the pool
   std::unordered_map<crypto::hash, wallet2::unconfirmed_transfer_details>::iterator it = m_unconfirmed_txs.begin();
   std::unordered_map<crypto::hash, wallet2::unconfirmed_ntz_transfer_details>::iterator it2 = m_unconfirmed_ntz_txs.begin();
@@ -2369,6 +2371,7 @@ void wallet2::update_pool_state(bool refreshed)
       {
         // not one of those we sent ourselves
         txids.push_back({txid, false});
+        ntzpool_hashes.push_back(txid);
       }
       else
       {
@@ -2379,6 +2382,7 @@ void wallet2::update_pool_state(bool refreshed)
     {
       LOG_PRINT_L1("Already saw that one, it's for us");
       txids.push_back({txid, true});
+      ntzpool_hashes.push_back(txid);
     }
   }
 
@@ -2403,8 +2407,8 @@ void wallet2::update_pool_state(bool refreshed)
     m_daemon_rpc_mutex.lock();
     bool nr = epee::net_utils::invoke_http_json("/get_notarizations", nreq, nres, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
-    MDEBUG("Got " << r << " and " << res.status << ", from gettransactions");
-    MDEBUG("Got " << nr << " and " << nres.status << ", from get_notarizations");
+    MWARNING("Got " << r << " and " << res.status << ", from gettransactions");
+    MWARNING("Got " << nr << " and " << nres.status << ", from get_notarizations");
     if ((r && res.status == CORE_RPC_STATUS_OK) || (nr && nres.status == CORE_RPC_STATUS_OK))
     {
       struct entry
@@ -2442,10 +2446,9 @@ void wallet2::update_pool_state(bool refreshed)
         e.block_height = each.block_height;
         e.block_timestamp = each.block_timestamp;
         e.output_indices = each.output_indices;
-        // TODO: missing notarization index field from entry struct
         collective_txs.push_back(e);
       }
-      if (collective_txs.size() == txids.size())
+      if (collective_txs.size() == (txids.size() - ntzpool_hashes.size()))
       {
         for (const auto &tx_entry: collective_txs)
         {
@@ -2493,12 +2496,15 @@ void wallet2::update_pool_state(bool refreshed)
       }
       else
       {
-        LOG_PRINT_L0("Expected " << txids.size() << " tx(es), got " << res.txs.size());
+        LOG_PRINT_L0("Expected " << txids.size() << " tx(es), got " << (nres.txs.size() + res.txs.size()));
       }
     }
     else
     {
-      LOG_PRINT_L0("Error calling gettransactions daemon RPC: r " << r << ", status " << res.status);
+      if ((!r) || res.status != CORE_RPC_STATUS_OK)
+        LOG_PRINT_L0("Error calling gettransactions daemon RPC: r " << r << ", status " << res.status);
+      if ((!nr) || nres.status != CORE_RPC_STATUS_OK)
+        LOG_PRINT_L0("Error calling get_notarizations daemon RPC: r " << nr << ", status " << nres.status);
     }
   }
   MDEBUG("update_pool_state end");
@@ -4965,7 +4971,7 @@ void wallet2::relay_ntzpool()
 //----------------------------------------------------------------------------------------------------
 void wallet2::relay_txpool()
 {
-  MWARNING("Relay txpool called in wallet2");
+  //MWARNING("Relay txpool called in wallet2");
   cryptonote::COMMAND_RPC_RELAY_TX::request req;
   cryptonote::COMMAND_RPC_RELAY_TX::response res;
   std::vector<cryptonote::tx_info> txs;
