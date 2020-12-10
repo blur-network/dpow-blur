@@ -1252,7 +1252,6 @@ namespace cryptonote
       {
         cryptonote_connection_context fake_context = AUTO_VAL_INIT(fake_context);
         ntz_req_verification_context tvc = AUTO_VAL_INIT(tvc);
-        //MWARNING("transaction blob: " << tx_to_blob(each.first));
         NOTIFY_REQUEST_NTZ_SIG::request r = AUTO_VAL_INIT(r);
         ntzpool_tx_meta_t meta;
         crypto::hash ntz_hash;
@@ -1265,7 +1264,6 @@ namespace cryptonote
         r.sig_count = each.sig_count;
         r.tx_hash = ntz_hash;
         r.tx_blob = each.tx_blob;
-        MWARNING("transaction blob: " << each.tx_blob);
         crypto::hash ptx_hash;
         if (!string_to_hash(each.ptx_hash, ptx_hash)) {
           return false;
