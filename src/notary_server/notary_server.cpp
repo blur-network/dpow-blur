@@ -1284,7 +1284,7 @@ namespace tools
     }
 
     size_t pool_count = m_wallet->get_ntzpool_count(true);
-    MWARNING("Pool count: " << std::to_string(pool_count));
+    //MWARNING("Pool count: " << std::to_string(pool_count));
     if (pool_count < 1) {
       er.code = NOTARY_RPC_ERROR_CODE_DENIED;
       er.message = "No pending transactions are in the ntzpool!";
@@ -1351,10 +1351,10 @@ pool_recheck:
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
     std::vector<std::pair<crypto::public_key,crypto::public_key>> notaries_keys;
     bool z = cryptonote::get_notary_pubkeys(notaries_keys);
-//    std::vector<crypto::public_key> out_eph_keys;
 
     cryptonote::blobdata ptx_blob_bin = ptx_blob;
-//    MWARNING("Matched tx blob: " << tx_blob << ", matched ptx_blob: " << ptx_blob_bin << ", matched sig_count: " << std::to_string(sig_count));
+    //MWARNING("Matched tx blob: " << tx_blob << ", matched ptx_blob: " << ptx_blob_bin << ", matched sig_count: " << std::to_string(sig_count));
+    //std::vector<crypto::public_key> out_eph_keys;
     wallet2::pending_tx pen_tx;
     std::stringstream iss;
     iss << ptx_blob_bin;
@@ -1364,7 +1364,7 @@ pool_recheck:
     uint64_t pk_counter = 0;
     const int neg = -1;
     const int count = DPOW_SIG_COUNT - std::count(signers_index.begin(), signers_index.end(), neg);
-    LOG_PRINT_L1("Signers index count = " << std::to_string(count));
+    //LOG_PRINT_L1("Signers index count = " << std::to_string(count));
     std::vector<crypto::secret_key> notary_viewkeys;
     bool r = false;
     r = cryptonote::get_notary_secret_viewkeys(notary_viewkeys);
@@ -1401,7 +1401,7 @@ pool_recheck:
         std::pair<crypto::public_key,size_t> each = std::make_pair(reinterpret_cast<const crypto::public_key&>(rv.outPk[n].dest), n);
         recv_outkeys.push_back(each);
       }
-
+/*
     size_t pk_index = 0;
     crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index++);
     bool R_two = false;
@@ -1415,24 +1415,24 @@ pool_recheck:
         LOG_PRINT_L1("Recv derivation = " << recv_derivation << ", for pk_index: " << std::to_string(pk_index));
         if (epee::string_tools::pod_to_hex(recv_derivation) != "0100000000000000000000000000000000000000000000000000000000000000") {
           LOG_PRINT_L2("Recv derivation does not equal rct identity element! Validation failed for pk_index: " << std::to_string(pk_index));
-/*          std::list<std::string> tx_strings;
-          std::string tx_hash_string = epee::string_tools::pod_to_hex(get_transaction_hash(tx));
-          tx_strings.push_back(tx_hash_string);
-          m_wallet->remove_ntzpool_txs(tx_strings);
-          break;*/
+          //std::list<std::string> tx_strings;
+          //std::string tx_hash_string = epee::string_tools::pod_to_hex(get_transaction_hash(tx));
+          //tx_strings.push_back(tx_hash_string);
+          //m_wallet->remove_ntzpool_txs(tx_strings);
+          //break;
         } else {
           recv_derivations.push_back(recv_derivation);
           pk_counter = pk_index;
         }
       }
-    }
+    }*/
   }
 
-    LOG_PRINT_L1("Recv derivations passed on index: " << std::to_string(pk_counter));
+    //LOG_PRINT_L1("Recv derivations passed on index: " << std::to_string(pk_counter));
 
     for (int i = 0; i < 64; i++)
     {
-//      MWARNING("Pair: " << epee::string_tools::pod_to_hex(pair.first) << " and " << epee::string_tools::pod_to_hex(pair.second));
+      //MWARNING("Pair: " << epee::string_tools::pod_to_hex(pair.first) << " and " << epee::string_tools::pod_to_hex(pair.second));
 
       const crypto::public_key view_pubkey = notaries_keys[i].first;
       const crypto::secret_key view_seckey = notary_viewkeys[i];
