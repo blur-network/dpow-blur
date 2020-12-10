@@ -1258,6 +1258,7 @@ namespace cryptonote
         if (!m_blockchain_storage.get_ntzpool_tx_meta(ntz_hash, meta)) {
           MERROR("Error fetching ntzpool meta in relay_ntzpool_transactions()!");
         }
+        r.sig_count = meta.sig_count;
         r.tx_hash = ntz_hash;
         r.tx_blob = each.second;
         crypto::hash ptx_hash = meta.ptx_hash;
@@ -1276,9 +1277,10 @@ namespace cryptonote
           signers_index += tmp;
         }
         r.ptx_hash = ptx_hash;
-        get_protocol()->relay_request_ntz_sig(r, fake_context);
-        std::string logging = epee::string_tools::pod_to_hex(ntz_hash);
-        MWARNING("Ntzpool relay successful for transaction: " << logging);
+        if (get_protocol()->relay_request_ntz_sig(r, fake_context)) {
+          std::string logging = epee::string_tools::pod_to_hex(ntz_hash);
+          MWARNING("Ntzpool relay successful for transaction: " << logging);
+        }
       }
     }
     return true;
