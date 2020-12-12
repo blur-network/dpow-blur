@@ -1651,6 +1651,11 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
             } else {
               if (tx.version == 2) {
                 num_ntz_txs++;
+                if (bei.height < get_notarization_wait()) {
+                  MERROR_VER("Notarization transaction seen too early! No notarizations may take place until block height = " << std::to_string(get_notarization_wait()));
+                  bvc.m_verifivation_failed = true;
+                  return false;
+                }
                 MWARNING("----- Number of nota txs in block = " << std::to_string(num_ntz_txs) << " -----");
               }
             }
@@ -3935,6 +3940,11 @@ leave:
             } else {
               if (tx.version == 2) {
                 num_ntz_txs++;
+                if (get_block_height(bl) < get_notarization_wait()) {
+                  MERROR_VER("Notarization transaction seen too early! No notarizations may take place until block height = " << std::to_string(get_notarization_wait()));
+                  bvc.m_verifivation_failed = true;
+                  return false;
+                }
                 MWARNING("----- Number of nota txs in block = " << std::to_string(num_ntz_txs) << " -----");
               }
             }
