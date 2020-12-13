@@ -123,6 +123,19 @@ namespace cryptonote
       return false;
     }
 
+    if (tx.version == 2) {
+      std::list<cryptonote::transaction> txs;
+      bool include_unrelayed = true;
+      get_transactions(txs, include_unrelayed);
+      for (const auto& each : txs) {
+        if (tx.version == 2) {
+          MERROR("Already have one notarization tx in pool! Failing validation");
+          tvc.m_verifivation_failed = true;
+          return false;
+        }
+      }
+    }
+
     // we do not accept transactions that timed out before, unless they're
     // kept_by_block
     if (!kept_by_block && m_timed_out_transactions.find(id) != m_timed_out_transactions.end())
