@@ -1456,6 +1456,25 @@ namespace cryptonote
   bool core::prepare_handle_incoming_blocks(const std::list<block_complete_entry> &blocks)
   {
     m_incoming_tx_lock.lock();
+    for (const auto& each : blocks) {
+      cryptonote::block b;
+      if (!parse_and_validate_block_from_blob(each.block, b)) {
+        MERROR("Failed to parse and validate block from blob in core::handle_incoming_blocks!");
+        break;
+      }
+      if (get_block_height(b) < get_notarization_wait()) {
+        std::list<cryptonote::transaction> txs;
+        bool include_unrelayed = true;
+        m_mempool.get_transactions(txs, include_unrelayed);
+        for (const auto& each : txs) {
+          if (each.version == 2) {
+            crypto::hash txid = get_transaction_hash(each);
+            MERROR("Found ntz tx in pool during notarization wait period. Flushing tx: " << epee::string_tools::pod_to_hex(txid));
+            m_blockchain_storage.remove_txpool_tx(txid);
+          }
+        }
+      }
+    }
     m_blockchain_storage.prepare_handle_incoming_blocks(blocks);
     return true;
   }
