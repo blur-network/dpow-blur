@@ -182,7 +182,7 @@ bool Blockchain::have_tx_keyimg_as_spent(const crypto::key_image &key_im) const
   return  m_db->has_key_image(key_im);
 }
 //------------------------------------------------------------------
-uint64_t Blockchain::get_ntz_count(std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>>& ret)
+uint64_t Blockchain::get_ntz_count(std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>>& ret) const
 {
   // vector of hash, height pair for all notarizations in DB
   // return value is total count
@@ -226,7 +226,7 @@ crypto::hash Blockchain::get_ntz_merkle(std::vector<std::pair<crypto::hash,uint6
   return merkle_root;
 }
 //------------------------------------------------------------------
-uint64_t Blockchain::get_notarized_height(crypto::hash& ntz_hash)
+uint64_t Blockchain::get_notarized_height(crypto::hash& ntz_hash) const
 {
   std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> ntz_txs;
   uint64_t ntz_count = get_ntz_count(ntz_txs);
@@ -241,7 +241,7 @@ uint64_t Blockchain::get_notarized_height(crypto::hash& ntz_hash)
   return notarized_height;
 }
 //------------------------------------------------------------------
-uint64_t Blockchain::get_notarization_wait()
+uint64_t Blockchain::get_notarization_wait() const
 {
   crypto::hash ntz_hash = crypto::null_hash;
   uint64_t ntz_height = get_notarized_height(ntz_hash);
