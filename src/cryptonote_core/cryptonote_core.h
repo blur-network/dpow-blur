@@ -402,6 +402,8 @@ namespace cryptonote
       */
      bool get_alternative_blocks(std::list<block>& blocks) const;
 
+     uint64_t get_notarization_wait() const;
+
      /**
       * @copydoc Blockchain::get_alternative_blocks_count
       *

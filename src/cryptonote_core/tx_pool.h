@@ -112,6 +112,8 @@ namespace cryptonote
 
     bool add_ntz_req(transaction &tx, /*const crypto::hash& tx_prefix_hash,*/ const crypto::hash &id, size_t blob_size, ntz_req_verification_context& tvc, bool kept_by_block, bool relayed, bool do_not_relay, uint8_t const& version, uint8_t const& has_raw_ntz_data, int const& sig_count, std::list<int> const& signers_index, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash);
 
+    uint64_t get_notarization_wait() const;
+
     /**
      * @brief add a transaction to the transaction pool
      *

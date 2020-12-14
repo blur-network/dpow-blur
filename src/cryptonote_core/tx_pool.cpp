@@ -443,6 +443,11 @@ namespace cryptonote
     return add_tx(tx, h, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version);
   }
   //---------------------------------------------------------------------------------
+  uint64_t tx_memory_pool::get_notarization_wait() const
+  {
+    return m_blockchain.get_notarization_wait();
+  }
+  //---------------------------------------------------------------------------------
   size_t tx_memory_pool::get_txpool_size() const
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);

@@ -324,6 +324,11 @@ namespace cryptonote
     return m_blockchain_storage.get_alternative_blocks(blocks);
   }
   //-----------------------------------------------------------------------------------------------
+  uint64_t core::get_notarization_wait() const
+  {
+    return m_blockchain_storage.get_notarization_wait();
+  }
+  //-----------------------------------------------------------------------------------------------
   size_t core::get_alternative_blocks_count() const
   {
     return m_blockchain_storage.get_alternative_blocks_count();
