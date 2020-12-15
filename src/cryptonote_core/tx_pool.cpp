@@ -118,7 +118,7 @@ namespace cryptonote
     if (tx.version == 0)
     {
       // v0 never accepted
-      LOG_PRINT_L1("transaction version 0 is invalid");
+      MERROR("transaction version 0 is invalid");
       tvc.m_verifivation_failed = true;
       return false;
     }
@@ -127,13 +127,26 @@ namespace cryptonote
       std::list<cryptonote::transaction> txs;
       bool include_unrelayed = true;
       get_transactions(txs, include_unrelayed);
+      std::list<crypto::hash> txids_to_flush;
       for (const auto& each : txs) {
-        if (tx.version == 2) {
-          MERROR("Already have one notarization tx in pool! Failing validation");
-          tvc.m_verifivation_failed = true;
-          return false;
+        crypto::hash pool_txid = get_transaction_hash(each);
+        cryptonote::txpool_tx_meta_t meta;
+        if (each.version == 2) {
+          if (!m_blockchain.get_txpool_tx_meta(pool_txid, meta)) {
+            MERROR("in tx_memory_pool::add_tx: failed to get txpool meta for txid: " << epee::string_tools::pod_to_hex(pool_txid));
+            txids_to_flush.push_back(pool_txid);
+          } else {
+            if (meta.kept_by_block == true) {
+              txids_to_flush.push_back(pool_txid);
+            } else {
+              MERROR("Already have one notarization tx in pool! Failing validation for txid: " << epee::string_tools::pod_to_hex(pool_txid));
+              tvc.m_verifivation_failed = true;
+              return false;
+            }
+          }
         }
       }
+      m_blockchain.flush_txes_from_pool(txids_to_flush);
     }
 
     // we do not accept transactions that timed out before, unless they're
