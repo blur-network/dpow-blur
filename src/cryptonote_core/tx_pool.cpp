@@ -1025,7 +1025,7 @@ namespace cryptonote
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
     CRITICAL_REGION_LOCAL1(m_blockchain);
-    m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const txpool_tx_meta_t &meta, const cryptonote::blobdata *bd){
+    m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const crypto::hash &ptxid, const ntzpool_tx_meta_t &meta, const cryptonote::blobdata *bd, cryptonote::blobdata const* ptx){
       txs.push_back(txid);
       return true;
     }, false, include_unrelayed_txes);

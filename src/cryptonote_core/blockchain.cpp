@@ -4896,6 +4896,11 @@ bool Blockchain::for_all_txpool_txes(std::function<bool(const crypto::hash&, con
   return m_db->for_all_txpool_txes(f, include_blob, include_unrelayed_txes);
 }
 
+bool Blockchain::for_all_ntzpool_txes(std::function<bool(const crypto::hash&, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)> f, bool include_blob, bool include_unrelayed_txes) const
+{
+  return m_db->for_all_ntzpool_txes(f, include_blob, include_unrelayed_txes);
+}
+
 void Blockchain::add_ntzpool_tx(transaction &tx, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t &meta)
 {
   m_db->add_ntzpool_tx(tx, ptx_blob, ptx_hash, meta);
@@ -4930,11 +4935,6 @@ bool Blockchain::get_ntzpool_tx_blob(const crypto::hash& txid, cryptonote::blobd
 std::pair<cryptonote::blobdata,cryptonote::blobdata> Blockchain::get_ntzpool_tx_blob(const crypto::hash& txid, crypto::hash const& ptx_hash) const
 {
   return m_db->get_ntzpool_tx_blob(txid, ptx_hash);
-}
-
-bool Blockchain::for_all_ntzpool_txes(std::function<bool(const crypto::hash&, crypto::hash const& ptx_hash, const ntzpool_tx_meta_t&, cryptonote::blobdata const* bd, cryptonote::blobdata const* ptx_blob)> f, bool include_blob, bool include_unrelayed_txes) const
-{
-  return m_db->for_all_ntzpool_txes(f, include_blob, include_unrelayed_txes);
 }
 
 uint64_t Blockchain::get_txpool_tx_count(bool include_unrelayed_txes) const
