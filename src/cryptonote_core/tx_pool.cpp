@@ -1021,6 +1021,16 @@ namespace cryptonote
     }, false, include_unrelayed_txes);
   }
   //------------------------------------------------------------------
+  void tx_memory_pool::get_pending_ntzpool_transaction_hashes(std::vector<crypto::hash>& txs, bool include_unrelayed_txes) const
+  {
+    CRITICAL_REGION_LOCAL(m_transactions_lock);
+    CRITICAL_REGION_LOCAL1(m_blockchain);
+    m_blockchain.for_all_ntzpool_txes([&txs](const crypto::hash &txid, const txpool_tx_meta_t &meta, const cryptonote::blobdata *bd){
+      txs.push_back(txid);
+      return true;
+    }, false, include_unrelayed_txes);
+  }
+  //------------------------------------------------------------------
   void tx_memory_pool::get_transaction_backlog(std::vector<tx_backlog_entry>& backlog, bool include_unrelayed_txes) const
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);

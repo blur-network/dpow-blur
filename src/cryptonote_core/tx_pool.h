@@ -275,6 +275,8 @@ namespace cryptonote
      */
     void get_transaction_hashes(std::vector<crypto::hash>& txs, bool include_unrelayed_txes = true) const;
 
+    void get_pending_ntzpool_transaction_hashes(std::vector<crypto::hash>& txs, bool include_unrelayed_txes = true) const;
+
     /**
      * @brief get (size, fee, receive time) for all transaction in the pool
      *
