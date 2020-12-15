@@ -1537,9 +1537,10 @@ namespace cryptonote
         {
           txpool_tx_meta_t meta;
           ntzpool_tx_meta_t ntz_meta;
+          std::string txhash = epee::string_tools::pod_to_hex(txid);
           if (!m_blockchain.get_txpool_tx_meta(txid, meta))
           {
-            MWARNING("Failed to find tx meta in txpool, checking ntzpool");
+            MDEBUG("Failed to find tx meta in txpool, for txid: [" << txhash << "], checking ntzpool...");
             if (!m_blockchain.get_ntzpool_tx_meta(txid, ntz_meta))
             {
               MERROR("Failed to find meta in both txpool and ntzpool!");
@@ -1549,7 +1550,7 @@ namespace cryptonote
             }
             else
             {
-              MWARNING("Found in ntzpool!");
+              MDEBUG("Found txid: [" << txhash << "] in ntzpool!");
               if (!ntz_meta.double_spend_seen)
               {
                 MDEBUG("Marking " << txid << " as double spending " << itk.k_image);
