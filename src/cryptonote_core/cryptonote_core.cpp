@@ -1311,7 +1311,11 @@ namespace cryptonote
       cryptonote::blobdata txid_data, txblob, ptxblob;
       epee::string_tools::parse_hexstr_to_binbuff(each.id_hash, txid_data);
       crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_data.data());
-      logging += (each.id_hash + ", ");
+      if (ntz_tx_info.size() > 1) {
+        logging += (each.id_hash + ", ");
+      } else {
+        logging += (each.id_hash);
+      }
       bool r = get_ntzpool_transaction(txid, txblob, ptxblob);
       ntz_txids.push_back(txid);
       if (r)
