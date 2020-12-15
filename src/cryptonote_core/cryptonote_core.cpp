@@ -1306,13 +1306,19 @@ namespace cryptonote
     get_pending_ntz_pool_and_spent_keys_info(ntz_tx_info, ntzpool_key_image_info);
 
     std::list<crypto::hash> ntz_txids;
+    uint64_t count = 0;
     for (const auto each: ntz_tx_info)
     {
+      count++;
       cryptonote::blobdata txid_data, txblob, ptxblob;
       epee::string_tools::parse_hexstr_to_binbuff(each.id_hash, txid_data);
       crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_data.data());
       if (ntz_tx_info.size() > 1) {
-        logging += (each.id_hash + ", ");
+        if (count == ntz_tx_info.size()) {
+          logging += (each.id_hash);
+        } else {
+          logging += (each.id_hash + ", ");
+        }
       } else {
         logging += (each.id_hash);
       }
