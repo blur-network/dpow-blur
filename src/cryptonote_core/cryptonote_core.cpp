@@ -1456,6 +1456,7 @@ namespace cryptonote
   bool core::prepare_handle_incoming_blocks(const std::list<block_complete_entry> &blocks)
   {
     m_incoming_tx_lock.lock();
+    std::list<crypto::hash> txids_to_flush;
     for (const auto& each : blocks) {
       cryptonote::block b;
       if (!parse_and_validate_block_from_blob(each.block, b)) {
@@ -1469,12 +1470,13 @@ namespace cryptonote
         for (const auto& each : txs) {
           if (each.version == 2) {
             crypto::hash txid = get_transaction_hash(each);
-            MERROR("Found ntz tx in pool during notarization wait period. Flushing tx: " << epee::string_tools::pod_to_hex(txid));
-            m_blockchain_storage.remove_txpool_tx(txid);
+            txids_to_flush.push_back(txid);
+            //MERROR("Found ntz tx in pool during notarization wait period. Flushing tx: " << epee::string_tools::pod_to_hex(txid));
           }
         }
       }
     }
+    m_blockchain_storage.flush_txes_from_pool(txids_to_flush);
     m_blockchain_storage.prepare_handle_incoming_blocks(blocks);
     return true;
   }
