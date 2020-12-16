@@ -2149,7 +2149,7 @@ void wallet2::update_pool_state(bool refreshed)
   THROW_WALLET_EXCEPTION_IF(res.status != CORE_RPC_STATUS_OK, error::get_tx_pool_error);
   MDEBUG("update_pool_state got pool");
 
-  std::vector<crypto::hash> ntzpool_hashes;
+  //std::vector<crypto::hash> ntzpool_hashes;
 
   // remove any pending tx that's not in the pool
   std::unordered_map<crypto::hash, wallet2::unconfirmed_transfer_details>::iterator it = m_unconfirmed_txs.begin();
@@ -2177,8 +2177,8 @@ void wallet2::update_pool_state(bool refreshed)
     }
     auto pit = it++;
     auto pit2 = it2++;
-    // TODO: Why is the above being done?
-    if (!found || !found2)
+
+    if ((!found) || (!found2))
     {
       // we want to avoid a false positive when we ask for the pool just after
       // a tx is removed from the pool due to being found in a new block, but
@@ -2195,12 +2195,12 @@ void wallet2::update_pool_state(bool refreshed)
       }
       else if (pit2->second.m_state == wallet2::unconfirmed_ntz_transfer_details::pending && found)
       {
-        LOG_PRINT_L1("Pending txid " << txid << " not in tx pool, marking as not in pool");
+        LOG_PRINT_L1("Pending txid " << txid << " not in ntz pool, marking as not in pool");
         pit2->second.m_state = wallet2::unconfirmed_ntz_transfer_details::pending_not_in_pool;
       }
       if (pit->second.m_state == wallet2::unconfirmed_transfer_details::pending_not_in_pool && refreshed && !found2)
       {
-        LOG_PRINT_L1("Pending txid " << txid << " not in pool, marking as failed");
+        LOG_PRINT_L1("Pending txid " << txid << " not in tx pool, marking as failed");
         pit->second.m_state = wallet2::unconfirmed_transfer_details::failed;
 
         // the inputs aren't spent anymore, since the tx failed
@@ -2225,7 +2225,7 @@ void wallet2::update_pool_state(bool refreshed)
       }
       else if (pit2->second.m_state == wallet2::unconfirmed_ntz_transfer_details::pending_not_in_pool && refreshed && !found)
       {
-        LOG_PRINT_L1("Pending txid " << txid << " not in pool, marking as failed");
+        LOG_PRINT_L1("Pending txid " << txid << " not in ntz pool, marking as failed");
         pit2->second.m_state = wallet2::unconfirmed_ntz_transfer_details::failed;
 
         // the inputs aren't spent anymore, since the tx failed
@@ -2285,7 +2285,7 @@ void wallet2::update_pool_state(bool refreshed)
     }
     if (!txid_found_in_up)
     {
-      LOG_PRINT_L1("Found new pool tx: " << txid);
+      LOG_PRINT_L1("Found new pool tx: " << txid) << "in txpool";
       bool found = false;
       for (const auto &i: m_unconfirmed_txs)
       {
@@ -2323,7 +2323,7 @@ void wallet2::update_pool_state(bool refreshed)
       txids.push_back({txid, true});
     }
   }
-  for (const auto &txid: nres.tx_hashes)
+/*  for (const auto &txid: nres.tx_hashes)
   {
     bool txid_found_in_up = false;
     for (const auto &up: m_unconfirmed_payments)
@@ -2345,7 +2345,7 @@ void wallet2::update_pool_state(bool refreshed)
     }
     if (!txid_found_in_up)
     {
-      LOG_PRINT_L1("Found new pool tx: " << txid);
+      LOG_PRINT_L1("Found new pool tx: " << txid << "in ntzpool");
       bool found2 = false;
       for (const auto &i: m_unconfirmed_ntz_txs)
       {
@@ -2371,7 +2371,7 @@ void wallet2::update_pool_state(bool refreshed)
       {
         // not one of those we sent ourselves
         txids.push_back({txid, false});
-        ntzpool_hashes.push_back(txid);
+        //ntzpool_hashes.push_back(txid);
       }
       else
       {
@@ -2382,48 +2382,48 @@ void wallet2::update_pool_state(bool refreshed)
     {
       LOG_PRINT_L1("Already saw that one, it's for us");
       txids.push_back({txid, true});
-      ntzpool_hashes.push_back(txid);
+      //ntzpool_hashes.push_back(txid);
     }
   }
-
+*/
   // get those txes
   if (!txids.empty())
   {
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request req;
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::response res;
-    cryptonote::COMMAND_RPC_GET_NOTARIZATIONS::request nreq;
-    cryptonote::COMMAND_RPC_GET_NOTARIZATIONS::response nres;
+    //cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::request nreq;
+    //cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::response nres;
     for (const auto &p: txids) {
       req.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
-      nreq.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
     }
     MDEBUG("asking for " << txids.size() << " transactions");
     req.decode_as_json = false;
     req.prune = false;
-    nreq.decode_as_json = false;
+    //nreq.decode_as_json = false;
     m_daemon_rpc_mutex.lock();
     bool r = epee::net_utils::invoke_http_json("/gettransactions", req, res, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
-    m_daemon_rpc_mutex.lock();
-    bool nr = epee::net_utils::invoke_http_json("/get_notarizations", nreq, nres, m_http_client, rpc_timeout);
-    m_daemon_rpc_mutex.unlock();
+    //m_daemon_rpc_mutex.lock();
+    //bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool", nreq, nres, m_http_client, rpc_timeout);
+    //m_daemon_rpc_mutex.unlock();
     MWARNING("Got " << r << " and " << res.status << ", from gettransactions");
-    MWARNING("Got " << nr << " and " << nres.status << ", from get_notarizations");
-    if ((r && res.status == CORE_RPC_STATUS_OK) || (nr && nres.status == CORE_RPC_STATUS_OK))
-    {
-      struct entry
-      {
-        std::string tx_hash;
-        std::string as_hex;
-        std::string as_json;
-        bool in_pool;
-        bool double_spend_seen;
-        uint64_t block_height;
-        uint64_t block_timestamp;
-        std::vector<uint64_t> output_indices;
-      };
+    //MWARNING("Got " << nr << " and " << nres.status << ", from /get_pending_ntz_pool");
 
-      std::vector<entry> collective_txs;
+    struct entry
+    {
+      std::string tx_hash;
+      std::string as_hex;
+      std::string as_json;
+      bool in_pool;
+      bool double_spend_seen;
+      uint64_t block_height;
+      uint64_t block_timestamp;
+      std::vector<uint64_t> output_indices;
+    };
+    std::vector<entry> collective_txs;
+
+    if (r && res.status == CORE_RPC_STATUS_OK) {
+    {
       for (const auto& each : res.txs) {
         entry e;
         e.tx_hash = each.tx_hash;
@@ -2436,18 +2436,23 @@ void wallet2::update_pool_state(bool refreshed)
         e.output_indices = each.output_indices;
         collective_txs.push_back(e);
       }
+    }
+    /*if (nr && nres.status == CORE_RPC_STATUS_OK)
+    {
       for (const auto& each : nres.txs) {
         entry e;
-        e.tx_hash = each.ntz_tx_hash;
-        e.as_hex = each.as_hex;
-        e.as_json = each.as_json;
-        e.in_pool = each.in_pool;
+        e.tx_hash = each.id_hash;
+        e.as_hex = each.tx_blob;
+        e.as_json = false;
+        e.in_pool = true;
         e.double_spend_seen = each.double_spend_seen;
         e.block_height = each.block_height;
         e.block_timestamp = each.block_timestamp;
         e.output_indices = each.output_indices;
         collective_txs.push_back(e);
       }
+    }
+*/
       if (collective_txs.size() == txids.size())
       {
         for (const auto &tx_entry: collective_txs)
@@ -2503,8 +2508,8 @@ void wallet2::update_pool_state(bool refreshed)
     {
       if ((!r) || res.status != CORE_RPC_STATUS_OK)
         LOG_PRINT_L0("Error calling gettransactions daemon RPC: r " << r << ", status " << res.status);
-      if ((!nr) || nres.status != CORE_RPC_STATUS_OK)
-        LOG_PRINT_L0("Error calling get_notarizations daemon RPC: r " << nr << ", status " << nres.status);
+      //if ((!nr) || nres.status != CORE_RPC_STATUS_OK)
+        //LOG_PRINT_L0("Error calling get_notarizations daemon RPC: r " << nr << ", status " << nres.status);
     }
   }
   MDEBUG("update_pool_state end");
