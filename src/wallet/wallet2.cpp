@@ -2323,139 +2323,34 @@ void wallet2::update_pool_state(bool refreshed)
       txids.push_back({txid, true});
     }
   }
-/*  for (const auto &txid: nres.tx_hashes)
-  {
-    bool txid_found_in_up = false;
-    for (const auto &up: m_unconfirmed_payments)
-    {
-      if (up.second.m_pd.m_tx_hash == txid)
-      {
-        txid_found_in_up = true;
-        break;
-      }
-    }
-    if (m_scanned_pool_txs[0].find(txid) != m_scanned_pool_txs[0].end() || m_scanned_pool_txs[1].find(txid) != m_scanned_pool_txs[1].end())
-    {
-      // if it's for us, we want to keep track of whether we saw a double spend, so don't bail out
-      if (!txid_found_in_up)
-      {
-        LOG_PRINT_L2("Already seen " << txid << ", and not for us, skipped");
-        continue;
-      }
-    }
-    if (!txid_found_in_up)
-    {
-      LOG_PRINT_L1("Found new pool tx: " << txid << "in ntzpool");
-      bool found2 = false;
-      for (const auto &i: m_unconfirmed_ntz_txs)
-      {
-        if (i.first == txid)
-        {
-          found2 = true;
-          // if this is a payment to yourself at a different subaddress account, don't skip it
-          // so that you can see the incoming pool tx with 'show_transfers' on that receiving subaddress account
-          const unconfirmed_ntz_transfer_details& utd = i.second;
-          for (const auto& dst : utd.m_dests)
-          {
-            auto subaddr_index = m_subaddresses.find(dst.addr.m_spend_public_key);
-            if (subaddr_index != m_subaddresses.end() && subaddr_index->second.major != utd.m_subaddr_account)
-            {
-              found2 = false;
-              break;
-            }
-          }
-          break;
-        }
-      }
-      if (!found2)
-      {
-        // not one of those we sent ourselves
-        txids.push_back({txid, false});
-        //ntzpool_hashes.push_back(txid);
-      }
-      else
-      {
-        LOG_PRINT_L1("We sent that one");
-      }
-    }
-    else
-    {
-      LOG_PRINT_L1("Already saw that one, it's for us");
-      txids.push_back({txid, true});
-      //ntzpool_hashes.push_back(txid);
-    }
-  }
-*/
   // get those txes
   if (!txids.empty())
   {
-    cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request req;
-    cryptonote::COMMAND_RPC_GET_TRANSACTIONS::response res;
+    cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request request;
+    cryptonote::COMMAND_RPC_GET_TRANSACTIONS::response response;
     //cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::request nreq;
     //cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::response nres;
     for (const auto &p: txids) {
-      req.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
+      request.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
     }
-    MDEBUG("asking for " << txids.size() << " transactions");
-    req.decode_as_json = false;
-    req.prune = false;
+    MWARNING("asking for " << txids.size() << " transactions");
+    request.decode_as_json = false;
+    request.prune = false;
     //nreq.decode_as_json = false;
     m_daemon_rpc_mutex.lock();
-    bool r = epee::net_utils::invoke_http_json("/gettransactions", req, res, m_http_client, rpc_timeout);
+    bool rt = epee::net_utils::invoke_http_json("/gettransactions", request, response, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
     //m_daemon_rpc_mutex.lock();
     //bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool", nreq, nres, m_http_client, rpc_timeout);
     //m_daemon_rpc_mutex.unlock();
-    MWARNING("Got " << r << " and " << res.status << ", from gettransactions");
+    MWARNING("Got " << rt << " and " << res.status << ", from gettransactions, with res.txs.size() = " << std::to_string(response.txs.size()));
     //MWARNING("Got " << nr << " and " << nres.status << ", from /get_pending_ntz_pool");
 
-    struct entry
+    if (rt && (response.status == CORE_RPC_STATUS_OK))
     {
-      std::string tx_hash;
-      std::string as_hex;
-      std::string as_json;
-      bool in_pool;
-      bool double_spend_seen;
-      uint64_t block_height;
-      uint64_t block_timestamp;
-      std::vector<uint64_t> output_indices;
-    };
-    std::vector<entry> collective_txs;
-
-    if (r && res.status == CORE_RPC_STATUS_OK) {
-    {
-      for (const auto& each : res.txs) {
-        entry e;
-        e.tx_hash = each.tx_hash;
-        e.as_hex = each.as_hex;
-        e.as_json = each.as_json;
-        e.in_pool = each.in_pool;
-        e.double_spend_seen = each.double_spend_seen;
-        e.block_height = each.block_height;
-        e.block_timestamp = each.block_timestamp;
-        e.output_indices = each.output_indices;
-        collective_txs.push_back(e);
-      }
-    }
-    /*if (nr && nres.status == CORE_RPC_STATUS_OK)
-    {
-      for (const auto& each : nres.txs) {
-        entry e;
-        e.tx_hash = each.id_hash;
-        e.as_hex = each.tx_blob;
-        e.as_json = false;
-        e.in_pool = true;
-        e.double_spend_seen = each.double_spend_seen;
-        e.block_height = each.block_height;
-        e.block_timestamp = each.block_timestamp;
-        e.output_indices = each.output_indices;
-        collective_txs.push_back(e);
-      }
-    }
-*/
-      if (collective_txs.size() == txids.size())
+      if (response.txs.size() == txids.size())
       {
-        for (const auto &tx_entry: collective_txs)
+        for (const auto &tx_entry: response.txs)
         {
           if (tx_entry.in_pool)
           {
@@ -2501,13 +2396,13 @@ void wallet2::update_pool_state(bool refreshed)
       }
       else
       {
-        LOG_PRINT_L0("Expected " << txids.size() << " tx(es), got " << collective_txs.size());
+        LOG_PRINT_L0("Expected " << txids.size() << " tx(es), got " << response.txs.size());
       }
     }
     else
     {
-      if ((!r) || res.status != CORE_RPC_STATUS_OK)
-        LOG_PRINT_L0("Error calling gettransactions daemon RPC: r " << r << ", status " << res.status);
+      if ((!rt) || response.status != CORE_RPC_STATUS_OK)
+        LOG_PRINT_L0("Error calling gettransactions daemon RPC: rt = " << rt << ", status " << response.status);
       //if ((!nr) || nres.status != CORE_RPC_STATUS_OK)
         //LOG_PRINT_L0("Error calling get_notarizations daemon RPC: r " << nr << ", status " << nres.status);
     }
