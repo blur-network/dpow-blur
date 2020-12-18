@@ -2345,7 +2345,7 @@ void wallet2::update_pool_state(bool refreshed)
     bool nrt = epee::net_utils::invoke_http_json("/get_notarizations", nrequest, nresponse, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
     MWARNING("Got " << rt << " and " << response.status << ", from gettransactions, with res.txs.size() = " << std::to_string(response.txs.size()));
-    MWARNING("Got " << nrt << " and " << nresponse.status << ", from gettransactions, with res.txs.size() = " << std::to_string(nresponse.txs.size()));
+    MWARNING("Got " << nrt << " and " << nresponse.status << ", from get_notarizations, with nres.txs.size() = " << std::to_string(nresponse.txs.size()));
 
     if (rt && (response.status == CORE_RPC_STATUS_OK))
     {
