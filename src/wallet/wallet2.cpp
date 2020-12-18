@@ -2285,7 +2285,7 @@ void wallet2::update_pool_state(bool refreshed)
     }
     if (!txid_found_in_up)
     {
-      LOG_PRINT_L1("Found new pool tx: " << txid) << "in txpool";
+      LOG_PRINT_L1("Found new pool tx: " << txid << "in txpool");
       bool found = false;
       for (const auto &i: m_unconfirmed_txs)
       {
@@ -2328,27 +2328,28 @@ void wallet2::update_pool_state(bool refreshed)
   {
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::request request;
     cryptonote::COMMAND_RPC_GET_TRANSACTIONS::response response;
-    //cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::request nreq;
-    //cryptonote::COMMAND_RPC_GET_PENDING_NTZ_POOL::response nres;
+    cryptonote::COMMAND_RPC_GET_NOTARIZATIONS::request nrequest;
+    cryptonote::COMMAND_RPC_GET_NOTARIZATIONS::response nresponse;
     for (const auto &p: txids) {
       request.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
+      nrequest.txs_hashes.push_back(epee::string_tools::pod_to_hex(p.first));
     }
     MWARNING("asking for " << txids.size() << " transactions");
     request.decode_as_json = false;
     request.prune = false;
-    //nreq.decode_as_json = false;
+    nrequest.decode_as_json = false;
     m_daemon_rpc_mutex.lock();
     bool rt = epee::net_utils::invoke_http_json("/gettransactions", request, response, m_http_client, rpc_timeout);
     m_daemon_rpc_mutex.unlock();
-    //m_daemon_rpc_mutex.lock();
-    //bool nr = epee::net_utils::invoke_http_json("/get_pending_ntz_pool", nreq, nres, m_http_client, rpc_timeout);
-    //m_daemon_rpc_mutex.unlock();
-    MWARNING("Got " << rt << " and " << res.status << ", from gettransactions, with res.txs.size() = " << std::to_string(response.txs.size()));
-    //MWARNING("Got " << nr << " and " << nres.status << ", from /get_pending_ntz_pool");
+    m_daemon_rpc_mutex.lock();
+    bool nrt = epee::net_utils::invoke_http_json("/get_notarizations", nrequest, nresponse, m_http_client, rpc_timeout);
+    m_daemon_rpc_mutex.unlock();
+    MWARNING("Got " << rt << " and " << response.status << ", from gettransactions, with res.txs.size() = " << std::to_string(response.txs.size()));
+    MWARNING("Got " << nrt << " and " << nresponse.status << ", from gettransactions, with res.txs.size() = " << std::to_string(nresponse.txs.size()));
 
     if (rt && (response.status == CORE_RPC_STATUS_OK))
     {
-      if (response.txs.size() == txids.size())
+      if ((response.txs.size() + nresponse.txs.size()) == txids.size())
       {
         for (const auto &tx_entry: response.txs)
         {
@@ -2401,10 +2402,66 @@ void wallet2::update_pool_state(bool refreshed)
     }
     else
     {
-      if ((!rt) || response.status != CORE_RPC_STATUS_OK)
+      if ((!rt) || (response.status != CORE_RPC_STATUS_OK))
         LOG_PRINT_L0("Error calling gettransactions daemon RPC: rt = " << rt << ", status " << response.status);
-      //if ((!nr) || nres.status != CORE_RPC_STATUS_OK)
-        //LOG_PRINT_L0("Error calling get_notarizations daemon RPC: r " << nr << ", status " << nres.status);
+    }
+    if (nrt && (nresponse.status == CORE_RPC_STATUS_OK))
+    {
+      if ((nresponse.txs.size() + response.txs.size()) == txids.size())
+      {
+        for (const auto &tx_entry: nresponse.txs)
+        {
+          if (tx_entry.in_pool)
+          {
+            cryptonote::transaction tx;
+            cryptonote::blobdata bd;
+            crypto::hash tx_hash, tx_prefix_hash;
+            if (epee::string_tools::parse_hexstr_to_binbuff(tx_entry.as_hex, bd))
+            {
+              if (cryptonote::parse_and_validate_tx_from_blob(bd, tx, tx_hash, tx_prefix_hash))
+              {
+                const std::vector<std::pair<crypto::hash, bool>>::const_iterator i = std::find_if(txids.begin(), txids.end(),
+                    [tx_hash](const std::pair<crypto::hash, bool> &e) { return e.first == tx_hash; });
+                if (i != txids.end())
+                {
+                  process_new_transaction(tx_hash, tx, std::vector<uint64_t>(), 0, time(NULL), false, true, tx_entry.double_spend_seen);
+                  m_scanned_pool_txs[0].insert(tx_hash);
+                  if (m_scanned_pool_txs[0].size() > 5000)
+                  {
+                    std::swap(m_scanned_pool_txs[0], m_scanned_pool_txs[1]);
+                    m_scanned_pool_txs[0].clear();
+                  }
+                }
+                else
+                {
+                  MERROR("Got txid " << tx_hash << " which we did not ask for");
+                }
+              }
+              else
+              {
+                LOG_PRINT_L0("failed to validate transaction from daemon");
+              }
+            }
+            else
+            {
+              LOG_PRINT_L0("Failed to parse transaction from daemon");
+            }
+          }
+          else
+          {
+            LOG_PRINT_L1("Transaction from daemon was in pool, but is no more");
+          }
+        }
+      }
+      else
+      {
+        LOG_PRINT_L0("Expected " << txids.size() << " tx(es), got " << nresponse.txs.size());
+      }
+    }
+    else
+    {
+      if ((!nrt) || nresponse.status != CORE_RPC_STATUS_OK)
+        LOG_PRINT_L0("Error calling get_notarizations daemon RPC: nrt " << nrt << ", status " << nresponse.status);
     }
   }
   MDEBUG("update_pool_state end");
