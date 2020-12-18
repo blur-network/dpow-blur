@@ -136,7 +136,7 @@ namespace cryptonote
             MERROR("in tx_memory_pool::add_tx: failed to get txpool meta for txid: " << epee::string_tools::pod_to_hex(pool_txid));
             txids_to_flush.push_back(pool_txid);
           } else {
-            if (meta.kept_by_block == true) {
+            if ((meta.kept_by_block == true) || (meta.double_spend_seen == true)) {
               txids_to_flush.push_back(pool_txid);
             } else {
               MERROR("Already have one notarization tx in pool! Failing validation for txid: " << epee::string_tools::pod_to_hex(pool_txid));
