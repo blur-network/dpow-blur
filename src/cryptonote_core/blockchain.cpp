@@ -1656,7 +1656,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
                   bvc.m_verifivation_failed = true;
                   return false;
                 }
-                MWARNING("----- Number of nota txs in block = " << std::to_string(num_ntz_txs) << " -----");
+                MWARNING("Notarized block at heght: " << std::to_string(bei.height) << ", notarization tx count: " << std::to_string(num_ntz_txs));
               }
             }
           } else {

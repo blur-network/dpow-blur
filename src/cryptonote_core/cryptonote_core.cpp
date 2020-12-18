@@ -1339,7 +1339,7 @@ namespace cryptonote
       MERROR("Failed to remove one or more tx(es): [" << logging << "]");
     } else {
       if (!ntz_txids.empty())
-        MWARNING("flush_ntzpool successful from RPC, for txids: [" << logging << "]");
+        MWARNING("flush_ntzpool successful from core, for txids: [" << logging << "]");
     }
   }
   //-----------------------------------------------------------------------------------------------
