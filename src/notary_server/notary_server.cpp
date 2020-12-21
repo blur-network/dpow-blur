@@ -1351,6 +1351,10 @@ pool_recheck:
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
     std::vector<std::pair<crypto::public_key,crypto::public_key>> notaries_keys;
     bool z = cryptonote::get_notary_pubkeys(notaries_keys);
+    std::vector<crypto::public_key> notary_pub_spendkeys;
+    for (const auto& each : notaries_keys) {
+      notary_pub_spendkeys.push_back(each.second);
+    }
 
     cryptonote::blobdata ptx_blob_bin = ptx_blob;
     //MWARNING("Matched tx blob: " << tx_blob << ", matched ptx_blob: " << ptx_blob_bin << ", matched sig_count: " << std::to_string(sig_count));
@@ -1366,8 +1370,7 @@ pool_recheck:
     const int count = DPOW_SIG_COUNT - std::count(signers_index.begin(), signers_index.end(), neg);
     //LOG_PRINT_L1("Signers index count = " << std::to_string(count));
     std::vector<crypto::secret_key> notary_viewkeys;
-    bool r = false;
-    r = cryptonote::get_notary_secret_viewkeys(notary_viewkeys);
+    bool r = cryptonote::get_notary_secret_viewkeys(notary_viewkeys);
 
     if (!r)
     {
@@ -1378,7 +1381,8 @@ pool_recheck:
     std::vector<crypto::key_derivation> recv_derivations;
     std::vector<std::pair<crypto::public_key,size_t>> recv_outkeys;
     int i = -1;
-    for (int j = 0; j < count; j++) {
+    size_t pk_index = 0;
+//    for (int j = 0; j < count; j++) {
       i = signers_index[count-1];
       crypto::secret_key viewkey = notary_viewkeys[i];
       cryptonote::transaction tx = pen_tx.tx;
@@ -1401,32 +1405,28 @@ pool_recheck:
         std::pair<crypto::public_key,size_t> each = std::make_pair(reinterpret_cast<const crypto::public_key&>(rv.outPk[n].dest), n);
         recv_outkeys.push_back(each);
       }
-/*
-    size_t pk_index = 0;
-    crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index++);
+  //  }
+
+    crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index);
     bool R_two = false;
-    for (const auto& each : notary_viewkeys) {
+    size_t counter = 0;
+    for (const auto& each : recv_outkeys) {
       crypto::key_derivation recv_derivation;
-      bool R = generate_key_derivation(recv_tx_key, each, recv_derivation);
+      bool R = generate_key_derivation(recv_tx_key, viewkey, recv_derivation);
       if (!R) {
-        MERROR("Failed to generate recv_derivation at append_ntz_sig! recv_tx_key = " << recv_tx_key << ", notary_viewkey = " << epee::string_tools::pod_to_hex(each));
+        MERROR("Failed to generate recv_derivation at append_ntz_sig! recv_tx_key = " << recv_tx_key << ", notary_viewkey = " << epee::string_tools::pod_to_hex(viewkey));
         return false;
       } else {
-        LOG_PRINT_L1("Recv derivation = " << recv_derivation << ", for pk_index: " << std::to_string(pk_index));
-        if (epee::string_tools::pod_to_hex(recv_derivation) != "0100000000000000000000000000000000000000000000000000000000000000") {
-          LOG_PRINT_L2("Recv derivation does not equal rct identity element! Validation failed for pk_index: " << std::to_string(pk_index));
-          //std::list<std::string> tx_strings;
-          //std::string tx_hash_string = epee::string_tools::pod_to_hex(get_transaction_hash(tx));
-          //tx_strings.push_back(tx_hash_string);
-          //m_wallet->remove_ntzpool_txs(tx_strings);
-          //break;
-        } else {
-          recv_derivations.push_back(recv_derivation);
-          pk_counter = pk_index;
+        LOG_PRINT_L1("Counter [" << std::to_string(counter++) << "], Recv derivation = " << recv_derivation << ", for pk_index: " << std::to_string(pk_index));
+        crypto::public_key each_pubkey;
+        for (size_t nn = 0; nn < 64; nn++) {
+          bool derive = derive_public_key(recv_derivation, each.second, notary_pub_spendkeys[nn], each_pubkey);
+          if (epee::string_tools::pod_to_hex(each_pubkey) == epee::string_tools::pod_to_hex(each.first)) {
+            LOG_PRINT_L1("Derived pubkey = " << epee::string_tools::pod_to_hex(each_pubkey) << ", recv_outkey: " << epee::string_tools::pod_to_hex(each.first) << "\n for n = " << std::to_string(each.second) << ", and nn = " << std::to_string(nn));
+          }
         }
       }
-    }*/
-  }
+    }
 
     //LOG_PRINT_L1("Recv derivations passed on index: " << std::to_string(pk_counter));
 
