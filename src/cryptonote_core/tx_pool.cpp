@@ -123,25 +123,41 @@ namespace cryptonote
       return false;
     }
 
-    if (tx.version == 2) {
+    if (tx.version == 2)
+    {
       std::list<cryptonote::transaction> txs;
       bool include_unrelayed = true;
       get_transactions(txs, include_unrelayed);
       std::list<crypto::hash> txids_to_flush;
-      for (const auto& each : txs) {
+      uint64_t num_ntz_txes = 0;
+      for (const auto& each : txs)
+      {
         crypto::hash pool_txid = get_transaction_hash(each);
         cryptonote::txpool_tx_meta_t meta;
-        if (each.version == 2) {
-          if (!m_blockchain.get_txpool_tx_meta(pool_txid, meta)) {
+        if (each.version == 2)
+        {
+          num_ntz_txes++;
+          if (!m_blockchain.get_txpool_tx_meta(pool_txid, meta))
+          {
             MERROR("in tx_memory_pool::add_tx: failed to get txpool meta for txid: " << epee::string_tools::pod_to_hex(pool_txid));
+            num_ntz_txes--;
             txids_to_flush.push_back(pool_txid);
-          } else {
-            if ((meta.kept_by_block == true) || (meta.double_spend_seen == true)) {
+          }
+          else
+          {
+            if ((meta.kept_by_block == true) || (meta.double_spend_seen == true))
+            {
+              num_ntz_txes--;
               txids_to_flush.push_back(pool_txid);
-            } else {
-              MERROR("Already have one notarization tx in pool! Failing validation for txid: " << epee::string_tools::pod_to_hex(pool_txid));
-              tvc.m_verifivation_failed = true;
-              return false;
+            }
+            else
+            {
+              if (num_ntz_txes >= DPOW_MAX_NOTA_PER_BLOCK)
+              {
+                MERROR("Already have " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " notarization tx(es) in pool! Failing validation for txid: " << epee::string_tools::pod_to_hex(pool_txid));
+                tvc.m_verifivation_failed = true;
+                return false;
+              }
             }
           }
         }

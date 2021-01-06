@@ -169,10 +169,10 @@ namespace tools
          //MWARNING("Height = " << std::to_string(height) << ", notarization_wait = " << std::to_string(notarization_wait) << " ---- ");
          if (m_wallet)
          {
-           if (first_run) {
+           /*if (first_run) {
              m_wallet->flush_ntzpool();
              first_run = false;
-           }
+           }*/
 
            bound_ntz_count = (bound_ntz_count == 0) ? m_wallet->get_ntz_count() : bound_ntz_count;
            if (height < notarization_wait) {
