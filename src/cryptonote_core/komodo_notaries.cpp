@@ -17,7 +17,7 @@
  * Parts of this file have been modified for compatibility with the Blur Network.
  * The copyright notice below applies to only those portions that have been changed.
  *
- * Copyright (c) Blur Network, 2018-2020
+ * Copyright (c) Blur Network, 2018-2021
  *
  * All rights reserved.
  *
