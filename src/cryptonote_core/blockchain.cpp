@@ -331,6 +331,8 @@ void Blockchain::komodo_update()
     komodo::NUM_NPOINTS = ntz_count;
     komodo::NOTARIZED_HEIGHT = greatest_height;
     komodo::NOTARIZED_PREVHEIGHT = previous_height;
+    MWARNING("komodo::NOTARIZED_HEIGHT = " << std::to_string(komodo::NOTARIZED_HEIGHT));
+    MWARNING("komodo::NOTARIZED_PREVHEIGHT = " << std::to_string(komodo::NOTARIZED_PREVHEIGHT));
 }
 //------------------------------------------------------------------
 // This function makes sure that each "input" in an input (mixins) exists
@@ -1620,7 +1622,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
     bei.bl = b;
     bei.height = alt_chain.size() ? it_prev->second.height + 1 : m_db->get_block_height(b.prev_id) + 1;
 
-    bool is_a_checkpoint;
+    bool is_a_checkpoint = false;
     if(!m_checkpoints.check_block(bei.height, id, is_a_checkpoint))
     {
       LOG_ERROR("CHECKPOINT VALIDATION FAILED");
@@ -1675,7 +1677,8 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       {
         if (is_block_notarized(bei.bl)) {
           MERROR("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
-          // add alternative chain handling here, or boolean to handle later in handle_alt_block()
+          // need to check against alt chains here, evaulate based on diff
+          // check against NOTARIZED_HEIGHT/NOTARIZED_PREVHEIGHT happens in is_block_notarized()
           bvc.m_verifivation_failed = true;
           return false;
         } else {
@@ -3964,9 +3967,6 @@ leave:
        // height less than last notarized height
         if (is_block_notarized(bl)) {
           MERROR("Blockchain::handle_block_to_main_chain() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(m_height));
-          // need to check against alt chains here, evaulate based on diff
-          // that check needs to only reorganize maximum of 1 nota checkpoint
-          // 2nd nota checkpoint seen should be considered set in stone
           bvc.m_verifivation_failed = true;
           return false;
         } else {
