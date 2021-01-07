@@ -261,11 +261,14 @@ bool Blockchain::is_block_notarized(cryptonote::block const& b)
   uint64_t prev_ntz_height = (komodo::NOTARIZED_PREVHEIGHT >= 0) ? ((uint64_t)komodo::NOTARIZED_PREVHEIGHT) : 0;
   if (b_height <= ntz_height) {
     if (b_height <= prev_ntz_height) {
+      LOG_PRINT_L0("Block height less than NOTARIZED_HEIGHT && NOTARIZED_PREVHEIGHT");
       // two notarization delay
       return true;
     }
-    else
+    else {
+      LOG_PRINT_L0("Block height less than NOTARIZED_HEIGHT, but greater than NOTARIZED_PREVHEIGHT");
       return false;
+    }
   }
   return false;
 }
