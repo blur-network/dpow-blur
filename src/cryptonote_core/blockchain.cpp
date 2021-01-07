@@ -1675,6 +1675,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       {
         if (is_block_notarized(bei.bl)) {
           MERROR("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
+          // add alternative chain handling here, or boolean to handle later in handle_alt_block()
           bvc.m_verifivation_failed = true;
           return false;
         } else {
@@ -3963,6 +3964,9 @@ leave:
        // height less than last notarized height
         if (is_block_notarized(bl)) {
           MERROR("Blockchain::handle_block_to_main_chain() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(m_height));
+          // need to check against alt chains here, evaulate based on diff
+          // that check needs to only reorganize maximum of 1 nota checkpoint
+          // 2nd nota checkpoint seen should be considered set in stone
           bvc.m_verifivation_failed = true;
           return false;
         } else {
