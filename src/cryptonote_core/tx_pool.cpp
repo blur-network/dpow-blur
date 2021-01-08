@@ -150,7 +150,7 @@ namespace cryptonote
               num_ntz_txes--;
               txids_to_flush.push_back(pool_txid);
             }
-            else
+            /*else
             {
               if (num_ntz_txes >= DPOW_MAX_NOTA_PER_BLOCK)
               {
@@ -158,7 +158,7 @@ namespace cryptonote
                 tvc.m_verifivation_failed = true;
                 return false;
               }
-            }
+            }*/
           }
         }
       }
@@ -1682,6 +1682,8 @@ namespace cryptonote
 
     LockedTXN lock(m_blockchain);
 
+    uint64_t num_ntz_txes = 0;
+
     auto sorted_it = m_txs_by_fee_and_receive_time.begin();
     while (sorted_it != m_txs_by_fee_and_receive_time.end())
     {
@@ -1739,6 +1741,15 @@ namespace cryptonote
         MERROR("Failed to parse tx from txpool");
         sorted_it++;
         continue;
+      }
+
+      if (tx.version == 2) {
+        num_ntz_txes++;
+        if (num_ntz_txes > DPOW_MAX_NOTA_PER_BLOCK) {
+          MERROR("More than " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " notarization tx(es) in pool. Excluding excess from block template!");
+          sorted_it++;
+          continue;
+        }
       }
 
       // Skip transactions that are not ready to be
