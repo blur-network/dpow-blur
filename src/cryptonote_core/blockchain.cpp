@@ -1644,30 +1644,27 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       {
         LOG_PRINT_L1("Blockchain::handle_alternative_block() >> Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
         uint64_t num_ntz_txs = 0;
-        for (const auto& each: bei.bl.tx_hashes)
+        std::vector<cryptonote::blobdata> txs_blobs;
+        std::vector<crypto::hash> missed_ids;
+        get_transactions_blobs(bei.bl.tx_hashes, txs_blobs, missed_ids);
+        // TODO: May need to handle missed_ids here and request those txs from other nodes
+        for (const auto& txblob: txs_blobs)
         {
-          cryptonote::blobdata txblob;
-          if (get_txpool_tx_blob(each, txblob)) {
-            cryptonote::transaction tx;
-            if (!parse_and_validate_tx_from_blob(txblob, tx)) {
-              MERROR("Failed to parse and validate tx from blob in handle_alternative_block_to_main_chain()!");
-              bvc.m_verifivation_failed = true;
-              return false;
-            } else {
-              if (tx.version == 2) {
-                num_ntz_txs++;
-                if (bei.height < get_notarization_wait()) {
-                  MERROR_VER("Notarization transaction seen too early! No notarizations may take place until block height = " << std::to_string(get_notarization_wait()));
-                  bvc.m_verifivation_failed = true;
-                  return false;
-                }
-                MWARNING("Notarized block at heght: " << std::to_string(bei.height) << ", notarization tx count: " << std::to_string(num_ntz_txs));
-              }
-            }
-          } else {
-            MERROR("Failed to get tx_blob!!!");
+          cryptonote::transaction tx;
+          if (!parse_and_validate_tx_from_blob(txblob, tx)) {
+            MERROR_VER("Failed to parse and validate tx from blob in handle_alternative_block_to_main_chain()!");
             bvc.m_verifivation_failed = true;
             return false;
+          } else {
+            if (tx.version == 2) {
+              num_ntz_txs++;
+              if (bei.height < get_notarization_wait()) {
+                MERROR_VER("Notarization transaction seen too early! No notarizations may take place until block height = " << std::to_string(get_notarization_wait()));
+                bvc.m_verifivation_failed = true;
+                return false;
+              }
+              MWARNING("Notarized block at heght: " << std::to_string(bei.height) << ", notarization tx count: " << std::to_string(num_ntz_txs));
+            }
           }
         }
         if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
@@ -1679,7 +1676,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       else
       {
         if (is_block_notarized(bei.bl)) {
-          MERROR("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
+          MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
           // need to check against alt chains here, evaulate based on diff
           // check against NOTARIZED_HEIGHT/NOTARIZED_PREVHEIGHT happens in is_block_notarized()
           bvc.m_verifivation_failed = true;
