@@ -1521,8 +1521,8 @@ namespace cryptonote
             //MERROR("Found ntz tx in pool during notarization wait period. Flushing tx: " << epee::string_tools::pod_to_hex(txid));
           }
         }
-      } else if (get_block_height(b) >= (get_notarization_wait() + (DPOW_NOTARIZATION_WINDOW))) {
-        flush_ntzpool();
+      /*} else if (get_block_height(b) >= (get_notarization_wait() + (DPOW_NOTARIZATION_WINDOW))) {
+        flush_ntzpool();*/
       }
     }
     m_blockchain_storage.flush_txes_from_pool(txids_to_flush);
