@@ -1279,20 +1279,42 @@ namespace cryptonote
         }
       }
 
-      std::string dups_logging1 = "";
-      for (const auto& dup : dups)
-        dups_logging1 += (std::to_string(dup) + " ");
-      MERROR("Duplicate (unsorted, dups not removed) sig_count entries = " << dups_logging1);
+      //std::string dups_logging1 = "";
+      //for (const auto& dup : dups)
+      //  dups_logging1 += (std::to_string(dup) + " ");
+      //MERROR("Duplicate (unsorted, dups not removed) sig_count entries = " << dups_logging1);
 
       std::sort(dups.begin(), dups.end());
       std::vector<int>::iterator it;
       it = std::unique(dups.begin(), dups.begin() + dups.size());
       dups.resize(std::distance(dups.begin(), it));
-      //std::vector<crypto::hash> hash_by_sigcount;
 
       std::string dups_logging2 = "";
-      for (const auto& dup : dups)
+      for (const auto& dup : dups) {
+        std::vector<crypto::hash> hash_by_sigcount;
         dups_logging2 += (std::to_string(dup) + " ");
+        for (const auto& each : tx_infos) {
+          if (each.sig_count == dup) {
+            crypto::hash each_hash;
+            if (!string_to_hash(each.id_hash, each_hash)) {
+              continue;
+            }
+            hash_by_sigcount.push_back(each_hash);
+          }
+        }
+        ntzids_by_sigcount.push_back(hash_by_sigcount);
+      }
+
+      std::vector<std::vector<uint32_t>> shortnums;
+      for (const auto& each : ntzids_by_sigcount) {
+        std::vector<uint32_t> shortnum = hashes_to_shortnums(each);
+        shortnums.push_back(shortnum);
+        std::string shnum_logging = "";
+        for (const auto& num : shortnum)
+          shnum_logging += (std::to_string(num) + " ");
+        MERROR("Shortnums : " << shnum_logging);
+      }
+
       MERROR("Duplicate (sorted, dups removed) sig_count entries = " << dups_logging2);
     }
   }

@@ -527,6 +527,23 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
+  std::vector<uint32_t> hashes_to_shortnums(std::vector<crypto::hash> const& hashes)
+  {
+     std::vector<uint32_t> shortnums;
+     for (const auto& each : hashes) {
+       uint32_t id_num = 0;
+       uint8_t bytes_span[3] = { 0, 0, 0 };
+
+        // get 6 char from previous hash as varint
+        for (size_t i = 0; i < 3; i++) {
+          memset(&bytes_span[i], (int)(each.data[i]), sizeof(each.data[i]));
+          id_num |= bytes_span[i] << (24 - (8*(i+1)));
+        }
+        shortnums.push_back(id_num);
+     }
+     return shortnums;
+  }
+  //---------------------------------------------------------------
   crypto::public_key get_tx_pub_key_from_extra(const std::vector<uint8_t>& tx_extra, size_t pk_index)
   {
     std::vector<tx_extra_field> tx_extra_fields;
