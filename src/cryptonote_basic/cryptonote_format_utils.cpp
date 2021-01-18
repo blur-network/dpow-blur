@@ -534,7 +534,7 @@ namespace cryptonote
        uint32_t id_num = 0;
        uint8_t bytes_span[3] = { 0, 0, 0 };
 
-        // get 6 char from previous hash as varint
+        // get 6 char from each hash as varint
         for (size_t i = 0; i < 3; i++) {
           memset(&bytes_span[i], (int)(each.data[i]), sizeof(each.data[i]));
           id_num |= bytes_span[i] << (24 - (8*(i+1)));

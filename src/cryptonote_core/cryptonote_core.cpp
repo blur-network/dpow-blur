@@ -1312,10 +1312,10 @@ namespace cryptonote
         std::string shnum_logging = "";
         for (const auto& num : shortnum)
           shnum_logging += (std::to_string(num) + " ");
-        MERROR("Shortnums : " << shnum_logging);
+        MWARNING("Shortnums : " << shnum_logging);
       }
 
-      MERROR("Duplicate (sorted, dups removed) sig_count entries = " << dups_logging2);
+      MWARNING("Duplicate (sorted, dups removed) sig_count entries = " << dups_logging2);
     }
   }
   //-----------------------------------------------------------------------------------------------
