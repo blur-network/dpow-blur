@@ -1306,13 +1306,14 @@ namespace cryptonote
       }
 
       std::vector<std::vector<uint32_t>> shortnums;
+      size_t i = 0;
       for (const auto& each : ntzids_by_sigcount) {
         std::vector<uint32_t> shortnum = hashes_to_shortnums(each);
         shortnums.push_back(shortnum);
         std::string shnum_logging = "";
         for (const auto& num : shortnum)
           shnum_logging += (std::to_string(num) + " ");
-        MWARNING("Shortnums : " << shnum_logging);
+        MWARNING("Shortnums (for sig_count = " << std::to_string(dups[i++]) << "): " << shnum_logging);
       }
 
       MWARNING("Duplicate (sorted, dups removed) sig_count entries = " << dups_logging2);
