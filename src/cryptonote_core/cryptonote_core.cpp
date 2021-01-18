@@ -1254,7 +1254,8 @@ namespace cryptonote
     std::vector<std::pair<int,crypto::hash>> sigcount_vals;
     std::vector<int> once, dups;
     std::vector<std::vector<crypto::hash>> ntzids_by_sigcount;
-    std::vector<crypto::hash> ntzids_to_flush;
+    std::list<crypto::hash> ntzids_to_flush;
+    std::string ntzids_logging = "";
     if (!tx_infos.empty()) {
       for (const auto& each : tx_infos) {
         std::pair<int,crypto::hash> sigcount_hash;
@@ -1307,16 +1308,38 @@ namespace cryptonote
 
       std::vector<std::vector<uint32_t>> shortnums;
       size_t i = 0;
+      std::vector<size_t> minimum_entries;
       for (const auto& each : ntzids_by_sigcount) {
         std::vector<uint32_t> shortnum = hashes_to_shortnums(each);
         shortnums.push_back(shortnum);
         std::string shnum_logging = "";
-        for (const auto& num : shortnum)
+        for (const auto& num : shortnum) {
           shnum_logging += (std::to_string(num) + " ");
-        MWARNING("Shortnums (for sig_count = " << std::to_string(dups[i++]) << "): " << shnum_logging);
+        }
+        std::vector<uint32_t>::iterator ip = std::min_element(shortnum.begin(), shortnum.end());
+        size_t min_pos = std::distance(shortnum.begin(), ip);
+        minimum_entries.push_back(min_pos);
+        if (!dups.empty())
+          MWARNING("Shortnums (for sig_count = " << std::to_string(dups[i++]) << "): " << shnum_logging);
       }
 
-      MWARNING("Duplicate (sorted, dups removed) sig_count entries = " << dups_logging2);
+      for (size_t j = 0; j < ntzids_by_sigcount.size(); j++) {
+        for (size_t jj = 0; jj < ntzids_by_sigcount[j].size(); jj++) {
+          if (jj != minimum_entries[j]) {
+            ntzids_to_flush.push_back(ntzids_by_sigcount[j][jj]);
+          }
+        }
+      }
+      for (const auto& each : ntzids_to_flush)
+        ntzids_logging += (epee::string_tools::pod_to_hex(each) + " ");
+      if (!dups.empty()) {
+        MWARNING("Duplicate (sorted, dups removed) sig_count entries = " << dups_logging2);
+        MWARNING("Ntzids to flush = [ " << ntzids_logging << " ]");
+      }
+    }
+    if (!m_blockchain_storage.flush_ntz_txes_from_pool(ntzids_to_flush))
+    {
+      MERROR("Failed to remove one or more tx(es): [ " << ntzids_logging << " ]");
     }
   }
   //-----------------------------------------------------------------------------------------------
