@@ -89,6 +89,8 @@ namespace cryptonote
 
      bool relay_ntzpool_transactions();
 
+     void cleanup_ntzpool();
+
     /**
      * @copydoc Blockchain::handle_get_objects
      *

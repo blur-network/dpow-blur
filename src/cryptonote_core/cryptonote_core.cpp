@@ -1246,6 +1246,57 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
+  void core::cleanup_ntzpool()
+  {
+    std::vector<ntz_tx_info> tx_infos;
+    std::vector<spent_key_image_info> key_image_infos;
+    get_pending_ntz_pool_and_spent_keys_info(tx_infos, key_image_infos);
+    std::vector<std::pair<int,crypto::hash>> sigcount_vals;
+    std::vector<int> once, dups;
+    std::vector<std::vector<crypto::hash>> ntzids_by_sigcount;
+    std::vector<crypto::hash> ntzids_to_flush;
+    if (!tx_infos.empty()) {
+      for (const auto& each : tx_infos) {
+        std::pair<int,crypto::hash> sigcount_hash;
+        sigcount_hash.first = each.sig_count;
+        if (!string_to_hash(each.id_hash, sigcount_hash.second)) {
+          continue;
+        }
+        sigcount_vals.push_back(sigcount_hash);
+      }
+
+      for (const auto& each : sigcount_vals) {
+        if (!once.empty()) {
+          for (const auto& one : once) {
+            if (each.first == one)
+              dups.push_back(each.first);
+            else
+              once.push_back(each.first);
+          }
+        }
+        else {
+          once.push_back(each.first);
+        }
+      }
+
+      std::string dups_logging1 = "";
+      for (const auto& dup : dups)
+        dups_logging1 += (std::to_string(dup) + " ");
+      MERROR("Duplicate (unsorted, dups not removed) sig_count entries = " << dups_logging1);
+
+      std::sort(dups.begin(), dups.end());
+      std::vector<int>::iterator it;
+      it = std::unique(dups.begin(), dups.begin() + dups.size());
+      dups.resize(std::distance(dups.begin(), it));
+      //std::vector<crypto::hash> hash_by_sigcount;
+
+      std::string dups_logging2 = "";
+      for (const auto& dup : dups)
+        dups_logging2 += (std::to_string(dup) + " ");
+      MERROR("Duplicate (sorted, dups removed) sig_count entries = " << dups_logging2);
+    }
+  }
+  //-----------------------------------------------------------------------------------------------
   bool core::relay_ntzpool_transactions()
   {
     //MWARNING("Called relay_ntzpool_transactions()!");
@@ -1521,9 +1572,8 @@ namespace cryptonote
             //MERROR("Found ntz tx in pool during notarization wait period. Flushing tx: " << epee::string_tools::pod_to_hex(txid));
           }
         }
-      /*} else if (get_block_height(b) >= (get_notarization_wait() + (DPOW_NOTARIZATION_WINDOW))) {
-        flush_ntzpool();*/
       }
+      cleanup_ntzpool();
     }
     m_blockchain_storage.flush_txes_from_pool(txids_to_flush);
     m_blockchain_storage.prepare_handle_incoming_blocks(blocks);
