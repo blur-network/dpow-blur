@@ -1793,7 +1793,7 @@ namespace cryptonote
       LOG_PRINT_L2("  added, new block size " << total_size << "/" << max_total_size << ", coinbase " << print_money(best_coinbase));
     }
 
-    m_blockchain.flush_ntz_txes_from_pool(ids_to_flush);
+    m_blockchain.flush_txes_from_pool(ids_to_flush);
 
     expected_reward = best_coinbase;
     LOG_PRINT_L2("Block template filled with " << bl.tx_hashes.size() << " txes, size "
