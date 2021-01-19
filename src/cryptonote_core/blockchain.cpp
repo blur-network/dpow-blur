@@ -334,8 +334,8 @@ void Blockchain::komodo_update()
     komodo::NUM_NPOINTS = ntz_count;
     komodo::NOTARIZED_HEIGHT = greatest_height;
     komodo::NOTARIZED_PREVHEIGHT = previous_height;
-    MWARNING("komodo::NOTARIZED_HEIGHT = " << std::to_string(komodo::NOTARIZED_HEIGHT));
-    MWARNING("komodo::NOTARIZED_PREVHEIGHT = " << std::to_string(komodo::NOTARIZED_PREVHEIGHT));
+    LOG_PRINT_L1("komodo::NOTARIZED_HEIGHT = " << std::to_string(komodo::NOTARIZED_HEIGHT));
+    LOG_PRINT_L1("komodo::NOTARIZED_PREVHEIGHT = " << std::to_string(komodo::NOTARIZED_PREVHEIGHT));
 }
 //------------------------------------------------------------------
 // This function makes sure that each "input" in an input (mixins) exists
