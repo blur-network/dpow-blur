@@ -1746,7 +1746,7 @@ namespace cryptonote
 
       if (tx.version == 2) {
         num_ntz_txes++;
-        if (num_ntz_txes > DPOW_MAX_NOTA_PER_BLOCK) {
+        if ((num_ntz_txes > (DPOW_MAX_NOTA_PER_BLOCK)) || (m_blockchain.get_db().height() < m_blockchain.get_notarization_wait())) {
           MWARNING("More than " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " notarization tx(es) in pool. Excluding " << std::to_string(num_ntz_txes) << " excess tx(es) from block template!");
           ids_to_flush.push_back(sorted_it->second);
           sorted_it++;
