@@ -3932,30 +3932,28 @@ leave:
         LOG_PRINT_L1("Blockchain::handle_block_to_main_chain() >> Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
         std::vector<cryptonote::transaction> nota_txs;
         uint64_t num_ntz_txs = 0;
-        for (const auto& each: bl.tx_hashes)
+        cryptonote::blobdata txblob;
+        std::vector<cryptonote::blobdata> txs_blobs;
+        std::vector<crypto::hash> missed_ids;
+        get_transactions_blobs(bl.tx_hashes, txs_blobs, missed_ids);
+        // TODO: May need to handle missed_ids here and request those txs from other nodes
+        for (const auto& txblob: txs_blobs)
         {
-          cryptonote::blobdata txblob;
-          if (m_db->get_txpool_tx_blob(each, txblob)) {
-            cryptonote::transaction tx;
-            if (!parse_and_validate_tx_from_blob(txblob, tx)) {
-              MERROR("Failed to parse and validate tx from blob in handle_alternative_block_to_main_chain()!");
-              bvc.m_verifivation_failed = true;
-              return false;
-            } else {
-              if (tx.version == 2) {
-                num_ntz_txs++;
-                if (get_block_height(bl) < get_notarization_wait()) {
-                  MERROR_VER("Notarization transaction seen too early! No notarizations may take place until block height = " << std::to_string(get_notarization_wait()));
-                  bvc.m_verifivation_failed = true;
-                  return false;
-                }
-                MWARNING("----- Number of nota txs in block = " << std::to_string(num_ntz_txs) << " -----");
-              }
-            }
-          } else {
-            MERROR("Failed to get tx_blob!!!");
+          cryptonote::transaction tx;
+          if (!parse_and_validate_tx_from_blob(txblob, tx)) {
+            MERROR("Failed to parse and validate tx from blob in handle_alternative_block_to_main_chain()!");
             bvc.m_verifivation_failed = true;
             return false;
+          } else {
+            if (tx.version == 2) {
+              num_ntz_txs++;
+              if (get_block_height(bl) < get_notarization_wait()) {
+                MERROR_VER("Notarization transaction seen too early! No notarizations may take place until block height = " << std::to_string(get_notarization_wait()));
+                bvc.m_verifivation_failed = true;
+                return false;
+              }
+              MWARNING("----- Number of nota txs in block = " << std::to_string(num_ntz_txs) << " -----");
+            }
           }
         }
         if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
