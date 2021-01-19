@@ -737,6 +737,7 @@ namespace cryptonote
       }
     }
 
+    cleanup_ntzpool();
 /*    if (keeped_by_block && get_blockchain_storage().is_within_compiled_block_hash_area())
     {
       MTRACE("Asked to skip semantics check for tx kept by block in embedded hash area");
@@ -1619,7 +1620,7 @@ namespace cryptonote
           }
         }
       }
-      cleanup_ntzpool();
+      //cleanup_ntzpool();
     }
     m_blockchain_storage.flush_txes_from_pool(txids_to_flush);
     m_blockchain_storage.prepare_handle_incoming_blocks(blocks);
