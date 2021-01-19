@@ -1684,6 +1684,7 @@ namespace cryptonote
 
     uint64_t num_ntz_txes = 0;
 
+    std::list<crypto::hash> ids_to_flush;
     auto sorted_it = m_txs_by_fee_and_receive_time.begin();
     while (sorted_it != m_txs_by_fee_and_receive_time.end())
     {
@@ -1747,6 +1748,7 @@ namespace cryptonote
         num_ntz_txes++;
         if (num_ntz_txes > DPOW_MAX_NOTA_PER_BLOCK) {
           MWARNING("More than " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " notarization tx(es) in pool. Excluding " << std::to_string(num_ntz_txes) << " excess tx(es) from block template!");
+          ids_to_flush.push_back(sorted_it->second);
           sorted_it++;
           continue;
         }
@@ -1790,6 +1792,8 @@ namespace cryptonote
       sorted_it++;
       LOG_PRINT_L2("  added, new block size " << total_size << "/" << max_total_size << ", coinbase " << print_money(best_coinbase));
     }
+
+    m_blockchain.flush_ntz_txes_from_pool(ids_to_flush);
 
     expected_reward = best_coinbase;
     LOG_PRINT_L2("Block template filled with " << bl.tx_hashes.size() << " txes, size "
