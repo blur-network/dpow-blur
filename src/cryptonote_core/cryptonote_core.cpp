@@ -566,6 +566,13 @@ namespace cryptonote
       tvc.m_verifivation_failed = true;
       return false;
     }
+
+    if ((tx.version == 2) && (get_blockchain_storage().get_db().height() < get_notarization_wait())) {
+      MWARNING("Ntz tx seen within notarization wait window. Failing validation!");
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+
     //std::cout << "!"<< tx.vin.size() << std::endl;
 
     bad_semantics_txes_lock.lock();
