@@ -191,7 +191,7 @@ uint64_t Blockchain::get_ntz_count(std::vector<std::tuple<crypto::hash,uint64_t,
   std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> hash_height_index;
   for_all_transactions([this, &hash_height_index, &count](const crypto::hash &hash, const cryptonote::transaction &tx)->bool
   {
-    if ((tx.version == 2) && (tx.vin[0].type() != typeid(txin_gen))) {
+    if ((tx.version == (DPOW_NOTA_TX_VERSION)) && (tx.vin[0].type() != typeid(txin_gen))) {
       uint64_t ntz_index = count;
       const uint64_t height = m_db->get_tx_block_height(hash);
       auto each = std::make_tuple(hash,height,ntz_index);
@@ -1636,7 +1636,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
   uint64_t const ntz_height = get_notarized_height(ntz_hash);
 
   // if we have notarizations in DB
-  if (b.major_version >= 11)
+  if (b.major_version >= (DPOW_FORK_VERSION))
   {
     if (ntz_height >= 1)
     {
@@ -1656,7 +1656,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
             bvc.m_verifivation_failed = true;
             return false;
           } else {
-            if (tx.version == 2) {
+            if (tx.version == (DPOW_NOTA_TX_VERSION)) {
               num_ntz_txs++;
               if (bei.height < get_notarization_wait()) {
                 MERROR_VER("Notarization transaction seen too early! No notarizations may take place until block height = " << std::to_string(get_notarization_wait()));
@@ -2865,7 +2865,7 @@ bool Blockchain::check_tx_inputs(transaction& tx, tx_verification_context &tvc, 
   // if one output cannot mix with 2 others, we accept at most 1 output that can mix
   if (hf_version >= 1)
   {
-    if ((hf_version >= 11) && (tx.version == 2)) {
+    if ((hf_version >= (DPOW_FORK_VERSION)) && (tx.version == (DPOW_NOTA_TX_VERSION))) {
       /* ignore */
     } else {
       for (const auto& txin : tx.vin)
@@ -3924,7 +3924,7 @@ leave:
   uint64_t ntz_height = get_notarized_height(ntz_hash);
   uint64_t m_height = get_block_height(bl);
 
-  if (bl.major_version >= 11)
+  if (bl.major_version >= (DPOW_FORK_VERSION))
   {
     if (ntz_height >= 1) {
       if (m_height >= ntz_height) {
@@ -3945,7 +3945,7 @@ leave:
             bvc.m_verifivation_failed = true;
             return false;
           } else {
-            if (tx.version == 2) {
+            if (tx.version == (DPOW_NOTA_TX_VERSION)) {
               num_ntz_txs++;
               if (get_block_height(bl) < get_notarization_wait()) {
                 MERROR_VER("Notarization transaction seen too early! No notarizations may take place until block height = " << std::to_string(get_notarization_wait()));

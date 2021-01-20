@@ -567,8 +567,8 @@ namespace cryptonote
       return false;
     }
 
-    if ((tx.version == 2) && (get_blockchain_storage().get_db().height() < get_notarization_wait())) {
-      MWARNING("Ntz tx seen within notarization wait window. Failing validation!");
+    if ((tx.version == (DPOW_NOTA_TX_VERSION)) && (get_blockchain_storage().get_db().height() < get_notarization_wait())) {
+      MWARNING("Ntz tx seen within notarization wait window. Failing validation for: [ " << epee::string_tools::pod_to_hex(tx_hash) << " ]");
       tvc.m_verifivation_failed = true;
       return false;
     }
@@ -1620,14 +1620,14 @@ namespace cryptonote
         bool include_unrelayed = true;
         m_mempool.get_transactions(txs, include_unrelayed);
         for (const auto& each : txs) {
-          if (each.version == 2) {
+          if (each.version == (DPOW_NOTA_TX_VERSION)) {  //TODO: consider moving this elsewhere.
+                                                         //this much mempool querying will probably slow sync
             crypto::hash txid = get_transaction_hash(each);
             txids_to_flush.push_back(txid);
             //MERROR("Found ntz tx in pool during notarization wait period. Flushing tx: " << epee::string_tools::pod_to_hex(txid));
           }
         }
       }
-      //cleanup_ntzpool();
     }
     m_blockchain_storage.flush_txes_from_pool(txids_to_flush);
     m_blockchain_storage.prepare_handle_incoming_blocks(blocks);

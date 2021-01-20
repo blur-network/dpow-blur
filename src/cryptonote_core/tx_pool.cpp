@@ -123,7 +123,7 @@ namespace cryptonote
       return false;
     }
 
-    if (tx.version == 2)
+    if (tx.version == (DPOW_NOTA_TX_VERSION))
     {
       std::list<cryptonote::transaction> txs;
       bool include_unrelayed = true;
@@ -134,7 +134,7 @@ namespace cryptonote
       {
         crypto::hash pool_txid = get_transaction_hash(each);
         cryptonote::txpool_tx_meta_t meta;
-        if (each.version == 2)
+        if (each.version == (DPOW_NOTA_TX_VERSION))
         {
           num_ntz_txes++;
           if (!m_blockchain.get_txpool_tx_meta(pool_txid, meta))
@@ -1744,7 +1744,7 @@ namespace cryptonote
         continue;
       }
 
-      if (tx.version == 2) {
+      if (tx.version == (DPOW_NOTA_TX_VERSION)) {
         num_ntz_txes++;
         if ((num_ntz_txes > (DPOW_MAX_NOTA_PER_BLOCK)) || (m_blockchain.get_db().height() < m_blockchain.get_notarization_wait())) {
           MWARNING("More than " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " notarization tx(es) in pool. Excluding " << std::to_string(num_ntz_txes) << " excess tx(es) from block template!");
