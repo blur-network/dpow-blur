@@ -1796,7 +1796,8 @@ namespace cryptonote
       LOG_PRINT_L2("  added, new block size " << total_size << "/" << max_total_size << ", coinbase " << print_money(best_coinbase));
     }
 
-    MWARNING("More than " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " nota tx(es) in pool. Excluding " << std::to_string(num_ntz_txes - (DPOW_MAX_NOTA_PER_BLOCK)) << " excess tx(es) from block template!");
+    if (num_ntz_txes > (DPOW_MAX_NOTA_PER_BLOCK))
+      MWARNING("More than " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " nota tx(es) in pool. Excluding " << std::to_string(num_ntz_txes - (DPOW_MAX_NOTA_PER_BLOCK)) << " excess tx(es) from block template!");
 
     m_blockchain.flush_txes_from_pool(ids_to_flush);
 
