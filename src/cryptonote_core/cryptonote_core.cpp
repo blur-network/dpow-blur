@@ -824,10 +824,10 @@ namespace cryptonote
       if (already_have[i]) {
         continue; }
 
-      if ((results[i].tx.version == (DPOW_NOTA_TX_VERSION)) && (get_blockchain_storage().get_db().height() < (get_notarization_wait()+5))) {
+      if ((results[i].tx.version == (DPOW_NOTA_TX_VERSION)) && (get_blockchain_storage().get_db().height() < get_notarization_wait())) {
         crypto::hash tx_hash = get_transaction_hash(results[i].tx);
-        MWARNING("Ntz tx seen within notarization wait: [" << epee::string_tools::pod_to_hex(tx_hash) << "]");
-        tvc[i].m_verifivation_failed = true;
+        MWARNING("skipping nota tx seen within notarization wait: [" << epee::string_tools::pod_to_hex(tx_hash) << "]");
+        continue;
       }
 
       ok &= add_new_tx(results[i].tx, results[i].hash, results[i].prefix_hash, it->size(), tvc[i], keeped_by_block, relayed, do_not_relay);
