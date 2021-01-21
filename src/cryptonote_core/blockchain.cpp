@@ -1658,8 +1658,10 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
           } else {
             if (tx.version == (DPOW_NOTA_TX_VERSION)) {
               num_ntz_txs++;
-              if (bei.height < get_notarization_wait()) {
-                MERROR_VER("Notarization transaction seen too early! No notarizations may take place until block height = " << std::to_string(get_notarization_wait()));
+              if (is_block_notarized(bei.bl)) {
+                MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
+                // previously, this was a check on bei.height < get_notarization_wait(). because we are handling an alternative block
+                // this was preventing valid reorgs which straddled a notarizing block
                 bvc.m_verifivation_failed = true;
                 return false;
               }
