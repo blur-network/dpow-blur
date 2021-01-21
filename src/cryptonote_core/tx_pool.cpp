@@ -1746,12 +1746,15 @@ namespace cryptonote
 
       if (tx.version == (DPOW_NOTA_TX_VERSION)) {
         num_ntz_txes++;
-        if ((num_ntz_txes > (DPOW_MAX_NOTA_PER_BLOCK)) || (m_blockchain.get_db().height() < m_blockchain.get_notarization_wait())) {
-          MWARNING("More than " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " notarization tx(es) in pool. Excluding " << std::to_string(num_ntz_txes) << " excess tx(es) from block template!");
+        if (m_blockchain.get_db().height() < m_blockchain.get_notarization_wait()) {
           ids_to_flush.push_back(sorted_it->second);
           sorted_it++;
           continue;
         }
+        if ((num_ntz_txes > (DPOW_MAX_NOTA_PER_BLOCK))) {
+          sorted_it++;
+          continue;
+       }
       }
 
       // Skip transactions that are not ready to be
@@ -1792,6 +1795,8 @@ namespace cryptonote
       sorted_it++;
       LOG_PRINT_L2("  added, new block size " << total_size << "/" << max_total_size << ", coinbase " << print_money(best_coinbase));
     }
+
+    MWARNING("More than " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " nota tx(es) in pool. Excluding " << std::to_string(num_ntz_txes - (DPOW_MAX_NOTA_PER_BLOCK)) << " excess tx(es) from block template!");
 
     m_blockchain.flush_txes_from_pool(ids_to_flush);
 
