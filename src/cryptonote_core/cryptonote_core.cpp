@@ -567,12 +567,6 @@ namespace cryptonote
       return false;
     }
 
-    if ((tx.version == (DPOW_NOTA_TX_VERSION)) && (get_blockchain_storage().get_db().height() < get_notarization_wait())) {
-      MWARNING("Ntz tx seen within notarization wait window. Failing validation for: [ " << epee::string_tools::pod_to_hex(tx_hash) << " ]");
-      tvc.m_verifivation_failed = true;
-      return false;
-    }
-
     //std::cout << "!"<< tx.vin.size() << std::endl;
 
     bad_semantics_txes_lock.lock();
@@ -829,6 +823,12 @@ namespace cryptonote
 
       if (already_have[i]) {
         continue; }
+
+      if ((results[i].tx.version == (DPOW_NOTA_TX_VERSION)) && (get_blockchain_storage().get_db().height() < (get_notarization_wait()+5))) {
+        crypto::hash tx_hash = get_transaction_hash(results[i].tx);
+        MWARNING("Ntz tx seen within notarization wait: [" << epee::string_tools::pod_to_hex(tx_hash) << "]");
+        tvc[i].m_verifivation_failed = true;
+      }
 
       ok &= add_new_tx(results[i].tx, results[i].hash, results[i].prefix_hash, it->size(), tvc[i], keeped_by_block, relayed, do_not_relay);
       if(tvc[i].m_verifivation_failed)
