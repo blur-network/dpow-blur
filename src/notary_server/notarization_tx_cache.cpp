@@ -34,27 +34,36 @@
 
 namespace tools {
 
+  std::mutex peer_cache_lock;
+  std::mutex ntz_cache_lock;
+
 std::vector<wallet2::pending_tx> get_cached_ptx()
 {
+  ntz_cache_lock.lock();
   std::vector<wallet2::pending_tx> ptx = ntz_ptx_cache.back();
   if (!ptx.empty())
     ntz_ptx_cache.pop_back();
+  ntz_cache_lock.unlock();
   return ptx;
 }
 
 std::pair<std::string, std::string> get_cached_peer_ptx_pair()
 {
+  peer_cache_lock.lock();
   std::pair<std::string,std::string> cache_entry;
   if (!peer_ptx_cache.empty())
     cache_entry = peer_ptx_cache.back();
   if (!cache_entry.first.empty() && !cache_entry.second.empty())
     peer_ptx_cache.pop_back();
+  peer_cache_lock.unlock();
   return cache_entry;
 }
 
 std::vector<wallet2::pending_tx> get_cached_peer_ptx()
 {
+  peer_cache_lock.lock();
   std::pair<std::string,std::string> cache_entry = get_cached_peer_ptx_pair();
+  peer_cache_lock.unlock();
   std::vector<wallet2::pending_tx> ptx_vec;
   std::string ptx_string = cache_entry.first;
   std::string signers_index_str = cache_entry.second;
@@ -75,7 +84,9 @@ bool add_ptx_to_cache(std::vector<wallet2::pending_tx> const& ptx)
     MERROR("Error: attempted to add empty ptx vector to cache!");
     return false;
   } else {
+    ntz_cache_lock.lock();
     ntz_ptx_cache.push_back(ptx);
+    ntz_cache_lock.unlock();
     return true;
   }
   return false;
@@ -101,14 +112,13 @@ bool add_peer_ptx_to_cache(std::string& ptx_string, std::string const& signers_i
     MERROR("Error: attempted to add empty ptx string to cache!");
     return false;
   } else {
-      peer_ptx_cache.push_back(cache_entry);
-    if (peer_ptx_cache.empty()) {
-      return false;
-    } else {
-      return true;
-    }
+    peer_cache_lock.lock();
+    peer_ptx_cache.push_back(cache_entry);
+    peer_cache_lock.unlock();
+    return true;
   }
 }
+
 bool req_ntz_sig_to_cache(cryptonote::NOTIFY_REQUEST_NTZ_SIG::request& arg, std::string const& signers_index_str)
 {
   std::string ptx_string = arg.ptx_string;
@@ -130,7 +140,10 @@ bool req_ntz_sig_to_cache(cryptonote::NOTIFY_REQUEST_NTZ_SIG::request& arg, std:
 
 size_t get_ntz_cache_count()
 {
-  return ntz_ptx_cache.size();
+  ntz_cache_lock.lock();
+  size_t size = ntz_ptx_cache.size();
+  ntz_cache_lock.unlock();
+  return size;
 }
 
 size_t get_peer_ptx_cache_count()
