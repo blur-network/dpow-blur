@@ -222,7 +222,7 @@ namespace tools
          MERROR("Exception while executing notarization idle handler sequence, what=" << ex.what());
        }
        return true;
-     }, 20000);
+     }, 30000);
 
     m_net_server.add_idle_handler([this](){
       if (m_stop.load(std::memory_order_relaxed))
