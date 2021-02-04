@@ -201,7 +201,7 @@ if(NOT MANUAL_SUBMODULES)
     message(STATUS "Checking submodules")
 #    check_submodule(external/rapidjson)
     check_submodule(external/libhydrogen)
-    check_submodule(external/libbtc)
+#    check_submodule(external/libbtc)
   endif()
 endif()
 
@@ -413,22 +413,22 @@ ExternalProject_Add(generate_translations_header
 include_directories("${CMAKE_CURRENT_BINARY_DIR}/translations") 
 add_subdirectory(external)
 
-if(DEPENDS)
-  set(EVENT_INCLUDE_DIR ${EVENT_INCLUDE_DIR})
-  set(EVENT_LIBRARIES ${EVENT_LIBRARIES})
-  set(EVENT_LIBRARY_DIR ${EVENT_LIBRARY_DIR})
-  include_directories("${EVENT_INCLUDE_DIR}")
-  message(STATUS "Found EVENT_LIBRARIES located at ${EVENT_LIBRARIES}")
-  message(STATUS "Using EVENT_INCLUDE_DIR located at ${EVENT_INCLUDE_DIR}")
-else()
-  find_library(EVENT_LIBRARIES event)
-  if(EVENT_LIBRARIES)
-    set(EVENT_LIBRARIES "${EVENT_LIBRARIES}")
-    message(STATUS "Found EVENT_LIBRARIES located at ${EVENT_LIBRARIES}")
-   else()
-    message(FATAL_ERROR "Could not find required libevent.")
-  endif()
-endif()
+#if(DEPENDS)
+#  set(EVENT_INCLUDE_DIR ${EVENT_INCLUDE_DIR})
+#  set(EVENT_LIBRARIES ${EVENT_LIBRARIES})
+#  set(EVENT_LIBRARY_DIR ${EVENT_LIBRARY_DIR})
+#  include_directories("${EVENT_INCLUDE_DIR}")
+#  message(STATUS "Found EVENT_LIBRARIES located at ${EVENT_LIBRARIES}")
+#  message(STATUS "Using EVENT_INCLUDE_DIR located at ${EVENT_INCLUDE_DIR}")
+#else()
+#  find_library(EVENT_LIBRARIES event)
+#  if(EVENT_LIBRARIES)
+#    set(EVENT_LIBRARIES "${EVENT_LIBRARIES}")
+#    message(STATUS "Found EVENT_LIBRARIES located at ${EVENT_LIBRARIES}")
+#   else()
+#    message(FATAL_ERROR "Could not find required libevent.")
+#  endif()
+#endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 include(ExternalProject)
@@ -441,30 +441,30 @@ ExternalProject_Add(backward
 )
 endif()
 
-include(ExternalProject)
-ExternalProject_Add(secp256k1
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1
-  CMAKE_ARGS -DSECP256K1_PATH=${SECP256K1_PATH} -DCFLAGS="-fPIC" -DLD_FLAGS=-static -DLD_FLAGS+=-llibbtc
-  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no
-  BUILD_COMMAND make
-  INSTALL_COMMAND make install
-  BUILD_IN_SOURCE 1
-)
+#include(ExternalProject)
+#ExternalProject_Add(secp256k1
+#  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1
+#  CMAKE_ARGS -DSECP256K1_PATH=${SECP256K1_PATH} -DCFLAGS="-fPIC" -DLD_FLAGS=-static -DLD_FLAGS+=-llibbtc
+#  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/configure --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no
+#  BUILD_COMMAND make
+#  INSTALL_COMMAND make install
+#  BUILD_IN_SOURCE 1
+#)
 
-set(SECP256K1_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/.libs/libsecp256k1.a)
+#set(SECP256K1_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/src/secp256k1/.libs/libsecp256k1.a)
 
-include(ExternalProject)
-ExternalProject_Add(libbtc
-  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
-  DEPENDS secp256k1
-  CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static -DLD_FLAGS+="-lsecp256k1" -DLD_FLAGS+="-levent" -DCPP_FLAGS+="-I ${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/include"
-  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure CPP_FLAGS="-I ${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/include"  --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no --with-net=no CPPFLAGS=-I${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-gnu-linux/include LD_LIBRARY_PATH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/lib
-  BUILD_COMMAND make
-  INSTALL_COMMAND make install
-  BUILD_IN_SOURCE 1
-)
+#include(ExternalProject)
+#ExternalProject_Add(libbtc
+#  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc
+#  DEPENDS secp256k1
+#  CMAKE_ARGS -DLIBBTC_PATH=${LIBBTC_PATH} -DCFLAGS=-fPIC -DLD_FLAGS=-static -DLD_FLAGS+="-lsecp256k1" -DLD_FLAGS+="-levent" -DCPP_FLAGS+="-I ${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/include"
+#  CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/autogen.sh && ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/configure CPP_FLAGS="-I ${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/include"  --prefix=${CMAKE_CURRENT_BINARY_DIR}/libbtc/ --enable-static=yes --enable-shared=no --with-pic=yes --enable-openssl-tests=no --enable-module-recovery=no --with-bignum=no --with-net=no CPPFLAGS=-I${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-gnu-linux/include LD_LIBRARY_PATH=${CMAKE_CURRENT_SOURCE_DIR}/contrib/depends/x86_64-linux-gnu/lib
+#  BUILD_COMMAND make
+#  INSTALL_COMMAND make install
+#  BUILD_IN_SOURCE 1
+#)
 
-set(BTC_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/.libs/libbtc.a)
+#set(BTC_LIBRARY ${CMAKE_CURRENT_SOURCE_DIR}/external/libbtc/.libs/libbtc.a)
 
 
 # Final setup for easylogging++

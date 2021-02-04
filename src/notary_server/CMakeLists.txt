@@ -40,9 +40,9 @@ target_link_libraries(notary_server
     rpc
     common
     version
-    ${BTC_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${EVENT_LIBRARIES}
+#    ${BTC_LIBRARY}
+#    ${SECP256K1_LIBRARY}
+#    ${EVENT_LIBRARIES}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
@@ -69,9 +69,9 @@ target_link_libraries(notary_server
     rpc
     common
     version
-    ${BTC_LIBRARY}
-    ${SECP256K1_LIBRARY}
-    ${EVENT_LIBRARIES}
+#    ${BTC_LIBRARY}
+#    ${SECP256K1_LIBRARY}
+#    ${EVENT_LIBRARIES}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
