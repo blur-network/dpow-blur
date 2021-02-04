@@ -486,9 +486,9 @@ if (BERKELEY_DB)
   include_directories(${BDB_INCLUDE})
 endif()
 
-if(NOT SECP256K1_LIBRARY)
-  message(FATAL_ERROR "Could not find required secp256k1 library.")
-endif()
+#if(NOT SECP256K1_LIBRARY)
+#  message(FATAL_ERROR "Could not find required secp256k1 library.")
+#endif()
 
 if(MSVC)
   add_definitions("/bigobj /MP /W3 /GS- /D_CRT_SECURE_NO_WARNINGS /wd4996 /wd4345 /D_WIN32_WINNT=0x0600 /DWIN32_LEAN_AND_MEAN /DGTEST_HAS_TR1_TUPLE=0 /FIinline_c.h /D__SSE4_1__")
@@ -957,9 +957,9 @@ link_directories(BACKWARD_LIBRARIES ${BACKWARD_LIBRARIES})
 endif()
 
 
-if(NOT BTC_LIBRARY)
-  message(FATAL_ERROR "Could not find required libbtc.")
-endif()
+#if(NOT BTC_LIBRARY)
+#  message(FATAL_ERROR "Could not find required libbtc.")
+#endif()
 
 find_library(SODIUM_LIBRARY sodium)
 
