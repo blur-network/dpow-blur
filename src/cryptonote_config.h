@@ -40,7 +40,7 @@
 #define DPOW_MAX_NOTA_PER_BLOCK				1
 #define DPOW_FORK_VERSION				11
 #define DPOW_NOTA_TX_VERSION				2
-#define DPOW_NOTARIZATION_WINDOW			26
+#define DPOW_NOTARIZATION_WINDOW			25
 
 #define CRYPTONOTE_MAX_BLOCK_NUMBER                     500000000
 #define CRYPTONOTE_MAX_BLOCK_SIZE                       500000000  /* block header blob limit, never used! */
