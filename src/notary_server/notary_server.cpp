@@ -1233,7 +1233,7 @@ namespace tools
             break;
           }
           m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
-          MINFO("Signatures < " << std::to_string(DPOW_SIG_COUNT) << ": [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+          MWARNING("Signatures < " << std::to_string(DPOW_SIG_COUNT) << ": [request_ntz_sig, from create_ntz_transfer] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
           res.sent_to_pool = true;
         }
         return fill_res;
@@ -1255,7 +1255,7 @@ namespace tools
               break;
             }
             m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
-            MINFO("Signatures < " << std::to_string(DPOW_SIG_COUNT) << ": [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+            MINFO("Signatures < " << std::to_string(DPOW_SIG_COUNT) << ": [request_ntz_sig, from create_ntz_transfer] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
             res.sent_to_pool = true;
           }
           return fill_res;
@@ -1525,7 +1525,7 @@ pool_recheck:
 //          MWARNING("Ptx to string: " << tx_metadata << ", ptx hash: " << epee::string_tools::pod_to_hex(ptx_hash) << std::endl);
           m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
           res.sent_to_pool = true;
-          MINFO(" [request_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
+          MWARNING(" [request_ntz_sig, from append_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
         }
        return fill_res;
       }
