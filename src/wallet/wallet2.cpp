@@ -5117,12 +5117,13 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
         // sanity checks
         for (size_t idx: ptx.selected_transfers)
         {
-          transfer_details &td = m_transfers[idx];
-          // notary wallet will not know about other notarizers' key images
-          if (!td.m_key_image_known || td.m_key_image_partial)
-            continue;
           THROW_WALLET_EXCEPTION_IF(idx >= m_transfers.size(), error::wallet_internal_error,
              "Bad output index in selected transfers: " + boost::lexical_cast<std::string>(idx));
+          transfer_details &td = m_transfers[idx];
+          // notary wallet will not know about other notarizers' key images -- below was culprit of segfault
+          // swiched order as result... need to add to m_transfers first, from looks of it
+          if (!td.m_key_image_known || td.m_key_image_partial)
+            continue;
         }
         crypto::hash txid;
 
