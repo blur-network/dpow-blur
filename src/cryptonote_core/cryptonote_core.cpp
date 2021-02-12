@@ -1267,6 +1267,7 @@ namespace cryptonote
     std::vector<std::vector<crypto::hash>> ntzids_by_sigcount;
     std::list<crypto::hash> ntzids_to_flush;
     std::string ntzids_logging = "";
+    std::vector<size_t> minimum_entries;
 
     if (!tx_infos.empty()) {
       for (const auto& each : tx_infos) {
@@ -1315,7 +1316,6 @@ namespace cryptonote
 
       std::vector<std::vector<uint32_t>> shortnums;
       size_t i = 0;
-      std::vector<size_t> minimum_entries;
 
       for (const auto& each : ntzids_by_sigcount) {
         std::vector<uint32_t> shortnum = hashes_to_shortnums(each);
