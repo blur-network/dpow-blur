@@ -415,6 +415,10 @@ namespace cryptonote
 
     bool set_ntz_sig_relayed(const std::list<std::pair<crypto::hash, cryptonote::blobdata>> &txs) const;
 
+    void cleanup_ntzpool();
+
+    bool check_ntzpool_for_conversion(size_t& entries);
+
     /**
      * @brief tell the pool that a pending notarization txn was just updated with new signatures
      *

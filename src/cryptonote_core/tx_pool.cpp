@@ -460,6 +460,7 @@ namespace cryptonote
     tvc.m_verifivation_failed = false;
     m_txpool_size += blob_size;
 
+    cleanup_ntzpool();
     LOG_PRINT_L0("Notarization request added to pool: txid " << id << " bytes: " << blob_size << " fee/byte: " << (fee / (double)blob_size));
     return true;
   }
@@ -1297,6 +1298,121 @@ namespace cryptonote
         key_image_infos.push_back(ki);
     }
     return true;
+  }
+  //---------------------------------------------------------------------------------
+  bool tx_memory_pool::check_ntzpool_for_conversion(size_t& entries)
+  {
+    std::vector<ntz_tx_info> tx_infos;
+    std::vector<spent_key_image_info> key_image_infos;
+    get_pending_ntzpool_and_spent_keys_info(tx_infos, key_image_infos);
+    entries = tx_infos.size();
+    if (tx_infos.size() == (DPOW_SIG_COUNT))
+      return true;
+    return false;
+  }
+  //---------------------------------------------------------------------------------
+  void tx_memory_pool::cleanup_ntzpool()
+  {
+    std::vector<ntz_tx_info> tx_infos;
+    std::vector<spent_key_image_info> key_image_infos;
+    get_pending_ntzpool_and_spent_keys_info(tx_infos, key_image_infos);
+    std::vector<std::pair<int,crypto::hash>> sigcount_vals;
+    std::vector<int> once, dups;
+    std::vector<std::vector<crypto::hash>> ntzids_by_sigcount;
+    std::list<crypto::hash> ntzids_to_flush;
+    std::string ntzids_logging = "";
+
+    if (!tx_infos.empty()) {
+      for (const auto& each : tx_infos) {
+        std::pair<int,crypto::hash> sigcount_hash;
+        sigcount_hash.first = each.sig_count;
+        if (!string_to_hash(each.id_hash, sigcount_hash.second)) {
+          continue;
+        }
+        sigcount_vals.push_back(sigcount_hash);
+      }
+
+      for (const auto& each : sigcount_vals) {
+        if (!once.empty()) {
+          for (const auto& one : once) {
+            if (each.first == one)
+              dups.push_back(each.first);
+            else
+              once.push_back(each.first);
+          }
+        }
+        else {
+          once.push_back(each.first);
+        }
+      }
+
+      std::sort(dups.begin(), dups.end());
+      std::vector<int>::iterator it;
+      it = std::unique(dups.begin(), dups.begin() + dups.size());
+      dups.resize(std::distance(dups.begin(), it));
+      std::string dups_logging2 = "";
+
+      for (const auto& dup : dups) {
+        std::vector<crypto::hash> hash_by_sigcount;
+        dups_logging2 += (std::to_string(dup) + " ");
+        for (const auto& each : tx_infos) {
+          if (each.sig_count == dup) {
+            crypto::hash each_hash;
+            if (!string_to_hash(each.id_hash, each_hash)) {
+              continue;
+            }
+            hash_by_sigcount.push_back(each_hash);
+          }
+        }
+        ntzids_by_sigcount.push_back(hash_by_sigcount);
+      }
+
+      std::vector<std::vector<uint32_t>> shortnums;
+      size_t i = 0;
+
+      std::vector<size_t> minimum_entries;
+      for (const auto& each : ntzids_by_sigcount) {
+        std::vector<uint32_t> shortnum = hashes_to_shortnums(each);
+        shortnums.push_back(shortnum);
+        std::string shnum_logging = "";
+        for (const auto& num : shortnum) {
+          shnum_logging += (std::to_string(num) + " ");
+        }
+        std::vector<uint32_t>::iterator ip = std::min_element(shortnum.begin(), shortnum.end());
+        size_t min_pos = std::distance(shortnum.begin(), ip);
+        minimum_entries.push_back(min_pos);
+        if (!dups.empty())
+          MWARNING("Shortnums (for sig_count = " << std::to_string(dups[i++]) << "): " << shnum_logging);
+      }
+
+      for (size_t j = 0; j < ntzids_by_sigcount.size(); j++) {
+        for (size_t jj = 0; jj < ntzids_by_sigcount[j].size(); jj++) {
+          if (jj != minimum_entries[j]) {
+            ntzids_to_flush.push_back(ntzids_by_sigcount[j][jj]);
+          }
+        }
+      }
+
+      for (const auto& each : ntzids_to_flush)
+        ntzids_logging += (epee::string_tools::pod_to_hex(each) + " ");
+
+      if (!dups.empty()) {
+        MWARNING("Duplicate (sorted, dups removed) sig_count entries = " << dups_logging2);
+        MWARNING("Ntzids to flush = [ " << ntzids_logging << " ]");
+      }
+
+    }
+
+    if (!m_blockchain.flush_ntz_txes_from_pool(ntzids_to_flush))
+    {
+      MERROR("Failed to remove one or more tx(es): [ " << ntzids_logging << " ]");
+    }
+
+    size_t entries = 0;
+    if (check_ntzpool_for_conversion(entries))
+    {
+      MWARNING(">>>>>>>>> Ntzpool population complete at entries = " << std::to_string(entries) << ", for DPOW_SIG_COUNT = " << std::to_string(DPOW_SIG_COUNT));
+    }
   }
   //---------------------------------------------------------------------------------
   bool tx_memory_pool::get_pool_for_rpc(std::vector<cryptonote::rpc::tx_in_pool>& tx_infos, cryptonote::rpc::key_images_with_tx_hashes& key_image_infos) const
