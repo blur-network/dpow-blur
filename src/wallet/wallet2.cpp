@@ -5092,7 +5092,7 @@ void wallet2::request_ntz_sig(std::string const& ptx_string, crypto::hash const&
       const int neg = -1;
       std::string temp;
       int i = 0;
-      for (i = 0; i <= DPOW_SIG_COUNT; i++) {
+      for (i = 0; i < DPOW_SIG_COUNT; i++) {
         int each = signers_index[i];
         if ((each < 10) && (each > neg)) {
           std::string each_lten = "0" + std::to_string(each);

@@ -1145,7 +1145,7 @@ namespace cryptonote
     }
 
     std::list<int> signers_index;
-    for (int i = 0; i <= DPOW_SIG_COUNT; i++) {
+    for (int i = 0; i < DPOW_SIG_COUNT; i++) {
       std::string si_tmp = signers_str.substr(i*2, 2);
       int s_ind = std::stoi(si_tmp, nullptr, 10);
       if ((s_ind >= 64) || (s_ind < -1)) {

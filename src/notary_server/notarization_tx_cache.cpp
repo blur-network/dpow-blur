@@ -125,7 +125,7 @@ bool req_ntz_sig_to_cache(cryptonote::NOTIFY_REQUEST_NTZ_SIG::request& arg, std:
   int const sig_count = arg.sig_count;
   std::string signers_index_s = arg.signers_index;
   std::vector<int> signers_index;
-  for (size_t i = 0; i <= DPOW_SIG_COUNT; i++) {
+  for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
     int tmp = 0;
     tmp = std::stoi(signers_index_s.substr(i*2, 2), nullptr, 10);
     signers_index.push_back(tmp);

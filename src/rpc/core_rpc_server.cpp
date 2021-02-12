@@ -3111,7 +3111,7 @@ namespace cryptonote
         r.ptx_hash = meta.ptx_hash;
         r.tx_blob = txblob;
         r.sig_count = meta.sig_count;
-        for (size_t i = 0; i <= DPOW_SIG_COUNT; i++) {
+        for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
           int each_ind = meta.signers_index[i];
           r.signers_index.push_back(each_ind);
         }

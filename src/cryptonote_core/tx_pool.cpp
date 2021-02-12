@@ -430,7 +430,7 @@ namespace cryptonote
       meta.sig_count = sig_count;
       int i = 0;
       for (const auto& each : signers_index) {
-         if ((each != (-1)) && (i <= DPOW_SIG_COUNT)) {
+         if ((each != (-1)) && (i < DPOW_SIG_COUNT)) {
            memcpy(&meta.signers_index[i], &each, sizeof(each));
         }
         i++;
@@ -1256,7 +1256,7 @@ namespace cryptonote
       txi.do_not_relay = meta.do_not_relay;
       txi.double_spend_seen = meta.double_spend_seen;
       txi.sig_count = meta.sig_count;
-      for (int i = 0; i <= DPOW_SIG_COUNT; i++) {
+      for (int i = 0; i < DPOW_SIG_COUNT; i++) {
         txi.signers_index.push_back(meta.signers_index[i]);
       }
       tx_infos.push_back(txi);
@@ -1363,7 +1363,7 @@ namespace cryptonote
       txi.ptx_blob = *ptx;
       txi.ptx_hash = meta.ptx_hash;
       txi.sig_count = meta.sig_count;
-      for (int i = 0; i <= DPOW_SIG_COUNT; i++) {
+      for (int i = 0; i < DPOW_SIG_COUNT; i++) {
         txi.signers_index.push_back(meta.signers_index[i]);
       }
       txi.fee = meta.fee;
