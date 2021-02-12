@@ -1155,7 +1155,6 @@ namespace cryptonote
       signers_index.push_back(s_ind);
     }
 
-
     std::vector<uint8_t> new_extra, new_vec, ntz_data;
     std::string ntz_string_rem;
     remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_string_rem);
@@ -1169,7 +1168,6 @@ namespace cryptonote
       new_vec.push_back(each);
     }
     std::string hex_from_bits = bytes256_to_hex(new_vec);
-
     MWARNING("Bits from doublesha = " << hex_from_bits);
 
     if (!empty)
@@ -1180,62 +1178,23 @@ namespace cryptonote
     bool ready = false;
     bool count_check = false;
 
-    //TODO: use (ready) condition to call function for conversion of ntzpool txs to txpool
-    // i.e. 5 ntzpool txs should be converted to 5 txpool txs
-
-    //ready = (sig_count > DPOW_SIG_COUNT);
     count_check = (count == sig_count);
+    MWARNING("tx " << tx_hash << " not ready to be sent yet, sig count: " << std::to_string(sig_count));
 
-    /*if (ready) {
+    if(m_blockchain_storage.have_tx(tx_hash))
+    {
+      MWARNING("tx " << tx_hash << " already have transaction in blockchain");
+      return true;
+    }
 
-      tx_verification_context txvc = AUTO_VAL_INIT(txvc);
+    uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
 
-      txvc.m_should_be_relayed = tvc.m_should_be_relayed;;
-      txvc.m_verifivation_failed = tvc.m_verifivation_failed;
-      txvc.m_verifivation_impossible = tvc.m_verifivation_impossible;
-      txvc.m_added_to_pool = tvc.m_added_to_pool;
-      txvc.m_low_mixin = tvc.m_low_mixin;
-      txvc.m_double_spend = tvc.m_double_spend;
-      txvc.m_invalid_input = tvc.m_invalid_input;
-      txvc.m_invalid_output = tvc.m_invalid_output;
-      txvc.m_too_big = tvc.m_too_big;
-      txvc.m_overspend = tvc.m_overspend;
-      txvc.m_fee_too_low = tvc.m_fee_too_low;
-      txvc.m_not_rct = tvc.m_not_rct;
-
-      if(m_blockchain_storage.have_tx(tx_hash))
-      {
-        LOG_PRINT_L2("tx " << tx_hash << " already have transaction in blockchain");
-        return true;
-      }
-
-      if (!count_check) {
-        MERROR("Error: Signature count does not match signer index!");
-        return false;
-      } else {
-        uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
-        return m_mempool.add_tx(tx, tx_hash, blob_size, txvc, keeped_by_block, relayed, do_not_relay, version);
-      }
-    } else {*/
-
-      MWARNING("tx " << tx_hash << " not ready to be sent yet, sig count: " << std::to_string(sig_count));
-
-
-      if(m_blockchain_storage.have_tx(tx_hash))
-      {
-        MWARNING("tx " << tx_hash << " already have transaction in blockchain");
-        return true;
-      }
-
-      uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
-
-      if(!count_check) {
-        MERROR("Error: Signature count does not match signer index!");
-        return false;
-      } else {
-        return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, has_raw_ntz_data, sig_count, signers_index, ptx_blob, ptx_hash);
-      }
-    //}
+    if(!count_check) {
+      MERROR("Error: Signature count does not match signer index!");
+      return false;
+    } else {
+      return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, has_raw_ntz_data, sig_count, signers_index, ptx_blob, ptx_hash);
+    }
   }
   //-----------------------------------------------------------------------------------------------
   bool core::relay_txpool_transactions()

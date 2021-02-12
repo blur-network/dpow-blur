@@ -417,7 +417,9 @@ namespace cryptonote
 
     void cleanup_ntzpool();
 
-    bool check_ntzpool_for_conversion(size_t& entries);
+    bool check_ntzpool_for_conversion(size_t& entries, std::vector<ntz_tx_info>& tx_infos, std::vector<spent_key_image_info>& ki_infos);
+
+    bool convert_ntzpool_to_txpool(std::vector<ntz_tx_info> const& tx_infos, std::vector<spent_key_image_info> const& ki_infos);
 
     /**
      * @brief tell the pool that a pending notarization txn was just updated with new signatures

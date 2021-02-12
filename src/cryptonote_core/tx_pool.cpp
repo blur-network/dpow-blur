@@ -1300,15 +1300,39 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------------------------
-  bool tx_memory_pool::check_ntzpool_for_conversion(size_t& entries)
+  bool tx_memory_pool::check_ntzpool_for_conversion(size_t& entries, std::vector<ntz_tx_info>& tx_infos, std::vector<spent_key_image_info>& ki_infos)
   {
-    std::vector<ntz_tx_info> tx_infos;
-    std::vector<spent_key_image_info> key_image_infos;
-    get_pending_ntzpool_and_spent_keys_info(tx_infos, key_image_infos);
+    get_pending_ntzpool_and_spent_keys_info(tx_infos, ki_infos);
     entries = tx_infos.size();
     if (tx_infos.size() == (DPOW_SIG_COUNT))
       return true;
     return false;
+  }
+  //---------------------------------------------------------------------------------
+  bool tx_memory_pool::convert_ntzpool_to_txpool(std::vector<ntz_tx_info>const& tx_infos, std::vector<spent_key_image_info> const& ki_infos)
+  {
+
+      /*tx_verification_context txvc = AUTO_VAL_INIT(txvc);
+
+      txvc.m_should_be_relayed = tvc.m_should_be_relayed;;
+      txvc.m_verifivation_failed = tvc.m_verifivation_failed;
+      txvc.m_verifivation_impossible = tvc.m_verifivation_impossible;
+      txvc.m_added_to_pool = tvc.m_added_to_pool;
+      txvc.m_low_mixin = tvc.m_low_mixin;
+      txvc.m_double_spend = tvc.m_double_spend;
+      txvc.m_invalid_input = tvc.m_invalid_input;
+      txvc.m_invalid_output = tvc.m_invalid_output;
+      txvc.m_too_big = tvc.m_too_big;
+      txvc.m_overspend = tvc.m_overspend;
+      txvc.m_fee_too_low = tvc.m_fee_too_low;
+      txvc.m_not_rct = tvc.m_not_rct;
+
+      if(m_blockchain.have_tx(tx_hash))
+      {
+        LOG_PRINT_L2("tx " << tx_hash << " already have transaction in blockchain");
+      }
+      add_tx(tx, tx_hash, blob_size, txvc, keeped_by_block, relayed, do_not_relay, version);*/
+      return true;
   }
   //---------------------------------------------------------------------------------
   void tx_memory_pool::cleanup_ntzpool()
@@ -1409,9 +1433,12 @@ namespace cryptonote
     }
 
     size_t entries = 0;
-    if (check_ntzpool_for_conversion(entries))
+    tx_infos.clear();
+    key_image_infos.clear();
+    if (check_ntzpool_for_conversion(entries, tx_infos, key_image_infos))
     {
       MWARNING(">>>>>>>>> Ntzpool population complete at entries = " << std::to_string(entries) << ", for DPOW_SIG_COUNT = " << std::to_string(DPOW_SIG_COUNT));
+      convert_ntzpool_to_txpool(tx_infos, key_image_infos);
     }
   }
   //---------------------------------------------------------------------------------
