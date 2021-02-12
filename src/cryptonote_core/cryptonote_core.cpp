@@ -1352,9 +1352,9 @@ namespace cryptonote
     {
       MERROR("Failed to remove one or more tx(es): [ " << ntzids_logging << " ]");
     }
-    if (minimum_entries.size() == (DPOW_SIG_COUNT)) {
+    if (ntzids_by_sigcount.size() == (DPOW_SIG_COUNT)) {
       //TODO: Add convert ntzpool function here
-      MWARNING(">>>>>>>>> Ntzpool population complete at minimum_enties.size() = " << std::to_string(minimum_entries.size()) << ", and signatures = " << std::to_string(DPOW_SIG_COUNT));
+      MWARNING(">>>>>>>>> Ntzpool population complete at ntzids_by_sigcount.size() = " << std::to_string(ntzids_by_sigcount.size()) << ", and signatures = " << std::to_string(DPOW_SIG_COUNT));
     }
   }
   //-----------------------------------------------------------------------------------------------
