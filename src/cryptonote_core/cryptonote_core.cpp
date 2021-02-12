@@ -1257,6 +1257,17 @@ namespace cryptonote
     return true;
   }
   //-----------------------------------------------------------------------------------------------
+  bool core::check_ntzpool_for_conversion(size_t& entries)
+  {
+    std::vector<ntz_tx_info> tx_infos;
+    std::vector<spent_key_image_info> key_image_infos;
+    get_pending_ntz_pool_and_spent_keys_info(tx_infos, key_image_infos);
+    entries = tx_infos.size();
+    if (tx_infos.size() == (DPOW_SIG_COUNT))
+      return true;
+    return false;
+  }
+  //-----------------------------------------------------------------------------------------------
   void core::cleanup_ntzpool()
   {
     std::vector<ntz_tx_info> tx_infos;
@@ -1267,7 +1278,6 @@ namespace cryptonote
     std::vector<std::vector<crypto::hash>> ntzids_by_sigcount;
     std::list<crypto::hash> ntzids_to_flush;
     std::string ntzids_logging = "";
-    std::vector<size_t> minimum_entries;
 
     if (!tx_infos.empty()) {
       for (const auto& each : tx_infos) {
@@ -1317,6 +1327,7 @@ namespace cryptonote
       std::vector<std::vector<uint32_t>> shortnums;
       size_t i = 0;
 
+      std::vector<size_t> minimum_entries;
       for (const auto& each : ntzids_by_sigcount) {
         std::vector<uint32_t> shortnum = hashes_to_shortnums(each);
         shortnums.push_back(shortnum);
@@ -1348,13 +1359,16 @@ namespace cryptonote
       }
 
     }
+
     if (!m_blockchain_storage.flush_ntz_txes_from_pool(ntzids_to_flush))
     {
       MERROR("Failed to remove one or more tx(es): [ " << ntzids_logging << " ]");
     }
-    if (ntzids_by_sigcount.size() == (DPOW_SIG_COUNT)) {
-      //TODO: Add convert ntzpool function here
-      MWARNING(">>>>>>>>> Ntzpool population complete at ntzids_by_sigcount.size() = " << std::to_string(ntzids_by_sigcount.size()) << ", and signatures = " << std::to_string(DPOW_SIG_COUNT));
+
+    size_t entries = 0;
+    if (check_ntzpool_for_conversion(entries))
+    {
+      MWARNING(">>>>>>>>> Ntzpool population complete at entries = " << std::to_string(entries) << ", for DPOW_SIG_COUNT = " << std::to_string(DPOW_SIG_COUNT));
     }
   }
   //-----------------------------------------------------------------------------------------------
