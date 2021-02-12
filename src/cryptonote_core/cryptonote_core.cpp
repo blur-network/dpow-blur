@@ -1267,6 +1267,7 @@ namespace cryptonote
     std::vector<std::vector<crypto::hash>> ntzids_by_sigcount;
     std::list<crypto::hash> ntzids_to_flush;
     std::string ntzids_logging = "";
+
     if (!tx_infos.empty()) {
       for (const auto& each : tx_infos) {
         std::pair<int,crypto::hash> sigcount_hash;
@@ -1291,17 +1292,12 @@ namespace cryptonote
         }
       }
 
-      //std::string dups_logging1 = "";
-      //for (const auto& dup : dups)
-      //  dups_logging1 += (std::to_string(dup) + " ");
-      //MERROR("Duplicate (unsorted, dups not removed) sig_count entries = " << dups_logging1);
-
       std::sort(dups.begin(), dups.end());
       std::vector<int>::iterator it;
       it = std::unique(dups.begin(), dups.begin() + dups.size());
       dups.resize(std::distance(dups.begin(), it));
-
       std::string dups_logging2 = "";
+
       for (const auto& dup : dups) {
         std::vector<crypto::hash> hash_by_sigcount;
         dups_logging2 += (std::to_string(dup) + " ");
@@ -1320,6 +1316,7 @@ namespace cryptonote
       std::vector<std::vector<uint32_t>> shortnums;
       size_t i = 0;
       std::vector<size_t> minimum_entries;
+
       for (const auto& each : ntzids_by_sigcount) {
         std::vector<uint32_t> shortnum = hashes_to_shortnums(each);
         shortnums.push_back(shortnum);
@@ -1341,16 +1338,23 @@ namespace cryptonote
           }
         }
       }
+
       for (const auto& each : ntzids_to_flush)
         ntzids_logging += (epee::string_tools::pod_to_hex(each) + " ");
+
       if (!dups.empty()) {
         MWARNING("Duplicate (sorted, dups removed) sig_count entries = " << dups_logging2);
         MWARNING("Ntzids to flush = [ " << ntzids_logging << " ]");
       }
+
     }
     if (!m_blockchain_storage.flush_ntz_txes_from_pool(ntzids_to_flush))
     {
       MERROR("Failed to remove one or more tx(es): [ " << ntzids_logging << " ]");
+    }
+    if (minimum_entries.size() == (DPOW_SIG_COUNT)) {
+      //TODO: Add convert ntzpool function here
+      MWARNING(">>>>>>>>> Ntzpool population complete at minimum_enties.size() = " << std::to_string(minimum_entries.size()) << ", and signatures = " << std::to_string(DPOW_SIG_COUNT));
     }
   }
   //-----------------------------------------------------------------------------------------------
