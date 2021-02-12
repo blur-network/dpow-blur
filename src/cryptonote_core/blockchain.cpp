@@ -3774,7 +3774,7 @@ bool Blockchain::flush_ntz_txes_from_pool(const std::list<crypto::hash> &txids)
 
     crypto::hash ptx_hash = meta.ptx_hash;
     std::list<int> signers_index;
-    for (int i = 0; i < DPOW_SIG_COUNT; i++) {
+    for (int i = 0; i <= DPOW_SIG_COUNT; i++) {
       signers_index.push_back(meta.signers_index[i]);
     }
     std::pair<cryptonote::blobdata,cryptonote::blobdata> bd_pair = get_ntzpool_tx_blob(txid, ptx_hash);

@@ -879,7 +879,7 @@ namespace tools
       const size_t count = DPOW_SIG_COUNT - std::count(signers_index_vec.begin(), signers_index_vec.end(), neg);
       LOG_PRINT_L1("Non-negative values in signers_index (count): " << std::to_string(count));
       std::vector<int> vec_ret;
-      for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
+      for (size_t i = 0; i <= DPOW_SIG_COUNT; i++) {
         if (signer_index == signers_index_vec[i]) {
           LOG_PRINT_L1("Found our index value in signers_index at: " << std::to_string(i) << ", we must have already signed this one!");
         } else if ((signers_index_vec[i] == neg) && (vec_ret.size() == count)) {
@@ -1207,7 +1207,7 @@ namespace tools
       MINFO("create_ntz_transactions called with sig_count = " << std::to_string(sig_count));
 
       std::string index_vec;
-      for (int i = 0; i < DPOW_SIG_COUNT; i++) {
+      for (int i = 0; i <= DPOW_SIG_COUNT; i++) {
         std::string tmp;
         if ((signers_index[i] < 10) && (signers_index[i] > (-1)))
           tmp = "0" + std::to_string(signers_index[i]);
@@ -1326,7 +1326,7 @@ pool_recheck:
       tx_blob = ntzpool_txs[best.second].tx_blob;
       ptx_blob = ntzpool_txs[best.second].ptx_blob;
       prior_ptx_hash = ntzpool_txs[best.second].ptx_hash;
-      for (int i = 0; i < DPOW_SIG_COUNT; i++) {
+      for (int i = 0; i <= DPOW_SIG_COUNT; i++) {
         int each = -1;
         each = ntzpool_txs[best.second].signers_index.front();
         signers_index.push_back(each);
@@ -1507,7 +1507,7 @@ pool_recheck:
       }
 
         std::string index_vec;
-        for (int i = 0; i < DPOW_SIG_COUNT; i++) {
+        for (int i = 0; i <= DPOW_SIG_COUNT; i++) {
           std::string tmp = std::to_string(signers_index[i]);
           index_vec += tmp;
         }

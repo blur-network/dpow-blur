@@ -872,7 +872,7 @@ namespace cryptonote
       already_have = true;
     }
 
-    if ((sig_count < DPOW_SIG_COUNT) && (!already_have)) {
+    if ((sig_count <= DPOW_SIG_COUNT) && (!already_have)) {
         res = handle_incoming_ntz_sig_post(tx_blob, tvc, tx, hash, prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count, ptx_blob);
       if (!res) {
         MERROR("Error in handle_incoming_ntz_sig_post! handle_incoming_post failed!");
@@ -1145,7 +1145,7 @@ namespace cryptonote
     }
 
     std::list<int> signers_index;
-    for (int i = 0; i < DPOW_SIG_COUNT; i++) {
+    for (int i = 0; i <= DPOW_SIG_COUNT; i++) {
       std::string si_tmp = signers_str.substr(i*2, 2);
       int s_ind = std::stoi(si_tmp, nullptr, 10);
       if ((s_ind >= 64) || (s_ind < -1)) {
@@ -1180,10 +1180,13 @@ namespace cryptonote
     bool ready = false;
     bool count_check = false;
 
-    ready = (sig_count >= DPOW_SIG_COUNT);
+    //TODO: use (ready) condition to call function for conversion of ntzpool txs to txpool
+    // i.e. 5 ntzpool txs should be converted to 5 txpool txs
+
+    //ready = (sig_count > DPOW_SIG_COUNT);
     count_check = (count == sig_count);
 
-    if (ready) {
+    /*if (ready) {
 
       tx_verification_context txvc = AUTO_VAL_INIT(txvc);
 
@@ -1213,7 +1216,7 @@ namespace cryptonote
         uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
         return m_mempool.add_tx(tx, tx_hash, blob_size, txvc, keeped_by_block, relayed, do_not_relay, version);
       }
-    } else {
+    } else {*/
 
       MWARNING("tx " << tx_hash << " not ready to be sent yet, sig count: " << std::to_string(sig_count));
 
@@ -1232,7 +1235,7 @@ namespace cryptonote
       } else {
         return m_mempool.add_ntz_req(tx, tx_hash, blob_size, tvc, keeped_by_block, relayed, do_not_relay, version, has_raw_ntz_data, sig_count, signers_index, ptx_blob, ptx_hash);
       }
-    }
+    //}
   }
   //-----------------------------------------------------------------------------------------------
   bool core::relay_txpool_transactions()
