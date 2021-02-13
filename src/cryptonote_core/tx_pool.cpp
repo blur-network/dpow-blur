@@ -143,14 +143,14 @@ namespace cryptonote
             num_ntz_txes--;
             txids_to_flush.push_back(pool_txid);
           }
-          else
+          /*else
           {
             if ((meta.kept_by_block == true) || (meta.double_spend_seen == true))
             {
               num_ntz_txes--;
               txids_to_flush.push_back(pool_txid);
             }
-            /*else
+            else
             {
               if (num_ntz_txes >= DPOW_MAX_NOTA_PER_BLOCK)
               {
@@ -158,8 +158,8 @@ namespace cryptonote
                 tvc.m_verifivation_failed = true;
                 return false;
               }
-            }*/
-          }
+            }
+          }*/
         }
       }
       m_blockchain.flush_txes_from_pool(txids_to_flush);
