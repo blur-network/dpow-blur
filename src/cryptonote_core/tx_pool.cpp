@@ -1315,12 +1315,12 @@ namespace cryptonote
     std::vector<uint32_t> positions;
     std::vector<ntz_tx_info> sorted_tx_infos;
 
-    for (int i = 0; i < (DPOW_SIG_COUNT); i++) {
+    for (int i = 1; i <= (DPOW_SIG_COUNT); i++) {
       size_t pos = 0;
       for (const auto& each : tx_infos) {
-        if (each.sig_count == i) {
+        if (each.sig_count == (i)) {
           positions.push_back(pos);
-          MWARNING("Sig count = " << each.sig_count << "found at position = " << pos << " in tx_infos vector");
+          MWARNING("Sig count = " << each.sig_count << ", found at position = " << pos << " in tx_infos vector");
           break;
         }
         pos++;
@@ -1363,6 +1363,12 @@ namespace cryptonote
           return false;
         }
       }
+      std::list<crypto::hash> flush;
+      flush.push_back(tx_hash);
+      m_blockchain.flush_ntz_txes_from_pool(flush);
+
+     // flushing above seems like a very non-graceful way to about this. but, it gets things working for now.
+
       uint8_t version = m_blockchain.get_current_hard_fork_version();
       if (!add_tx(tx, tx_hash, blob_size, txvc, false, false, false, version)) {
         MERROR("Failed to add transaction with hash: " << epee::string_tools::pod_to_hex(tx_hash) << ", to txpool in conversion from ntzpool!");
