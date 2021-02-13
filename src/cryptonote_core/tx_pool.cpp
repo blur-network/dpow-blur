@@ -1314,9 +1314,9 @@ namespace cryptonote
     std::vector<bool> sig_count_checks;
     std::vector<uint32_t> positions;
     std::vector<ntz_tx_info> sorted_tx_infos;
-    size_t pos = 0;
 
     for (int i = 0; i < (DPOW_SIG_COUNT); i++) {
+      size_t pos = 0;
       for (const auto& each : tx_infos) {
         if (each.sig_count == i) {
           positions.push_back(pos);
