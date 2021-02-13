@@ -1311,10 +1311,32 @@ namespace cryptonote
   //---------------------------------------------------------------------------------
   bool tx_memory_pool::convert_ntzpool_to_txpool(std::vector<ntz_tx_info>const& tx_infos, std::vector<spent_key_image_info> const& ki_infos)
   {
+    std::vector<bool> sig_count_checks;
+    std::vector<uint32_t> positions;
+    std::vector<ntz_tx_info> sorted_tx_infos;
+    size_t pos = 0;
 
-      /*tx_verification_context txvc = AUTO_VAL_INIT(txvc);
+    for (int i = 0; i < (DPOW_SIG_COUNT); i++) {
+      for (const auto& each : tx_infos) {
+        if (each.sig_count == i) {
+          positions.push_back(pos);
+          MWARNING("Sig count = " << each.sig_count << "found at position = " << pos << " in tx_infos vector");
+          break;
+        }
+        pos++;
+      }
+    }
 
-      txvc.m_should_be_relayed = tvc.m_should_be_relayed;;
+    if (positions.size() != (DPOW_SIG_COUNT)) {
+      MERROR("Something went wrong when trying to discern signature counts sequentially in ntz->txpool conversion!");
+      return false;
+    }
+
+    for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {
+      ntz_tx_info const& each_info = tx_infos[positions[i]];
+      tx_verification_context txvc = AUTO_VAL_INIT(txvc);
+
+      /*txvc.m_should_be_relayed = tvc.m_should_be_relayed;
       txvc.m_verifivation_failed = tvc.m_verifivation_failed;
       txvc.m_verifivation_impossible = tvc.m_verifivation_impossible;
       txvc.m_added_to_pool = tvc.m_added_to_pool;
@@ -1326,13 +1348,28 @@ namespace cryptonote
       txvc.m_overspend = tvc.m_overspend;
       txvc.m_fee_too_low = tvc.m_fee_too_low;
       txvc.m_not_rct = tvc.m_not_rct;
+     */
 
-      if(m_blockchain.have_tx(tx_hash))
-      {
-        LOG_PRINT_L2("tx " << tx_hash << " already have transaction in blockchain");
+      crypto::hash tx_hash;
+      if(!string_to_hash(each_info.id_hash, tx_hash)) {
+        MERROR("Error converting id_hash to tx_hash in ntz->txpool conversion!");
+        return false;
       }
-      add_tx(tx, tx_hash, blob_size, txvc, keeped_by_block, relayed, do_not_relay, version);*/
-      return true;
+      uint64_t blob_size = each_info.blob_size;
+      cryptonote::transaction tx;
+      if (!each_info.tx_blob.empty()) {
+        if (!parse_and_validate_tx_from_blob(each_info.tx_blob, tx)) {
+          MERROR("Failed to parse tx in conversion from ntz->txpool");
+          return false;
+        }
+      }
+      uint8_t version = m_blockchain.get_current_hard_fork_version();
+      if (!add_tx(tx, tx_hash, blob_size, txvc, false, false, false, version)) {
+        MERROR("Failed to add transaction with hash: " << epee::string_tools::pod_to_hex(tx_hash) << ", to txpool in conversion from ntzpool!");
+        return false;
+      }
+    }
+    return true;
   }
   //---------------------------------------------------------------------------------
   void tx_memory_pool::cleanup_ntzpool()
@@ -1438,7 +1475,8 @@ namespace cryptonote
     if (check_ntzpool_for_conversion(entries, tx_infos, key_image_infos))
     {
       MWARNING(">>>>>>>>> Ntzpool population complete at entries = " << std::to_string(entries) << ", for DPOW_SIG_COUNT = " << std::to_string(DPOW_SIG_COUNT));
-      convert_ntzpool_to_txpool(tx_infos, key_image_infos);
+      if(!convert_ntzpool_to_txpool(tx_infos, key_image_infos))
+        MERROR("Something went wrong when converting ntzpool to txpool!");
     }
   }
   //---------------------------------------------------------------------------------
