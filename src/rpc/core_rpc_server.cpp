@@ -1306,7 +1306,7 @@ namespace cryptonote
     const std::string signers_index = req.signers_index;
     const cryptonote::blobdata ptx_string = req.ptx_string;
     std::list<int> signers_list;
-    for (size_t i = 0; i <= (DPOW_SIG_COUNT); i++) {
+    for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {
       signers_list.push_back(std::stoi(signers_index.substr(i*2, 2), nullptr, 10));
     }
     int neg = -1;
