@@ -3831,7 +3831,7 @@ void Blockchain::flush_ntzpool()
     MERROR_VER("Failed to remove one or more tx(es): [" << logging << "]");
   } else {
     if (!ntz_txids.empty())
-      MWARNING("flush_ntzpool successful from core, for txids: [" << logging << "]");
+      MWARNING("automatic flush_ntzpool successful, for txids: [" << logging << "]");
   }
 }
 //------------------------------------------------------------------
