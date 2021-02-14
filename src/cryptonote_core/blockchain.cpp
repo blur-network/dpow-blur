@@ -3789,6 +3789,52 @@ bool Blockchain::flush_ntz_txes_from_pool(const std::list<crypto::hash> &txids)
   return res;
 }
 //------------------------------------------------------------------
+void Blockchain::flush_ntzpool()
+{
+  std::string logging;
+  std::vector<ntz_tx_info> ntz_tx_info;
+  std::vector<spent_key_image_info> ntzpool_key_image_info;
+
+  m_tx_pool.get_pending_ntzpool_and_spent_keys_info(ntz_tx_info, ntzpool_key_image_info);
+
+  std::list<crypto::hash> ntz_txids;
+  uint64_t count = 0;
+  for (const auto each: ntz_tx_info)
+  {
+    count++;
+    cryptonote::blobdata txid_data, txblob, ptxblob;
+    epee::string_tools::parse_hexstr_to_binbuff(each.id_hash, txid_data);
+    crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_data.data());
+    if (ntz_tx_info.size() > 1) {
+      if (count == ntz_tx_info.size()) {
+        logging += (each.id_hash);
+      } else {
+        logging += (each.id_hash + ", ");
+      }
+    } else {
+      logging += (each.id_hash);
+    }
+    bool r = m_tx_pool.get_transaction(txid, txblob);
+    ntz_txids.push_back(txid);
+    if (r)
+    {
+      ntzpool_tx_meta_t meta = AUTO_VAL_INIT(meta);
+      if (!get_ntzpool_tx_meta(txid, meta)) {
+        LOG_PRINT_L1("Failed to get ntzpool meta for tx: " << each.id_hash);
+      }
+    } else {
+      LOG_PRINT_L1("Failed to get ntzpool transaction: " << each.id_hash);
+    }
+  }
+  if (!flush_ntz_txes_from_pool(ntz_txids))
+  {
+    MERROR_VER("Failed to remove one or more tx(es): [" << logging << "]");
+  } else {
+    if (!ntz_txids.empty())
+      MWARNING("flush_ntzpool successful from core, for txids: [" << logging << "]");
+  }
+}
+//------------------------------------------------------------------
 //      Needs to validate the block and acquire each transaction from the
 //      transaction mem_pool, then pass the block and transactions to
 //      m_db->add_block()
@@ -3953,7 +3999,7 @@ leave:
             cryptonote::blobdata each_blob;
             if (!get_txpool_tx_blob(each, each_blob)) {
               MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_to_main_chain");
-              flush_ntz_txes_from_pool(missed_ids);
+              flush_ntzpool();
             }
           }
         }

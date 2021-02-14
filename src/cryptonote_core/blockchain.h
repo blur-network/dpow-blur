@@ -1057,7 +1057,7 @@ namespace cryptonote
 
     crypto::hash get_best_block_hash() const;
 
-
+    void flush_ntzpool();
 
   private:
 

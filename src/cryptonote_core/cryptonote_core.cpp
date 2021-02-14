@@ -1269,48 +1269,8 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------
   void core::flush_ntzpool()
   {
-    std::string logging;
-    std::vector<ntz_tx_info> ntz_tx_info;
-    std::vector<spent_key_image_info> ntzpool_key_image_info;
-
-    get_pending_ntz_pool_and_spent_keys_info(ntz_tx_info, ntzpool_key_image_info);
-
-    std::list<crypto::hash> ntz_txids;
-    uint64_t count = 0;
-    for (const auto each: ntz_tx_info)
-    {
-      count++;
-      cryptonote::blobdata txid_data, txblob, ptxblob;
-      epee::string_tools::parse_hexstr_to_binbuff(each.id_hash, txid_data);
-      crypto::hash txid = *reinterpret_cast<const crypto::hash*>(txid_data.data());
-      if (ntz_tx_info.size() > 1) {
-        if (count == ntz_tx_info.size()) {
-          logging += (each.id_hash);
-        } else {
-          logging += (each.id_hash + ", ");
-        }
-      } else {
-        logging += (each.id_hash);
-      }
-      bool r = get_ntzpool_transaction(txid, txblob, ptxblob);
-      ntz_txids.push_back(txid);
-      if (r)
-      {
-        ntzpool_tx_meta_t meta = AUTO_VAL_INIT(meta);
-        if (!m_blockchain_storage.get_ntzpool_tx_meta(txid, meta)) {
-          LOG_PRINT_L1("Failed to get ntzpool meta for tx: " << each.id_hash);
-        }
-      } else {
-        LOG_PRINT_L1("Failed to get ntzpool transaction: " << each.id_hash);
-      }
-    }
-    if (!m_blockchain_storage.flush_ntz_txes_from_pool(ntz_txids))
-    {
-      MERROR("Failed to remove one or more tx(es): [" << logging << "]");
-    } else {
-      if (!ntz_txids.empty())
-        MWARNING("flush_ntzpool successful from core, for txids: [" << logging << "]");
-    }
+    m_blockchain_storage.flush_ntzpool();
+    return;
   }
   //-----------------------------------------------------------------------------------------------
   void core::on_transaction_relayed(const cryptonote::blobdata& tx_blob)
