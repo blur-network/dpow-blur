@@ -125,10 +125,10 @@ namespace cryptonote
 
     if (tx.version == (DPOW_NOTA_TX_VERSION))
     {
-      crypto::hash ptx_hash;
-      cryptonote::blobdata ntzpool_blob, ntzpool_ptx_blob;
+      CRITICAL_REGION_LOCAL1(m_blockchain);
       std::list<crypto::hash> txids_to_flush;
-      if (get_ntzpool_transaction(id, ptx_hash, ntzpool_blob, ntzpool_ptx_blob))
+      ntzpool_tx_meta_t nmeta;
+      if (m_blockchain.get_ntzpool_tx_meta(id, nmeta))
       {
         txids_to_flush.push_back(id);
         m_blockchain.flush_ntz_txes_from_pool(txids_to_flush);
