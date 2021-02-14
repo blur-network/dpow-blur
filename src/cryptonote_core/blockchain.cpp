@@ -3945,14 +3945,15 @@ leave:
         uint64_t num_ntz_txs = 0;
         cryptonote::blobdata txblob;
         std::vector<cryptonote::blobdata> txs_blobs;
-        std::vector<crypto::hash> missed_ids;
+        std::list<crypto::hash> missed_ids;
         get_transactions_blobs(bl.tx_hashes, txs_blobs, missed_ids);
         if (missed_ids.size())  {
           //check txpool
           for (const auto& each : missed_ids) {
             cryptonote::blobdata each_blob;
             if (!get_txpool_tx_blob(each, each_blob)) {
-              MERROR("Failed to get transaction from both database and txpool for id: " << each << ", in handle_to_main_chain");
+              MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_to_main_chain");
+              flush_ntz_txes_from_pool(missed_ids);
             }
           }
         }
