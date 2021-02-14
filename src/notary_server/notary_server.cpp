@@ -198,8 +198,12 @@ namespace tools
              }
            }
 
+           const size_t count = m_wallet->get_ntzpool_count(true);
+           if (count < 1) {
+             sent_to_pool = false;
+           }
+
            if (height >= (notarization_wait)) {
-             const size_t count = m_wallet->get_ntzpool_count(true);
              if ((count >= 1) && (get_ntz_cache_count() >= 2) && !sent_to_pool) {
                notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
                notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response = AUTO_VAL_INIT(response);
