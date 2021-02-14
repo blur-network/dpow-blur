@@ -125,10 +125,18 @@ namespace cryptonote
 
     if (tx.version == (DPOW_NOTA_TX_VERSION))
     {
+      crypto::hash ptx_hash;
+      cryptonote::blobdata ntzpool_blob, ntzpool_ptx_blob;
+      std::list<crypto::hash> txids_to_flush;
+      if (get_ntzpool_transaction(id, ptx_hash, ntzpool_blob, ntzpool_ptx_blob))
+      {
+        txids_to_flush.push_back(id);
+        m_blockchain.flush_ntz_txes_from_pool(txids_to_flush);
+        txids_to_flush.clear();
+      }
       std::list<cryptonote::transaction> txs;
       bool include_unrelayed = true;
       get_transactions(txs, include_unrelayed);
-      std::list<crypto::hash> txids_to_flush;
       uint64_t num_ntz_txes = 0;
       for (const auto& each : txs)
       {
@@ -1363,10 +1371,6 @@ namespace cryptonote
           return false;
         }
       }
-      std::list<crypto::hash> flush;
-      flush.push_back(tx_hash);
-      m_blockchain.flush_ntz_txes_from_pool(flush);
-
      // flushing above seems like a very non-graceful way to about this. but, it gets things working for now.
 
       uint8_t version = m_blockchain.get_current_hard_fork_version();
