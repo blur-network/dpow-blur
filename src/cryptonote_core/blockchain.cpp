@@ -1680,7 +1680,11 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
           }
         }
         if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
-          MERROR("Error: encountered two notarization txs in a single block!");
+          MERROR("Error: encountered more notarization txs in a single block than DPOW_SIG_COUNT!");
+          bvc.m_verifivation_failed = true;
+          return false;
+        } else if (num_ntz_txs < DPOW_MAX_NOTA_PER_BLOCK) {
+          MERROR("Error: too few notarization txs in notarizing block!");
           bvc.m_verifivation_failed = true;
           return false;
         }
@@ -4028,7 +4032,12 @@ leave:
           MERROR("Error: encountered two notarization txs in a single block!");
           bvc.m_verifivation_failed = true;
           return false;
+        } else if (num_ntz_txs < DPOW_MAX_NOTA_PER_BLOCK) {
+          MERROR("Error: too few notarization txs in notarizing block!");
+          bvc.m_verifivation_failed = true;
+          return false;
         }
+
       } else {
        // height less than last notarized height
         if (is_block_notarized(bl)) {
