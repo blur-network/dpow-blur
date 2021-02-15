@@ -1652,7 +1652,8 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
           for (const auto& each : missed_ids) {
             cryptonote::blobdata each_blob;
             if (!get_txpool_tx_blob(each, each_blob)) {
-              MERROR("Failed to get transaction from both database and txpool for id: " << each << ", in handle_alternative");
+              MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_alternative_block");
+              flush_ntzpool();
             }
           }
         }
@@ -3998,7 +3999,7 @@ leave:
           for (const auto& each : missed_ids) {
             cryptonote::blobdata each_blob;
             if (!get_txpool_tx_blob(each, each_blob)) {
-              MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_to_main_chain");
+              MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_block_to_main_chain");
               flush_ntzpool();
             }
           }
