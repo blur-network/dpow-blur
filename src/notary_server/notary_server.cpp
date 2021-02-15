@@ -1362,7 +1362,6 @@ pool_recheck:
 
     cryptonote::blobdata ptx_blob_bin = ptx_blob;
     //MWARNING("Matched tx blob: " << tx_blob << ", matched ptx_blob: " << ptx_blob_bin << ", matched sig_count: " << std::to_string(sig_count));
-    //std::vector<crypto::public_key> out_eph_keys;
     wallet2::pending_tx pen_tx;
     std::stringstream iss;
     iss << ptx_blob_bin;
@@ -1492,11 +1491,11 @@ pool_recheck:
         ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx_vec);
         MINFO("create_ntz_transactions called with sig_count = " << std::to_string(sig_count) <<
           ", and signers_index = " << index_str);
-        ptx_vector.push_back(pen_tx);
+        //ptx_vector.push_back(pen_tx);
       } else {
         ptx_vector = get_cached_ptx();
         LOG_PRINT_L1("Ptx loaded from cache!");
-        ptx_vector.push_back(pen_tx);
+        //ptx_vector.push_back(pen_tx);
       }
       if (m_wallet->get_ntzpool_count(true) > 1) {
         std::list<std::string> hashes;
