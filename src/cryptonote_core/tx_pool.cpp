@@ -1311,9 +1311,22 @@ namespace cryptonote
   bool tx_memory_pool::check_ntzpool_for_conversion(size_t& entries, std::vector<ntz_tx_info>& tx_infos, std::vector<spent_key_image_info>& ki_infos)
   {
     get_pending_ntzpool_and_spent_keys_info(tx_infos, ki_infos);
-    entries = tx_infos.size();
-    if (tx_infos.size() == (DPOW_SIG_COUNT))
+    std::vector<int> sig_counts;
+    for (const auto& each : tx_infos) {
+      sig_counts.push_back(each.sig_count);
+    }
+    std::sort(sig_counts.begin(), sig_counts.end());
+    std::vector<int>::iterator it;
+    it = std::unique(sig_counts.begin(), sig_counts.begin() + sig_counts.size());
+    sig_counts.resize(std::distance(sig_counts.begin(), it));
+
+    size_t counter = 0;
+    for (const auto& each : sig_counts) {
+      counter++;
+    }  //TODO: Ensure consistency between signers index entries here
+    if (counter == (DPOW_SIG_COUNT))
       return true;
+
     return false;
   }
   //---------------------------------------------------------------------------------
