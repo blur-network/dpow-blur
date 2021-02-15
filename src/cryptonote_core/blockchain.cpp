@@ -202,7 +202,7 @@ uint64_t Blockchain::get_ntz_count(std::vector<std::tuple<crypto::hash,uint64_t,
   });
 
   ret = hash_height_index;
-  return (count/(DPOW_SIG_COUNT));
+  return count;
 }
 //------------------------------------------------------------------
 crypto::hash Blockchain::get_ntz_merkle(std::vector<std::pair<crypto::hash,uint64_t>> const& notarizations)
