@@ -1644,39 +1644,31 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       {
         LOG_PRINT_L1("Blockchain::handle_alternative_block() >> Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
         uint64_t num_ntz_txs = 0;
-        std::vector<cryptonote::blobdata> txs_blobs;
-        std::vector<crypto::hash> missed_ids;
-        get_transactions_blobs(bei.bl.tx_hashes, txs_blobs, missed_ids);
-        if (missed_ids.size())  {
-          //check txpool
-          for (const auto& each : missed_ids) {
-            cryptonote::blobdata each_blob;
-            if (!get_txpool_tx_blob(each, each_blob)) {
-              MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_alternative_block");
-              flush_ntzpool();
-            }
+        std::vector<cryptonote::blobdata> tx_blobs;
+        for (const auto& each: bei.bl.tx_hashes) {
+          cryptonote::blobdata each_blob;
+          if (!get_txpool_tx_blob(each, each_blob)) {
+            MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_alternative_block");
+            flush_ntzpool();
           }
+          tx_blobs.push_back(each_blob);
         }
-        // TODO: May need to handle missed_ids here and request those txs from other nodes
-        for (const auto& txblob: txs_blobs)
+        for (const auto& txblob: tx_blobs)
         {
           cryptonote::transaction tx;
           if (!parse_and_validate_tx_from_blob(txblob, tx)) {
             MERROR_VER("Failed to parse and validate tx from blob in handle_alternative_block_to_main_chain()!");
             bvc.m_verifivation_failed = true;
             return false;
-          } else {
-            if (tx.version == (DPOW_NOTA_TX_VERSION)) {
-              num_ntz_txs++;
-              if (is_block_notarized(bei.bl)) {
-                MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
-                // previously, this was a check on bei.height < get_notarization_wait(). because we are handling an alternative block
-                // this was preventing valid reorgs which straddled a notarizing block
-                bvc.m_verifivation_failed = true;
-                return false;
-              }
-              MWARNING("Notarized block at heght: " << std::to_string(bei.height) << ", notarization tx count: " << std::to_string(num_ntz_txs));
+          }
+          if (tx.version == (DPOW_NOTA_TX_VERSION)) {
+            num_ntz_txs++;
+            if (is_block_notarized(bei.bl)) {
+              MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
+              bvc.m_verifivation_failed = true;
+              return false;
             }
+            MWARNING("Notarized block at heght: " << std::to_string(bei.height) << ", notarization tx count: " << std::to_string(num_ntz_txs));
           }
         }
         if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
@@ -3995,37 +3987,31 @@ leave:
         std::vector<cryptonote::transaction> nota_txs;
         uint64_t num_ntz_txs = 0;
         cryptonote::blobdata txblob;
-        std::vector<cryptonote::blobdata> txs_blobs;
-        std::list<crypto::hash> missed_ids;
-        get_transactions_blobs(bl.tx_hashes, txs_blobs, missed_ids);
-        if (missed_ids.size())  {
-          //check txpool
-          for (const auto& each : missed_ids) {
-            cryptonote::blobdata each_blob;
-            if (!get_txpool_tx_blob(each, each_blob)) {
-              MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_block_to_main_chain");
-              flush_ntzpool();
-            }
+        std::vector<cryptonote::blobdata> tx_blobs;
+        for (const auto& each: bl.tx_hashes) {
+          cryptonote::blobdata each_blob;
+          if (!get_txpool_tx_blob(each, each_blob)) {
+            MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_alternative_block");
+            flush_ntzpool();
           }
+          tx_blobs.push_back(each_blob);
         }
-        // TODO: May need to handle missed_ids here and request those txs from other nodes
-        for (const auto& txblob: txs_blobs)
+        for (const auto& txblob: tx_blobs)
         {
           cryptonote::transaction tx;
           if (!parse_and_validate_tx_from_blob(txblob, tx)) {
-            MERROR("Failed to parse and validate tx from blob in handle_alternative_block_to_main_chain()!");
+            MERROR_VER("Failed to parse and validate tx from blob in handle_alternative_block_to_main_chain()!");
             bvc.m_verifivation_failed = true;
             return false;
-          } else {
-            if (tx.version == (DPOW_NOTA_TX_VERSION)) {
-              num_ntz_txs++;
-              if (get_block_height(bl) < get_notarization_wait()) {
-                MERROR_VER("Notarization transaction seen too early! No notarizations may take place until block height = " << std::to_string(get_notarization_wait()));
-                bvc.m_verifivation_failed = true;
-                return false;
-              }
-              MWARNING("----- Number of nota txs in block = " << std::to_string(num_ntz_txs) << " -----");
+          }
+          if (tx.version == (DPOW_NOTA_TX_VERSION)) {
+            num_ntz_txs++;
+            if (is_block_notarized(bl)) {
+              MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(get_block_height(bl)));
+              bvc.m_verifivation_failed = true;
+              return false;
             }
+            MWARNING("Notarized block at heght: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
           }
         }
         if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
