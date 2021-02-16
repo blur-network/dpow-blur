@@ -1319,11 +1319,13 @@ namespace cryptonote
     std::vector<int>::iterator it;
     it = std::unique(sig_counts.begin(), sig_counts.begin() + sig_counts.size());
     sig_counts.resize(std::distance(sig_counts.begin(), it));
-
     size_t counter = 0;
     for (const auto& each : sig_counts) {
       counter++;
-    }  //TODO: Ensure consistency between signers index entries here
+    }
+    entries = counter;
+    //TODO: Ensure consistency between signers index entries here
+
     if (counter == (DPOW_SIG_COUNT))
       return true;
 
