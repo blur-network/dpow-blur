@@ -142,6 +142,30 @@ namespace cryptonote
    return (found_pubkey && pubkey_check);
   }
   //---------------------------------------------------------------
+  bool get_ntz_signer_index(account_keys const& keys, int& signer_index)
+  {
+    std::vector<std::pair<crypto::public_key,crypto::public_key>> keys_vec;
+    crypto::public_key account_pub_key = crypto::null_pkey;
+    bool pubkey_check = false;
+
+    if (!secret_key_to_public_key(keys.m_spend_secret_key, account_pub_key)) {
+      MERROR("Failed to derive public key from secret spend key!");
+      return false;
+    }
+    if (!get_notary_pubkeys(keys_vec)) {
+      MERROR("Failed to get notary pubkeys from hardcoded key array!");
+      return false;
+    }
+
+    for (int i = 0; i < 63; i++) {
+      if (epee::string_tools::pod_to_hex(account_pub_key) == epee::string_tools::pod_to_hex(keys_vec[i].second)) {
+        pubkey_check = true;
+        signer_index = i;
+      }
+    }
+    return pubkey_check;
+  }
+  //---------------------------------------------------------------
   bool construct_miner_tx(size_t height, size_t median_size, uint64_t already_generated_coins, size_t current_block_size, uint64_t fee, const account_public_address &miner_address, transaction& tx, const blobdata& extra_nonce, size_t max_outs, uint8_t hard_fork_version) {
     tx.vin.clear();
     tx.vout.clear();
