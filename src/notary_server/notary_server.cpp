@@ -140,6 +140,51 @@ namespace tools
     return hash_blob;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  void notary_server::get_ntzpool_tx_infos(std::vector<cryptonote::ntz_tx_info>& tx_infos)
+  {
+    std::vector<cryptonote::spent_key_image_info> ski_infos;
+    try {
+      if (m_wallet) {
+        m_wallet->get_ntzpool_txs_and_keys(tx_infos, ski_infos);
+      }
+    } catch (const std::exception& e) {
+      LOG_ERROR("Exception when gettings ntzpool_tx_infos: " << e.what());
+    }
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool notary_server::check_if_sent_to_pool()
+  {
+    std::vector<cryptonote::ntz_tx_info> tx_infos;
+    get_ntzpool_tx_infos(tx_infos);
+    cryptonote::account_keys own_keys;
+    try {
+      if (m_wallet) {
+        own_keys = m_wallet->get_account().get_keys();
+      }
+    } catch (const std::exception& e) {
+      LOG_ERROR("Exception when retrieving our keys from m_wallet: " << e.what());
+    }
+    int signer_index = -1;
+    if (!get_ntz_signer_index(own_keys, signer_index)) {
+      LOG_ERROR("Failed to get ntz_signer_index - We must not be a notary node!");
+      return false;
+    }
+    if ((signer_index < 0) || (signer_index > 63)) {
+      LOG_ERROR("In check_if_sent_to_pool: signer index must be in range of 0-63!");
+      return false;
+    }
+
+    for (const auto& each : tx_infos) {
+      for (const auto& signer_entry : each.signers_index)  {
+        if (signer_entry == signer_index) {
+          LOG_PRINT_L0("Found our signer index in a pool tx with hash: " << each.id_hash << ", we must have already sent to pool!");
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::run()
   {
     bool sent_to_pool = false;
@@ -1277,8 +1322,6 @@ namespace tools
 //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::on_append_ntz_sig(const notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request& req, notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response& res, epee::json_rpc::error& er)
   {
-
-
     if (!m_wallet) return not_open(er);
     if (m_wallet->restricted())
     {
