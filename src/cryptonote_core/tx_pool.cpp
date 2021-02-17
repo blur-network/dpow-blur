@@ -51,6 +51,8 @@
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "txpool"
 
+#define MERROR_VER(x) MCERROR("txpool verify", x)
+
 DISABLE_VS_WARNINGS(4244 4345 4503) //'boost::foreach_detail_::or_' : decorated name length exceeded, name was truncated
 
 using namespace crypto;
@@ -380,7 +382,7 @@ namespace cryptonote
     size_t tx_size_limit = get_transaction_size_limit(version);
     if (blob_size > tx_size_limit)
     {
-      MERROR("transaction is too big: " << blob_size << " bytes, maximum size: " << tx_size_limit);
+      MERROR_VER("transaction is too big: " << blob_size << " bytes, maximum size: " << tx_size_limit);
       tvc.m_verifivation_failed = true;
       tvc.m_too_big = true;
       return false;
@@ -389,7 +391,7 @@ namespace cryptonote
     if(have_tx_keyimges_as_spent(tx))
     {
       mark_double_spend(tx);
-      MERROR("Transaction with id= "<< id << " used already spent key images");
+      MERROR_VER("Transaction with id= "<< id << " used already spent key images");
       tvc.m_verifivation_failed = true;
       tvc.m_double_spend = true;
       return false;
@@ -397,7 +399,7 @@ namespace cryptonote
 
     if (!m_blockchain.check_ntz_req_outputs(tx, tvc))
     {
-      MERROR("Transaction with id= "<< id << " has at least one invalid output");
+      MERROR_VER("Transaction with id= "<< id << " has at least one invalid output");
       tvc.m_verifivation_failed = true;
       tvc.m_invalid_output = true;
       return false;
@@ -414,7 +416,7 @@ namespace cryptonote
     bool ch_inp_res = m_blockchain.check_ntz_req_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
     if(!ch_inp_res)
     {
-        MERROR("tx used wrong inputs, rejected");
+        MERROR_VER("tx used wrong inputs, rejected");
         tvc.m_verifivation_failed = true;
         tvc.m_invalid_input = true;
         return false;
