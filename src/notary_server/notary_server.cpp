@@ -177,11 +177,15 @@ namespace tools
     for (const auto& each : tx_infos) {
       for (const auto& signer_entry : each.signers_index)  {
         if (signer_entry == signer_index) {
-          LOG_PRINT_L0("Found our signer index in a pool tx with hash: " << each.id_hash << ", we must have already sent to pool!");
+          LOG_PRINT_L0("Found our signer index: " << signer_index << ", in pool tx with hash: " << each.id_hash << ", we must have already sent to pool!");
           return true;
         }
       }
     }
+    //TODO: also need to account for txs in txpool with tx.version = 2
+    // Logic above will not account for txs we may have sent that were already
+    // converted from ntzpool->txpool. Probably doesn't matter in reality, since
+    // > 5 ntz txs can't make it into a block. but will reduce efficiency
     return false;
   }
   //------------------------------------------------------------------------------------------------------------------------------

@@ -4007,7 +4007,7 @@ leave:
                 bvc.m_verifivation_failed = true;
                 return false;
               }
-              MWARNING("Notarized block at heght: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
+              MWARNING("Notarized block at height: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
             }
           }
           if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
