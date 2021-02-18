@@ -351,7 +351,7 @@ namespace cryptonote
       return true;
     }
 
-    MWARNING("req_ntz_sig received in mempool! transaction version: " << std::to_string(tx.version));
+    LOG_PRINT_L1("req_ntz_sig received in mempool! transaction version: " << std::to_string(tx.version));
 
     // we do not accept transactions that timed out before
     if (m_timed_out_transactions.find(id) != m_timed_out_transactions.end())
