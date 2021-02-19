@@ -4009,15 +4009,19 @@ leave:
               }
             }
           }
-          MWARNING("Notarizing block at height: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
           if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
             MERROR_VER("Error: encountered two notarization txs in a single block!");
             bvc.m_verifivation_failed = true;
             return false;
-          } else if ((num_ntz_txs > 0) && (num_ntz_txs < DPOW_MAX_NOTA_PER_BLOCK)) {
-            MERROR_VER("Error: too few notarization txs in notarizing block!");
-            bvc.m_verifivation_failed = true;
-            return false;
+          }
+
+          if (num_ntz_txs > 0) {
+            MWARNING("Notarizing block at height: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
+            if ((num_ntz_txs < DPOW_MAX_NOTA_PER_BLOCK)) {
+              MERROR_VER("Error: too few notarization txs in notarizing block!");
+              bvc.m_verifivation_failed = true;
+              return false;
+            }
           }
         } else {
          // height less than last notarized height
