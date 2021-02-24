@@ -2087,7 +2087,7 @@ void wallet2::get_ntzpool_txs_and_keys(std::vector<cryptonote::ntz_tx_info>& txs
   txs = nres.transactions;
   spent_key_images = nres.spent_key_images;
   if (txs.empty() || spent_key_images.empty()) {
-    LOG_PRINT_L1("Wallet failed to retrieve transaction vector, or spent key vector from ntzpool!");
+    LOG_PRINT_L2("Wallet failed to retrieve transaction vector, or spent key vector from ntzpool!");
   }
   return;
 }
