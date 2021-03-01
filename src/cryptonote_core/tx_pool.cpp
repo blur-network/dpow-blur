@@ -416,7 +416,8 @@ namespace cryptonote
     bool ch_inp_res = m_blockchain.check_ntz_req_inputs(tx, max_used_block_height, max_used_block_id, tvc, kept_by_block);
     if(!ch_inp_res)
     {
-        MERROR_VER("tx used wrong inputs, rejected");
+        LOG_PRINT_L1("tx used wrong inputs, rejected");
+        // want to push to a lower log level - we're rejecting anyway, and this can happen due to ntzpool<->txpool conversion
         tvc.m_verifivation_failed = true;
         tvc.m_invalid_input = true;
         return false;

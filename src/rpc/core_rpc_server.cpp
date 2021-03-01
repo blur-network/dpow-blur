@@ -1363,7 +1363,7 @@ namespace cryptonote
         const std::string punctuation = res.reason.empty() ? "" : ": ";
         if (tvc.m_verifivation_failed)
         {
-          MERROR("[on_request_ntz_sig]: tx verification failed" << punctuation << res.reason);
+          LOG_PRINT_L1("[on_request_ntz_sig]: tx verification failed" << punctuation << res.reason);
           return false;
         }
       }
