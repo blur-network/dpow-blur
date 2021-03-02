@@ -1661,12 +1661,6 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
             }
             if (tx.version == (DPOW_NOTA_TX_VERSION)) {
               num_ntz_txs++;
-              if (is_block_notarized(bei.bl)) {
-                MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
-                bvc.m_verifivation_failed = true;
-                return false;
-              }
-              MWARNING("Notarized block at heght: " << std::to_string(bei.height) << ", notarization tx count: " << std::to_string(num_ntz_txs));
             }
           }
           if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
@@ -1677,6 +1671,13 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
             MERROR_VER("Error: too few notarization txs in notarizing block!");
             bvc.m_verifivation_failed = true;
             return false;
+          } else {
+            if (is_block_notarized(bei.bl)) {
+              MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
+              bvc.m_verifivation_failed = true;
+              return false;
+            }
+            MWARNING("Notarized block at heght: " << std::to_string(bei.height) << ", notarization tx count: " << std::to_string(num_ntz_txs));
           }
         }
         else
@@ -4001,11 +4002,6 @@ leave:
             }
             if (tx.version == (DPOW_NOTA_TX_VERSION)) {
               num_ntz_txs++;
-              if (is_block_notarized(bl)) {
-                MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(get_block_height(bl)));
-                bvc.m_verifivation_failed = true;
-                return false;
-              }
             }
           }
           if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
@@ -4020,6 +4016,12 @@ leave:
               MERROR_VER("Error: too few notarization txs in notarizing block!");
               bvc.m_verifivation_failed = true;
               return false;
+            } else {
+              if (is_block_notarized(bl)) {
+                MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(get_block_height(bl)));
+                bvc.m_verifivation_failed = true;
+                return false;
+              }
             }
           }
         } else {
