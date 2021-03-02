@@ -1891,9 +1891,9 @@ namespace cryptonote
 
     LockedTXN lock(m_blockchain);
 
-    uint64_t num_ntz_txes = 0;
 
     std::list<crypto::hash> ids_to_flush;
+    uint64_t num_ntz_txes = 0;
     bool exclude_too_few_notas = false;
 
   notas_not_ready:
@@ -2014,7 +2014,8 @@ namespace cryptonote
 
     if (num_ntz_txes > (DPOW_MAX_NOTA_PER_BLOCK)) {
       MWARNING("More than " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " nota tx(es) in pool. Excluding " << std::to_string(num_ntz_txes - (DPOW_MAX_NOTA_PER_BLOCK)) << " excess tx(es) from block template!");
-    } else if (num_ntz_txes < (DPOW_MAX_NOTA_PER_BLOCK)) {
+    } else if ((num_ntz_txes < (DPOW_MAX_NOTA_PER_BLOCK)) && (num_ntz_txes)) {
+      num_ntz_txes = 0;
       exclude_too_few_notas = true;
       goto notas_not_ready;
     }
