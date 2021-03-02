@@ -229,7 +229,6 @@ crypto::hash Blockchain::get_ntz_merkle(std::vector<std::pair<crypto::hash,uint6
 uint64_t Blockchain::get_notarized_height(crypto::hash& ntz_hash) const
 {
   std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> ntz_txs;
-  uint64_t ntz_count = get_ntz_count(ntz_txs);
   uint64_t notarized_height = 0;
   ntz_hash = crypto::null_hash;
   for (const auto& each : ntz_txs) {
