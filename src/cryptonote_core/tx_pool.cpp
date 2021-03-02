@@ -1894,6 +1894,10 @@ namespace cryptonote
     uint64_t num_ntz_txes = 0;
 
     std::list<crypto::hash> ids_to_flush;
+    bool exclude_too_few_notas = false;
+
+  notas_not_ready:
+
     auto sorted_it = m_txs_by_fee_and_receive_time.begin();
     while (sorted_it != m_txs_by_fee_and_receive_time.end())
     {
@@ -1955,7 +1959,7 @@ namespace cryptonote
 
       if (tx.version == (DPOW_NOTA_TX_VERSION)) {
         num_ntz_txes++;
-        if (m_blockchain.get_db().height() < m_blockchain.get_notarization_wait()) {
+        if ((m_blockchain.get_db().height() < m_blockchain.get_notarization_wait()) || exclude_too_few_notas) {
           ids_to_flush.push_back(sorted_it->second);
           sorted_it++;
           continue;
@@ -2005,8 +2009,13 @@ namespace cryptonote
       LOG_PRINT_L2("  added, new block size " << total_size << "/" << max_total_size << ", coinbase " << print_money(best_coinbase));
     }
 
-    if (num_ntz_txes > (DPOW_MAX_NOTA_PER_BLOCK))
+    if (num_ntz_txes > (DPOW_MAX_NOTA_PER_BLOCK)) {
       MWARNING("More than " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " nota tx(es) in pool. Excluding " << std::to_string(num_ntz_txes - (DPOW_MAX_NOTA_PER_BLOCK)) << " excess tx(es) from block template!");
+    } else if (num_ntz_txes < (DPOW_MAX_NOTA_PER_BLOCK)) {
+      exclude_too_few_notas = true;
+      goto notas_not_ready;
+    }
+
 
     m_blockchain.flush_txes_from_pool(ids_to_flush);
 
