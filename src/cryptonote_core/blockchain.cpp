@@ -229,6 +229,7 @@ crypto::hash Blockchain::get_ntz_merkle(std::vector<std::pair<crypto::hash,uint6
 uint64_t Blockchain::get_notarized_height(crypto::hash& ntz_hash) const
 {
   std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> ntz_txs;
+  uint64_t ntz_count = get_ntz_count(ntz_txs);
   uint64_t notarized_height = 0;
   ntz_hash = crypto::null_hash;
   for (const auto& each : ntz_txs) {
@@ -242,8 +243,7 @@ uint64_t Blockchain::get_notarized_height(crypto::hash& ntz_hash) const
 //------------------------------------------------------------------
 uint64_t Blockchain::get_notarization_wait() const
 {
-  crypto::hash ntz_hash = crypto::null_hash;
-  uint64_t ntz_height = get_notarized_height(ntz_hash);
+  uint64_t ntz_height = komodo::NOTARIZED_HEIGHT;
   uint64_t ret = 0;
   if (ntz_height) {
     ret = (ntz_height + (DPOW_NOTARIZATION_WINDOW));
@@ -1631,8 +1631,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       bvc.m_verifivation_failed = true;
       return false;
     }
-    crypto::hash ntz_hash = crypto::null_hash;
-    uint64_t const ntz_height = get_notarized_height(ntz_hash);
+    uint64_t const ntz_height = komodo::NOTARIZED_HEIGHT;
 
     if (b.major_version >= (DPOW_FORK_VERSION))
     {
@@ -1671,13 +1670,12 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
             MERROR_VER("Error: too few notarization txs in notarizing block!");
             bvc.m_verifivation_failed = true;
             return false;
-          } else {
-            if (is_block_notarized(bei.bl)) {
-              MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
-              bvc.m_verifivation_failed = true;
-              return false;
-            }
-            MWARNING("Notarized block at heght: " << std::to_string(bei.height) << ", notarization tx count: " << std::to_string(num_ntz_txs));
+          }
+
+          if (is_block_notarized(bei.bl)) {
+            MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
+            bvc.m_verifivation_failed = true;
+            return false;
           }
         }
         else
@@ -3970,8 +3968,7 @@ leave:
     merkle = komodo::iguana_merkle(&merkle_bits, txn_count);
     MWARNING("bitcoinified merkle-ator txid: " << std::to_string(merkle_bits.txid));
 */
-    crypto::hash ntz_hash = crypto::null_hash;
-    uint64_t ntz_height = get_notarized_height(ntz_hash);
+    uint64_t ntz_height = komodo::NOTARIZED_HEIGHT;
     uint64_t m_height = get_block_height(bl);
 
     if (bl.major_version >= (DPOW_FORK_VERSION))
@@ -4011,7 +4008,6 @@ leave:
           }
 
           if (num_ntz_txs > 0) {
-            MWARNING("Notarizing block at height: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
             if ((num_ntz_txs < DPOW_MAX_NOTA_PER_BLOCK)) {
               MERROR_VER("Error: too few notarization txs in notarizing block!");
               bvc.m_verifivation_failed = true;
@@ -4023,6 +4019,7 @@ leave:
                 return false;
               }
             }
+            MWARNING("Notarizing block at height: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
           }
         } else {
          // height less than last notarized height
