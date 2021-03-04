@@ -487,6 +487,8 @@ namespace cryptonote
     m_blockchain_storage.set_show_time_stats(show_time_stats);
     CHECK_AND_ASSERT_MES(r, false, "Failed to initialize blockchain storage");
 
+    m_blockchain_storage.komodo_update();
+
     block_sync_size = command_line::get_arg(vm, arg_block_sync_size);
 
     MGINFO("Loading checkpoints");
