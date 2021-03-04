@@ -1063,7 +1063,7 @@ namespace cryptonote
       if(b.tx_hashes.size() != block_entry.txs.size())
       {
         LOG_ERROR_CCONTEXT("sent wrong NOTIFY_RESPONSE_GET_OBJECTS: block with id=" << epee::string_tools::pod_to_hex(get_blob_hash(block_entry.block))
-          << ", tx_hashes.size()=" << b.tx_hashes.size() << " mismatch with block_complete_entry.m_txs.size()=" << block_entry.txs.size() << ", Missing hash from block: " <<epee::string_tools::pod_to_hex(get_transaction_hash(tx)));
+          << ", tx_hashes.size()=" << b.tx_hashes.size() << " mismatch with block_complete_entry.m_txs.size() = " << block_entry.txs.size());
         drop_connection(context, false, false);
         return 1;
       }
