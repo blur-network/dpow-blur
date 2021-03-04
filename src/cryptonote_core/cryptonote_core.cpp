@@ -1,3 +1,4 @@
+
 // Copyright (c) 2018-2021, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
@@ -1133,6 +1134,12 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------
   bool core::add_new_ntz_req(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_str, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash)
   {
+    if (m_blockchain_storage.get_db().height() < (m_target_blockchain_height - 1))
+    {
+      LOG_PRINT_L2("Received notarization request while syncing, ignoring until we hit chain tip!");
+      return true;
+    }
+
     if(m_mempool.have_tx(tx_hash))
     {
       LOG_PRINT_L2("tx " << tx_hash << "already have transaction in tx_pool");
