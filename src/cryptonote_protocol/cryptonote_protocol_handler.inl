@@ -262,6 +262,9 @@ namespace cryptonote
   template<class t_core>
   bool t_cryptonote_protocol_handler<t_core>::process_payload_sync_data(const CORE_SYNC_DATA& hshd, cryptonote_connection_context& context, bool is_inital)
   {
+    if(context.m_state == cryptonote_connection_context::state_before_handshake && !is_inital)
+      return true;
+
     if(context.m_state == cryptonote_connection_context::state_synchronizing)
       return true;
 
@@ -1059,8 +1062,6 @@ namespace cryptonote
       }
       if(b.tx_hashes.size() != block_entry.txs.size())
       {
-        cryptonote::transaction tx;
-        parse_and_validate_tx_from_blob(block_entry.txs.front(), tx); 
         LOG_ERROR_CCONTEXT("sent wrong NOTIFY_RESPONSE_GET_OBJECTS: block with id=" << epee::string_tools::pod_to_hex(get_blob_hash(block_entry.block))
           << ", tx_hashes.size()=" << b.tx_hashes.size() << " mismatch with block_complete_entry.m_txs.size()=" << block_entry.txs.size() << ", Missing hash from block: " <<epee::string_tools::pod_to_hex(get_transaction_hash(tx)));
         drop_connection(context, false, false);
@@ -1094,18 +1095,6 @@ namespace cryptonote
       MLOG_YELLOW(el::Level::Debug, context << " Got NEW BLOCKS inside of " << __FUNCTION__ << ": size: " << arg.blocks.size()
           << ", blocks: " << start_height << " - " << (start_height + arg.blocks.size() - 1));
 
-/*      std::list<cryptonote::block> blocks_list;
-
-      for (const auto& each : arg.blocks) {
-        cryptonote::block each_b;
-        if (!parse_and_validate_block_from_blob(each.block, each_b))
-          MERROR("Failed to parse block from blob!");
-        else
-          blocks_list.push_back(each_b);
-      }
-
-      m_core.get_blockchain_storage().rollback_blockchain_switching(blocks_list, start_height);
-*/
       // add that new span to the block queue
       const boost::posix_time::time_duration dt = now - context.m_last_request_time;
       const float rate = size * 1e6 / (dt.total_microseconds() + 1);

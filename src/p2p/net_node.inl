@@ -498,8 +498,10 @@ namespace nodetool
       _note("Thread monitor number of peers - done");
     })); // lambda
 
-    //here you can set worker threads count
-    int thrds_count = 10;
+    // thread count was previously fetched using boost::thread::get_hardware_concurrency()..
+    // but that change adversely affected hashrate
+    // TODO: look into "why?"
+    int thrds_count = 20;
 
     m_net_server.add_idle_handler(boost::bind(&node_server<t_payload_net_handler>::idle_worker, this), 1000);
     m_net_server.add_idle_handler(boost::bind(&t_payload_net_handler::on_idle, &m_payload_handler), 1000);
@@ -985,7 +987,7 @@ namespace nodetool
         local_peers_count = m_peerlist.get_white_peers_count();
         if (!local_peers_count)
           return false;
-        max_random_index = std::min<uint64_t>(local_peers_count -1, 20);
+        max_random_index = std::min<uint64_t>(local_peers_count, 20);
         random_index = get_random_index_with_fixed_probability(max_random_index);
       } else {
         local_peers_count = m_peerlist.get_gray_peers_count();
