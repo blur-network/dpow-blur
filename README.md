@@ -77,7 +77,7 @@ After installing the dependencies, clone this repo with:
 
 Cd into the proper directory, and then compile with:
 
-`cd dpow-blur && make release-static`
+`cd dpow-blur && git submodule update --init && make release-static`
 
 
 ---
