@@ -1772,7 +1772,7 @@ namespace cryptonote
   bool core_rpc_server::on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res)
   {
     res.address = req[0];
-    res.scriptPubKey = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec98";
+    res.scriptPubKey = "76a914db8a14ad84fedb72704cdc1b0999c2cd4bc7df07";
     res.segid = 4;
     res.isscript = false;
     res.ismine = true;
@@ -1885,12 +1885,12 @@ namespace cryptonote
     for (const auto& each : addrs) {
       COMMAND_RPC_LIST_UNSPENT::unspent_entry e;
       e.address = each;
-      e.scriptPubKey = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec98";
+      e.scriptPubKey = "76a914db8a14ad84fedb72704cdc1b0999c2cd4bc7df07";
       e.txid = epee::string_tools::pod_to_hex(m_core.get_blockchain_storage().get_tail_id());
       e.vout = 1;
       e.amount = 10000;
       e.confirmations = 1000;
-      e.redeemScript = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec98";
+      e.redeemScript = "76a914db8a14ad84fedb72704cdc1b0999c2cd4bc7df07";
       e.spendable = true;
       e.solvable = true;
       e.safe = true;
