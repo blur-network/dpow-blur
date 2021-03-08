@@ -1652,7 +1652,7 @@ namespace cryptonote
       std::string scriptPubKey;
       uint64_t amount;
       uint64_t confirmations;
-      std::string redeemScript;
+      uint16_t segid;
       bool spendable;
       bool solvable;
       bool safe;
@@ -1664,7 +1664,7 @@ namespace cryptonote
         KV_SERIALIZE(scriptPubKey)
         KV_SERIALIZE(amount)
         KV_SERIALIZE(confirmations)
-        KV_SERIALIZE(redeemScript)
+        KV_SERIALIZE(segid)
         KV_SERIALIZE(spendable)
         KV_SERIALIZE(solvable)
         KV_SERIALIZE(safe)

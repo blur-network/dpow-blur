@@ -75,7 +75,7 @@ After installing the dependencies, clone this repo with:
 
 > `git clone https://github.com/blur-network/dpow-blur.git`
 
-Cd into the proper directory, and then compile with:
+`cd` into the proper directory, and then compile with:
 
 `cd dpow-blur && git submodule update --init && make release-static`
 
