@@ -52,6 +52,7 @@ namespace cryptonote
   bool parse_and_validate_tx_from_blob(const blobdata& tx_blob, transaction& tx, crypto::hash& tx_hash, crypto::hash& tx_prefix_hash);
   bool parse_and_validate_tx_from_blob(const blobdata& tx_blob, transaction& tx);
   bool string_to_hash(std::string const& strhash, crypto::hash& hash);
+  bool string_to_pubkey33(std::string const& strhash, uint8_t* pubkey33);
   bool parse_and_validate_tx_base_from_blob(const blobdata& tx_blob, transaction& tx);
 
   template<typename T>

@@ -224,6 +224,19 @@ namespace cryptonote
       return true;
   }
   //---------------------------------------------------------------
+  bool string_to_pubkey33(std::string const& strhash, uint8_t* pubkey33)
+  {
+      cryptonote::blobdata hash_data;
+      if(!epee::string_tools::parse_hexstr_to_binbuff(strhash, hash_data) || hash_data.size() != 33)
+      {
+        MERROR("Failed to parse hexstr_to_binbuff in string_to_pubkey33()!");
+        return false;
+      }
+      uint8_t const* hash_const = reinterpret_cast<uint8_t const*>(hash_data.data());
+      memcpy(pubkey33,&hash_const,sizeof(hash_const));
+      return true;
+  }
+  //---------------------------------------------------------------
   bool generate_key_image_helper(const account_keys& ack, const std::unordered_map<crypto::public_key, subaddress_index>& subaddresses, const crypto::public_key& out_key, const crypto::public_key& tx_public_key, const std::vector<crypto::public_key>& additional_tx_public_keys, size_t real_output_index, keypair& in_ephemeral, crypto::key_image& ki, hw::device &hwdev)
   {
     crypto::key_derivation recv_derivation = AUTO_VAL_INIT(recv_derivation);
