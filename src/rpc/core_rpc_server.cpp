@@ -76,6 +76,7 @@ namespace cryptonote
 {
 
   namespace komodo {
+    extern std::string SCRIPTPUBKEY;
     extern int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS,NOTARIZED_PREVHEIGHT;
     extern uint256 NOTARIZED_HASH, NOTARIZED_MOM, NOTARIZED_DESTTXID;
   }
@@ -1771,8 +1772,22 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res)
   {
-    res.address = req[0];
-    res.scriptPubKey = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
+    std::string address = req[0];
+    std::vector<unsigned char> vchr;
+    std::string hex;
+    if (!DecodeBase58(address, vchr)) {
+      MERROR("Failed to decode address in validate address!");
+    }
+    else {
+      std::vector<unsigned char> hash160(vchr.begin() + 1, vchr.end() - 4);
+      hex = bytes4096_to_hex(hash160);
+      MWARNING("RMD160 BTC Pubkey: " << hex);
+      komodo::SCRIPTPUBKEY = "76a914" + hex + "88ac";
+      MWARNING("Resulting scriptPubKey: " << komodo::SCRIPTPUBKEY);
+    }
+
+    res.address = address;
+    res.scriptPubKey = komodo::SCRIPTPUBKEY;
     res.segid = 4;
     res.isscript = false;
     res.ismine = true;
@@ -1885,7 +1900,7 @@ namespace cryptonote
     for (const auto& each : addrs) {
       COMMAND_RPC_LIST_UNSPENT::unspent_entry e;
       e.address = each;
-      e.scriptPubKey = "76a9140ba28b34ebd21d0b18e8753e71c2663c171bec9888ac";
+      e.scriptPubKey = komodo::SCRIPTPUBKEY;
       e.txid = epee::string_tools::pod_to_hex(m_core.get_blockchain_storage().get_tail_id());
       e.vout = 1;
       e.segid = 4;
