@@ -74,12 +74,10 @@ endfunction()
 set(source_files
   ${PROJECT_NAME}.cpp
   arith_uint256.cpp
-  base58.cpp
   strencodings.cpp
   uint256.cpp
   arith_uint256.h
   attributes.h
-  base58.h
   endian.h
   strencodings.h
   tinyformat.h
