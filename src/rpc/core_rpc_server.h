@@ -278,6 +278,7 @@ private:
     core& m_core;
     nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core> >& m_p2p;
     std::string m_bootstrap_daemon_address;
+    std::string m_btc_pubkey;
     epee::net_utils::http::http_simple_client m_http_client;
     boost::shared_mutex m_bootstrap_daemon_mutex;
     bool m_should_use_bootstrap_daemon;
