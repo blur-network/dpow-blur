@@ -1041,7 +1041,7 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
       const uint8_t* pubkey33_data = reinterpret_cast<uint8_t const*>(pubkeystr.data());
       //crypto::hash sha_hash;
       //tools::sha256sum(pubkey33_data, sizeof(pubkey33_data), sha_hash);
-      bits256 hash = sha256(pubkey33_data, sizeof(crypto::pubkey33));
+      bits256 hash = bits256_doublesha256(pubkey33_data, sizeof(crypto::pubkey33));
       std::vector<uint8_t> vchr;
       for (const auto& each : hash.bytes) {
         vchr.push_back(each);
@@ -1052,6 +1052,9 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
       uint8_t hash160[CRIPEMD160::OUTPUT_SIZE];
       CRIPEMD160().Write(sha_data, sizeof(sha_data)).Finalize(hash160);
       MWARNING("----- hash160 = " << epee::string_tools::pod_to_hex(hash160));
+      MWARNING("------- hash160frompbukey: " << komodo::SCRIPTPUBKEY.substr(6,40));
+      if (komodo::SCRIPTPUBKEY.substr(6,40) == epee::string_tools::pod_to_hex(hash160))
+        MERROR(">>>>>> MATCH FOUND <<<<<<<");
     }
     return true;
   }
