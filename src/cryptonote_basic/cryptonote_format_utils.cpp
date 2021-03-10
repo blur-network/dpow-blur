@@ -224,16 +224,17 @@ namespace cryptonote
       return true;
   }
   //---------------------------------------------------------------
-  bool string_to_pubkey33(std::string const& strhash, uint8_t* pubkey33)
+  bool string_to_pubkey33(std::string const& strhash, crypto::pubkey33& pubkey33)
   {
       cryptonote::blobdata hash_data;
-      if(!epee::string_tools::parse_hexstr_to_binbuff(strhash, hash_data) || hash_data.size() != 33)
+      MWARNING("strhash = " << strhash);
+      if(!epee::string_tools::parse_hexstr_to_binbuff(strhash, hash_data) || hash_data.size() != PUBKEY33_SIZE)
       {
         MERROR("Failed to parse hexstr_to_binbuff in string_to_pubkey33()!");
         return false;
       }
-      uint8_t const* hash_const = reinterpret_cast<uint8_t const*>(hash_data.data());
-      memcpy(pubkey33,&hash_const,sizeof(hash_const));
+      const crypto::pubkey33 key33 = *reinterpret_cast<const crypto::pubkey33*>(hash_data.data());
+      pubkey33 = key33;
       return true;
   }
   //---------------------------------------------------------------
