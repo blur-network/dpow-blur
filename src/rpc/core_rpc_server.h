@@ -58,6 +58,7 @@ namespace cryptonote
     static const command_line::arg_descriptor<bool> arg_restricted_rpc;
     static const command_line::arg_descriptor<std::string> arg_bootstrap_daemon_address;
     static const command_line::arg_descriptor<std::string> arg_bootstrap_daemon_login;
+    static const command_line::arg_descriptor<std::string> arg_btc_pubkey;
 
     typedef epee::net_utils::connection_context_base connection_context;
 

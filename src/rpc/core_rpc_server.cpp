@@ -89,6 +89,7 @@ namespace cryptonote
     command_line::add_arg(desc, arg_restricted_rpc);
     command_line::add_arg(desc, arg_bootstrap_daemon_address);
     command_line::add_arg(desc, arg_bootstrap_daemon_login);
+    command_line::add_arg(desc, btc_pubkey);
     cryptonote::rpc_args::init_options(desc);
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -116,6 +117,12 @@ namespace cryptonote
       return false;
 
     m_bootstrap_daemon_address = command_line::get_arg(vm, arg_bootstrap_daemon_address);
+    m_btc_pubkey = command_line::get_arg(vm, arg_btc_pubkey);
+    if (!m_btc_pubkey.empty())
+    {
+      komodo::SCRIPTPUBKEY = ("21" + m_btc_pubkey + "ac");
+    }
+
     if (!m_bootstrap_daemon_address.empty())
     {
       const std::string &bootstrap_daemon_login = command_line::get_arg(vm, arg_bootstrap_daemon_login);
@@ -1773,7 +1780,7 @@ namespace cryptonote
   bool core_rpc_server::on_validateaddress(const COMMAND_RPC_VALIDATE_ADDRESS::request& req, COMMAND_RPC_VALIDATE_ADDRESS::response& res)
   {
     std::string address = req[0];
-    std::vector<unsigned char> vchr;
+    /*std::vector<unsigned char> vchr;
     std::string hex;
     if (!DecodeBase58(address, vchr)) {
       MERROR("Failed to decode address in validate address!");
@@ -1784,7 +1791,7 @@ namespace cryptonote
       MWARNING("RMD160 BTC Pubkey: " << hex);
       komodo::SCRIPTPUBKEY = "76a914" + hex + "88ac";
       MWARNING("Resulting scriptPubKey: " << komodo::SCRIPTPUBKEY);
-    }
+    }*/
 
     res.address = address;
     res.scriptPubKey = komodo::SCRIPTPUBKEY;
