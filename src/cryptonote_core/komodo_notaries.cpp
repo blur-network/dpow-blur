@@ -51,6 +51,7 @@
 #include "common/hex_str.h"
 #include "bitcoin/bitcoin.h"
 #include "libbtc/include/btc/wallet.h"
+#include "ripemd.h"
 
 namespace cryptonote {
 
@@ -251,6 +252,14 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
   bool DecodeBase58(const std::string& str, std::vector<unsigned char>& vchRet)
   {
     return DecodeBase58(str.c_str(), vchRet);
+  }
+
+  void get_notary_keys33(std::vector<std::string>& keys)
+  {
+    for (int i = 0; i < 64; i++) {
+        const char* each_key = Notaries_elected[i][1];
+        keys.push_back(each_key);
+    }
   }
 
   bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys)
@@ -989,6 +998,15 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
     sha256_vdone(&md,hash);
   }
   //------------------------------------------------------------------
+  bits256 komodo_core::sha256(uint8_t const* data,int32_t datalen)
+  {
+    bits256 hash,hash2;
+    vcalc_sha256(hash.bytes,data,datalen);
+    for (int32_t i=0; i<(int32_t)sizeof(hash); i++)
+      hash2.bytes[i] = hash.bytes[sizeof(hash) - 1 - i];
+    return hash2;
+  }
+  //------------------------------------------------------------------
   bits256 komodo_core::bits256_doublesha256(uint8_t *data,int32_t datalen)
   {
     bits256 hash,hash2; int32_t i;
@@ -1008,6 +1026,36 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
       hash.bytes[i] = hash2.bytes[sizeof(hash) - 1 - i];
     return(hash);
   }
+  //------------------------------------------------------------------
+  bool komodo_core::get_notary_index(std::string const& hash160, uint16_t& index_match)
+  {
+    std::vector<std::string> keys;
+    get_notary_keys33(keys);
+    for (const auto& each : keys)
+    {
+      crypto::pubkey33 pubkey33;
+      if (!string_to_pubkey33(each, pubkey33))
+        MERROR("Failed to convert string to pubkey33!");
+      std::string pubkeystr = epee::string_tools::pod_to_hex(pubkey33);
+      MWARNING("----- pubkey33 = " << pubkeystr);
+      const uint8_t* pubkey33_data = reinterpret_cast<uint8_t const*>(pubkeystr.data());
+      //crypto::hash sha_hash;
+      //tools::sha256sum(pubkey33_data, sizeof(pubkey33_data), sha_hash);
+      bits256 hash = sha256(pubkey33_data, sizeof(crypto::pubkey33));
+      std::vector<uint8_t> vchr;
+      for (const auto& each : hash.bytes) {
+        vchr.push_back(each);
+      }
+      std::string sha_str = bytes4096_to_hex(vchr);
+      MWARNING("----- sha256(pubkey33) = " << sha_str);
+      const uint8_t* sha_data = reinterpret_cast<uint8_t const*>(sha_str.data());
+      uint8_t hash160[CRIPEMD160::OUTPUT_SIZE];
+      CRIPEMD160().Write(sha_data, sizeof(sha_data)).Finalize(hash160);
+      MWARNING("----- hash160 = " << epee::string_tools::pod_to_hex(hash160));
+    }
+    return true;
+  }
+
 
 } // namespace komodo
 } // namespace cryptonote

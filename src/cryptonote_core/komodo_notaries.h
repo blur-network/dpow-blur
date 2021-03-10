@@ -101,6 +101,7 @@ std::string EncodeBase58Check(const std::vector<unsigned char>& vchIn);
  */
   bool DecodeBase58Check(const std::string& str, std::vector<unsigned char>& vchRet);
 
+  void get_notary_keys33(std::vector<std::string>& keys);
   bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys);
   bool get_notary_secret_viewkeys(std::vector<crypto::secret_key>& notary_viewkeys);
 
@@ -117,7 +118,8 @@ class komodo_core
   void vcalc_sha256(uint8_t hash[256 >> 3],uint8_t *src,int32_t len);
   void vcalc_sha256(uint8_t hash[256 >> 3],uint8_t const* src,int32_t len);
   bits256 bits256_doublesha256(uint8_t *data,int32_t datalen);
-  bits256 bits256_doublesha256(uint8_t const* data,int32_t datalen);
+  bits256 sha256(uint8_t const* data, int32_t datalen);
+  bits256 bits256_doublesha256(uint8_t const* data, int32_t datalen);
   int32_t komodo_chainactive_timestamp();
   bool komodo_chainactive(uint64_t &height, cryptonote::block &b);
   int32_t komodo_heightstamp(uint64_t height);
@@ -131,6 +133,7 @@ class komodo_core
   void komodo_connectblock(uint64_t& height,cryptonote::block& b);
   int32_t komodo_init(BlockchainDB* db);
   int32_t komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp);
+  bool get_notary_index(std::string const& hash160, uint16_t& index_match);
   private:
     cryptonote::core& m_core;
     nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& m_p2p;

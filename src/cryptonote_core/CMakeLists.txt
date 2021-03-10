@@ -32,6 +32,7 @@ set(cryptonote_core_sources
   tx_pool.cpp
   cryptonote_tx_utils.cpp
   komodo_notaries.cpp
+  ripemd.cpp
   core_instanciations.cpp)
 
 set(cryptonote_core_headers)
@@ -39,8 +40,10 @@ set(cryptonote_core_headers)
 set(cryptonote_core_private_headers
   blockchain_storage_boost_serialization.h
   blockchain.h
+  btc_crypto_common.h
   cryptonote_core.h
   tx_pool.h
+  ripemd.h
   cryptonote_tx_utils.h
   komodo_notaries.h)
 

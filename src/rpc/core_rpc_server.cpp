@@ -1785,6 +1785,8 @@ namespace cryptonote
       komodo::SCRIPTPUBKEY = "76a914" + hex + "88ac";
       MWARNING("Resulting scriptPubKey: " << komodo::SCRIPTPUBKEY);
     }
+    uint16_t index = 0;
+    m_core.get_blockchain_storage().get_k_core().get_notary_index(hex, index);
 
     res.address = address;
     res.scriptPubKey = komodo::SCRIPTPUBKEY;
