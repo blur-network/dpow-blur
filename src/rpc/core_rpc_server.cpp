@@ -3319,4 +3319,11 @@ namespace cryptonote
     , "Specify username:password for the bootstrap daemon login"
     , ""
     };
+
+  const command_line::arg_descriptor<std::string> core_rpc_server::arg_btc_pubkey = {
+    "btc-pubkey"
+    , "Specify 33-byte secp256k1 public key for bitcoin transaction compatibility"
+    , ""
+    };
+
 }  // namespace cryptonote
