@@ -472,9 +472,7 @@ namespace cryptonote
     m_blockchain_storage.set_user_options(blocks_threads,
         blocks_per_sync, sync_mode, fast_sync);
 
-    std::unique_ptr<komodo::komodo_core> k_core;
-
-    r = m_blockchain_storage.init(db.release(), k_core, m_nettype, m_offline, test_options);
+    r = m_blockchain_storage.init(db.release(), m_nettype, m_offline, test_options);
 
     r = m_mempool.init(max_txpool_size);
     CHECK_AND_ASSERT_MES(r, false, "Failed to initialize memory pool");
@@ -1172,7 +1170,7 @@ namespace cryptonote
 
     uint8_t has_raw_ntz_data = 0;
 
-    bits256 bits = m_blockchain_storage.get_k_core().bits256_doublesha256(ntz_data_ptr, ntz_data.size());
+    bits256 bits = komodo::bits256_doublesha256(ntz_data_ptr, ntz_data.size());
     for (const auto& each : bits.bytes) {
       new_vec.push_back(each);
     }

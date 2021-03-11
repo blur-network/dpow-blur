@@ -35,7 +35,6 @@
 #include "cryptonote_core/tx_pool.h"
 #include "cryptonote_core/cryptonote_core.h"
 #include "cryptonote_core/blockchain.h"
-#include "cryptonote_core/komodo_notaries.h"
 #include "blockchain_db/blockchain_db.h"
 #include "blockchain_db/db_types.h"
 #include "version.h"
@@ -195,20 +194,7 @@ int main(int argc, char* argv[])
   }
 
 
-  std::unique_ptr<komodo::komodo_core> k_core;
-  try
-  {
-    int32_t didinit = k_core->komodo_init(db);
-    if (didinit < 0)
-      return 1;
-  }
-  catch (const std::exception& e)
-  {
-    LOG_PRINT_L0("Error initializing komodo core" << e.what());
-    return 1;
-  }
-
-  r = core_storage->init(db, k_core, net_type);
+  r = core_storage->init(db, net_type);
 
   CHECK_AND_ASSERT_MES(r, 1, "Failed to initialize source blockchain storage");
   LOG_PRINT_L0("Source blockchain storage initialized OK");

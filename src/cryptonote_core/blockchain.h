@@ -66,9 +66,6 @@ namespace cryptonote
   union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4];};
   typedef union _bits256 bits256;
 
-  namespace komodo {
-    class komodo_core;
-  }
   class tx_memory_pool;
   struct test_options;
 
@@ -130,7 +127,7 @@ namespace cryptonote
      *
      * @return true on success, false if any initialization steps fail
      */
-    bool init(BlockchainDB* db, std::unique_ptr<komodo::komodo_core>& k_core, const network_type nettype = MAINNET, bool offline = false, const cryptonote::test_options *test_options = NULL);
+    bool init(BlockchainDB* db, const network_type nettype = MAINNET, bool offline = false, const cryptonote::test_options *test_options = NULL);
 
     /**
      * @brief Initialize the Blockchain state
@@ -142,7 +139,7 @@ namespace cryptonote
      *
      * @return true on success, false if any initialization steps fail
      */
-    bool init(BlockchainDB* db, std::unique_ptr<komodo::komodo_core>& k_core, HardFork*& hf, const network_type nettype = MAINNET, bool offline = false);
+    bool init(BlockchainDB* db, HardFork*& hf, const network_type nettype = MAINNET, bool offline = false);
 
     /**
      * @brief Uninitializes the blockchain state
@@ -958,17 +955,6 @@ namespace cryptonote
     }
 
 
-    komodo::komodo_core& get_k_core()
-    {
-      return *m_komodo_core;
-    }
-
-    const komodo::komodo_core& get_k_core() const
-    {
-      return *m_komodo_core;
-    }
-
-
     /**
      * @brief get a number of outputs of a specific amount
      *
@@ -1125,8 +1111,6 @@ namespace cryptonote
     checkpoints m_checkpoints;
 
     HardFork *m_hardfork;
-
-    komodo::komodo_core* m_komodo_core;
 
     network_type m_nettype;
     bool m_offline;

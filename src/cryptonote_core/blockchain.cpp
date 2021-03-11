@@ -483,7 +483,7 @@ uint64_t Blockchain::get_current_blockchain_height() const
 //------------------------------------------------------------------
 //FIXME: possibly move this into the constructor, to avoid accidentally
 //       dereferencing a null BlockchainDB pointer
-bool Blockchain::init(BlockchainDB* db, std::unique_ptr<komodo::komodo_core>& k_core, const network_type nettype, bool offline, const cryptonote::test_options *test_options)
+bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline, const cryptonote::test_options *test_options)
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_tx_pool);
@@ -568,14 +568,6 @@ bool Blockchain::init(BlockchainDB* db, std::unique_ptr<komodo::komodo_core>& k_
   uint64_t top_block_timestamp = m_db->get_top_block_timestamp();
   uint64_t timestamp_diff = time(NULL) - top_block_timestamp;
 
-  m_komodo_core = k_core.release();
-  if (m_komodo_core->komodo_init(m_db) == 0) {
-    MCLOG_CYAN(el::Level::Info, "global", "Komodo core initialized.  DPoW protection active, in event of hash attack.");
-  }
-  else {
-    MWARNING("Komodo core failed to initialize! DPoW protection is not active!");
-  }
-
   // genesis block has no timestamp, could probably change it to have timestamp of 1341378000...
   if(!top_block_timestamp)
     timestamp_diff = time(NULL) - 1341378000;
@@ -645,11 +637,11 @@ bool Blockchain::init(BlockchainDB* db, std::unique_ptr<komodo::komodo_core>& k_
   return true;
 }
 //------------------------------------------------------------------
-bool Blockchain::init(BlockchainDB* db, std::unique_ptr<komodo::komodo_core>& k_core, HardFork*& hf, const network_type nettype, bool offline)
+bool Blockchain::init(BlockchainDB* db, HardFork*& hf, const network_type nettype, bool offline)
 {
   if (hf != nullptr)
     m_hardfork = hf;
-  bool res = init(db, k_core, nettype, offline, NULL);
+  bool res = init(db, nettype, offline, NULL);
   if (hf == nullptr)
     hf = m_hardfork;
   return res;

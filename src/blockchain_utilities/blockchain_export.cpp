@@ -179,20 +179,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  std::unique_ptr<komodo::komodo_core> k_core;
-  try
-  {
-    int32_t didinit =  k_core->komodo_init(db);
-    if (didinit < 0)
-      return 1;
-  }
-  catch (const std::exception& e)
-  {
-    LOG_PRINT_L0("Error initializing komodo core" << e.what());
-    return 1;
-  }
-
-  r = core_storage->init(db, k_core, opt_testnet ? cryptonote::TESTNET : opt_stagenet ? cryptonote::STAGENET : cryptonote::MAINNET);
+  r = core_storage->init(db, opt_testnet ? cryptonote::TESTNET : opt_stagenet ? cryptonote::STAGENET : cryptonote::MAINNET);
 
   CHECK_AND_ASSERT_MES(r, 1, "Failed to initialize source blockchain storage");
   LOG_PRINT_L0("Source blockchain storage initialized OK");

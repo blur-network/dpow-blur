@@ -194,7 +194,7 @@ namespace cryptonote
       return r;
     }
 
-    m_core.get_blockchain_storage().get_k_core().komodo_update(m_core);
+    m_core.get_blockchain_storage().komodo_update();
 
     res.notarized = komodo::NOTARIZED_HEIGHT;
     std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
@@ -1832,7 +1832,6 @@ namespace cryptonote
       res.tx.push_back(epee::string_tools::pod_to_hex(each));
     }
 
-    m_core.get_blockchain_storage().get_k_core().komodo_update(m_core);
     uint64_t height = get_block_height(b);
 
     res.rawconfirmations = (m_core.get_blockchain_storage().get_current_blockchain_height()) - height;
@@ -1873,7 +1872,7 @@ namespace cryptonote
     }
 
     uint8_t const* txdata = reinterpret_cast<uint8_t const*>(bintxdata.data());
-    bits256 btc_hash = m_core.get_blockchain_storage().get_k_core().bits256_doublesha256(txdata, bintxdata.size());
+    bits256 btc_hash = komodo::bits256_doublesha256(txdata, bintxdata.size());
     std::vector<uint8_t> bitscontainer;
     for (const auto& each : btc_hash.bytes) {
       bitscontainer.push_back(each);
@@ -2410,7 +2409,7 @@ namespace cryptonote
     }
 
 
-    m_core.get_blockchain_storage().get_k_core().komodo_update(m_core);
+    m_core.get_blockchain_storage().komodo_update();
 
     std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
     std::vector<uint8_t> v_txid(komodo::NOTARIZED_DESTTXID.begin(), komodo::NOTARIZED_DESTTXID.begin()+32);
@@ -2606,8 +2605,6 @@ namespace cryptonote
       }
 
 
-      m_core.get_blockchain_storage().get_k_core().komodo_update(m_core);
-
       std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
       std::string n_hash = bytes256_to_hex(v_hash);
       std::vector<uint8_t> v_txid(komodo::NOTARIZED_DESTTXID.begin(), komodo::NOTARIZED_DESTTXID.begin()+32);
@@ -2648,7 +2645,7 @@ namespace cryptonote
           MWARNING("string_ntz_data: " << string_ntz_data);
           MWARNING("ntz_rem: " << ntz_rem);*/
           uint8_t* ntz_data_ptr = ntz_data.data();
-          bits256 bits = m_core.get_blockchain_storage().get_k_core().bits256_doublesha256(ntz_data_ptr, ntz_data.size());
+          bits256 bits = komodo::bits256_doublesha256(ntz_data_ptr, ntz_data.size());
           for (const auto& each : bits.bytes) {
             doublesha_vec.push_back(each);
           }
@@ -2693,8 +2690,6 @@ namespace cryptonote
       res.status = "Failed! calc_MoM illegal height or MoMdepth";
       return true;
     }
-
-    m_core.get_blockchain_storage().get_k_core().komodo_update(m_core);
 
     std::vector<uint8_t> v_mom(komodo::NOTARIZED_MOM.begin(), komodo::NOTARIZED_MOM.begin()+32);
 

@@ -106,42 +106,12 @@ std::string EncodeBase58Check(const std::vector<unsigned char>& vchIn);
 
 namespace komodo {
 
-char const ASSETCHAINS_SYMBOL[5] = "BLUR";
-
-class komodo_core
-{
-  public:
-
-  komodo_core(cryptonote::core& cr, nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& p2p);
+  char const ASSETCHAINS_SYMBOL[5] = "BLUR";
 
   void vcalc_sha256(uint8_t hash[256 >> 3],uint8_t *src,int32_t len);
   void vcalc_sha256(uint8_t hash[256 >> 3],uint8_t const* src,int32_t len);
   bits256 bits256_doublesha256(uint8_t *data,int32_t datalen);
   bits256 bits256_doublesha256(uint8_t const* data,int32_t datalen);
-  int32_t komodo_chainactive_timestamp();
-  bool komodo_chainactive(uint64_t &height, cryptonote::block &b);
-  int32_t komodo_heightstamp(uint64_t height);
-  void komodo_disconnect(uint64_t height,cryptonote::block block);
-  int32_t komodo_notarized_height(uint64_t *prevMoMheightp, uint256 *hashp,uint256 *txidp);
-  int32_t komodo_notarizeddata(uint64_t nHeight,uint256 *notarized_hashp,uint256 *notarized_desttxidp);
-  void komodo_notarized_update(uint64_t nHeight,uint64_t notarized_height,uint256 notarized_hash,uint256 notarized_desttxid,uint256 MoM,int32_t MoMdepth);
-  void komodo_update(cryptonote::core& m_core);
-  int32_t komodo_checkpoint(int32_t *notarized_heightp, uint64_t nHeight, crypto::hash& hash);
-  void komodo_voutupdate(int32_t txi,int32_t vout,uint8_t *scriptbuf,int32_t scriptlen,int32_t height,int32_t *specialtxp,int32_t *notarizedheightp,uint64_t value,int32_t notarized,uint64_t signedmask);
-  void komodo_connectblock(uint64_t& height,cryptonote::block& b);
-  int32_t komodo_init(BlockchainDB* db);
-  int32_t komodo_notaries(uint8_t pubkeys[64][33],uint64_t height,uint64_t timestamp);
-  private:
-    cryptonote::core& m_core;
-    nodetool::node_server<cryptonote::t_cryptonote_protocol_handler<cryptonote::core>>& m_p2p;
-    bool check_core_ready();
-    bool check_core_busy();
-
-};
-
-
-  int32_t komodo_init(BlockchainDB& db);
-  struct notarized_checkpoint *komodo_npptr(uint64_t height);
 
 } // namespace komodo
 
