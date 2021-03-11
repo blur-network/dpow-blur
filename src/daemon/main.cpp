@@ -48,8 +48,8 @@
 #include "sodium.h"
 #include "daemon/command_line_args.h"
 #include "blockchain_db/db_types.h"
-#include "version.h"
 #include "bitcoin_spv.h"
+#include "version.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon"
@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
 
     if (command_line::get_arg(vm, command_line::arg_help))
     {
-      std::cout << "Blur Network '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL << ENDL;
+      std::cout << "Blur Network '" << cryptonote::MONERO_RELEASE_NAME << "' (v" << cryptonote::MONERO_VERSION_FULL << ")" << ENDL << ENDL;
       std::cout << "Usage: " + std::string{argv[0]} + " [options|settings] [daemon_command...]" << std::endl << std::endl;
       std::cout << visible_options << std::endl;
       return 0;
@@ -131,7 +131,7 @@ int main(int argc, char* argv[])
     // Monero Version
     if (command_line::get_arg(vm, command_line::arg_version))
     {
-      std::cout << "Blur Network '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL;
+      std::cout << "Blur Network '" << cryptonote::MONERO_RELEASE_NAME << "' (v" << cryptonote::MONERO_VERSION_FULL << ")" << ENDL;
       return 0;
     }
 
@@ -285,7 +285,7 @@ int main(int argc, char* argv[])
     }
 
     // logging is now set up
-    MGINFO("Blur Network '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")");
+    MGINFO("Blur Network '" << cryptonote::MONERO_RELEASE_NAME << "' (v" << cryptonote::MONERO_VERSION_FULL << ")");
 
  /*   uint32_t process_id = 0;
     int launch = libbtc_launch("bitcointool", "-command", "genkey", data_dir, relative_path_base, process_id);

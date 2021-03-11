@@ -39,7 +39,6 @@ target_link_libraries(notary_server
     p2p
     rpc
     common
-    version
 #    ${BTC_LIBRARY}
 #    ${SECP256K1_LIBRARY}
 #    ${EVENT_LIBRARIES}
@@ -68,7 +67,6 @@ target_link_libraries(notary_server
     p2p
     rpc
     common
-    version
 #    ${BTC_LIBRARY}
 #    ${SECP256K1_LIBRARY}
 #    ${EVENT_LIBRARIES}

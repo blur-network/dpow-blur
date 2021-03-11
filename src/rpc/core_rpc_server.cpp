@@ -50,9 +50,9 @@ using namespace epee;
 #include "rpc/rpc_args.h"
 #include "core_rpc_server_error_codes.h"
 #include "p2p/net_node.h"
-#include "version.h"
 #include "cryptonote_core/komodo_notaries.h"
 #include "blockchain_db/db_structs.h"
+#include "version.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "daemon.rpc"

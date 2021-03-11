@@ -33,7 +33,6 @@
 #include "wallet.h"
 #include "common_defines.h"
 #include "common/util.h"
-#include "version.h"
 #include "net/http_client.h"
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>

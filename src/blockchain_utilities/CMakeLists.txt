@@ -101,7 +101,6 @@ target_link_libraries(blockchain_import
   PRIVATE
     blockchain_db
     p2p
-    version
     epee
     cryptonote_protocol
     cryptonote_core
@@ -130,7 +129,6 @@ target_link_libraries(blockchain_export
     blockchain_db
     p2p
     cryptonote_core
-    version
     epee
     cryptonote_protocol
     ${Boost_FILESYSTEM_LIBRARY}
@@ -154,7 +152,6 @@ target_link_libraries(blockchain_blackball
     cryptonote_core
     p2p
     cryptonote_core
-    version
     epee
     cryptonote_protocol
     wallet
@@ -179,7 +176,6 @@ target_link_libraries(blockchain_usage
     blockchain_db
     cryptonote_core
     p2p
-    version
     epee
     cryptonote_protocol
     ${Boost_FILESYSTEM_LIBRARY}

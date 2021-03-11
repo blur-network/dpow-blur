@@ -126,7 +126,6 @@ target_link_libraries(daemon
 #    ${SECP256K1_LIBRARY}
 #    ${BTC_LIBRARY}
     ${EPEE_READLINE}
-    version
     ${Boost_CHRONO_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
@@ -157,7 +156,6 @@ target_link_libraries(daemon
 #    ${SECP256K1_LIBRARY}
 #    ${BTC_LIBRARY}
     ${EPEE_READLINE}
-    version
     ${Boost_CHRONO_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

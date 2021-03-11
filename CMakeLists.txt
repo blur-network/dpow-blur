@@ -983,3 +983,8 @@ option(BUILD_GUI_DEPS "Build GUI dependencies." OFF)
 
 CHECK_C_COMPILER_FLAG(-std=c11 HAVE_C11)
 
+set(PRE_CONFIGURE_FILE "${CMAKE_SOURCE_DIR}/src/git_version.h.in")
+set(POST_CONFIGURE_FILE "${CMAKE_SOURCE_DIR}/src/version.h")
+
+include(cmake/git-watcher.cmake)
+

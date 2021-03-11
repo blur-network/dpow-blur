@@ -56,7 +56,6 @@ using namespace epee;
 #include "cryptonote_core.h"
 #include "komodo_notaries.h"
 #include "ringct/rctSigs.h"
-#include "version.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "cn"
