@@ -105,3 +105,4 @@ local.properties
 .idea/
 
 /testnet
+src/version.h
