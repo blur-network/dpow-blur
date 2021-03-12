@@ -194,8 +194,6 @@ namespace cryptonote
       return r;
     }
 
-    m_core.get_blockchain_storage().komodo_update();
-
     res.notarized = komodo::NOTARIZED_HEIGHT;
     std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
     std::vector<uint8_t> v_txid(komodo::NOTARIZED_DESTTXID.begin(), komodo::NOTARIZED_DESTTXID.begin()+32);
@@ -2407,9 +2405,6 @@ namespace cryptonote
       res.was_bootstrap_ever_used = true;
       return r;
     }
-
-
-    m_core.get_blockchain_storage().komodo_update();
 
     std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
     std::vector<uint8_t> v_txid(komodo::NOTARIZED_DESTTXID.begin(), komodo::NOTARIZED_DESTTXID.begin()+32);
