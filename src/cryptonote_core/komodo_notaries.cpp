@@ -61,7 +61,7 @@ static uint64_t const  KOMODO_ASSETCHAIN_MAXLEN = 64;
 static uint64_t const  KOMODO_NOTARIES_TIMESTAMP1 = 1525132800; // May 1st 2018 1530921600 // 7/7/2017
 static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP) * KOMODO_ELECTION_GAP);
 
-  const char* Notaries_elected[64][3] =
+  const char* notaries_elected[64][3] =
   {
     {"tonyL_test",         "033ac7d60d65246a59524d8cb83e2f7be9209c763650547cbd882bb4d6ba7769e1", "3c869fbf49fb5735d5eb1245c0df5b61fec77aa5568fc13c077adf3e210baac1" }, // 0
     {"alright_test",       "0235e22a9fb097965fb55b2b3f08a16fba4e55be042dfd00982dcf223471cd77b3", "662f177fbbba32bbd5abede145679d543ffecc7f76632ad480056f0b87f38eef" },
@@ -134,8 +134,8 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 /** All alphanumeric characters except for "0", "I", "O", and "l" */
-  static const char* pszBase58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-  static const int8_t mapBase58[256] = {
+  static const char* psz_base58 = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
+  static const int8_t map_base58[256] = {
     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
@@ -154,7 +154,7 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
     -1,-1,-1,-1,-1,-1,-1,-1, -1,-1,-1,-1,-1,-1,-1,-1,
   };
 
-  bool DecodeBase58(const char* psz, std::vector<unsigned char>& vch)
+  bool decode_base58(const char* psz, std::vector<unsigned char>& vch)
   {
     // Skip leading spaces.
     while (*psz && IsSpace(*psz))
@@ -170,10 +170,10 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
     int size = strlen(psz) * 733 /1000 + 1; // log(58) / log(256), rounded up.
     std::vector<unsigned char> b256(size);
     // Process the characters.
-    static_assert(sizeof(mapBase58)/sizeof(mapBase58[0]) == 256, "mapBase58.size() should be 256"); // guarantee not out of range
+    static_assert(sizeof(map_base58)/sizeof(map_base58[0]) == 256, "map_base58.size() should be 256"); // guarantee not out of range
     while (*psz && !IsSpace(*psz)) {
         // Decode base58 character
-        int carry = mapBase58[(uint8_t)*psz];
+        int carry = map_base58[(uint8_t)*psz];
         if (carry == -1)  // Invalid b58 character
             return false;
         int i = 0;
@@ -203,7 +203,7 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
     return true;
   }
 
-  std::string EncodeBase58(const unsigned char* pbegin, const unsigned char* pend)
+  std::string encode_base58(const unsigned char* pbegin, const unsigned char* pend)
   {
     // Skip & count leading zeroes.
     int zeroes = 0;
@@ -239,18 +239,18 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
     str.reserve(zeroes + (b58.end() - it));
     str.assign(zeroes, '1');
     while (it != b58.end())
-        str += pszBase58[*(it++)];
+        str += psz_base58[*(it++)];
     return str;
   }
 
-  std::string EncodeBase58(const std::vector<unsigned char>& vch)
+  std::string encode_base58(const std::vector<unsigned char>& vch)
   {
-    return EncodeBase58(vch.data(), vch.data() + vch.size());
+    return encode_base58(vch.data(), vch.data() + vch.size());
   }
 
-  bool DecodeBase58(const std::string& str, std::vector<unsigned char>& vchRet)
+  bool decode_base58(const std::string& str, std::vector<unsigned char>& vchRet)
   {
-    return DecodeBase58(str.c_str(), vchRet);
+    return decode_base58(str.c_str(), vchRet);
   }
 
   bool get_notary_pubkeys(std::vector<std::pair<crypto::public_key,crypto::public_key>>& notary_pubkeys)
@@ -260,8 +260,8 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
 
     for (int i =0; i < 64; i++) {
         std::pair<const char*,const char*> seed_and_pubkey_pair;
-        seed_and_pubkey_pair = std::make_pair(Notaries_elected[i][1], Notaries_elected[i][2]);
-        //MWARNING("First: " << Notaries_elected[i][1] << ", Second: " << Notaries_elected[i][2]);
+        seed_and_pubkey_pair = std::make_pair(notaries_elected[i][1], notaries_elected[i][2]);
+        //MWARNING("First: " << notaries_elected[i][1] << ", Second: " << notaries_elected[i][2]);
         notaries_keys.push_back(seed_and_pubkey_pair);
     }
 
@@ -306,8 +306,8 @@ static uint64_t const  KOMODO_NOTARIES_HEIGHT1 = ((814000 / KOMODO_ELECTION_GAP)
     std::vector<std::string> notary_seed_strings;
 
     for (int i =0; i < 64; i++) {
-        const char* seed = Notaries_elected[i][1];
-   //     MWARNING("First: " << Notaries_elected[i][1] << ", Second: " << Notaries_elected[i][3]);
+        const char* seed = notaries_elected[i][1];
+   //     MWARNING("First: " << notaries_elected[i][1] << ", Second: " << notaries_elected[i][3]);
         notary_seed_strings.push_back(seed);
     }
 
