@@ -1905,7 +1905,8 @@ namespace cryptonote
       COMMAND_RPC_LIST_UNSPENT::unspent_entry e;
       e.address = each;
       e.scriptPubKey = komodo::SCRIPTPUBKEY;
-      e.txid = epee::string_tools::pod_to_hex(m_core.get_blockchain_storage().get_tail_id());
+      std::vector<uint8_t> v_hash(komodo::NOTARIZED_HASH.begin(), komodo::NOTARIZED_HASH.begin()+32);
+      e.txid = bytes256_to_hex(v_hash);
       e.vout = 1;
       e.segid = 4;
       e.amount = 10000;
