@@ -1133,7 +1133,7 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------
   bool core::add_new_ntz_req(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_str, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash)
   {
-    if (m_blockchain_storage.get_db().height() < (m_target_blockchain_height - 1))
+    if (m_blockchain_storage.get_db().height() < (m_target_blockchain_height - 20))
     {
       LOG_PRINT_L2("Received notarization request while syncing, ignoring until we hit chain tip!");
       return true;
@@ -1151,7 +1151,7 @@ namespace cryptonote
     }
 
     std::list<int> signers_index;
-    for (int i = 0; i < DPOW_SIG_COUNT; i++) {
+    for (int i = 0; i < (DPOW_SIG_COUNT); i++) {
       std::string si_tmp = signers_str.substr(i*2, 2);
       int s_ind = std::stoi(si_tmp, nullptr, 10);
       if ((s_ind >= 64) || (s_ind < -1)) {
@@ -1180,7 +1180,7 @@ namespace cryptonote
       has_raw_ntz_data = 1;
 
     int neg = -1;
-    int count = DPOW_SIG_COUNT - std::count(signers_index.begin(), signers_index.end(), neg);
+    int count = (DPOW_SIG_COUNT) - std::count(signers_index.begin(), signers_index.end(), neg);
     bool ready = false;
     bool count_check = false;
 
