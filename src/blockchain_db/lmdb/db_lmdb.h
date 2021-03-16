@@ -318,11 +318,11 @@ public:
   std::map<uint64_t, std::tuple<uint64_t, uint64_t, uint64_t>> get_output_histogram(const std::vector<uint64_t> &amounts, bool unlocked, uint64_t recent_cutoff) const;
 
 private:
-  void do_resize(uint64_t size_increase=0);
+  void do_resize();
 
-  bool need_resize(uint64_t threshold_size=0) const;
+  bool need_resize() const;
+
   void check_and_resize_for_batch(uint64_t batch_num_blocks, uint64_t batch_bytes);
-  uint64_t get_estimated_batch_size(uint64_t batch_num_blocks, uint64_t batch_bytes) const;
 
   virtual void add_block( const block& blk
                 , const size_t& block_size
