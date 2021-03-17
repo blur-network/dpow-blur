@@ -339,7 +339,7 @@ namespace komodo {
 
    std::string NOTARY_PUBKEY, SCRIPTPUBKEY;
    uint8_t NOTARY_PUBKEY33[33];
-   int32_t NUM_NPOINTS,last_NPOINTSi,NOTARIZED_HEIGHT,NOTARIZED_MOMDEPTH,KOMODO_NEEDPUBKEYS,NOTARIZED_PREVHEIGHT;
+   int32_t NUM_NPOINTS{0},NOTARIZED_HEIGHT{0},NOTARIZED_MOMDEPTH{0},NOTARIZED_PREVHEIGHT{0};
    uint256 NOTARIZED_HASH, NOTARIZED_MOM, NOTARIZED_DESTTXID;
 
 // following is ported from libtom
@@ -584,7 +584,6 @@ static inline int32_t sha256_vdone(struct sha256_vstate *md,uint8_t *out)
     std::fill(NOTARIZED_DESTTXID.begin(),NOTARIZED_DESTTXID.begin()+32,0);
     std::fill(NOTARIZED_MOM.begin(),NOTARIZED_MOM.begin()+32,0);
     memset(&NOTARIZED_MOMDEPTH,0,sizeof(NOTARIZED_MOMDEPTH));
-    memset(&last_NPOINTSi,0,sizeof(last_NPOINTSi));
   //  portable_mutex_unlock(&komodo_mutex);
   }
 
