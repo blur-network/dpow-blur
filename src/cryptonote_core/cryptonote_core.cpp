@@ -1387,10 +1387,14 @@ namespace cryptonote
       m_miner.resume();
       return false;
     }
+    bool is_notarizing_block = false;
     prepare_handle_incoming_blocks(blocks);
-    m_blockchain_storage.add_new_block(b, bvc);
+    m_blockchain_storage.add_new_block(b, bvc, is_notarizing_block);
     cleanup_handle_incoming_blocks(true);
     //anyway - update miner template
+    if (is_notarizing_block && bvc.m_added_to_main_chain) {
+      m_blockchain_storage.komodo_update();
+    }
     update_miner_block_template();
     m_miner.resume();
 
@@ -1432,9 +1436,9 @@ namespace cryptonote
     m_blockchain_storage.safesyncmode(onoff);
   }
   //-----------------------------------------------------------------------------------------------
-  bool core::add_new_block(const block& b, block_verification_context& bvc)
+  bool core::add_new_block(const block& b, block_verification_context& bvc, bool& is_notarizing_block)
   {
-    return m_blockchain_storage.add_new_block(b, bvc);
+    return m_blockchain_storage.add_new_block(b, bvc, is_notarizing_block);
   }
 
   //-----------------------------------------------------------------------------------------------
@@ -1504,9 +1508,16 @@ namespace cryptonote
       bvc.m_verifivation_failed = true;
       return false;
     }
-    add_new_block(b, bvc);
-    if(update_miner_blocktemplate && bvc.m_added_to_main_chain)
-       update_miner_block_template();
+    bool is_notarizing_block = false;
+    add_new_block(b, bvc, is_notarizing_block);
+    if (bvc.m_added_to_main_chain) {
+      if (update_miner_blocktemplate) {
+        update_miner_block_template();
+      }
+      if (is_notarizing_block) {
+        m_blockchain_storage.komodo_update();
+      }
+    }
     return true;
 
     CATCH_ENTRY_L0("core::handle_incoming_block()", false);

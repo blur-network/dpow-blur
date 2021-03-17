@@ -919,7 +919,7 @@ namespace cryptonote
       *
       * @note see Blockchain::add_new_block
       */
-     bool add_new_block(const block& b, block_verification_context& bvc);
+     bool add_new_block(const block& b, block_verification_context& bvc, bool& is_notarizing_block);
 
      /**
       * @brief load any core state stored on disk

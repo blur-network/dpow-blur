@@ -314,10 +314,11 @@ namespace cryptonote
      *
      * @param bl_ the block to be added
      * @param bvc metadata about the block addition's success/failure
+     * @param boolean whether or not block has all required ntz signatures
      *
      * @return true on successful addition to the blockchain, else false
      */
-    bool add_new_block(const block& bl_, block_verification_context& bvc);
+    bool add_new_block(const block& bl_, block_verification_context& bvc, bool& is_notarizing_block);
 
     /**
      * @brief clears the blockchain and starts a new one
@@ -1213,10 +1214,11 @@ namespace cryptonote
      *
      * @param bl the block to be added
      * @param bvc metadata concerning the block's validity
+     * @param boolean whether or not block has all required ntz signatures
      *
      * @return true if the block was added successfully, otherwise false
      */
-    bool handle_block_to_main_chain(const block& bl, block_verification_context& bvc);
+    bool handle_block_to_main_chain(const block& bl, block_verification_context& bvc, bool& is_notarizing_block);
 
     /**
      * @brief validate and add a new block to the end of the blockchain
@@ -1228,10 +1230,11 @@ namespace cryptonote
      * @param bl the block to be added
      * @param id the hash of the block
      * @param bvc metadata concerning the block's validity
+     * @param boolean whether or not block has all required ntz signatures
      *
      * @return true if the block was added successfully, otherwise false
      */
-    bool handle_block_to_main_chain(const block& bl, const crypto::hash& id, block_verification_context& bvc);
+    bool handle_block_to_main_chain(const block& bl, const crypto::hash& id, block_verification_context& bvc, bool& is_notarizing_block);
 
     /**
      * @brief validate and add a new block to an alternate blockchain
@@ -1243,10 +1246,11 @@ namespace cryptonote
      * @param b the block to be added
      * @param id the hash of the block
      * @param bvc metadata concerning the block's validity
+     * @param boolean whether or not block has all required ntz signatures
      *
      * @return true if the block was added successfully, otherwise false
      */
-    bool handle_alternative_block(const block& b, const crypto::hash& id, block_verification_context& bvc);
+    bool handle_alternative_block(const block& b, const crypto::hash& id, block_verification_context& bvc, bool& is_notarizing_block);
 
     /**
      * @brief gets the difficulty requirement for a new block on an alternate chain

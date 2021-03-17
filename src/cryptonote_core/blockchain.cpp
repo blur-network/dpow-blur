@@ -255,7 +255,7 @@ bool Blockchain::is_block_notarized(cryptonote::block const& b)
 {
   uint64_t greatest_height = 0;
   uint64_t const b_height = get_block_height(b);
-  komodo_update();
+  //komodo_update();
   uint64_t ntz_height = (komodo::NOTARIZED_HEIGHT >= 0) ? ((uint64_t)komodo::NOTARIZED_HEIGHT) : 0;
   uint64_t prev_ntz_height = (komodo::NOTARIZED_PREVHEIGHT >= 0) ? ((uint64_t)komodo::NOTARIZED_PREVHEIGHT) : 0;
   if (b_height <= ntz_height) {
@@ -548,7 +548,8 @@ bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline
     block bl = boost::value_initialized<block>();
     block_verification_context bvc = boost::value_initialized<block_verification_context>();
     generate_genesis_block(bl, m_nettype);
-    add_new_block(bl, bvc);
+    bool x = false; // just for compatibility
+    add_new_block(bl, bvc, x);
     CHECK_AND_ASSERT_MES(!bvc.m_verifivation_failed, false, "Failed to add genesis block to blockchain");
   }
   // TODO: if blockchain load successful, verify blockchain against both
@@ -798,7 +799,8 @@ bool Blockchain::reset_and_set_genesis_block(const block& b)
   m_hardfork->init();
 
   block_verification_context bvc = boost::value_initialized<block_verification_context>();
-  add_new_block(b, bvc);
+  bool x = false; // just for compatibility
+  add_new_block(b, bvc, x);
   update_next_cumulative_size_limit();
   return bvc.m_added_to_main_chain && !bvc.m_verifivation_failed;
 }
@@ -1070,8 +1072,9 @@ bool Blockchain::rollback_blockchain_switching(std::list<block>& original_chain,
   //return back original chain
   for (auto& bl : original_chain)
   {
+    bool is_notarizing_block = false;
     block_verification_context bvc = boost::value_initialized<block_verification_context>();
-    bool r = handle_block_to_main_chain(bl, bvc);
+    bool r = handle_block_to_main_chain(bl, bvc, is_notarizing_block);
     CHECK_AND_ASSERT_MES((r && bvc.m_added_to_main_chain), false, "PANIC! failed to add (again) block while chain switching during the rollback!");
   }
 
@@ -1117,6 +1120,8 @@ bool Blockchain::switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::
 
   auto split_height = m_db->height();
 
+  bool is_notarizing_block = false;
+
   //connecting new alternative chain
   for(auto alt_ch_iter = alt_chain.begin(); alt_ch_iter != alt_chain.end(); alt_ch_iter++)
   {
@@ -1124,7 +1129,7 @@ bool Blockchain::switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::
     block_verification_context bvc = boost::value_initialized<block_verification_context>();
 
     // add block to main chain
-    bool r = handle_block_to_main_chain(ch_ent->second.bl, bvc);
+    bool r = handle_block_to_main_chain(ch_ent->second.bl, bvc, is_notarizing_block);
 
     // if adding block to main chain failed, rollback to previous state and
     // return false
@@ -1160,7 +1165,7 @@ bool Blockchain::switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::
     for (auto& old_ch_ent : disconnected_chain)
     {
       block_verification_context bvc = boost::value_initialized<block_verification_context>();
-      bool r = handle_alternative_block(old_ch_ent, get_block_hash(old_ch_ent), bvc);
+      bool r = handle_alternative_block(old_ch_ent, get_block_hash(old_ch_ent), bvc, is_notarizing_block);
       if(!r)
       {
         MERROR("Failed to push ex-main chain blocks to alternative chain ");
@@ -1177,6 +1182,9 @@ bool Blockchain::switch_to_alternative_blockchain(std::list<blocks_ext_by_hash::
   }
 
   m_hardfork->reorganize_from_chain_height(split_height);
+
+  if (is_notarizing_block)
+    komodo_update();
 
   MGINFO_GREEN("REORGANIZE SUCCESS! on height: " << split_height << ", new blockchain size: " << m_db->height());
   return true;
@@ -1522,7 +1530,7 @@ bool Blockchain::complete_timestamps_vector(uint64_t start_top_height, std::vect
 // if that chain is long enough to become the main chain and re-org accordingly
 // if so.  If not, we need to hang on to the block in case it becomes part of
 // a long forked chain eventually.
-bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id, block_verification_context& bvc)
+bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id, block_verification_context& bvc, bool& is_notarizing_block)
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
   CRITICAL_REGION_LOCAL(m_blockchain_lock);
@@ -1633,7 +1641,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       uint64_t const ntz_height = komodo::NOTARIZED_HEIGHT;
       if (bei.height >= ntz_height)
       {
-        LOG_PRINT_L1("Blockchain::handle_alternative_block() >> Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
+        LOG_PRINT_L1("Blockchain::handle_alternative_block >> Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
         uint64_t num_ntz_txs = 0;
         std::vector<cryptonote::blobdata> tx_blobs;
         for (const auto& each: bei.bl.tx_hashes) {
@@ -1664,10 +1672,13 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
           MERROR_VER("Error: too few notarization txs in notarizing block!");
           bvc.m_verifivation_failed = true;
           return false;
+        } else if (num_ntz_txs == (DPOW_MAX_NOTA_PER_BLOCK)) {
+          MWARNING("Notarizing ALTERNATIVE block at height = " << bei.height << ", with num_ntz_txs = " << num_ntz_txs);
+          is_notarizing_block = true;
         }
 
         if (is_block_notarized(bei.bl)) {
-          MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
+          MERROR_VER("Blockchain::handle_alternative_block >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
           bvc.m_verifivation_failed = true;
           return false;
         }
@@ -1675,7 +1686,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       else
       {
         if (is_block_notarized(bei.bl)) {
-          MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
+          MERROR_VER("Blockchain::handle_alternative_block >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
           bvc.m_verifivation_failed = true;
           return false;
         } else {
@@ -2475,11 +2486,11 @@ bool Blockchain::have_block(const crypto::hash& id) const
   return false;
 }
 //------------------------------------------------------------------
-bool Blockchain::handle_block_to_main_chain(const block& bl, block_verification_context& bvc)
+bool Blockchain::handle_block_to_main_chain(const block& bl, block_verification_context& bvc, bool& is_notarizing_block)
 {
     LOG_PRINT_L3("Blockchain::" << __func__);
     crypto::hash id = get_block_hash(bl);
-    return handle_block_to_main_chain(bl, id, bvc);
+    return handle_block_to_main_chain(bl, id, bvc, is_notarizing_block);
 }
 //------------------------------------------------------------------
 size_t Blockchain::get_total_transactions() const
@@ -3822,7 +3833,7 @@ void Blockchain::flush_ntzpool()
 //      Needs to validate the block and acquire each transaction from the
 //      transaction mem_pool, then pass the block and transactions to
 //      m_db->add_block()
-bool Blockchain::handle_block_to_main_chain(const block& bl, const crypto::hash& id, block_verification_context& bvc)
+bool Blockchain::handle_block_to_main_chain(const block& bl, const crypto::hash& id, block_verification_context& bvc, bool& is_notarizing_block)
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
 
@@ -3977,12 +3988,13 @@ leave:
             return false;
           } else {
             if (is_block_notarized(bl)) {
-              MERROR_VER("Blockchain::handle_alternative_block() >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(get_block_height(bl)));
+              MERROR_VER("Blockchain::handle_alternative_block >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(get_block_height(bl)));
               bvc.m_verifivation_failed = true;
               return false;
             }
           }
             MWARNING("Notarizing block at height: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
+            is_notarizing_block = true;
         }
       } else {
        // height less than last notarized height
@@ -4255,9 +4267,10 @@ bool Blockchain::update_next_cumulative_size_limit()
   return true;
 }
 //------------------------------------------------------------------
-bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc)
+bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc, bool& is_notarizing_block)
 {
   LOG_PRINT_L3("Blockchain::" << __func__);
+  is_notarizing_block = false;
   //copy block here to let modify block.target
   block bl = bl_;
   crypto::hash id = get_block_hash(bl);
@@ -4279,14 +4292,15 @@ bool Blockchain::add_new_block(const block& bl_, block_verification_context& bvc
     //chain switching or wrong block
     bvc.m_added_to_main_chain = false;
     m_db->block_txn_stop();
-    bool r = handle_alternative_block(bl, id, bvc);
+    bool r = handle_alternative_block(bl, id, bvc, is_notarizing_block);
     m_blocks_txs_check.clear();
     return r;
     //never relay alternative blocks
   }
 
   m_db->block_txn_stop();
-  return handle_block_to_main_chain(bl, id, bvc);
+  bool ret = handle_block_to_main_chain(bl, id, bvc, is_notarizing_block);
+  return ret;
 }
 //------------------------------------------------------------------
 //TODO: Refactor, consider returning a failure height and letting
