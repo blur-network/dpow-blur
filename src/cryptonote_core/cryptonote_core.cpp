@@ -826,7 +826,7 @@ namespace cryptonote
 
       if ((results[i].tx.version == (DPOW_NOTA_TX_VERSION)) && (get_blockchain_storage().get_db().height() < get_notarization_wait())) {
         crypto::hash tx_hash = get_transaction_hash(results[i].tx);
-        MWARNING("skipping nota tx seen within notarization wait: [" << epee::string_tools::pod_to_hex(tx_hash) << "]");
+        LOG_PRINT_L1("skipping nota tx seen within notarization wait: [" << epee::string_tools::pod_to_hex(tx_hash) << "]");
         continue;
       }
 
