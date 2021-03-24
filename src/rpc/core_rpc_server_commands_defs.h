@@ -1561,6 +1561,44 @@ namespace cryptonote
     };
   };
 
+
+  struct COMMAND_RPC_DECODE_RAW_BTC_TX
+  {
+     typedef std::vector<std::string> request;
+
+     struct script
+     {
+       std::string hex;
+
+       BEGIN_KV_SERIALIZE_MAP()
+         KV_SERIALIZE(hex)
+       END_KV_SERIALIZE_MAP()
+     };
+
+     struct vinput
+     {
+       std::string txid;
+       script scriptSig;
+
+       BEGIN_KV_SERIALIZE_MAP()
+         KV_SERIALIZE(txid)
+         KV_SERIALIZE(scriptSig)
+       END_KV_SERIALIZE_MAP()
+     };
+
+     struct response
+     {
+       std::string txid;
+       std::vector<vinput> vin;
+
+       BEGIN_KV_SERIALIZE_MAP()
+         KV_SERIALIZE(txid)
+         KV_SERIALIZE(vin)
+       END_KV_SERIALIZE_MAP()
+     };
+
+  };
+
   struct COMMAND_RPC_CALC_MOM
   {
 
