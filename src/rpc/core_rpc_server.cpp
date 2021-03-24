@@ -1901,8 +1901,10 @@ namespace cryptonote
   bool core_rpc_server::on_decode_raw_btc_tx(const COMMAND_RPC_DECODE_RAW_BTC_TX::request& req, COMMAND_RPC_DECODE_RAW_BTC_TX::response& res)
   {
     res.txid = uint256_to_hex(komodo::NOTARIZED_HASH);
-    res.vin[0].txid = res.txid;
-    res.vin[0].scriptSig.hex = komodo::SCRIPTPUBKEY;
+    COMMAND_RPC_DECODE_RAW_BTC_TX::vinput vin;
+    vin.txid = res.txid;
+    vin.scriptSig.hex = komodo::SCRIPTPUBKEY;
+    res.vin.push_back(vin);
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
