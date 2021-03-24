@@ -224,6 +224,12 @@ namespace cryptonote
       return true;
   }
   //---------------------------------------------------------------
+  std::string uint256_to_hex(uint256 const& hash)
+  {
+    std::vector<uint8_t> vchr(hash.begin(), hash.begin()+32);
+    return bytes256_to_hex(vchr);
+  }
+  //---------------------------------------------------------------
   bool string_to_pubkey33(std::string const& strhash, crypto::pubkey33& pubkey33)
   {
       cryptonote::blobdata hash_data;
