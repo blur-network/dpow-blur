@@ -1898,6 +1898,14 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_decode_raw_btc_tx(const COMMAND_RPC_DECODE_RAW_BTC_TX::request& req, COMMAND_RPC_DECODE_RAW_BTC_TX::response& res)
+  {
+    res.txid = uint256_to_hex(komodo::NOTARIZED_HASH);
+    res.vin[0].txid = res.txid;
+    res.vin[0].scriptSig.hex = komodo::SCRIPTPUBKEY;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_listunspent(const COMMAND_RPC_LIST_UNSPENT::request& req, COMMAND_RPC_LIST_UNSPENT::response& res)
   {
     std::list<std::string> addrs = req.addresses;
