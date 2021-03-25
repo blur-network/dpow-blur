@@ -1902,9 +1902,12 @@ namespace cryptonote
   {
     res.txid = uint256_to_hex(komodo::NOTARIZED_HASH);
     COMMAND_RPC_DECODE_RAW_BTC_TX::vinput vin;
+    COMMAND_RPC_DECODE_RAW_BTC_TX::voutput vout;
     vin.txid = res.txid;
     vin.scriptSig.hex = komodo::SCRIPTPUBKEY;
+    vout.scriptPubKey.hex = komodo::SCRIPTPUBKEY;
     res.vin.push_back(vin);
+    res.vout.push_back(vout);
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------

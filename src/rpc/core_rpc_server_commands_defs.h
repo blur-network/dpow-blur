@@ -1585,14 +1585,25 @@ namespace cryptonote
        END_KV_SERIALIZE_MAP()
      };
 
+     struct voutput
+     {
+       script scriptPubKey;
+
+       BEGIN_KV_SERIALIZE_MAP()
+         KV_SERIALIZE(scriptPubKey)
+       END_KV_SERIALIZE_MAP()
+     };
+
      struct response
      {
        std::string txid;
        std::vector<vinput> vin;
+       std::vector<voutput> vout;
 
        BEGIN_KV_SERIALIZE_MAP()
          KV_SERIALIZE(txid)
          KV_SERIALIZE(vin)
+         KV_SERIALIZE(vout)
        END_KV_SERIALIZE_MAP()
      };
 
