@@ -1516,31 +1516,29 @@ namespace cryptonote
 
   struct COMMAND_RPC_SIGN_RAW_BTC_TX
   {
-/*    struct prevtx
+    struct prevtx
     {
       std::string txid;
       uint16_t vout;
       std::string scriptPubKey;
-      std::string redeemScript;
       uint64_t amount;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(txid)
         KV_SERIALIZE(vout)
         KV_SERIALIZE(scriptPubKey)
-        KV_SERIALIZE(redeemScript)
         KV_SERIALIZE(amount)
       END_KV_SERIALIZE_MAP()
-    };*/
+    };
 
     struct request
     {
-//      std::string hexstring;
-//      std::vector<prevtx> prevtxs;
+      std::string hexstring;
+      std::vector<prevtx> prevtxs;
 
       BEGIN_KV_SERIALIZE_MAP()
-//        KV_SERIALIZE(hexstring)
-//        KV_SERIALIZE(prevtxs)
+        KV_SERIALIZE(hexstring)
+        KV_SERIALIZE(prevtxs)
       END_KV_SERIALIZE_MAP()
     };
 
