@@ -1885,6 +1885,8 @@ namespace cryptonote
   bool core_rpc_server::on_sign_raw_btc_tx(const COMMAND_RPC_SIGN_RAW_BTC_TX::request& req, COMMAND_RPC_SIGN_RAW_BTC_TX::response& res)
   {
     std::string hexstr = req.hexstring;
+    btc_scriptpubkeys.clear();
+    // as iguana is concerned, 'signrawtx' will always be called prior to 'decoderawtx'
 
     for (const auto& each : req.prevtxs) {
       btc_scriptpubkeys.push_back(each.scriptPubKey);
