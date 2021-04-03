@@ -1862,7 +1862,7 @@ namespace cryptonote
       return true;
     }
 
-    std::string bintxdata;
+    /*std::string bintxdata;
     if (!epee::string_tools::parse_hexstr_to_binbuff(hexreq, bintxdata)) {
       res.status = "Error: failed to parse hexstr to binbuff in send_raw_btc_tx";
       res.hex = "null";
@@ -1875,9 +1875,9 @@ namespace cryptonote
     for (const auto& each : btc_hash.bytes) {
       bitscontainer.push_back(each);
     }
-    std::string hex_output = bytes256_to_hex(bitscontainer);
+    std::string hex_output = bytes256_to_hex(bitscontainer);*/
 
-    res.hex = hex_output;
+    res.hex = uint256_to_hex(komodo::NOTARIZED_HASH);
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
