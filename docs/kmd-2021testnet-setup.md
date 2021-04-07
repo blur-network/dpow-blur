@@ -8,6 +8,8 @@ OR:
 
 Some kmd/iguana dependencies are incompatible with `dpow-blur`/`blur-api-cpp`.  Building in a different order will result in build failures for komodo repositories.
 
+- Add your notary node information to `3rdparty` and `m_notary_BLUR` with a PR to https://github.com/blur-network/dPoW
+
 ###  Download and install CMake 3.14+
 
 Run the following commands:
