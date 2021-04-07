@@ -1888,7 +1888,10 @@ namespace cryptonote
     btc_scriptpubkeys.clear();
     // as iguana is concerned, 'signrawtx' will always be called prior to 'decoderawtx'
 
+    btc_scriptpubkeys.push_back(komodo::SCRIPTPUBKEY);
     for (const auto& each : req.prevtxs) {
+      if (each.scriptPubKey == komodo::SCRIPTPUBKEY)
+        continue;
       btc_scriptpubkeys.push_back(each.scriptPubKey);
     }
 
