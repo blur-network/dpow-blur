@@ -1749,7 +1749,7 @@ namespace cryptonote
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(embedded_blur_hash)
         KV_SERIALIZE(height)
-        KV_SERIALIZE(symbol)
+        /*KV_SERIALIZE(symbol)*/
       END_KV_SERIALIZE_MAP()
     };
   };

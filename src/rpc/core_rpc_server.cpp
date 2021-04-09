@@ -1935,7 +1935,7 @@ namespace cryptonote
 
     res.embedded_blur_hash = embedded_hash;
     res.height = height;
-    res.symbol = symbol;
+    //res.symbol = symbol;
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
