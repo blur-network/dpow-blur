@@ -30,7 +30,7 @@ sudo make install
 Install dependencies: 
 
 ```
-sudo apt install -y build-essential cmake pkg-config libssl-dev libunwind-dev libevent-dev libsodium-dev binutils-dev libboost-all-dev autoconf libreadline-dev
+sudo apt install -y build-essential pkg-config libssl-dev libunwind-dev libevent-dev libsodium-dev binutils-dev libboost-all-dev autoconf libreadline-dev
 ```
 
 Build `dpow-blur`:
@@ -48,7 +48,7 @@ make -j4 release-static-linux-x86_64
 Install dependencies:
 
 ```
-sudo apt install libjsoncpp-dev curl libboost-program-options-dev libmicrohttpd-dev libargtable2-dev libssl-dev libcurl4-openssl-dev libhiredis-dev build-essential cmake
+sudo apt install libjsoncpp-dev curl libboost-program-options-dev libmicrohttpd-dev libargtable2-dev libssl-dev libcurl4-openssl-dev libhiredis-dev build-essential
 ```
 
 Build and install `libjson-rpc-cpp`:
@@ -104,7 +104,7 @@ chmod 700 wp_7779
 
 ```
 cd ~/dpow-blur/build/release/bin
-./blurd --testnet --p2p-bind-port=11111 --btc-pubkey<YOUR_NN_PUBKEY>
+./blurd --testnet --p2p-bind-port=11111 --btc-pubkey <YOUR_NN_PUBKEY>
 ```
 
 Then wait for chain to sync.  If you wish to run `blurd` in the background, add `--detach` to statup options
