@@ -1729,6 +1729,31 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_DECODE_OPRETURN
+  {
+    struct request
+    {
+      std::string hex;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(hex)
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string embedded_blur_hash;
+      uint64_t height;
+      std::string symbol;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(embedded_blur_hash)
+        KV_SERIALIZE(height)
+        KV_SERIALIZE(symbol)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
 // ---------  end btc compat dummy calls ------------
 
 

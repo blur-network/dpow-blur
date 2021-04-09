@@ -1916,6 +1916,29 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_decode_btc_opreturn(const COMMAND_RPC_DECODE_OPRETURN::request& req, COMMAND_RPC_DECODE_OPRETURN::response& res)
+  {
+    std::string embedded_hash, hexheight, hexsymbol, symbol;
+
+    // need to flip bytes
+    for (size_t i = 33; i > 1; i--) {
+      embedded_hash += req.hex.substr(i*2, 2);
+    }
+    for (size_t i = 37; i > 33; i--) {
+      hexheight += req.hex.substr(i*2,2);
+    }
+
+    //symbol is not flipped
+    hexsymbol = req.hex.substr(req.hex.size()-10, 10);
+    epee::string_tools::parse_hexstr_to_binbuff(hexsymbol, symbol);
+    uint64_t height = stoull(hexheight, 0, 16);
+
+    res.embedded_blur_hash = embedded_hash;
+    res.height = height;
+    res.symbol = symbol;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_listunspent(const COMMAND_RPC_LIST_UNSPENT::request& req, COMMAND_RPC_LIST_UNSPENT::response& res)
   {
     std::list<std::string> addrs = req.addresses;
