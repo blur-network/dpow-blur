@@ -32,7 +32,6 @@ Any value between `2` and `21` is valid for this constant (but above `21` will r
 - <a href="https://github.com/blur-network/dpow-blur#view-pending">Viewing pending notarization txs</a>
 - <a href="https://github.com/blur-network/dpow-blur#rpc-calls">Other RPC calls</a>
 
-
 ---
 
 
@@ -399,3 +398,98 @@ $ curl -X POST http://localhost:21111/json_rpc -d '{"method":"get_merkle_root","
 }
 ```
 
+
+## Decoding `OP_RETURN` Data from KMD
+
+Get raw transaction data from a BLUR->KMD notarization (KMD txid):
+
+```
+$ komodo-cli getrawtransaction 4e1314221fdf53205591134c38cebcf832073643dc393cc20552b6b4f9001796
+
+0400008085202f8902b3135368a62b33fcc1dcdaa224e5b74468f256381e85839d91f56b34f32788bd3b00000049483045022100ac8f1a53f4cb1c2bb5651cea4a88d916c4ea650798c1e9beec631d9a4592d13d022057b581e122f2e26dfb516896b43741b61ce3d7896a0cd71c3467059632cc8af401ffffffffba006cc4a963a26c3af6a5eaeb0d865f45d4698ccee27a6e4551231e4c73f42355000000494830450221008ac71ce1959017a0946ba01e82677c8b7ef9d79821824d41fa6c4fdaa9b0886e022073939d695f863858c7fd15131c787e8eee3e417731eb5f20ea32fc1928986e7b01ffffffff0210270000000000002321020e46e79a2a8d12b9b5d12c7a91adb4e454edfae43c0a0cb805427d2ac7613fd9ac00000000000000002b6a29668bc765d66e2bda159248c9b531129d41e8ec96e033b0e505312002303f337e3a260100424c55520000000000000000000000000000000000000000
+```
+
+Decode raw transaction:
+
+```
+$ komodo-cli decoderawtransaction 0400008085202f8902b3135368a62b33fcc1dcdaa224e5b74468f256381e85839d91f56b34f32788bd3b00000049483045022100ac8f1a53f4cb1c2bb5651cea4a88d916c4ea650798c1e9beec631d9a4592d13d022057b581e122f2e26dfb516896b43741b61ce3d7896a0cd71c3467059632cc8af401ffffffffba006cc4a963a26c3af6a5eaeb0d865f45d4698ccee27a6e4551231e4c73f42355000000494830450221008ac71ce1959017a0946ba01e82677c8b7ef9d79821824d41fa6c4fdaa9b0886e022073939d695f863858c7fd15131c787e8eee3e417731eb5f20ea32fc1928986e7b01ffffffff0210270000000000002321020e46e79a2a8d12b9b5d12c7a91adb4e454edfae43c0a0cb805427d2ac7613fd9ac00000000000000002b6a29668bc765d66e2bda159248c9b531129d41e8ec96e033b0e505312002303f337e3a260100424c55520000000000000000000000000000000000000000
+
+{
+  "txid": "4e1314221fdf53205591134c38cebcf832073643dc393cc20552b6b4f9001796",
+  "overwintered": true,
+  "version": 4,
+  "versiongroupid": "892f2085",
+  "locktime": 0,
+  "expiryheight": 0,
+  "vin": [
+    {
+      "txid": "bd8827f3346bf5919d83851e3856f26844b7e524a2dadcc1fc332ba6685313b3",
+      "vout": 59,
+      "scriptSig": {
+        "asm": "3045022100ac8f1a53f4cb1c2bb5651cea4a88d916c4ea650798c1e9beec631d9a4592d13d022057b581e122f2e26dfb516896b43741b61ce3d7896a0cd71c3467059632cc8af4[ALL]",
+        "hex": "483045022100ac8f1a53f4cb1c2bb5651cea4a88d916c4ea650798c1e9beec631d9a4592d13d022057b581e122f2e26dfb516896b43741b61ce3d7896a0cd71c3467059632cc8af401"
+      },
+      "sequence": 4294967295
+    },
+    {
+      "txid": "23f4734c1e2351456e7ae2ce8c69d4455f860debeaa5f63a6ca263a9c46c00ba",
+      "vout": 85,
+      "scriptSig": {
+        "asm": "30450221008ac71ce1959017a0946ba01e82677c8b7ef9d79821824d41fa6c4fdaa9b0886e022073939d695f863858c7fd15131c787e8eee3e417731eb5f20ea32fc1928986e7b[ALL]",
+        "hex": "4830450221008ac71ce1959017a0946ba01e82677c8b7ef9d79821824d41fa6c4fdaa9b0886e022073939d695f863858c7fd15131c787e8eee3e417731eb5f20ea32fc1928986e7b01"
+      },
+      "sequence": 4294967295
+    }
+  ],
+  "vout": [
+    {
+      "value": 0.00010000,
+      "valueZat": 10000,
+      "n": 0,
+      "scriptPubKey": {
+        "asm": "020e46e79a2a8d12b9b5d12c7a91adb4e454edfae43c0a0cb805427d2ac7613fd9 OP_CHECKSIG",
+        "hex": "21020e46e79a2a8d12b9b5d12c7a91adb4e454edfae43c0a0cb805427d2ac7613fd9ac",
+        "reqSigs": 1,
+        "type": "pubkey",
+        "addresses": [
+          "RXL3YXG2ceaB6C5hfJcN4fvmLH2C34knhA"
+        ]
+      }
+    },
+    {
+      "value": 0.00000000,
+      "valueZat": 0,
+      "n": 1,
+      "scriptPubKey": {
+        "asm": "OP_RETURN 668bc765d66e2bda159248c9b531129d41e8ec96e033b0e505312002303f337e3a260100424c555200",
+        "hex": "6a29668bc765d66e2bda159248c9b531129d41e8ec96e033b0e505312002303f337e3a260100424c555200",
+        "type": "nulldata"
+      }
+    }
+  ],
+  "vjoinsplit": [
+  ],
+  "valueBalance": 0.00000000,
+  "vShieldedSpend": [
+  ],
+  "vShieldedOutput": [
+  ]
+}
+```
+
+Call `decode_opreturn` method with scriptPubKey hex as parameter:
+
+```
+$ curl -X POST http://localhost:21111/json_rpc -d '{"method":"decode_opreturn","params":{"hex":"6a29668bc765d66e2bda159248c9b531129d41e8ec96e033b0e505312002303f337e3a260100424c555200"}}'
+
+{
+  "id": 0,
+  "jsonrpc": "2.0",
+  "result": {
+    "embedded_blur_hash": "7e333f3002203105e5b033e096ece8419d1231b5c9489215da2b6ed665c78b66",
+    "height": 75322
+  }
+}
+```
+
+You may now cross-reference this information [on the Blur Network Testnet Explorer](https://testnetexplorer.blur.cash/search?value=7e333f3002203105e5b033e096ece8419d1231b5c9489215da2b6ed665c78b66).
