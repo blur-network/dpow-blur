@@ -1919,23 +1919,37 @@ namespace cryptonote
   bool core_rpc_server::on_decode_btc_opreturn(const COMMAND_RPC_DECODE_OPRETURN::request& req, COMMAND_RPC_DECODE_OPRETURN::response& res)
   {
     std::string embedded_hash, hexheight, hexsymbol, symbol;
+    res.status = "Failed";
+    res.embedded_srchash = epee::string_tools::pod_to_hex(crypto::null_hash);
+    res.height = 0;
 
-    // need to flip bytes
+    // need to flip encoded hash bytes
     for (size_t i = 33; i > 1; i--) {
       embedded_hash += req.hex.substr(i*2, 2);
     }
+    // same for height
     for (size_t i = 37; i > 33; i--) {
       hexheight += req.hex.substr(i*2,2);
     }
-
     //symbol is not flipped
     hexsymbol = req.hex.substr(req.hex.size()-10, 10);
     epee::string_tools::parse_hexstr_to_binbuff(hexsymbol, symbol);
+    for (size_t i = 0; i < 5; i++) {
+      // exclude null bytes
+      if (std::stoull(hexsymbol.substr(i*2,2),0,16) != 0)
+        res.symbol += symbol.substr(i,1);
+    }
+
+    if (res.symbol != "BLUR") {
+      res.status = "Error: OP_RETURN data is not for BLUR - check symbol!";
+    } else {
+      res.status = CORE_RPC_STATUS_OK;
+    }
+
     uint64_t height = stoull(hexheight, 0, 16);
 
-    res.embedded_blur_hash = embedded_hash;
+    res.embedded_srchash = embedded_hash;
     res.height = height;
-    //res.symbol = symbol;
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
