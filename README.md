@@ -481,13 +481,14 @@ Call `decode_opreturn` method with scriptPubKey hex as parameter:
 
 ```
 $ curl -X POST http://localhost:21111/json_rpc -d '{"method":"decode_opreturn","params":{"hex":"6a29668bc765d66e2bda159248c9b531129d41e8ec96e033b0e505312002303f337e3a260100424c555200"}}'
-
 {
   "id": 0,
   "jsonrpc": "2.0",
   "result": {
-    "embedded_blur_hash": "7e333f3002203105e5b033e096ece8419d1231b5c9489215da2b6ed665c78b66",
-    "height": 75322
+    "embedded_srchash": "7e333f3002203105e5b033e096ece8419d1231b5c9489215da2b6ed665c78b66",
+    "height": 75322,
+    "status": "OK",
+    "symbol": "BLUR"
   }
 }
 ```
