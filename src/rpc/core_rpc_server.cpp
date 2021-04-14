@@ -68,6 +68,11 @@ using namespace epee;
 #define OP_PUSHDATA2   77
 #define OP_PUSHDATA4   78
 
+// kmd op_return sizes
+#define HASHDATA_SIZE  32
+#define HEIGHT_SIZE    4
+#define SYMBOL_SIZE    5
+
 
 namespace
 {
@@ -1931,34 +1936,46 @@ namespace cryptonote
     res.status = "Failed";
     res.embedded_srchash = epee::string_tools::pod_to_hex(crypto::null_hash);
     res.height = 0;
+    size_t data_size = 0;
+    uint32_t x = 0;
 
-    if (std::stoull(req.hex.substr(0,2),0,16) != OP_RETURN) {
+    std::vector<uint8_t> script_vchr = hex_to_bytes4096(req.hex);
+
+    if (script_vchr[x++] != OP_RETURN) {
       res.status = "Error: hex does not have proper opcode!";
       return true;
     }
 
-    // need to flip encoded hash bytes
-    for (size_t i = 33; i > 1; i--) {
-      embedded_hash += req.hex.substr(i*2, 2);
-    }
-    // same for height
-    for (size_t i = 37; i > 33; i--) {
-      hexheight += req.hex.substr(i*2,2);
-    }
-    //symbol is not flipped
-    hexsymbol = req.hex.substr(req.hex.size()-10, 10);
-    epee::string_tools::parse_hexstr_to_binbuff(hexsymbol, symbol);
-    for (size_t i = 0; i < 5; i++) {
-      // exclude null bytes
-      if (std::stoull(hexsymbol.substr(i*2,2),0,16) != 0)
-        res.symbol += symbol.substr(i,1);
-    }
+    if (script_vchr[x] <= OP_NEXTBYTES)
+    {
+      data_size = script_vchr[x];
+      //MWARNING("-->OP_NEXTBYTES code found: " << data_size);
 
-    if (res.symbol != "BLUR") {
-      res.status = "Error: OP_RETURN data is not for BLUR - check symbol!";
-    } else {
-      res.status = CORE_RPC_STATUS_OK;
-    }
+      // need to flip encoded hash bytes
+      for (size_t i = (x + HASHDATA_SIZE); i > x; i--) {
+        embedded_hash += req.hex.substr(i*2, 2);
+      }
+      x += HASHDATA_SIZE;
+      // same for height
+      for (size_t i = (x + HEIGHT_SIZE); i > x; i--) {
+        hexheight += req.hex.substr(i*2,2);
+      }
+      //symbol is not flipped
+      hexsymbol = req.hex.substr((req.hex.size() - (2*SYMBOL_SIZE)), 10);
+      epee::string_tools::parse_hexstr_to_binbuff(hexsymbol, symbol);
+      for (size_t i = 0; i < 5; i++)
+      {
+        // exclude null bytes
+        if (std::stoull(hexsymbol.substr(i*2,2),0,16) != 0)
+          res.symbol += symbol.substr(i,1);
+      }
+
+      if (res.symbol != "BLUR") {
+        res.status = "Error: OP_RETURN data is not for BLUR - check symbol!";
+      } else {
+        res.status = CORE_RPC_STATUS_OK;
+      }
+    }  // else if OP_PUSHDATA(1|2|4)
 
     uint64_t height = stoull(hexheight, 0, 16);
 
