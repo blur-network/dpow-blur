@@ -113,7 +113,7 @@
       std::fill(out.begin(), out.begin()+len, 0);
       return out;
     }
-    for(size_t i = 0; i < len; i++) {
+    for(size_t i = 0; i < (len/2); i++) {
       std::string tmp = input.substr(i*2, 2);
       uint8_t x = std::stoi(tmp, nullptr, 16);
       out.push_back(x);
