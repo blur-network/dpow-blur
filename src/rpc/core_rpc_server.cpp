@@ -61,6 +61,13 @@ using namespace epee;
 #define MAX_RESTRICTED_GLOBAL_FAKE_OUTS_COUNT 5000
 
 
+// bitcoin opcodes
+#define OP_RETURN      106
+#define OP_NEXTBYTES   75
+#define OP_PUSHDATA1   76
+#define OP_PUSHDATA2   77
+#define OP_PUSHDATA4   78
+
 
 namespace
 {
@@ -1862,6 +1869,8 @@ namespace cryptonote
       return true;
     }
 
+    MWARNING("Raw tx data: \n" << req.hexstring);
+
     std::string bintxdata;
     if (!epee::string_tools::parse_hexstr_to_binbuff(hexreq, bintxdata)) {
       res.status = "Error: failed to parse hexstr to binbuff in send_raw_btc_tx";
@@ -1922,6 +1931,11 @@ namespace cryptonote
     res.status = "Failed";
     res.embedded_srchash = epee::string_tools::pod_to_hex(crypto::null_hash);
     res.height = 0;
+
+    if (std::stoull(req.hex.substr(0,2),0,16) != OP_RETURN) {
+      res.status = "Error: hex does not have proper opcode!";
+      return true;
+    }
 
     // need to flip encoded hash bytes
     for (size_t i = 33; i > 1; i--) {
