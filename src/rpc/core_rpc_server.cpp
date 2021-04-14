@@ -1936,7 +1936,6 @@ namespace cryptonote
     res.status = "Failed";
     res.embedded_srchash = epee::string_tools::pod_to_hex(crypto::null_hash);
     res.height = 0;
-    size_t data_size = 0;
     uint32_t x = 0;
 
     std::vector<uint8_t> script_vchr = hex_to_bytes4096(req.hex);
@@ -1948,7 +1947,7 @@ namespace cryptonote
 
     if (script_vchr[x] <= OP_NEXTBYTES)
     {
-      data_size = script_vchr[x];
+      size_t data_size = script_vchr[x];
       //MWARNING("-->OP_NEXTBYTES code found: " << data_size);
 
       // need to flip encoded hash bytes
@@ -1960,14 +1959,19 @@ namespace cryptonote
       for (size_t i = (x + HEIGHT_SIZE); i > x; i--) {
         hexheight += req.hex.substr(i*2,2);
       }
+      x += HEIGHT_SIZE;
       //symbol is not flipped
-      hexsymbol = req.hex.substr((req.hex.size() - (2*SYMBOL_SIZE)), 10);
+      hexsymbol = req.hex.substr((x*2), 10);
       epee::string_tools::parse_hexstr_to_binbuff(hexsymbol, symbol);
-      for (size_t i = 0; i < 5; i++)
+      for (size_t i = 0; i < SYMBOL_SIZE; i++)
       {
         // exclude null bytes
         if (std::stoull(hexsymbol.substr(i*2,2),0,16) != 0)
           res.symbol += symbol.substr(i,1);
+      }
+      x += SYMBOL_SIZE;
+      if (data_size != (x - 1)) {
+        res.status = "Error: Inconsistency in data OP_NEXTBYTES vs actual data sz!";
       }
 
       if (res.symbol != "BLUR") {
