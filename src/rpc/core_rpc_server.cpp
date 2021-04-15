@@ -1974,7 +1974,7 @@ namespace cryptonote
       }
 
       //symbol is not flipped
-      hexsymbol = req.hex.substr((x*2), 10);
+      hexsymbol = req.hex.substr((req.hex.size()-10), 10);
       epee::string_tools::parse_hexstr_to_binbuff(hexsymbol, symbol);
       for (size_t i = 0; i < SYMBOL_SIZE; i++)
       {
