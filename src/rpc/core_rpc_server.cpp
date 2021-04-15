@@ -1932,9 +1932,10 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_decode_btc_opreturn(const COMMAND_RPC_DECODE_OPRETURN::request& req, COMMAND_RPC_DECODE_OPRETURN::response& res)
   {
-    std::string embedded_hash, hexheight, hexsymbol, symbol;
+    std::string embedded_srchash, embedded_desthash, hexheight, hexsymbol, symbol;
     res.status = "Failed";
     res.embedded_srchash = epee::string_tools::pod_to_hex(crypto::null_hash);
+    res.embedded_desthash = epee::string_tools::pod_to_hex(crypto::null_hash);
     res.height = 0;
     uint32_t x = 0;
 
@@ -1952,14 +1953,26 @@ namespace cryptonote
 
       // need to flip encoded hash bytes
       for (size_t i = (x + HASHDATA_SIZE); i > x; i--) {
-        embedded_hash += req.hex.substr(i*2, 2);
+        embedded_srchash += req.hex.substr(i*2, 2);
       }
+      res.embedded_srchash = embedded_srchash;
       x += HASHDATA_SIZE;
       // same for height
       for (size_t i = (x + HEIGHT_SIZE); i > x; i--) {
         hexheight += req.hex.substr(i*2,2);
       }
       x += HEIGHT_SIZE;
+
+      if (data_size >= (x + SYMBOL_SIZE))
+      {
+        // if > 5 bytes left, we probably have a desthash too
+        for (size_t i = (x + HASHDATA_SIZE); i > x; i--) {
+          embedded_desthash += req.hex.substr(i*2, 2);
+        }
+        res.embedded_desthash = embedded_desthash;
+        x += HASHDATA_SIZE;
+      }
+
       //symbol is not flipped
       hexsymbol = req.hex.substr((x*2), 10);
       epee::string_tools::parse_hexstr_to_binbuff(hexsymbol, symbol);
@@ -1981,10 +1994,7 @@ namespace cryptonote
       }
     }  // else if OP_PUSHDATA(1|2|4)
 
-    uint64_t height = stoull(hexheight, 0, 16);
-
-    res.embedded_srchash = embedded_hash;
-    res.height = height;
+    res.height = std::stoull(hexheight, 0, 16);
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------

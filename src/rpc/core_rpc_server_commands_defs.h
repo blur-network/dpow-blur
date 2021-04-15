@@ -1743,12 +1743,14 @@ namespace cryptonote
     struct response
     {
       std::string embedded_srchash;
+      std::string embedded_desthash;
       uint64_t height;
       std::string symbol;
       std::string status;
 
       BEGIN_KV_SERIALIZE_MAP()
         KV_SERIALIZE(embedded_srchash)
+        KV_SERIALIZE(embedded_desthash)
         KV_SERIALIZE(height)
         KV_SERIALIZE(status)
         KV_SERIALIZE(symbol)
