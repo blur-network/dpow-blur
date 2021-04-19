@@ -479,14 +479,34 @@ $ komodo-cli decoderawtransaction 0400008085202f8902b3135368a62b33fcc1dcdaa224e5
 
 Call `decode_opreturn` method with scriptPubKey hex as parameter:
 
+For destination chain tx (KMD `OP_RETURN`):
+
 ```
-$ curl -X POST http://localhost:21111/json_rpc -d '{"method":"decode_opreturn","params":{"hex":"6a29668bc765d66e2bda159248c9b531129d41e8ec96e033b0e505312002303f337e3a260100424c555200"}}'
+curl -X POST http://localhost:21111/json_rpc -d '{"method":"decode_opreturn","params":{"hex":"6a29668bc765d66e2bda159248c9b531129d41e8ec96e033b0e505312002303f337e3a260100424c555200"}}'
 {
   "id": 0,
   "jsonrpc": "2.0",
   "result": {
+    "embedded_desthash": "0000000000000000000000000000000000000000000000000000000000000000",
     "embedded_srchash": "7e333f3002203105e5b033e096ece8419d1231b5c9489215da2b6ed665c78b66",
     "height": 75322,
+    "status": "OK",
+    "symbol": "BLUR"
+  }
+}
+```
+
+For source chain tx (BLUR `OP_RETURN` from `btc_sendrawtransactin`):
+
+```
+curl -X POST http://localhost:21111/json_rpc -d '{"method":"decode_opreturn","params":{"hex":"6a498944420ee9b1050fc4924b4fa6c3e89853082157c865069acf6e2ddc9089d39e123101006c157b762dfa634be3262c4f76db37d6bfd1395dc18adb8ee644ce3ea78ec40d424c555200"}}'
+{
+  "id": 0,
+  "jsonrpc": "2.0",
+  "result": {
+    "embedded_desthash": "0dc48ea73ece44e68edb8ac15d39d1bfd637db764f2c26e34b63fa2d767b156c",
+    "embedded_srchash": "9ed38990dc2d6ecf9a0665c85721085398e8c3a64f4b92c40f05b1e90e424489",
+    "height": 78098,
     "status": "OK",
     "symbol": "BLUR"
   }
