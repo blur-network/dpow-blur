@@ -156,7 +156,7 @@ namespace cryptonote
     uint64_t get_notarized_height(crypto::hash& ntz_hash) const;
     uint64_t get_notarization_wait() const;
     void komodo_update();
-    void update_raw_kmd_tx(std::string const& raw_kmd_tx);
+    void update_raw_src_tx(std::string const& raw_src_tx);
 
     /**
      * @brief assign a set of blockchain checkpoint hashes

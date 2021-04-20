@@ -95,7 +95,7 @@ namespace cryptonote
   {
     extern int32_t NOTARIZED_HEIGHT, NOTARIZED_PREVHEIGHT, NUM_NPOINTS;
     extern uint256 NOTARIZED_HASH, NOTARIZED_DESTTXID, NOTARIZED_MOM;
-    extern std::string RAW_KMD_TX;
+    extern std::string RAW_SRC_TX;
   }
 }
 
@@ -273,10 +273,9 @@ bool Blockchain::is_block_notarized(cryptonote::block const& b)
   return false;
 }
 //------------------------------------------------------------------
-void Blockchain::update_raw_kmd_tx(std::string const& raw_kmd_tx)
+void Blockchain::update_raw_src_tx(std::string const& raw_src_tx)
 {
-  komodo::RAW_KMD_TX = raw_kmd_tx;
-  return;
+  komodo::RAW_SRC_TX = raw_src_tx;
 }
 //------------------------------------------------------------------
 void Blockchain::komodo_update()
