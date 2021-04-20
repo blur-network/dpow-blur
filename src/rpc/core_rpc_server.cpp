@@ -1895,6 +1895,8 @@ namespace cryptonote
     }
     std::string hex_output = bytes256_to_hex(bitscontainer);
 
+    m_core.get_blockchain_storage().update_raw_kmd_tx(req.hexstring);
+
     res.hex = hex_output;
     res.status = CORE_RPC_STATUS_OK;
     return true;
