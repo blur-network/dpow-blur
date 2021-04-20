@@ -1876,6 +1876,10 @@ namespace cryptonote
 
     MWARNING("Raw tx data: \n" << req.hexstring);
 
+    std::string opreturn = req.hexstring.substr(req.hexstring.size()-158,150);
+
+    MWARNING("opreturn = \n" << opreturn);
+
     std::string bintxdata;
     if (!epee::string_tools::parse_hexstr_to_binbuff(hexreq, bintxdata)) {
       res.status = "Error: failed to parse hexstr to binbuff in send_raw_btc_tx";
