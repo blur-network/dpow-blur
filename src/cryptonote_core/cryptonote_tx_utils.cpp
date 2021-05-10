@@ -712,6 +712,8 @@ namespace cryptonote
       return false;
     }
      std::string ntz;
+     MWARNING("---> in construct_ntz_tx_with_keys: \n" << komodo::RAW_SRC_TX << "\n");
+
      if (!komodo::RAW_SRC_TX.empty())
        ntz = komodo::RAW_SRC_TX;
      else

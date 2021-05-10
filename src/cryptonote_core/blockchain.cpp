@@ -275,6 +275,7 @@ bool Blockchain::is_block_notarized(cryptonote::block const& b)
 //------------------------------------------------------------------
 void Blockchain::update_raw_src_tx(std::string const& raw_src_tx)
 {
+  MWARNING("---> in blockchain::update_raw_src_tx: \n" << raw_src_tx << "\n");
   komodo::RAW_SRC_TX = raw_src_tx;
 }
 //------------------------------------------------------------------
