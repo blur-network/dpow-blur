@@ -1158,7 +1158,8 @@ namespace cryptonote
       std::string si_tmp = signers_str.substr(i*2, 2);
       int s_ind = std::stoi(si_tmp, nullptr, 10);
       if ((s_ind >= 64) || (s_ind < -1)) {
-        MERROR("Error at core::add_new_tx! Signer indices must fall in the range of -1 to 63");
+        MERROR("Error at core::add_new_tx! signer_index expected value: [-1,63] || actual value: " << si_tmp);
+        MERROR("Transaction with issue: " << epee::string_tools::pod_to_hex(get_transaction_hash(tx)));
         return false;
       }
       signers_index.push_back(s_ind);
