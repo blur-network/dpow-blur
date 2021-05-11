@@ -872,12 +872,12 @@ namespace tools
       return false;
     }
 
-    if(dsts.size() != 64)
+    /*if(dsts.size() != 64)
     {
       er.code = NOTARY_RPC_ERROR_CODE_INVALID_VOUT_COUNT;
       er.message = "Notarization transactions should have exactly 64 destinations";
       return false;
-    }
+    }*/
 
     std::string extra_nonce;
 
@@ -891,7 +891,8 @@ namespace tools
         cryptonote::set_payment_id_to_tx_extra_nonce(extra_nonce, long_payment_id);
         LOG_PRINT_L1("Payment id " << epee::string_tools::pod_to_hex(long_payment_id) << "added to extra nonce");
       }
-      else {
+      else
+      {
         er.code = NOTARY_RPC_ERROR_CODE_WRONG_PAYMENT_ID;
         er.message = "Payment id has invalid format: \"" + payment_id_str + "\", expected 16 or 64 character string";
         return false;
@@ -903,48 +904,53 @@ namespace tools
         return false;
       }
     }
-      bool r = false;
-      cryptonote::address_parse_info info;
-      if (!get_account_address_from_str(info, m_wallet->nettype(), m_wallet->get_account().get_public_address_str(m_wallet->nettype()))) {
-        MERROR("Unable to get our own address info from str!");
-        return false;
-      }
-      cryptonote::account_public_address const& own_address = info.address;
-      cryptonote::account_keys const& own_keys = m_wallet->get_account().get_keys();
-      size_t num_stdaddresses = 0;
-      int sign_index = -1;
-      r = auth_and_get_ntz_signer_index(dsts, own_address, num_stdaddresses, own_keys, sign_index);
-      if (!r) {
-        MERROR("Error authenticating and retrieving signer_index in notary_server!");
+
+    bool r = false;
+    cryptonote::address_parse_info info;
+    size_t num_stdaddresses = 0;
+    int sign_index = -1;
+
+    if (!get_account_address_from_str(info, m_wallet->nettype(), m_wallet->get_account().get_public_address_str(m_wallet->nettype()))) {
+      MERROR("Unable to get our own address info from str!");
+      return false;
+    }
+    cryptonote::account_public_address const& own_address = info.address;
+    cryptonote::account_keys const& own_keys = m_wallet->get_account().get_keys();
+
+    r = auth_and_get_ntz_signer_index(dsts, own_address, num_stdaddresses, own_keys, sign_index);
+    if (!r) {
+      MERROR("Error authenticating and retrieving signer_index in notary_server!");
+      return false;
+    } else {
+      if (sign_index == -1) {
+        MERROR("Failed to retrieve a valid signer_index value for our keys!");
         return false;
       } else {
-        if (sign_index == -1) {
-          MERROR("Failed to retrieve a valid signer_index value for our keys!");
-          return false;
-        } else {
-          MINFO("Authenticated successfully for ntz transaction creation. Signer index: " << std::to_string(sign_index));
-        }
+        MINFO("Authenticated successfully for ntz transaction creation. Signer index: " << std::to_string(sign_index));
       }
-      const int signer_index = sign_index;
-      bool once = false;
-      int loc = -1;
-      const int neg = -1;
-      const size_t count = DPOW_SIG_COUNT - std::count(signers_index_vec.begin(), signers_index_vec.end(), neg);
-      LOG_PRINT_L1("Non-negative values in signers_index (count): " << std::to_string(count));
-      std::vector<int> vec_ret;
-      for (size_t i = 0; i < DPOW_SIG_COUNT; i++) {
-        if (signer_index == signers_index_vec[i]) {
-          LOG_PRINT_L1("Found our index value in signers_index at: " << std::to_string(i) << ", we must have already signed this one!");
-        } else if ((signers_index_vec[i] == neg) && (vec_ret.size() == count)) {
-          MINFO("Adding our index value: " << std::to_string(signer_index) << ", to signers_index at location: " << std::to_string(i));
+    }
+
+    const int signer_index = sign_index;
+    bool once = false;
+    int loc = -1;
+    const int neg = -1;
+    const size_t count = DPOW_SIG_COUNT - std::count(signers_index_vec.begin(), signers_index_vec.end(), neg);
+    LOG_PRINT_L1("Non-negative values in signers_index (count): " << std::to_string(count));
+    std::vector<int> vec_ret;
+    for (size_t i = 0; i < DPOW_SIG_COUNT; i++)
+    {
+      if (signer_index == signers_index_vec[i]) {
+        LOG_PRINT_L1("Found our index value in signers_index at: " << std::to_string(i) << ", we must have already signed this one!");
+      } else if ((signers_index_vec[i] == neg) && (vec_ret.size() == count)) {
+        MINFO("Adding our index value: " << std::to_string(signer_index) << ", to signers_index at location: " << std::to_string(i));
           vec_ret.push_back(signer_index);
-        } else if ((signers_index_vec[i] > neg) && (vec_ret.size() < count)) {
+      } else if ((signers_index_vec[i] > neg) && (vec_ret.size() < count)) {
           LOG_PRINT_L1("Copying non-negative signer_index value that is not our own: " << std::to_string(signers_index_vec[i]));
           vec_ret.push_back(signers_index_vec[i]);
-        } else if ((signers_index_vec[i] == neg) && (vec_ret.size() > count)) {
+      } else if ((signers_index_vec[i] == neg) && (vec_ret.size() > count)) {
           vec_ret.push_back(neg);
-        }
       }
+    }
     signers_index_vec = vec_ret;
     sig_count = count + 1;
     return true;
