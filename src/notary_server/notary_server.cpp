@@ -824,10 +824,10 @@ namespace tools
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
-  bool notary_server::validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, int& sig_count, std::vector<int>& signers_index_vec, epee::json_rpc::error& er)
+  bool notary_server::validate_ntz_transfer(const std::vector<notary_rpc::transfer_destination>& destinations, const std::string& payment_id, std::vector<cryptonote::tx_destination_entry>& dsts, std::vector<uint8_t>& extra, bool at_least_one_destination, int& sig_count, std::vector<int>& signers_index_vec, bool& already_signed, epee::json_rpc::error& er)
   {
     std::string ntz_txn_extra_data;
-
+    already_signed = false;
     for (auto it = destinations.begin(); it != destinations.end(); it++)
     {
       cryptonote::address_parse_info info;
@@ -941,6 +941,7 @@ namespace tools
     {
       if (signer_index == signers_index_vec[i]) {
         LOG_PRINT_L1("Found our index value in signers_index at: " << std::to_string(i) << ", we must have already signed this one!");
+        already_signed = true;
       } else if ((signers_index_vec[i] == neg) && (vec_ret.size() == count)) {
         MINFO("Adding our index value: " << std::to_string(signer_index) << ", to signers_index at location: " << std::to_string(i));
           vec_ret.push_back(signer_index);
@@ -1229,10 +1230,15 @@ namespace tools
     }*/
     std::string payment_id = "";
     std::vector<int> signers_index(DPOW_SIG_COUNT, -1);
-    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
-    {
+    bool already_signed = false;
+    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, already_signed, er)) {
       MERROR("Failed to validate_ntz_transfer in notary_server::create_ntz_transfer!");
       return false;
+    }
+    if (already_signed) {
+      LOG_PRINT_L1("validate_ntz_transfer found our index in signers_index, not attempting to send tx!");
+      res.sent_to_pool = true;
+      return true;
     }
 
     try
@@ -1493,11 +1499,9 @@ pool_recheck:
       not_validated_dsts.push_back(dest);
     }
 
-
     std::string payment_id = req.payment_id;
-
-    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
-    {
+    bool already_signed = false;
+    if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, already_signed, er)) {
       LOG_PRINT_L1("Transfer failed validation in validate_ntz_transfer!");
       std::list<std::string> tx_hashes;
       tx_hashes.push_back(tx_hash);
@@ -1507,6 +1511,12 @@ pool_recheck:
       } else {
         goto pool_recheck;
       }
+    }
+
+    if (already_signed) {
+      LOG_PRINT_L1("validate_ntz_transfer found our index in signers_index, not attempting to send tx!");
+      res.sent_to_pool = true;
+      return true;
     }
 
     std::string index_str;
