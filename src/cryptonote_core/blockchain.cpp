@@ -279,6 +279,12 @@ void Blockchain::update_raw_src_tx(std::string const& raw_src_tx)
   komodo::RAW_SRC_TX = raw_src_tx;
 }
 //------------------------------------------------------------------
+void Blockchain::fetch_raw_src_tx(std::string& raw_src_tx)
+{
+  raw_src_tx = komodo::RAW_SRC_TX;
+  MWARNING("---> in blockchain::fetch_raw_src_tx: \n" << raw_src_tx << "\n");
+}
+//------------------------------------------------------------------
 void Blockchain::komodo_update()
 {
     std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> notarizations;

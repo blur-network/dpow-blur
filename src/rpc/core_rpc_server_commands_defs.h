@@ -2759,6 +2759,26 @@ namespace cryptonote
     };
   };
 
+  struct COMMAND_RPC_GET_KMD_TX_DATA
+  {
+    struct request
+    {
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      std::string raw_src_tx;
+      std::string status;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(raw_src_tx)
+        KV_SERIALIZE(status)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
+
   struct COMMAND_RPC_FLUSH_NTZ_POOL
   {
     struct request

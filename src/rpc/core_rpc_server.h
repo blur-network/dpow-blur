@@ -82,6 +82,7 @@ namespace cryptonote
       MAP_URI_AUTO_JON2("/relay_ntzpool", on_relay_ntzpool_tx_bin, COMMAND_RPC_RELAY_NTZPOOL_TX)
       MAP_URI_AUTO_JON2("/relay_txpool", on_relay_txpool, COMMAND_RPC_RELAY_TX)
       MAP_URI_AUTO_JON2("/flush_ntzpool",  on_flush_ntzpool_bin, COMMAND_RPC_FLUSH_NTZ_POOL)
+      MAP_URI_AUTO_JON2("/get_kmd_tx_data",  on_get_kmd_tx_data, COMMAND_RPC_GET_KMD_TX_DATA)
       MAP_URI_AUTO_JON2("/get_height", on_get_height, COMMAND_RPC_GET_HEIGHT)
       MAP_URI_AUTO_JON2("/getheight", on_get_height, COMMAND_RPC_GET_HEIGHT)
       MAP_URI_AUTO_BIN2("/get_blocks.bin", on_get_blocks, COMMAND_RPC_GET_BLOCKS_FAST)
@@ -250,6 +251,7 @@ namespace cryptonote
     bool on_flush_txpool(const COMMAND_RPC_FLUSH_TRANSACTION_POOL::request& req, COMMAND_RPC_FLUSH_TRANSACTION_POOL::response& res, epee::json_rpc::error& error_resp);
     bool on_flush_ntzpool(const COMMAND_RPC_FLUSH_NTZ_POOL::request& req, COMMAND_RPC_FLUSH_NTZ_POOL::response& res, epee::json_rpc::error& error_resp);
     bool on_flush_ntzpool_bin(const COMMAND_RPC_FLUSH_NTZ_POOL::request& req, COMMAND_RPC_FLUSH_NTZ_POOL::response& res);
+    bool on_get_kmd_tx_data(const COMMAND_RPC_GET_KMD_TX_DATA::request& req, COMMAND_RPC_GET_KMD_TX_DATA::response& res);
     bool on_get_output_histogram(const COMMAND_RPC_GET_OUTPUT_HISTOGRAM::request& req, COMMAND_RPC_GET_OUTPUT_HISTOGRAM::response& res, epee::json_rpc::error& error_resp);
     bool on_get_version(const COMMAND_RPC_GET_VERSION::request& req, COMMAND_RPC_GET_VERSION::response& res, epee::json_rpc::error& error_resp);
     bool on_get_coinbase_tx_sum(const COMMAND_RPC_GET_COINBASE_TX_SUM::request& req, COMMAND_RPC_GET_COINBASE_TX_SUM::response& res, epee::json_rpc::error& error_resp);

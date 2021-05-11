@@ -2987,6 +2987,15 @@ namespace cryptonote
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_get_kmd_tx_data(const COMMAND_RPC_GET_KMD_TX_DATA::request& req, COMMAND_RPC_GET_KMD_TX_DATA::response& res)
+  {
+    std::string raw_src_tx;
+    m_core.get_blockchain_storage().fetch_raw_src_tx(raw_src_tx);
+    res.status = CORE_RPC_STATUS_OK;
+    res.raw_src_tx = raw_src_tx;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_get_output_histogram(const COMMAND_RPC_GET_OUTPUT_HISTOGRAM::request& req, COMMAND_RPC_GET_OUTPUT_HISTOGRAM::response& res, epee::json_rpc::error& error_resp)
   {
     PERF_TIMER(on_get_output_histogram);
