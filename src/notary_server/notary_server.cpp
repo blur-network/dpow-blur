@@ -1202,7 +1202,19 @@ namespace tools
       return false;
     }
 
-    std::vector<std::pair<crypto::public_key, crypto::public_key>> notaries_keys;
+    cryptonote::address_parse_info info;
+    cryptonote::account_keys const& own_keys = m_wallet->get_account().get_keys();
+
+    if (!get_account_address_from_str(info, m_wallet->nettype(), m_wallet->get_account().get_public_address_str(m_wallet->nettype()))) {
+      MERROR("Unable to get our own address info from str!");
+      return false;
+    }
+
+    cryptonote::account_public_address const& own_address = info.address;
+    std::vector<notary_rpc::transfer_destination> not_validated_dsts;
+
+    // TODO: Remove below, old logic for 64-destination transfers
+    /*std::vector<std::pair<crypto::public_key, crypto::public_key>> notaries_keys;
     bool r = false;
     r = cryptonote::get_notary_pubkeys(notaries_keys);
 
@@ -1211,31 +1223,21 @@ namespace tools
       er.code = NOTARY_RPC_ERROR_CODE_DENIED;
       er.message = "Couldn't fetch notary pubkeys";
       return false;
-    }
+    }*/
 
-    std::vector<notary_rpc::transfer_destination> not_validated_dsts;
+    //for (const auto& pair : notaries_keys)
+    //{
+      //MWARNING("Pair: " << epee::string_tools::pod_to_hex(pair.first) << " and " << epee::string_tools::pod_to_hex(pair.second));
+      std::string address_str = get_account_address_as_str(m_wallet->nettype(), false, own_address);
 
-    for (const auto& pair : notaries_keys)
-    {
-//      MWARNING("Pair: " << epee::string_tools::pod_to_hex(pair.first) << " and " << epee::string_tools::pod_to_hex(pair.second));
-
-      const crypto::public_key view_pubkey = pair.first;
-      const crypto::public_key spend_pubkey = pair.second;
-      cryptonote::account_public_address address;
-      address.m_view_public_key = view_pubkey;
-      address.m_spend_public_key = spend_pubkey;
-
-      std::string address_str = get_account_address_as_str(m_wallet->nettype(), false, address);
-
-      uint64_t amount = 10000;
       // arbitrary, but meaningful: 1 * 10^(-8) BLUR
       // for compatibility with BTC-flavored atomicity
       // and exchange visibility
       notary_rpc::transfer_destination dest = AUTO_VAL_INIT(dest);
       dest.address = address_str;
-      dest.amount = amount;
+      dest.amount = 10000;
       not_validated_dsts.push_back(dest);
-    }
+    //}
 
 /*      uint8_t buf[32];
       hydro_random_buf(buf, sizeof buf);

@@ -84,7 +84,8 @@ namespace cryptonote
     LOG_PRINT_L2("destinations include " << num_stdaddresses << " standard addresses and " << num_subaddresses << " subaddresses");
   }
   //---------------------------------------------------------------
-  bool auth_and_get_ntz_signer_index(const std::vector<tx_destination_entry> &destinations, const boost::optional<cryptonote::account_public_address>& change_addr, size_t &num_stdaddresses, account_keys const & sender_account_keys, int& signer_index) {
+  bool auth_and_get_ntz_signer_index(const std::vector<tx_destination_entry> &destinations, const boost::optional<cryptonote::account_public_address>& change_addr, size_t &num_stdaddresses, account_keys const & sender_account_keys, int& signer_index)
+  {
     num_stdaddresses = 0;
     std::unordered_set<cryptonote::account_public_address> unique_dst_addresses;
     crypto::public_key account_pub_key = crypto::null_pkey;
