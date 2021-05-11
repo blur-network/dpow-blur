@@ -698,6 +698,7 @@ namespace tools
     void request_ntz_sig(std::string const& ptx_string, crypto::hash const& ptx_hash, std::vector<pending_tx> ptxs, int const& sigs_count, std::string const& payment_id, std::vector<int> const& sig_index, std::string const& prior_tx_hash, std::string const& prior_ptx_hash);
     uint64_t get_ntz_count();
     void flush_ntzpool();
+    void get_kmd_tx_data(std::string& kmd_tx_data);
     void relay_ntzpool();
     void relay_txpool();
     void get_ntzpool_tx(std::vector<pending_tx>& ptx_vector);

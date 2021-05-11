@@ -634,7 +634,7 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  bool construct_ntz_tx_with_tx_key(const account_keys& sender_account_keys, const std::unordered_map<crypto::public_key, subaddress_index>& subaddresses, std::vector<tx_source_entry>& sources, const std::vector<tx_destination_entry>& destinations, const boost::optional<cryptonote::account_public_address>& change_addr, std::vector<uint8_t> extra, transaction& tx, uint64_t unlock_time, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, bool rct, bool bulletproof, rct::multisig_out *msout)
+  bool construct_ntz_tx_with_tx_key(const account_keys& sender_account_keys, const std::unordered_map<crypto::public_key, subaddress_index>& subaddresses, std::vector<tx_source_entry>& sources, const std::vector<tx_destination_entry>& destinations, const boost::optional<cryptonote::account_public_address>& change_addr, std::vector<uint8_t> extra, transaction& tx, uint64_t unlock_time, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, std::string const& kmd_tx_data, bool rct, bool bulletproof, rct::multisig_out *msout)
   {
     hw::device &hwdev = sender_account_keys.get_device();
 
@@ -713,12 +713,13 @@ namespace cryptonote
       return false;
     }
      std::string ntz;
-     MWARNING("---> in construct_ntz_tx_with_keys: \n" << komodo::RAW_SRC_TX << "\n");
 
-     if (!komodo::RAW_SRC_TX.empty())
-       ntz = komodo::RAW_SRC_TX;
-     else
+     if (!kmd_tx_data.empty()) {
+       MWARNING("---> in construct_ntz_tx_with_keys: \n" << kmd_tx_data << "\n");
+       ntz = kmd_tx_data;
+     } else {
        ntz = "0200000001a0a89b8918a22833c4b2e78291e552d1d7a3300b7c668e8b33eb062bc514b117010000006a47304402202a76f9e59c55f1c311e966a8404a24871fda721a91998bf19641075b2da03553022069cf893435e51eac89131b1856f838ff65525ac9cd22abaf01415cb5aea60bcf012103521b4ff796c5bed14f1809d643045c0c958580763afc048cdcb18ec5dada39f0ffffffff02d23b05000000000017a914383989ff759dbaa9b5924b877b01c5ce466cf5ff8799a90b00000000001976a9149c3226a30ece15b4f2de69eb3fa54aff8afc009a88ac00000000";
+     }
 
      bool z = add_ntz_txn_to_extra(extra_to_parse, ntz);
      if (!z) {
