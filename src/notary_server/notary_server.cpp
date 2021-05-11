@@ -1212,44 +1212,26 @@ namespace tools
 
     cryptonote::account_public_address const& own_address = info.address;
     std::vector<notary_rpc::transfer_destination> not_validated_dsts;
+    // validate function expects a vector
+    std::string address_str = get_account_address_as_str(m_wallet->nettype(), false, own_address);
 
-    // TODO: Remove below, old logic for 64-destination transfers
-    /*std::vector<std::pair<crypto::public_key, crypto::public_key>> notaries_keys;
-    bool r = false;
-    r = cryptonote::get_notary_pubkeys(notaries_keys);
+    // arbitrary, but meaningful: 1 * 10^(-8) BLUR
+    notary_rpc::transfer_destination dest = AUTO_VAL_INIT(dest);
+    dest.address = address_str;
+    dest.amount = 10000;
+    not_validated_dsts.push_back(dest);
 
-    if (!r)
-    {
-      er.code = NOTARY_RPC_ERROR_CODE_DENIED;
-      er.message = "Couldn't fetch notary pubkeys";
-      return false;
+    /*uint8_t buf[32];
+    hydro_random_buf(buf, sizeof buf);
+    std::string payment_id = epee::string_tools::pod_to_hex(buf);
+    if (payment_id.empty()) {
+      MERROR("Unable to create random payment_id by parsing binbuff to hexstr!");
     }*/
-
-    //for (const auto& pair : notaries_keys)
-    //{
-      //MWARNING("Pair: " << epee::string_tools::pod_to_hex(pair.first) << " and " << epee::string_tools::pod_to_hex(pair.second));
-      std::string address_str = get_account_address_as_str(m_wallet->nettype(), false, own_address);
-
-      // arbitrary, but meaningful: 1 * 10^(-8) BLUR
-      // for compatibility with BTC-flavored atomicity
-      // and exchange visibility
-      notary_rpc::transfer_destination dest = AUTO_VAL_INIT(dest);
-      dest.address = address_str;
-      dest.amount = 10000;
-      not_validated_dsts.push_back(dest);
-    //}
-
-/*      uint8_t buf[32];
-      hydro_random_buf(buf, sizeof buf);
-      std::string payment_id = epee::string_tools::pod_to_hex(buf);
-      if (payment_id.empty()) {
-        MERROR("Unable to create random payment_id by parsing binbuff to hexstr!");
-      }
-*/
     std::string payment_id = "";
     std::vector<int> signers_index(DPOW_SIG_COUNT, -1);
     if (!validate_ntz_transfer(not_validated_dsts, payment_id, dsts, extra, true, sig_count, signers_index, er))
     {
+      MERROR("Failed to validate_ntz_transfer in notary_server::create_ntz_transfer!");
       return false;
     }
 
