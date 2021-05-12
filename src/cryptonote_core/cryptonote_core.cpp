@@ -567,21 +567,6 @@ namespace cryptonote
       return false;
     }
 
-    //std::cout << "!"<< tx.vin.size() << std::endl;
-
-    bad_semantics_txes_lock.lock();
-    for (int idx = 0; idx < 2; ++idx)
-    {
-      if (bad_semantics_txes[idx].find(tx_hash) != bad_semantics_txes[idx].end())
-      {
-        bad_semantics_txes_lock.unlock();
-        LOG_PRINT_L1("Transaction already seen with bad semantics, rejected");
-        tvc.m_verifivation_failed = true;
-        return false;
-      }
-    }
-    bad_semantics_txes_lock.unlock();
-
     // TODO-TK: need to consider tx versioning standard.
     const size_t max_tx_version = 2;
     uint8_t version = m_blockchain_storage.get_current_hard_fork_version();
@@ -664,14 +649,13 @@ namespace cryptonote
     // TODO: this is a placeholder for verification
 
     tvc = boost::value_initialized<ntz_req_verification_context>();
-    crypto::hash hone, htwo;
-    if (!parse_and_validate_tx_from_blob(tx_blob, tx, hone, htwo))
+    if (!parse_and_validate_tx_from_blob(tx_blob, tx, tx_hash, tx_prefixt_hash))
     {
       MERROR("Failed to parse tx from blob in handle_incoming_ntz_sig_pre!");
       tvc.m_verifivation_failed = true;
       return false;
     }
-    MINFO("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(hone) << ", connection context: " << context);
+    MINFO("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(tx_hash) << ", connection context: " << context);
     cryptonote::transaction const tx_output_check = tx;
     bool check_out = m_blockchain_storage.check_ntz_req_outputs(tx_output_check, tvc);
     if (!check_out) {
@@ -686,10 +670,7 @@ namespace cryptonote
       tvc.m_too_big = true;
       return false;
     }
-    tx_hash = hone;
-    tx_prefixt_hash = htwo;
 
-    const size_t max_tx_version = 2;
     if (tx.version != 2)
     {
       MERROR("Received ntz_sig request with incorrect tx version = " << std::to_string(tx.version));
@@ -858,8 +839,13 @@ namespace cryptonote
   {
     CRITICAL_REGION_LOCAL(m_incoming_tx_lock);
 
-    bool res = false; cryptonote::transaction tx; crypto::hash hash = crypto::null_hash; crypto::hash prefix_hash = crypto::null_hash; bool in_txpool = false; bool in_blockchain = false;
-    res = handle_incoming_ntz_sig_pre(tx_blob, tvc, tx, hash, prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count, context);
+    bool res = false;
+    cryptonote::transaction tx; crypto::hash hash = crypto::null_hash; crypto::hash prefix_hash = crypto::null_hash; bool in_txpool = false; bool in_blockchain = false;
+    if (!handle_incoming_ntz_sig_pre(tx_blob, tvc, tx, hash, prefix_hash, keeped_by_block, relayed, do_not_relay, sig_count, context))
+    {
+      return false;
+    }
+
     bool already_have = false;
     if(m_mempool.have_tx(hash))
     {

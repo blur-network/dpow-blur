@@ -2726,6 +2726,22 @@ bool Blockchain::check_tx_outputs(const transaction& tx, tx_verification_context
     }
   }
 
+  if (hf_version >= (DPOW_FORK_VERSION)) {
+    if (tx.version == (DPOW_NOTA_TX_VERSION)) {
+      if (tx.vout.size() > 2) {
+        MERROR("notarization txs cannot have more than 2 outputs! actual vout.size() = " << tx.vout.size());
+        tvc.m_verifivation_failed = true;
+        return false;
+      }
+    }
+  } else {
+    if (tx.version == (DPOW_NOTA_TX_VERSION)) {
+      MERROR("tx.version = " << std::to_string(DPOW_NOTA_TX_VERSION) << " not allowed before hf.version = " << std::to_string(DPOW_FORK_VERSION));
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+  }
+
   return true;
 }
 //------------------------------------------------------------------
