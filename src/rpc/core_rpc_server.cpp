@@ -873,8 +873,8 @@ namespace cryptonote
     for(auto& tx: txs)
     {
       uint64_t ntz_index = 1;
-      if (tx.version != 2) {
-
+      if (tx.version != (DPOW_NOTA_TX_VERSION)) {
+        // ignore
       } else {
         res.txs.push_back(COMMAND_RPC_GET_NOTARIZATIONS::entry());
         COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
