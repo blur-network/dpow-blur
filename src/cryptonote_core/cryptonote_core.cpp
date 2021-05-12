@@ -655,14 +655,9 @@ namespace cryptonote
       tvc.m_verifivation_failed = true;
       return false;
     }
+
     MINFO("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(tx_hash) << ", connection context: " << context);
-    cryptonote::transaction const tx_output_check = tx;
-    bool check_out = m_blockchain_storage.check_ntz_req_outputs(tx_output_check, tvc);
-    if (!check_out) {
-      MERROR("Output check failed in handle_incoming_ntz_sig_pre!");
-      tvc.m_verifivation_failed = true;
-      return false;
-    }
+
     if(tx_blob.size() > get_max_tx_size())
     {
       LOG_PRINT_L1("WRONG TRANSACTION BLOB, too big size " << tx_blob.size() << ", rejected");
