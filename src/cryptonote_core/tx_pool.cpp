@@ -322,7 +322,7 @@ namespace cryptonote
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
 
-    if (tx.version != 2)
+    if (tx.version != (DPOW_NOTA_TX_VERSION))
     {
       MERROR("transaction version: " << std::to_string(tx.version) << " is invalid.");
       tvc.m_verifivation_failed = true;

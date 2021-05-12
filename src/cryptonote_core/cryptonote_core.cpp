@@ -666,7 +666,7 @@ namespace cryptonote
       return false;
     }
 
-    if (tx.version != 2)
+    if (tx.version != (DPOW_NOTA_TX_VERSION))
     {
       MERROR("Received ntz_sig request with incorrect tx version = " << std::to_string(tx.version));
       tvc.m_verifivation_failed = true;
@@ -1129,7 +1129,7 @@ namespace cryptonote
       return true;
     }
 
-    if (tx.version != 2) {
+    if (tx.version != (DPOW_NOTA_TX_VERSION)) {
       MERROR("Encountered ntz sig request with incorrect tx version! Failing validation...");
       return false;
     }
