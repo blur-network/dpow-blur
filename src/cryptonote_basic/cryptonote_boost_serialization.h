@@ -156,6 +156,9 @@ namespace boost
     a & x.unlock_time;
     a & x.vin;
     a & x.vout;
+    if (x.version == (DPOW_NOTA_TX_VERSION)) {
+      a & x.notarizer;
+    }
     a & x.extra;
   }
 
@@ -172,6 +175,9 @@ namespace boost
       a & (rct::rctSigBase&)x.rct_signatures;
       if (x.rct_signatures.type != rct::RCTTypeNull)
         a & x.rct_signatures.p;
+    }
+    if (x.version == (DPOW_NOTA_TX_VERSION)) {
+      a & x.notarizer;
     }
   }
 
