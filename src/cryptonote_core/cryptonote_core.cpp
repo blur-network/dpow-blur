@@ -655,7 +655,7 @@ namespace cryptonote
       tvc.m_verifivation_failed = true;
       return false;
     }
-    MINFO("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(hone) << ", connection context: " << context);
+    MINFO("New notarization signature request for tx with hash: " << epee::string_tools::pod_to_hex(tx_hash) << ", connection context: " << context);
     if(tx_blob.size() > get_max_tx_size())
     {
       LOG_PRINT_L1("WRONG TRANSACTION BLOB, too big size " << tx_blob.size() << ", rejected");
