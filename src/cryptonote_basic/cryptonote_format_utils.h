@@ -47,12 +47,15 @@ namespace epee
 
 namespace cryptonote
 {
+  union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4];};
+  typedef union _bits256 bits256;
   //---------------------------------------------------------------
   void get_transaction_prefix_hash(const transaction_prefix& tx, crypto::hash& h);
   crypto::hash get_transaction_prefix_hash(const transaction_prefix& tx);
   bool parse_and_validate_tx_from_blob(const blobdata& tx_blob, transaction& tx, crypto::hash& tx_hash, crypto::hash& tx_prefix_hash);
   bool parse_and_validate_tx_from_blob(const blobdata& tx_blob, transaction& tx);
   bool string_to_hash(std::string const& strhash, crypto::hash& hash);
+  bool extract_and_parse_opreturn(std::string const& raw_tx_hex, std::string& opreturn, std::string& btchash, std::string& srchash, std::string& desthash, uint64_t& height, std::string& symbol);
   std::string uint256_to_hex(uint256 const& hash);
   bool string_to_pubkey33(std::string const& strhash, uint8_t* pubkey33);
   bool parse_and_validate_tx_base_from_blob(const blobdata& tx_blob, transaction& tx);

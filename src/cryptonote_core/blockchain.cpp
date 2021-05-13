@@ -54,7 +54,7 @@
 #include "warnings.h"
 #include "crypto/hash.h"
 #include "cryptonote_core.h"
-#include "komodo_notaries.h"
+#include "cryptonote_basic/komodo_notaries.h"
 #include "ringct/rctSigs.h"
 #include "common/perf_timer.h"
 #include "libhydrogen/hydrogen.h"
@@ -275,14 +275,14 @@ bool Blockchain::is_block_notarized(cryptonote::block const& b)
 //------------------------------------------------------------------
 void Blockchain::update_raw_src_tx(std::string const& raw_src_tx)
 {
-  MWARNING("---> in blockchain::update_raw_src_tx: [" << raw_src_tx << "]");
+  MWARNING("---> in blockchain::update_raw_src_tx: \n" << raw_src_tx << "\n");
   komodo::RAW_SRC_TX = raw_src_tx;
 }
 //------------------------------------------------------------------
 void Blockchain::fetch_raw_src_tx(std::string& raw_src_tx)
 {
   raw_src_tx = komodo::RAW_SRC_TX;
-  //MWARNING("---> in blockchain::fetch_raw_src_tx: [" << raw_src_tx << "]");
+  MWARNING("---> in blockchain::fetch_raw_src_tx: \n" << raw_src_tx << "\n");
 }
 //------------------------------------------------------------------
 void Blockchain::komodo_update()
@@ -2726,22 +2726,6 @@ bool Blockchain::check_tx_outputs(const transaction& tx, tx_verification_context
     }
   }
 
-  if (hf_version >= (DPOW_FORK_VERSION)) {
-    if (tx.version == (DPOW_NOTA_TX_VERSION)) {
-      if (tx.vout.size() > 2) {
-        MERROR("notarization txs cannot have more than 2 outputs! actual vout.size() = " << tx.vout.size());
-        tvc.m_verifivation_failed = true;
-        return false;
-      }
-    }
-  } else {
-    if (tx.version == (DPOW_NOTA_TX_VERSION)) {
-      MERROR("tx.version = " << std::to_string(DPOW_NOTA_TX_VERSION) << " not allowed before hf.version = " << std::to_string(DPOW_FORK_VERSION));
-      tvc.m_verifivation_failed = true;
-      return false;
-    }
-  }
-
   return true;
 }
 //------------------------------------------------------------------
@@ -2764,16 +2748,13 @@ bool Blockchain::check_ntz_req_outputs(const transaction& tx, ntz_req_verificati
     }
   }
 
-  if (hf_version < (DPOW_FORK_VERSION)) {
-    std::string s(std::to_string(11 - hf_version) + " forks from now!");
-    MERROR("Notarizations are not enabled until " << (hf_version == 10 ? "after the next hardfork!" : s));
-    tvc.m_verifivation_failed = true;
-    return false;
-  }
+ if (hf_version < 11) {
+   std::string s(std::to_string(11 - hf_version) + " forks from now!");
+   MERROR("Notarizations are not enabled until " << (hf_version == 10 ? "after the next hardfork!" : s));
+   return false;
+ }
 
   // forbid invalid pubkeys
-  // TODO: Discern why this is here - maybe leftover from masari codebase modifications?
-  // likely same logic in check_tx_outputs too
   if (hf_version >= 1) {
     for (const auto &o: tx.vout) {
       if (o.target.type() == typeid(txout_to_key)) {
@@ -2786,13 +2767,8 @@ bool Blockchain::check_ntz_req_outputs(const transaction& tx, ntz_req_verificati
     }
   }
 
-  if (tx.vout.size() > 2) {
-    MERROR("Error ntz_request output count cannot be greater than 2!");
-    tvc.m_verifivation_failed = true;
-    return false;
-  }
-
-  /*if (hf_version < 7) {
+  // from, allow bulletproofs
+  if (hf_version < 7) {
     const bool bulletproof = tx.rct_signatures.type == rct::RCTTypeFullBulletproof || tx.rct_signatures.type == rct::RCTTypeSimpleBulletproof;
     if (bulletproof || !tx.rct_signatures.p.bulletproofs.empty())
     {
@@ -2800,8 +2776,8 @@ bool Blockchain::check_ntz_req_outputs(const transaction& tx, ntz_req_verificati
       tvc.m_invalid_output = true;
       return false;
     }
-  }*/
-  // above not needed, since we're starting at v11 in this function
+  }
+
   return true;
 }
 //------------------------------------------------------------------

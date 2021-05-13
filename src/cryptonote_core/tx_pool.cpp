@@ -153,6 +153,23 @@ namespace cryptonote
             num_ntz_txes--;
             txids_to_flush.push_back(pool_txid);
           }
+          /*else
+          {
+            if ((meta.kept_by_block == true) || (meta.double_spend_seen == true))
+            {
+              num_ntz_txes--;
+              txids_to_flush.push_back(pool_txid);
+            }
+            else
+            {
+              if (num_ntz_txes >= DPOW_MAX_NOTA_PER_BLOCK)
+              {
+                MERROR("Already have " << std::to_string(DPOW_MAX_NOTA_PER_BLOCK) << " notarization tx(es) in pool! Failing validation for txid: " << epee::string_tools::pod_to_hex(pool_txid));
+                tvc.m_verifivation_failed = true;
+                return false;
+              }
+            }
+          }*/
         }
       }
       m_blockchain.flush_txes_from_pool(txids_to_flush);
@@ -322,7 +339,7 @@ namespace cryptonote
   {
     CRITICAL_REGION_LOCAL(m_transactions_lock);
 
-    if (tx.version != (DPOW_NOTA_TX_VERSION))
+    if (tx.version != 2)
     {
       MERROR("transaction version: " << std::to_string(tx.version) << " is invalid.");
       tvc.m_verifivation_failed = true;

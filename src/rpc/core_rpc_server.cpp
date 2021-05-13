@@ -50,7 +50,7 @@ using namespace epee;
 #include "rpc/rpc_args.h"
 #include "core_rpc_server_error_codes.h"
 #include "p2p/net_node.h"
-#include "cryptonote_core/komodo_notaries.h"
+#include "cryptonote_basic/komodo_notaries.h"
 #include "blockchain_db/db_structs.h"
 #include "version.h"
 
@@ -59,19 +59,6 @@ using namespace epee;
 
 #define MAX_RESTRICTED_FAKE_OUTS_COUNT 40
 #define MAX_RESTRICTED_GLOBAL_FAKE_OUTS_COUNT 5000
-
-
-// bitcoin opcodes
-#define OP_RETURN      106
-#define OP_NEXTBYTES   75
-#define OP_PUSHDATA1   76
-#define OP_PUSHDATA2   77
-#define OP_PUSHDATA4   78
-
-// kmd op_return sizes
-#define HASHDATA_SIZE  32
-#define HEIGHT_SIZE    4
-#define SYMBOL_SIZE    5
 
 
 namespace
@@ -873,8 +860,8 @@ namespace cryptonote
     for(auto& tx: txs)
     {
       uint64_t ntz_index = 1;
-      if (tx.version != (DPOW_NOTA_TX_VERSION)) {
-        // ignore
+      if (tx.version != 2) {
+
       } else {
         res.txs.push_back(COMMAND_RPC_GET_NOTARIZATIONS::entry());
         COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
@@ -1868,36 +1855,29 @@ namespace cryptonote
   bool core_rpc_server::on_send_raw_btc_tx(const COMMAND_RPC_SEND_RAW_BTC_TX::request& req, COMMAND_RPC_SEND_RAW_BTC_TX::response& res)
   {
     std::string hexreq = req.hexstring;
+    res.hex = "null";
     if (hexreq.empty()) {
       res.status = "Error: input hex empty!";
-      res.hex = "null";
       return true;
     }
 
-    MWARNING("Raw tx data: \n" << req.hexstring);
+    std::string opreturn, btchash, srchash, desthash, symbol;
+    uint64_t height = 0;
 
-    std::string opreturn = req.hexstring.substr(req.hexstring.size()-158,150);
-
-    MWARNING("opreturn = \n" << opreturn);
-
-    std::string bintxdata;
-    if (!epee::string_tools::parse_hexstr_to_binbuff(hexreq, bintxdata)) {
-      res.status = "Error: failed to parse hexstr to binbuff in send_raw_btc_tx";
-      res.hex = "null";
+    if (!extract_and_parse_opreturn(hexreq, opreturn, btchash, srchash, desthash, height, symbol))
+    {
+      res.status = "Error: failed to extract and/or parse BTC tx data!";
       return true;
     }
 
-    uint8_t const* txdata = reinterpret_cast<uint8_t const*>(bintxdata.data());
-    bits256 btc_hash = komodo::bits256_doublesha256(txdata, bintxdata.size());
-    std::vector<uint8_t> bitscontainer;
-    for (const auto& each : btc_hash.bytes) {
-      bitscontainer.push_back(each);
-    }
-    std::string hex_output = bytes256_to_hex(bitscontainer);
+    //std::string opreturn = req.hexstring.substr(req.hexstring.size()-158,150);
+    //MWARNING("Raw tx data: \n" << req.hexstring);
+    //MWARNING("opreturn = \n" << opreturn);
 
     m_core.get_blockchain_storage().update_raw_src_tx(req.hexstring);
 
-    res.hex = hex_output;
+    res.hex.clear();
+    res.hex = btchash;
     res.status = CORE_RPC_STATUS_OK;
     return true;
   }
@@ -1938,69 +1918,21 @@ namespace cryptonote
   //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_decode_btc_opreturn(const COMMAND_RPC_DECODE_OPRETURN::request& req, COMMAND_RPC_DECODE_OPRETURN::response& res)
   {
-    std::string embedded_srchash, embedded_desthash, hexheight, hexsymbol, symbol;
+    std::string embedded_srchash, embedded_desthash, hexheight, hexsymbol, symbol, empty_tx_data, btchash;
     res.status = "Failed";
     res.embedded_srchash = epee::string_tools::pod_to_hex(crypto::null_hash);
     res.embedded_desthash = epee::string_tools::pod_to_hex(crypto::null_hash);
     res.height = 0;
-    uint32_t x = 0;
+    std::string opreturn = req.hex;
 
-    std::vector<uint8_t> script_vchr = hex_to_bytes4096(req.hex);
-
-    if (script_vchr[x++] != OP_RETURN) {
-      res.status = "Error: hex does not have proper opcode!";
+    if (!extract_and_parse_opreturn(empty_tx_data, opreturn, btchash, res.embedded_srchash, res.embedded_desthash, res.height, res.symbol))
+    {
+      res.status = "Error: couldn't parse opreturn!";
       return true;
+    } else {
+      res.status = CORE_RPC_STATUS_OK;
     }
 
-    if (script_vchr[x] <= OP_NEXTBYTES)
-    {
-      size_t data_size = script_vchr[x];
-      //MWARNING("-->OP_NEXTBYTES code found: " << data_size);
-
-      // need to flip encoded hash bytes
-      for (size_t i = (x + HASHDATA_SIZE); i > x; i--) {
-        embedded_srchash += req.hex.substr(i*2, 2);
-      }
-      res.embedded_srchash = embedded_srchash;
-      x += HASHDATA_SIZE;
-      // same for height
-      for (size_t i = (x + HEIGHT_SIZE); i > x; i--) {
-        hexheight += req.hex.substr(i*2,2);
-      }
-      x += HEIGHT_SIZE;
-
-      if (data_size >= (x + SYMBOL_SIZE))
-      {
-        // if > 5 bytes left, we probably have a desthash too
-        for (size_t i = (x + HASHDATA_SIZE); i > x; i--) {
-          embedded_desthash += req.hex.substr(i*2, 2);
-        }
-        res.embedded_desthash = embedded_desthash;
-        x += HASHDATA_SIZE;
-      }
-
-      //symbol is not flipped
-      hexsymbol = req.hex.substr((req.hex.size()-10), 10);
-      epee::string_tools::parse_hexstr_to_binbuff(hexsymbol, symbol);
-      for (size_t i = 0; i < SYMBOL_SIZE; i++)
-      {
-        // exclude null bytes
-        if (std::stoull(hexsymbol.substr(i*2,2),0,16) != 0)
-          res.symbol += symbol.substr(i,1);
-      }
-      x += SYMBOL_SIZE;
-      if (data_size != (x - 1)) {
-        res.status = "Error: Inconsistency in data OP_NEXTBYTES vs actual data sz!";
-      }
-
-      if (res.symbol != "BLUR") {
-        res.status = "Error: OP_RETURN data is not for BLUR - check symbol!";
-      } else {
-        res.status = CORE_RPC_STATUS_OK;
-      }
-    }  // else if OP_PUSHDATA(1|2|4)
-
-    res.height = std::stoull(hexheight, 0, 16);
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------

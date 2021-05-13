@@ -31,7 +31,6 @@ set(cryptonote_core_sources
   cryptonote_core.cpp
   tx_pool.cpp
   cryptonote_tx_utils.cpp
-  komodo_notaries.cpp
   core_instanciations.cpp)
 
 set(cryptonote_core_headers)
@@ -41,8 +40,7 @@ set(cryptonote_core_private_headers
   blockchain.h
   cryptonote_core.h
   tx_pool.h
-  cryptonote_tx_utils.h
-  komodo_notaries.h)
+  cryptonote_tx_utils.h)
 
 monero_private_headers(cryptonote_core
   ${cryptonote_core_private_headers})

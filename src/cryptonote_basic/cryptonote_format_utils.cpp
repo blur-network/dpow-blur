@@ -42,6 +42,7 @@ using namespace epee;
 #include "string_tools.h"
 #include "serialization/string.h"
 #include "cryptonote_format_utils.h"
+#include "komodo_notaries.h"
 #include "cryptonote_config.h"
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
@@ -55,6 +56,20 @@ using namespace epee;
 #define ENCRYPTED_PAYMENT_ID_TAIL 0x8d
 
 // #define ENABLE_HASH_CASH_INTEGRITY_CHECK
+
+// bitcoin opcodes
+#define OP_RETURN      106
+#define OP_NEXTBYTES   75
+#define OP_PUSHDATA1   76
+#define OP_PUSHDATA2   77
+#define OP_PUSHDATA4   78
+
+// kmd op_return sizes
+#define HASHDATA_SIZE  32
+#define HEIGHT_SIZE    4
+#define SYMBOL_SIZE    5
+
+#define DPOW_SYMBOL   "BLUR"
 
 using namespace crypto;
 
@@ -222,6 +237,95 @@ namespace cryptonote
       const crypto::hash hash_const = *reinterpret_cast<const crypto::hash*>(hash_data.data());
       hash = hash_const;
       return true;
+  }
+  //---------------------------------------------------------------
+  bool extract_and_parse_opreturn(std::string const& raw_tx_hex, std::string& opreturn, std::string& btchash, std::string& srchash, std::string& desthash, uint64_t& height, std::string& symbol)
+  {
+    std::string bintxdata;
+    btchash = epee::string_tools::pod_to_hex(crypto::null_hash);
+    srchash = epee::string_tools::pod_to_hex(crypto::null_hash);
+    desthash = epee::string_tools::pod_to_hex(crypto::null_hash);
+    height = 0;
+    std::vector<uint8_t> bitscontainer;
+
+    if (raw_tx_hex.empty()) {
+      if (opreturn.empty()) {
+        MERROR("No raw_tx_data or opreturn data to extract and/or parse!");
+        return false;
+      }
+    } else {
+      opreturn = raw_tx_hex.substr(raw_tx_hex.size()-158,150);
+      if (!epee::string_tools::parse_hexstr_to_binbuff(raw_tx_hex, bintxdata)) {
+        MERROR("Failed to parse_hexstr_to_binbuff in extract_and_parse_opreturn!");
+        return false;
+      }
+      uint8_t const* txdata = reinterpret_cast<uint8_t const*>(bintxdata.data());
+      bits256 btc_hash = cryptonote::komodo::bits256_doublesha256(txdata, bintxdata.size());
+      for (const auto& each : btc_hash.bytes) {
+        bitscontainer.push_back(each);
+      }
+      btchash = bytes256_to_hex(bitscontainer);
+    }
+
+    std::string hexheight, hexsymbol;
+    uint32_t x = 0;
+
+    std::vector<uint8_t> script_vchr = hex_to_bytes4096(opreturn);
+
+    if (script_vchr[x++] != OP_RETURN) {
+      MERROR("hex does not have proper opcode! actual: " << std::to_string(script_vchr[x-1]) << ", expected: " << std::to_string(OP_RETURN));
+      return false;
+    }
+
+    if (script_vchr[x] <= OP_NEXTBYTES)
+    {
+      size_t data_size = script_vchr[x];
+      //MWARNING("-->OP_NEXTBYTES code found: " << data_size);
+
+      // need to flip encoded hash bytes
+      srchash.clear();
+      for (size_t i = (x + HASHDATA_SIZE); i > x; i--) {
+        srchash += opreturn.substr(i*2, 2);
+      }
+      x += HASHDATA_SIZE;
+      // same for height
+      for (size_t i = (x + HEIGHT_SIZE); i > x; i--) {
+        hexheight += opreturn.substr(i*2,2);
+      }
+      x += HEIGHT_SIZE;
+
+      if (data_size >= (x + SYMBOL_SIZE))
+      {
+        desthash.clear();
+        // if > 5 bytes left, we probably have a desthash too
+        for (size_t i = (x + HASHDATA_SIZE); i > x; i--) {
+          desthash += opreturn.substr(i*2, 2);
+        }
+        x += HASHDATA_SIZE;
+      }
+
+      //symbol is not flipped
+      hexsymbol = opreturn.substr((opreturn.size()-10), 10);
+      std::string binsymbol;
+      epee::string_tools::parse_hexstr_to_binbuff(hexsymbol, binsymbol);
+      for (size_t i = 0; i < SYMBOL_SIZE; i++)
+      {
+        // exclude null bytes
+        if (std::stoull(hexsymbol.substr(i*2,2),0,16) != 0)
+          symbol += binsymbol.substr(i,1);
+      }
+      x += SYMBOL_SIZE;
+      if (data_size != (x - 1)) {
+        MERROR("Inconsistency in data OP_NEXTBYTES vs actual data size!");
+      }
+
+      if (symbol != DPOW_SYMBOL) {
+        MERROR("OP_RETURN data is not for " << DPOW_SYMBOL << " - check data!");
+      }
+    }  // else if OP_PUSHDATA(1|2|4)
+
+    height = std::stoull(hexheight, 0, 16);
+    return true;
   }
   //---------------------------------------------------------------
   std::string uint256_to_hex(uint256 const& hash)

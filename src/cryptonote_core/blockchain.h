@@ -63,9 +63,6 @@
 namespace cryptonote
 {
 
-  union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4];};
-  typedef union _bits256 bits256;
-
   class tx_memory_pool;
   struct test_options;
 
