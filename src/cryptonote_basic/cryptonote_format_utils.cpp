@@ -69,8 +69,6 @@ using namespace epee;
 #define HEIGHT_SIZE    4
 #define SYMBOL_SIZE    5
 
-#define DPOW_SYMBOL   "BLUR"
-
 using namespace crypto;
 
 static const uint64_t valid_decomposed_outputs[] = {
