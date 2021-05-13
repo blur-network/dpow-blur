@@ -45,18 +45,14 @@ using namespace epee;
 #include "ringct/rctSigs.h"
 #include "multisig/multisig.h"
 #include "libhydrogen/hydrogen.h"
-#include "komodo_notaries.h"
 #include "common/hex_str.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
+#include "cryptonote_basic/komodo_notaries.h"
 
 using namespace crypto;
 
 namespace cryptonote
 {
-  namespace komodo {
-    extern std::string RAW_SRC_TX;
-  }
-
   //---------------------------------------------------------------
   void classify_addresses(const std::vector<tx_destination_entry> &destinations, const boost::optional<cryptonote::account_public_address>& change_addr, size_t &num_stdaddresses, size_t &num_subaddresses, account_public_address &single_dest_subaddress)
   {
