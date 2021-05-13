@@ -43,6 +43,9 @@
 #define DPOW_NOTARIZATION_WINDOW                        25
 #define DPOW_SYMBOL                                     "BLUR"
 
+#define ENABLE_DPOWCONFS                                0
+/*sets confirmations to a static '1' until block is notarized*/
+
 #define CRYPTONOTE_MAX_BLOCK_NUMBER                     500000000
 #define CRYPTONOTE_MAX_BLOCK_SIZE                       500000000  /* block header blob limit, never used! */
 #define CRYPTONOTE_MAX_TX_SIZE                          1000000000

@@ -1831,8 +1831,13 @@ namespace cryptonote
 
     uint64_t height = get_block_height(b);
 
+#ifdef ENABLE_DPOWCONFS
     res.rawconfirmations = (m_core.get_blockchain_storage().get_current_blockchain_height()) - height;
     res.confirmations = (komodo::NOTARIZED_HEIGHT >= (int32_t)(height)) ? res.rawconfirmations : 1;
+#else
+    res.confirmations = (m_core.get_blockchain_storage().get_current_blockchain_height()) - height;
+    res.rawconfirmations = (m_core.get_blockchain_storage().get_current_blockchain_height()) - height;
+#endif //ENABLE_DPOWCONFS
     res.height = height;
     tree_hash = get_tx_tree_hash(b);
     res.merkleroot = epee::string_tools::pod_to_hex(tree_hash);

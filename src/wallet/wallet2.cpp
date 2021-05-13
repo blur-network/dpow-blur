@@ -9055,7 +9055,6 @@ bool wallet2::check_spend_proof(const crypto::hash &txid, const std::string &mes
   return true;
 }
 //----------------------------------------------------------------------------------------------------
-
 void wallet2::check_tx_key(const crypto::hash &txid, const crypto::secret_key &tx_key, const std::vector<crypto::secret_key> &additional_tx_keys, const cryptonote::account_public_address &address, uint64_t &received, bool &in_pool, uint64_t &confirmations, uint64_t &rawconfirmations)
 {
   crypto::key_derivation derivation;
@@ -9070,7 +9069,7 @@ void wallet2::check_tx_key(const crypto::hash &txid, const crypto::secret_key &t
 
   check_tx_key_helper(txid, derivation, additional_derivations, address, received, in_pool, confirmations, rawconfirmations);
 }
-
+//----------------------------------------------------------------------------------------------------
 void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_derivation &derivation, const std::vector<crypto::key_derivation> &additional_derivations, const cryptonote::account_public_address &address, uint64_t &received, bool &in_pool, uint64_t &confirmations, uint64_t &rawconfirmations)
 {
   COMMAND_RPC_GET_TRANSACTIONS::request req;
@@ -9149,7 +9148,8 @@ void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_de
   }
 
   in_pool = res.txs.front().in_pool;
-  rawconfirmations = (uint64_t)-1;
+  rawconfirmations = 0; // (uint64_t)-1;
+  // TODO commented portion above is what was here initially
   if (!in_pool)
   {
     std::string err;
@@ -9159,6 +9159,9 @@ void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_de
       confirmations = rawconfirmations;
     }
   }
+
+#ifdef ENABLE_DPOWCONFS
+
   COMMAND_RPC_GET_NTZ_DATA::request req_ntz;
   COMMAND_RPC_GET_NTZ_DATA::response res_ntz;
   m_daemon_rpc_mutex.lock();
@@ -9178,6 +9181,7 @@ void wallet2::check_tx_key_helper(const crypto::hash &txid, const crypto::key_de
       }
     }
   }
+#endif
 }
 
 std::string wallet2::get_tx_proof(const crypto::hash &txid, const cryptonote::account_public_address &address, bool is_subaddress, const std::string &message)

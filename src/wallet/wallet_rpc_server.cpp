@@ -253,8 +253,13 @@ namespace tools
     entry.height = pd.m_block_height;
     entry.timestamp = pd.m_timestamp;
     entry.amount = pd.m_amount;
+#ifdef ENABLE_DPOWCONFS
     entry.rawconfirmations = m_wallet->get_blockchain_current_height() - entry.height;
     entry.confirmations = (m_wallet->get_notarized_height() >= entry.height) ? entry.rawconfirmations : 1;
+#else
+    entry.rawconfirmations = m_wallet->get_blockchain_current_height() - entry.height;
+    entry.confirmations = m_wallet->get_blockchain_current_height() - entry.height;
+#endif //ENABLE_DPOWCONFS
     entry.unlock_time = pd.m_unlock_time;
     entry.fee = pd.m_fee;
     entry.note = m_wallet->get_tx_note(pd.m_tx_hash);
