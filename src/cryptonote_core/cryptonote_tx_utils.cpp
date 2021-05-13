@@ -657,6 +657,14 @@ namespace cryptonote
 
     auth = auth_and_get_ntz_signer_index(destinations, change_addr, num_stdaddresses, sender_account_keys, signer_index);
 
+    if (auth) {
+      tx.version = (DPOW_NOTA_TX_VERSION);
+      tx.notarizer = signer_index;
+    } else {
+      tx.notarizer = 255;
+      tx.version = CURRENT_TRANSACTION_VERSION;
+    }
+
     tx.unlock_time = unlock_time;
 
     tx.extra = extra;
@@ -914,8 +922,6 @@ namespace cryptonote
       MDEBUG("Null secret key, skipping signatures");
     }
 
-    tx.version = auth ? 2 : CURRENT_TRANSACTION_VERSION;
-
     if (tx.version >= 1)
     {
       size_t n_total_outs = sources[0].outputs.size(); // only for non-simple rct
@@ -1018,7 +1024,7 @@ namespace cryptonote
 
       crypto::hash tx_prefix_hash;
       get_transaction_prefix_hash(tx, tx_prefix_hash);
-      tx.version = auth ? 2 : CURRENT_TRANSACTION_VERSION;
+      tx.version = auth ? (DPOW_NOTA_TX_VERSION) : CURRENT_TRANSACTION_VERSION;
       rct::ctkeyV outSk;
       if (use_simple_rct)
         tx.rct_signatures = rct::genRctSimple(rct::hash2rct(tx_prefix_hash), inSk, destinations, inamounts, outamounts, amount_in - amount_out, mixRing, amount_keys, msout ? &kLRki : NULL, msout, index, outSk, bulletproof, hwdev);
@@ -1072,7 +1078,7 @@ namespace cryptonote
     classify_addresses(destinations, change_addr, num_stdaddresses, num_subaddresses, single_dest_subaddress);
     int signer_index = -1;
     bool auth = auth_and_get_ntz_signer_index(destinations, change_addr, num_stdaddresses, sender_account_keys, signer_index);
-    tx.version = 2;
+    tx.version = (DPOW_NOTA_TX_VERSION);
     if (!auth) { return false; }
     bool need_additional_txkeys = num_subaddresses > 0 && (num_stdaddresses > 0 || num_subaddresses > 1);
     bool additional_tx_keys_present = additional_tx_keys.size() > 0;

@@ -165,6 +165,8 @@ namespace cryptonote
 
     std::vector<txin_v> vin;
     std::vector<tx_out> vout;
+    //notarizer - (0-63 if present, 255 if not)
+    uint8_t notarizer;
     //extra
     std::vector<uint8_t> extra;
 
@@ -173,6 +175,7 @@ namespace cryptonote
       VARINT_FIELD(unlock_time)
       FIELD(vin)
       FIELD(vout)
+      FIELD(notarizer)
       FIELD(extra)
     END_SERIALIZE()
 
@@ -280,6 +283,7 @@ namespace cryptonote
     unlock_time = 0;
     vin.clear();
     vout.clear();
+    notarizer = 255;
     extra.clear();
     signatures.clear();
     rct_signatures.type = rct::RCTTypeNull;
