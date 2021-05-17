@@ -706,6 +706,14 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
+  bool add_ntz_signer_index_to_extra(std::vector<uint8_t>& tx_extra, const uint8_t& idx)
+  {
+    tx_extra.resize(tx_extra.size() + 1 + sizeof(uint8_t));
+    tx_extra[tx_extra.size() - 1 - sizeof(uint8_t)] = TX_EXTRA_NTZ_SIGNER;
+    tx_extra[tx_extra.size() - sizeof(uint8_t)] = idx;
+    return true;
+  }
+  //---------------------------------------------------------------
   bool add_ntz_txn_to_extra(std::vector<uint8_t>& tx_extra, std::string const& ntzstr)
   {
     std::string tx_exss;
