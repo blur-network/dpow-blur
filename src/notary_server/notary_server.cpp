@@ -38,7 +38,6 @@
 using namespace epee;
 
 #include "notary_server.h"
-#include "notarization_tx_cache.h"
 #include "wallet/wallet_args.h"
 #include "common/command_line.h"
 #include "common/i18n.h"
@@ -236,7 +235,7 @@ namespace tools
              sent_to_pool = false; // reset once per cycle
            }
 
-           if (get_ntz_cache_count() <= 1)
+           /*if (get_ntz_cache_count() <= 1)
            {
              if (on_create_ntz_transfer(req, res, e)) {
                sent_to_pool = res.sent_to_pool;
@@ -245,7 +244,7 @@ namespace tools
                  sent_to_pool = res.sent_to_pool;
                }
              }
-           }
+           }*/
 
            if (!check_if_sent_to_pool()) {
              sent_to_pool = false;
@@ -253,7 +252,7 @@ namespace tools
 
            if (height >= (notarization_wait)) {
            const size_t count = m_wallet->get_ntzpool_count(true);
-             if ((count >= 1) && (get_ntz_cache_count() >= 2) && !sent_to_pool) {
+             if ((count >= 1) && !sent_to_pool) {
                notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request request;
                notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response response = AUTO_VAL_INIT(response);
                epee::json_rpc::error err;
@@ -1270,7 +1269,7 @@ namespace tools
       std::string const prior_ptx_hash = epee::string_tools::pod_to_hex(crypto::null_hash);
       res.sent_to_pool = false;
 
-      if ((get_ntz_cache_count() >= 2) && (m_wallet->get_ntzpool_count(true) < 1)) {
+      if (m_wallet->get_ntzpool_count(true) < 1) {
         bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false, res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
         if (fill_res) {
           std::string tx_metadata;
@@ -1286,38 +1285,13 @@ namespace tools
           res.sent_to_pool = true;
         }
         return fill_res;
-
-      } else {
-        bool added = add_ptx_to_cache(ptx_vector);
-        MINFO("Pending ntz transaction added to cache! Cache count: " << std::to_string(get_ntz_cache_count()));
-        if (!added) {
-          MINFO("Failed to add ptx to cache! Relaying instead");
-          bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
-             res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
-          if (fill_res && (m_wallet->get_ntzpool_count(true) < 1)) {
-            std::string tx_metadata;
-            for (const auto& each : ptx_vector) {
-              std::pair<crypto::hash,std::string> hash_string = ptx_to_string_hash(each);
-              tx_metadata = hash_string.second;
-              ptx_hash = hash_string.first;
-              //MWARNING("Ptx to string: " << tx_metadata << ", ptx hash: " << epee::string_tools::pod_to_hex(ptx_hash) << std::endl);
-              break;
-            }
-            m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
-            MINFO("Signatures < " << std::to_string(DPOW_SIG_COUNT) << ": [request_ntz_sig, from create_ntz_transfer] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
-            res.sent_to_pool = true;
-          }
-          return fill_res;
-        } else {
-          return true;
-        }
       }
     }
     catch (const std::exception& e)
     {
       handle_rpc_exception(std::current_exception(), er, NOTARY_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);
-      return false;
     }
+    return false;
   }
 //------------------------------------------------------------------------------------------------------------------------------
   bool notary_server::on_append_ntz_sig(const notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::request& req, notary_rpc::COMMAND_RPC_APPEND_NTZ_SIG::response& res, epee::json_rpc::error& er)
@@ -1534,51 +1508,43 @@ pool_recheck:
       uint32_t priority = m_wallet->adjust_priority(3);
       uint64_t unlock_time = m_wallet->get_blockchain_current_height()-1;
       std::vector<wallet2::pending_tx> ptx_vector;
-      if (!get_ntz_cache_count()) {
-        ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx_vec);
-        MINFO("create_ntz_transactions called with sig_count = " << std::to_string(sig_count) <<
-          ", and signers_index = " << index_str);
-        //ptx_vector.push_back(pen_tx);
-      } else {
-        ptx_vector = get_cached_ptx();
-        LOG_PRINT_L1("Ptx loaded from cache!");
-        //ptx_vector.push_back(pen_tx);
-      }
-      if (m_wallet->get_ntzpool_count(true) > 1) {
+      ptx_vector = m_wallet->create_ntz_transactions(dsts, unlock_time, priority, extra, 0, {0,0}, m_trusted_daemon, sig_count, pen_tx_vec);
+      MINFO("create_ntz_transactions, from notary_server::append_ntz_sig called with sig_count = " << std::to_string(sig_count) <<
+            ", and signers_index = " << index_str);
+
+      if (m_wallet->get_ntzpool_count(true) > 1)
+      {
         std::list<std::string> hashes;
-        for (const auto& each : removals) {
+        for (const auto& each : removals)
           hashes.push_back(each.first);
-        }
-        bool remove = m_wallet->remove_ntzpool_txs(hashes);
-        if (!remove) {
+        if(!m_wallet->remove_ntzpool_txs(hashes))
           MERROR("Failed to remove ntzpool txs!");
-            //Not fatal
-        }
+        //Not fatal
       }
 
-        std::string index_vec;
-        for (int i = 0; i < DPOW_SIG_COUNT; i++) {
-          std::string tmp = std::to_string(signers_index[i]);
-          index_vec += tmp;
-        }
+      std::string index_vec;
+      for (int i = 0; i < DPOW_SIG_COUNT; i++) {
+        std::string tmp = std::to_string(signers_index[i]);
+        index_vec += tmp;
+      }
 
-        res.sent_to_pool = false;
-        const std::vector<int> si_const = signers_index;
-        crypto::hash ptx_hash;
-        bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
+      res.sent_to_pool = false;
+      const std::vector<int> si_const = signers_index;
+      crypto::hash ptx_hash;
+      bool fill_res = fill_response(ptx_vector, true, res.tx_key_list, res.amount_list, res.fee_list, res.multisig_txset, false,
           res.tx_hash_list, true, res.tx_blob_list, true, res.tx_metadata_list, er);
-        if (fill_res) {
-          std::string tx_metadata;
-          std::pair<crypto::hash,std::string> hash_string = ptx_to_string_hash(ptx_vector.front());
-          tx_metadata = hash_string.second;
-          ptx_hash = hash_string.first;
+      if (fill_res) {
+        std::string tx_metadata;
+        std::pair<crypto::hash,std::string> hash_string = ptx_to_string_hash(ptx_vector.front());
+        tx_metadata = hash_string.second;
+        ptx_hash = hash_string.first;
 //          MWARNING("Ptx to string: " << tx_metadata << ", ptx hash: " << epee::string_tools::pod_to_hex(ptx_hash) << std::endl);
-          m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
-          res.sent_to_pool = true;
-          MWARNING(" [request_ntz_sig, from append_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
-        }
-       return fill_res;
+        m_wallet->request_ntz_sig(tx_metadata, ptx_hash, ptx_vector, sig_count, payment_id, si_const, prior_tx_hash, prior_ptx_hash);
+        res.sent_to_pool = true;
+        MWARNING(" [request_ntz_sig, from append_ntz_sig] sent with sig_count: " << std::to_string(sig_count) << ", signers_index =  " << index_vec << ", and payment id: " << payment_id);
       }
+      return fill_res;
+    }
     catch (const std::exception& e)
     {
       handle_rpc_exception(std::current_exception(), er, NOTARY_RPC_ERROR_CODE_GENERIC_TRANSFER_ERROR);

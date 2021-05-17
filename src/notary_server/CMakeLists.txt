@@ -2,12 +2,10 @@
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 set(notary_server_sources
   notary_server.cpp
-  notarization_tx_cache.cpp
   ../../external/backward/backward.cpp)
 else()
 set(notary_server_sources
-  notary_server.cpp
-  notarization_tx_cache.cpp)
+  notary_server.cpp)
 endif()
 
 set(notary_server_headers)
@@ -15,9 +13,7 @@ set(notary_server_headers)
 set(notary_server_private_headers
   notary_server.h
   notary_server_error_codes.h
-  notary_server_commands_defs.h
-  notarization_tx_cache.h
-  notarization_tx_container.h)
+  notary_server_commands_defs.h)
 
 monero_private_headers(notary_server
   ${notary_server_private_headers})
