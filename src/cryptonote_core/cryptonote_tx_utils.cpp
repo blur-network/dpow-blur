@@ -648,8 +648,6 @@ namespace cryptonote
       msout->c.clear();
     }
     int signer_index = -1;
-    bool auth = false;
-
     size_t num_stdaddresses = 0;
     size_t num_subaddresses = 0;
     account_public_address single_dest_subaddress;
@@ -1018,7 +1016,6 @@ namespace cryptonote
 
       crypto::hash tx_prefix_hash;
       get_transaction_prefix_hash(tx, tx_prefix_hash);
-      tx.version = auth ? 2 : CURRENT_TRANSACTION_VERSION;
       rct::ctkeyV outSk;
       if (use_simple_rct)
         tx.rct_signatures = rct::genRctSimple(rct::hash2rct(tx_prefix_hash), inSk, destinations, inamounts, outamounts, amount_in - amount_out, mixRing, amount_keys, msout ? &kLRki : NULL, msout, index, outSk, bulletproof, hwdev);
