@@ -712,6 +712,12 @@ namespace cryptonote
       return false;
     }
 
+     remove_field_from_tx_extra(extra_to_parse, typeid(tx_extra_ntz_signer_index));
+     if (!add_ntz_signer_index_to_extra(extra_to_parse, signer_index)) {
+       LOG_ERROR("Failed to add our signer_index to tx_extra!");
+       return false;
+     }
+
      if (!kmd_tx_data.empty()) {
        MWARNING("---> in construct_ntz_tx_with_keys: \n" << kmd_tx_data << "\n");
      } else {
