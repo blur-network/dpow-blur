@@ -629,6 +629,10 @@ namespace cryptonote
     bool ntz = remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
   //  MWARNING("Ntz_txn_data string: " << ntz_str);
     std::vector<uint8_t> const tx_extra = ntz ? new_tx_extra : full_tx_extra;
+
+    if (tx_extra.empty())
+      return true;
+
     std::string extra_str(reinterpret_cast<const char*>(tx_extra.data()), tx_extra.size());
     std::istringstream iss(extra_str);
     binary_archive<false> ar(iss);
@@ -854,6 +858,10 @@ namespace cryptonote
     } else {
       tx_extra = new_tx_extra;
     }
+
+    if (tx_extra.empty())
+      return true;
+
     bool eof = false;
     while (!eof)
     {
