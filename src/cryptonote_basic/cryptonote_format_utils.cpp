@@ -505,7 +505,7 @@ namespace cryptonote
     return r;
   }
   //---------------------------------------------------------------
-  bool remove_ntz_data_from_tx_extra(std::vector<uint8_t> const& tx_extra, std::vector<uint8_t>& new_extra, std::vector<uint8_t>& ntz_data, blobdata& ntz_str)
+  void remove_ntz_data_from_tx_extra(std::vector<uint8_t> const& tx_extra, std::vector<uint8_t>& new_extra, std::vector<uint8_t>& ntz_data, blobdata& ntz_str)
   {
     size_t ntz_data_size;
     uint8_t ex_nonce_size;
@@ -589,8 +589,7 @@ namespace cryptonote
     }
     else
     {
-      MERROR("Failed to remove_ntz_data: tx.extra disordered, ntz_tx_data should be first!");
-      return false;
+      return;
     }
 
     if ((tmp.front() == TX_EXTRA_TAG_PUBKEY) || (tmp.front() == TX_EXTRA_TAG_ADDITIONAL_PUBKEYS))
@@ -621,8 +620,6 @@ namespace cryptonote
       new_extra.push_back(tx_extra[i]);
       tmp.pop_front();
     }
-
-    return true;
   }
   //---------------------------------------------------------------
   bool parse_tx_extra(const std::vector<uint8_t>& full_tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
@@ -636,9 +633,9 @@ namespace cryptonote
     std::vector<uint8_t> ntz_tx_data;
     std::string ntz_str;
     tx_extra_field field;
-    bool ntz = remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
+    remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
   //  MWARNING("Ntz_txn_data string: " << ntz_str);
-    std::vector<uint8_t> const tx_extra = ntz ? new_tx_extra : full_tx_extra;
+    std::vector<uint8_t> const tx_extra = (!ntz_str.empty()) ? new_tx_extra : full_tx_extra;
 
     if (tx_extra.empty())
       return true;
@@ -861,13 +858,9 @@ namespace cryptonote
     std::string ntz_str;
     std::vector<uint8_t> new_tx_extra, ntz_tx_data, tx_extra;
 
-    bool rem = remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
+    remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
 //    MWARNING("----- remove_field_from_tx_extra() [full_extra]: " << tx_extra_stream.str());
-    if (!rem) {
-      tx_extra = full_tx_extra;
-    } else {
-      tx_extra = new_tx_extra;
-    }
+    tx_extra = (!ntz_str.empty()) ? new_tx_extra : full_tx_extra;
 
     if (tx_extra.empty())
       return true;

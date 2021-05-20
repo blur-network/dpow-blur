@@ -2675,14 +2675,8 @@ namespace cryptonote
       if (!parse_and_validate_tx_from_blob(tx_blob, tx)) {
         MERROR("Couldn't parse tx from blob!");
       } else {
-        bool rem = remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_rem);
-        if (rem) {
-          /*std::string string_ntz_data;
-          for (const auto& each : ntz_data) {
-            string_ntz_data += epee::string_tools::pod_to_hex(each);
-          }
-          MWARNING("string_ntz_data: " << string_ntz_data);
-          MWARNING("ntz_rem: " << ntz_rem);*/
+        remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_rem);
+        if (!ntz_rem.empty()) {
           uint8_t* ntz_data_ptr = ntz_data.data();
           bits256 bits = komodo::bits256_doublesha256(ntz_data_ptr, ntz_data.size());
           for (const auto& each : bits.bytes) {
