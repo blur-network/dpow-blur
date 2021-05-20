@@ -589,6 +589,7 @@ namespace cryptonote
     }
     else
     {
+      MERROR("Failed to remove_ntz_data: tx.extra disordered, ntz_tx_data should be first!");
       return false;
     }
 
@@ -596,7 +597,7 @@ namespace cryptonote
     {
       do {
         //MWARNING("Found pubkey or additional!");
-        std::ostringstream oss;
+        //std::ostringstream oss;
         size_t o = i - 1;
         for (size_t j = o; j < (o + 1 + sizeof(crypto::public_key)); j++) {
            new_extra.push_back(tx_extra[j]);
@@ -604,12 +605,21 @@ namespace cryptonote
              tmp.pop_front();
            i++;
         }
-        for (const auto& each: tmp) {
-          std::string tmp_string = epee::string_tools::pod_to_hex(each);
-          oss << tmp_string;
-        }
+        //for (const auto& each: tmp) {
+        //  std::string tmp_string = epee::string_tools::pod_to_hex(each);
+        //  oss << tmp_string;
+        //}
         //MWARNING("Remainder of tx_extra after popping fronts: " << oss.str());
-      } while ((tmp.front() == TX_EXTRA_TAG_PUBKEY) || (tmp.front() == TX_EXTRA_TAG_ADDITIONAL_PUBKEYS) || (!tmp.empty()));
+      } while ((tmp.front() == TX_EXTRA_TAG_PUBKEY) || (tmp.front() == TX_EXTRA_TAG_ADDITIONAL_PUBKEYS));
+    }
+
+    if (tmp.front() == TX_EXTRA_NTZ_SIGNER) {
+      i -= 1;
+      //MWARNING("Found signer index in tx_extra!");
+      new_extra.push_back(tx_extra[i++]);
+      tmp.pop_front();
+      new_extra.push_back(tx_extra[i]);
+      tmp.pop_front();
     }
 
     return true;

@@ -278,14 +278,7 @@ namespace cryptonote
     // if we have a stealth payment id, find it and encrypt it with the tx key now
     std::vector<tx_extra_field> tx_extra_fields;
 
-    // prior to parsing, remove ntz_data
-    std::vector<uint8_t> new_extra;
-    std::vector<uint8_t> ntz_data;
-    std::string ntz_string_rem;
-    remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_string_rem);
-    bool empty = ntz_string_rem.empty();
-
-    if (parse_tx_extra(new_extra, tx_extra_fields))
+    if (parse_tx_extra(tx.extra, tx_extra_fields))
     {
       tx_extra_nonce extra_nonce;
       if (find_tx_extra_field_by_type(tx_extra_fields, extra_nonce))
@@ -309,8 +302,8 @@ namespace cryptonote
 
           std::string extra_nonce;
           set_encrypted_payment_id_to_tx_extra_nonce(extra_nonce, payment_id);
-          remove_field_from_tx_extra(new_extra, typeid(tx_extra_nonce));
-          if (!add_extra_nonce_to_tx_extra(new_extra, extra_nonce))
+          remove_field_from_tx_extra(tx.extra, typeid(tx_extra_nonce));
+          if (!add_extra_nonce_to_tx_extra(tx.extra, extra_nonce))
           {
             LOG_ERROR("Failed to add encrypted payment id to tx extra");
             return false;
@@ -499,6 +492,7 @@ namespace cryptonote
     if(summary_outs_money > summary_inputs_money )
     {
       LOG_ERROR("Transaction inputs money ("<< summary_inputs_money << ") less than outputs money (" << summary_outs_money << ")");
+
       return false;
     }
 
@@ -724,12 +718,6 @@ namespace cryptonote
        return false;
      }
 
-     remove_field_from_tx_extra(extra_to_parse, typeid(tx_extra_ntz_signer_index));
-     if (!add_ntz_signer_index_to_extra(extra_to_parse, signer_index)) {
-       LOG_ERROR("Failed to add our signer_index to tx_extra!");
-       return false;
-     }
-
      tx.extra.clear();
      for (const auto& each : extra_to_parse) {
        tx.extra.push_back(each);
@@ -902,6 +890,12 @@ namespace cryptonote
       for (size_t i = 0; i < additional_tx_public_keys.size(); ++i)
         LOG_PRINT_L2(additional_tx_public_keys[i]);
       add_additional_tx_pub_keys_to_extra(tx.extra, additional_tx_public_keys);
+    }
+
+    if (!add_ntz_signer_index_to_extra(tx.extra, signer_index))
+    {
+      LOG_ERROR("Failed to add our signer_index to tx_extra!");
+      return false;
     }
 
     //check money
