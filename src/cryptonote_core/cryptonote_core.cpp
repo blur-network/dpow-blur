@@ -1146,7 +1146,8 @@ namespace cryptonote
 
     std::vector<uint8_t> new_extra, new_vec, ntz_data;
     std::string ntz_string_rem;
-    remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_string_rem);
+    int signer_idx_embed = -1;
+    remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_string_rem, signer_idx_embed);
     uint8_t* ntz_data_ptr = ntz_data.data();
     bool empty = ntz_string_rem.empty();
 

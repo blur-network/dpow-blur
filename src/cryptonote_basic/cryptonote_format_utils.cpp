@@ -505,7 +505,7 @@ namespace cryptonote
     return r;
   }
   //---------------------------------------------------------------
-  void remove_ntz_data_from_tx_extra(std::vector<uint8_t> const& tx_extra, std::vector<uint8_t>& new_extra, std::vector<uint8_t>& ntz_data, blobdata& ntz_str)
+  void remove_ntz_data_from_tx_extra(std::vector<uint8_t> const& tx_extra, std::vector<uint8_t>& new_extra, std::vector<uint8_t>& ntz_data, blobdata& ntz_str, int& signer_index)
   {
     size_t ntz_data_size;
     uint8_t ex_nonce_size;
@@ -618,8 +618,13 @@ namespace cryptonote
       new_extra.push_back(tx_extra[i++]);
       tmp.pop_front();
       new_extra.push_back(tx_extra[i]);
+      signer_index = tx_extra[i];
       tmp.pop_front();
+    } else {
+      signer_index = -1;
     }
+    //TODO: handle excess tx.extra data if present
+
   }
   //---------------------------------------------------------------
   bool parse_tx_extra(const std::vector<uint8_t>& full_tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
@@ -633,7 +638,8 @@ namespace cryptonote
     std::vector<uint8_t> ntz_tx_data;
     std::string ntz_str;
     tx_extra_field field;
-    remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
+    int signer_idx_embed = -1;
+    remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str, signer_idx_embed);
   //  MWARNING("Ntz_txn_data string: " << ntz_str);
     std::vector<uint8_t> const tx_extra = (!ntz_str.empty()) ? new_tx_extra : full_tx_extra;
 
@@ -857,8 +863,9 @@ namespace cryptonote
     binary_archive<true> newar(oss);
     std::string ntz_str;
     std::vector<uint8_t> new_tx_extra, ntz_tx_data, tx_extra;
+    int signer_idx_embed = -1;
 
-    remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str);
+    remove_ntz_data_from_tx_extra(full_tx_extra, new_tx_extra, ntz_tx_data, ntz_str, signer_idx_embed);
 //    MWARNING("----- remove_field_from_tx_extra() [full_extra]: " << tx_extra_stream.str());
     tx_extra = (!ntz_str.empty()) ? new_tx_extra : full_tx_extra;
 
