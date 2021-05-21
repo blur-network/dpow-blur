@@ -184,16 +184,7 @@ curl -X POST http://127.0.0.1:12121/json_rpc -d '{"method":"create_ntz_transfer"
 
 *Notes:*
 
-The command above will create a new notarization tx with one signature.
-
-The first two times this command is called, the generated transactions will be added to a cache (`ntz_ptx_cache`). 
-
-Once there are two `pending_tx`s in the cache, the third call will be relayed as a request for more signatures using `NOTIFY_REQUEST_NTZ_SIG`
-
-Destinations for the transaction are automatically populated, using the BTC & CryptoNote pubkeys provided in `komodo_notaries.h`.  Each notary wallet is sent 0.00000001 BLUR.
-
-
-**TL;DR: The above is performed automatically, upon launching a wallet with pubkeys matching one of the 64 hardcoded keypairs.  The method `create_ntz_sig` is called twice before the wallet will check the notarization pool for pending ntz's.  These two calls cache the tx blob and data, and the cache serves to speed up the addition of new signatures to pending ntz's, when found in the ntzpool. Each call takes about 15 seconds to complete.**
+The command above will create a new notarization tx with one signature, back to the NN's own address (a churn).  Each transaction sent is 0.00000001 BLUR (+fees).
 
 
 ---
@@ -201,7 +192,7 @@ Destinations for the transaction are automatically populated, using the BTC & Cr
 
 <h2 id="append-sig">Appending signatures to a pending notarization</h2>
 
-**Note: This should be performed automatically, if the cache is full (contains two transactions), and a notarization sequence has already begun (Pending notarization is in pool already)** 
+**Note: This should be performed automatically, once a notarization sequence has already begun (Pending notarization is in pool already, with `sig_count == 1`)** 
 
 If you wish to call it manually, use the syntax below:
 
@@ -243,7 +234,7 @@ Please, wait for further signatures
 
 <h2 id="relay-tx">Relaying a request for Notarization Signatures from other Notary Nodes:</h2>
 
-**This will also be performed automatically, upon a successful and non-cacheing call to either of the above RPC methods**
+**This will also be performed automatically, upon a successful call to either of the above RPC methods**
 
 To relay the created `tx_blob` from the previous command `ntz_transfer` issued to the wallet, perform the following:
 
