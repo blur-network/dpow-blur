@@ -1112,7 +1112,8 @@ namespace cryptonote
   //-----------------------------------------------------------------------------------------------
   bool core::add_new_ntz_req(transaction& tx, const crypto::hash& tx_hash, const crypto::hash& tx_prefix_hash, size_t blob_size, ntz_req_verification_context& tvc, bool keeped_by_block, bool relayed, bool do_not_relay, int const& sig_count, std::string const& signers_str, cryptonote::blobdata const& ptx_blob, crypto::hash const& ptx_hash, crypto::hash const& prior_tx_hash, crypto::hash const& prior_ptx_hash)
   {
-    if (m_target_blockchain_height) {
+    if (m_target_blockchain_height)
+    {
       // m_target_height is set to 0 on init, and occassionally in protocol_handler.inl
       if (m_blockchain_storage.get_db().height() < (m_target_blockchain_height - 1))
       {
@@ -1127,30 +1128,47 @@ namespace cryptonote
       return true;
     }
 
-    if (tx.version != (DPOW_NOTA_TX_VERSION)) {
+    if (tx.version != (DPOW_NOTA_TX_VERSION))
+    {
       MERROR("Encountered ntz sig request with incorrect tx version! Failing validation...");
       return false;
     }
 
     std::list<int> signers_index;
-    for (int i = 0; i < (DPOW_SIG_COUNT); i++) {
+    int ntz_signer = -1;
+    for (int i = 0; i < (DPOW_SIG_COUNT); i++)
+    {
       std::string si_tmp = signers_str.substr(i*2, 2);
       int s_ind = std::stoi(si_tmp, nullptr, 10);
-      if ((s_ind >= 64) || (s_ind < -1)) {
+      if ((s_ind >= 64) || (s_ind < -1))
+      {
         MERROR("Error at core::add_new_tx! signer_index expected value: [-1,63] || actual value: " << si_tmp);
         MERROR("Transaction with issue: " << epee::string_tools::pod_to_hex(get_transaction_hash(tx)));
         return false;
       }
       signers_index.push_back(s_ind);
+      if (s_ind != -1)
+        ntz_signer = s_ind;
     }
 
     std::vector<uint8_t> new_extra, new_vec, ntz_data;
     std::string ntz_string_rem;
     int signer_idx_embed = -1;
     remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_string_rem, signer_idx_embed);
-    uint8_t* ntz_data_ptr = ntz_data.data();
-    bool empty = ntz_string_rem.empty();
 
+    if (signer_idx_embed == (-1))
+    {
+      MERROR("Couldn't extract signer_idx_embed from tx.extra!");
+      return false;
+    } else {
+      if (signer_idx_embed != ntz_signer)
+      {
+        MERROR("Error: signer_idx_embed and ntz_signer mismatch for tx: " << epee::string_tools::pod_to_hex(get_transaction_hash(tx)));
+        return false;
+      }
+    }
+
+    uint8_t* ntz_data_ptr = ntz_data.data();
     uint8_t has_raw_ntz_data = 0;
 
     bits256 bits = komodo::bits256_doublesha256(ntz_data_ptr, ntz_data.size());
@@ -1160,7 +1178,7 @@ namespace cryptonote
     std::string hex_from_bits = bytes256_to_hex(new_vec);
     MWARNING("Bits from doublesha = " << hex_from_bits);
 
-    if (!empty)
+    if (!ntz_string_rem.empty())
       has_raw_ntz_data = 1;
 
     int neg = -1;
