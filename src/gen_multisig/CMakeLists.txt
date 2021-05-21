@@ -48,8 +48,6 @@ target_link_libraries(gen_multisig
     ${READLINE_LIBRARIES}
     ${EXTRA_LIBRARIES}
     ${OPENSSL_LIBRARIES})
-add_dependencies(gen_multisig
-  version)
 set_property(TARGET gen_multisig
   PROPERTY
     OUTPUT_NAME "blur-gen-trusted-multisig")
