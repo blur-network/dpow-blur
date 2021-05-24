@@ -1341,6 +1341,9 @@ namespace cryptonote
       return false;
     }
 
+    std::vector<cryptonote::transaction> txs;
+    std::vector<std::string> btc_hashes;
+
     for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {
       ntz_tx_info const& each_info = tx_infos[positions[i]];
       tx_verification_context txvc = AUTO_VAL_INIT(txvc);
@@ -1370,16 +1373,36 @@ namespace cryptonote
         if (!parse_and_validate_tx_from_blob(each_info.tx_blob, tx)) {
           MERROR("Failed to parse tx in conversion from ntz->txpool");
           return false;
+        } else {
+          txs.push_back(tx);
         }
       }
-     // flushing above seems like a very non-graceful way to about this. but, it gets things working for now.
-
       uint8_t version = m_blockchain.get_current_hard_fork_version();
       if (!add_tx(tx, tx_hash, blob_size, txvc, false, false, false, version)) {
         MERROR("Failed to add transaction with hash: " << epee::string_tools::pod_to_hex(tx_hash) << ", to txpool in conversion from ntzpool!");
         return false;
       }
+      //TODO: move above outside of loop. some txs may be converted even in event of failure, as written
     }
+
+    for (const auto& tx : txs)
+    {
+      std::vector<uint8_t> new_extra, ntz_data;
+      std::string ntz_blob, opreturn, btchash, srchash, desthash, symbol;
+      uint64_t embed_height = 0;
+      int ntz_signer_idx = -1;
+      remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_blob, ntz_signer_idx);
+      if (!extract_and_parse_opreturn(ntz_blob, opreturn, btchash, srchash, desthash, embed_height, symbol))
+      {
+        MERROR("Failed to parse opreturn from raw_tx_hex in ntzpool conversion!");
+        return false;
+      }
+      else
+      {
+        btc_hashes.push_back(btchash);
+      }
+    }
+
     return true;
   }
   //---------------------------------------------------------------------------------
