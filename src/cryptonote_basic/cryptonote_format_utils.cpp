@@ -627,6 +627,31 @@ namespace cryptonote
 
   }
   //---------------------------------------------------------------
+  int32_t verify_embedded_ntz_data(std::vector<cryptonote::transaction> const& txs, std::vector<std::string>& btc_hashes, std::vector<uint64_t>& heights)
+  {
+    for (const auto& tx : txs)
+    {
+      std::vector<uint8_t> new_extra, ntz_data;
+      std::string ntz_blob, opreturn, btchash, srchash, desthash, symbol;
+      uint64_t embed_height = 0;
+      int ntz_signer_idx = -1;
+      remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_blob, ntz_signer_idx);
+      if (!extract_and_parse_opreturn(ntz_blob, opreturn, btchash, srchash, desthash, embed_height, symbol))
+      {
+        MERROR("Failed to parse opreturn from raw_tx_hex in ntzpool conversion!");
+        return (-1);
+      }
+      else
+      {
+        btc_hashes.push_back(btchash);
+        heights.push_back(embed_height);
+      }
+    }
+    // return 0 if we have mismatched hashes/heights
+
+    return 1;
+  }
+  //---------------------------------------------------------------
   bool parse_tx_extra(const std::vector<uint8_t>& full_tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
   {
     tx_extra_fields.clear();
