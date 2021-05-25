@@ -814,16 +814,6 @@ namespace cryptonote
     return true;
   }
   //---------------------------------------------------------------
-  std::vector<uint8_t> get_ntz_data_from_extra(const std::vector<uint8_t>& tx_extra)
-  {
-    std::vector<tx_extra_field> tx_extra_fields;
-    parse_tx_extra(tx_extra, tx_extra_fields);
-    tx_extra_ntz_txn ntz_txn;
-    if(!find_tx_extra_field_by_type(tx_extra_fields, ntz_txn))
-      return {};
-    return ntz_txn.data;
-  }
-  //---------------------------------------------------------------
   std::vector<crypto::public_key> get_additional_tx_pub_keys_from_extra(const std::vector<uint8_t>& tx_extra)
   {
     // parse

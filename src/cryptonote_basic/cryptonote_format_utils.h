@@ -81,7 +81,6 @@ namespace cryptonote
   bool add_tx_pub_key_to_extra(std::vector<uint8_t>& tx_extra, const crypto::public_key& tx_pub_key);
   bool add_ntz_signer_index_to_extra(std::vector<uint8_t>& tx_extra, const uint8_t& idx);
   bool add_ntz_txn_to_extra(std::vector<uint8_t>& tx_extra, const std::string& input);
-  std::vector<uint8_t> get_ntz_data_from_extra(const std::vector<uint8_t>& tx_extra);
   void remove_ntz_data_from_tx_extra(std::vector<uint8_t> const& tx_extra, std::vector<uint8_t>& new_extra, std::vector<uint8_t>& ntz_data, blobdata& ntz_str, int& signer_index);
   int32_t verify_embedded_ntz_data(std::vector<cryptonote::transaction> const& txs, std::vector<std::string>& btc_hashes, std::vector<uint64_t>& heights);
   std::vector<crypto::public_key> get_additional_tx_pub_keys_from_extra(const std::vector<uint8_t>& tx_extra);
