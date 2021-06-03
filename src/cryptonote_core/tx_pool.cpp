@@ -1386,9 +1386,13 @@ namespace cryptonote
       //TODO: move above outside of loop. some txs may be converted even in event of failure, as written
     }
 
-    if (verify_embedded_ntz_data(txs, btc_hashes, heights) < 0)
+    std::vector<uint32_t> bad_idxs;
+    int32_t verify_ret = verify_embedded_ntz_data(txs, btc_hashes, heights, bad_idxs);
+    if (verify_ret < 1)
     {
       MERROR("Something went wrong when verifying embedded ntz data!");
+      if (verify_ret == 0)
+        MWARNING("Mismatched heights in embedded data!");
       return false;
     }
 

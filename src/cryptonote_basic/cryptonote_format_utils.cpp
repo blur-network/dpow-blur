@@ -627,7 +627,7 @@ namespace cryptonote
 
   }
   //---------------------------------------------------------------
-  int32_t verify_embedded_ntz_data(std::vector<cryptonote::transaction> const& txs, std::vector<std::string>& btc_hashes, std::vector<uint64_t>& heights)
+  int32_t verify_embedded_ntz_data(std::vector<cryptonote::transaction> const& txs, std::vector<std::string>& btc_hashes, std::vector<uint64_t>& heights, std::vector<uint32_t>& inferior_idxs)
   {
     for (const auto& tx : txs)
     {
@@ -647,6 +647,20 @@ namespace cryptonote
         heights.push_back(embed_height);
       }
     }
+    auto max_height = *std::max_element(heights.begin(), heights.end());
+    MWARNING("max_height = " << max_height);
+    uint32_t tx_idx = 0;
+    for (const auto& each : heights)
+    {
+      if (max_height != each)
+      {
+        inferior_idxs.push_back(tx_idx);
+      }
+      tx_idx++;
+    }
+
+    if (!inferior_idxs.empty())
+      return 0;
     // return 0 if we have mismatched hashes/heights
 
     return 1;
