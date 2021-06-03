@@ -1342,60 +1342,69 @@ namespace cryptonote
     }
 
     std::vector<cryptonote::transaction> txs;
+    std::vector<crypto::hash> cn_hashes;
+    std::vector<size_t> blob_sizes;
     std::vector<std::string> btc_hashes;
     std::vector<uint64_t> heights;
 
-    for (size_t i = 0; i < (DPOW_SIG_COUNT); i++) {
+    for (size_t i = 0; i < (DPOW_SIG_COUNT); i++)
+    {
       ntz_tx_info const& each_info = tx_infos[positions[i]];
-      tx_verification_context txvc = AUTO_VAL_INIT(txvc);
-
-      /*txvc.m_should_be_relayed = tvc.m_should_be_relayed;
-      txvc.m_verifivation_failed = tvc.m_verifivation_failed;
-      txvc.m_verifivation_impossible = tvc.m_verifivation_impossible;
-      txvc.m_added_to_pool = tvc.m_added_to_pool;
-      txvc.m_low_mixin = tvc.m_low_mixin;
-      txvc.m_double_spend = tvc.m_double_spend;
-      txvc.m_invalid_input = tvc.m_invalid_input;
-      txvc.m_invalid_output = tvc.m_invalid_output;
-      txvc.m_too_big = tvc.m_too_big;
-      txvc.m_overspend = tvc.m_overspend;
-      txvc.m_fee_too_low = tvc.m_fee_too_low;
-      txvc.m_not_rct = tvc.m_not_rct;
-     */
-
       crypto::hash tx_hash;
-      if(!string_to_hash(each_info.id_hash, tx_hash)) {
+      if (!string_to_hash(each_info.id_hash, tx_hash))
+      {
         MERROR("Error converting id_hash to tx_hash in ntz->txpool conversion!");
         return false;
+      } else {
+        cn_hashes.push_back(tx_hash);
       }
-      uint64_t blob_size = each_info.blob_size;
+      blob_sizes.push_back(each_info.blob_size);
       cryptonote::transaction tx;
-      if (!each_info.tx_blob.empty()) {
-        if (!parse_and_validate_tx_from_blob(each_info.tx_blob, tx)) {
+      if (!each_info.tx_blob.empty())
+      {
+        if (!parse_and_validate_tx_from_blob(each_info.tx_blob, tx))
+        {
           MERROR("Failed to parse tx in conversion from ntz->txpool");
           return false;
         } else {
           txs.push_back(tx);
         }
       }
-      uint8_t version = m_blockchain.get_current_hard_fork_version();
-      if (!add_tx(tx, tx_hash, blob_size, txvc, false, false, false, version)) {
-        MERROR("Failed to add transaction with hash: " << epee::string_tools::pod_to_hex(tx_hash) << ", to txpool in conversion from ntzpool!");
-        return false;
-      }
-      //TODO: move above outside of loop. some txs may be converted even in event of failure, as written
     }
 
     std::vector<uint32_t> bad_idxs;
     int32_t verify_ret = verify_embedded_ntz_data(txs, btc_hashes, heights, bad_idxs);
     if (verify_ret < 1)
     {
-      MERROR("Something went wrong when verifying embedded ntz data!");
       if (verify_ret == 0)
+      {
         MWARNING("Mismatched heights in embedded data!");
-      return false;
+        std::list<crypto::hash> flush_ids;
+        for (size_t i = 0; i < bad_idxs.size(); i++)
+        {
+          flush_ids.push_back(cn_hashes[i]);
+        }
+        if (!m_blockchain.flush_ntz_txes_from_pool(flush_ids))
+        {
+          MERROR("Failed to remove one or more txs from ntzpool!");
+        }
+      } else {
+        MERROR("Something went wrong when verifying embedded ntz data!");
+        return false;
+      }
     }
-
+    else
+    {
+      for (size_t i = 0; i < txs.size(); i++)
+      {
+        uint8_t version = m_blockchain.get_current_hard_fork_version();
+        tx_verification_context txvc = AUTO_VAL_INIT(txvc);
+        if (!add_tx(txs[i], cn_hashes[i], blob_sizes[i], txvc, false, false, false, version)) {
+          MERROR("Failed to add transaction with hash: " << epee::string_tools::pod_to_hex(cn_hashes[i]) << ", to txpool in conversion from ntzpool!");
+          return false;
+        }
+      }
+    }
     return true;
   }
   //---------------------------------------------------------------------------------
@@ -1503,7 +1512,7 @@ namespace cryptonote
     {
       MWARNING(">>>>>>>>> Ntzpool population complete at entries = " << std::to_string(entries) << ", for DPOW_SIG_COUNT = " << std::to_string(DPOW_SIG_COUNT));
       if(!convert_ntzpool_to_txpool(tx_infos, key_image_infos))
-        MERROR("Something went wrong when converting ntzpool to txpool!");
+        MWARNING("----->>>> ntzpool conversion did not complete fully, wait to re-populate");
     }
   }
   //---------------------------------------------------------------------------------
