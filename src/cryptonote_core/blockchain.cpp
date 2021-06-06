@@ -4050,7 +4050,9 @@ leave:
             MERROR_VER("Error: too few notarization txs in notarizing block!");
             bvc.m_verifivation_failed = true;
             return false;
-          } else {
+          }
+          else
+          {
             if (is_block_notarized(bl))
             {
               MERROR_VER("Blockchain::handle_block_to_main_chain >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(get_block_height(bl)));
@@ -4064,9 +4066,23 @@ leave:
             if (verify_ntz_txs < 1)
             {
               if (verify_ntz_txs == 0)
-                MERROR("Mismatched heights in embedded data!");
+              {
+                std::string badidx_logging;
+                std::string btchash_logging;
+                for (const auto& each : bad_idxs)
+                {
+                  badidx_logging += (std::to_string(each) + " ");
+                }
+                MERROR("Mismatched heights in embedded data, bad idxs at: " << badidx_logging);
+                for (const auto& each : btc_hashes)
+                {
+                  btchash_logging += (each + " ");
+                }
+              }
               else
+              {
                 MERROR("Something went wrong when verifying embedded ntz data!");
+              }
               bvc.m_verifivation_failed = true;
               return false;
             }
