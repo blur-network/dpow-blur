@@ -3986,17 +3986,20 @@ leave:
       }
       uint64_t const ntz_height = komodo::NOTARIZED_HEIGHT;
 
-      if (m_height >= ntz_height) {
-       // height greater than last notarized height
+      if (m_height >= ntz_height)
+      {
+        // height greater than last notarized height
         LOG_PRINT_L1("Blockchain::handle_block_to_main_chain() >> Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
         std::vector<cryptonote::transaction> nota_txs;
         uint64_t num_ntz_txs = 0;
         cryptonote::blobdata txblob;
         std::vector<cryptonote::blobdata> tx_blobs;
-        for (const auto& each: bl.tx_hashes) {
+        for (const auto& each: bl.tx_hashes)
+        {
           cryptonote::blobdata each_blob;
-          if (!get_txpool_tx_blob(each, each_blob)) {
-            MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_alternative_block");
+          if (!get_txpool_tx_blob(each, each_blob))
+          {
+            MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_block_to_main_chain");
             flush_ntzpool();
           }
           tx_blobs.push_back(each_blob);
@@ -4004,35 +4007,55 @@ leave:
         for (const auto& txblob: tx_blobs)
         {
           cryptonote::transaction tx;
-          if (!parse_and_validate_tx_from_blob(txblob, tx)) {
-            MERROR_VER("Failed to parse and validate tx from blob in handle_alternative_block_to_main_chain()!");
+          if (!parse_and_validate_tx_from_blob(txblob, tx))
+          {
+            MERROR_VER("Failed to parse and validate tx from blob in handle_block_to_main_chain()!");
             bvc.m_verifivation_failed = true;
             return false;
           }
-          if (tx.version == (DPOW_NOTA_TX_VERSION)) {
+          if (tx.version == (DPOW_NOTA_TX_VERSION))
+          {
+            nota_txs.push_back(tx);
             num_ntz_txs++;
           }
         }
-        if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
-          MERROR_VER("Error: encountered two notarization txs in a single block!");
+        if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK)
+        {
+          MERROR_VER("Error: encountered notarizing block with excess ntz transactions!");
           bvc.m_verifivation_failed = true;
           return false;
         }
 
-        if (num_ntz_txs > 0) {
-          if ((num_ntz_txs < DPOW_MAX_NOTA_PER_BLOCK)) {
+        if (num_ntz_txs > 0)
+        {
+          if ((num_ntz_txs < DPOW_MAX_NOTA_PER_BLOCK))
+          {
             MERROR_VER("Error: too few notarization txs in notarizing block!");
             bvc.m_verifivation_failed = true;
             return false;
           } else {
-            if (is_block_notarized(bl)) {
-              MERROR_VER("Blockchain::handle_alternative_block >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(get_block_height(bl)));
+            if (is_block_notarized(bl))
+            {
+              MERROR_VER("Blockchain::handle_block_to_main_chain >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(get_block_height(bl)));
+              bvc.m_verifivation_failed = true;
+              return false;
+            }
+            std::vector<std::string> btc_hashes;
+            std::vector<uint64_t> heights;
+            std::vector<uint32_t> bad_idxs;
+            int32_t verify_ntz_txs = verify_embedded_ntz_data(nota_txs, btc_hashes, heights, bad_idxs);
+            if (verify_ntz_txs < 1)
+            {
+              if (verify_ntz_txs == 0)
+                MERROR("Mismatched heights in embedded data!");
+              else
+                MERROR("Something went wrong when verifying embedded ntz data!");
               bvc.m_verifivation_failed = true;
               return false;
             }
           }
-            MWARNING("Notarizing block at height: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
-            is_notarizing_block = true;
+          MWARNING("Notarizing block at height: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
+          is_notarizing_block = true;
         }
       } else {
        // height less than last notarized height
