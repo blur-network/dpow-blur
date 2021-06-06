@@ -1655,11 +1655,14 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
       if (bei.height >= ntz_height)
       {
         LOG_PRINT_L1("Blockchain::handle_alternative_block >> Encountered pre-notarization block greater than height: " << std::to_string(ntz_height));
+        std::vector<cryptonote::transaction> nota_txs;
         uint64_t num_ntz_txs = 0;
         std::vector<cryptonote::blobdata> tx_blobs;
-        for (const auto& each: bei.bl.tx_hashes) {
+        for (const auto& each: bei.bl.tx_hashes)
+        {
           cryptonote::blobdata each_blob;
-          if (!get_txpool_tx_blob(each, each_blob)) {
+          if (!get_txpool_tx_blob(each, each_blob))
+          {
             MERROR_VER("Failed to get transaction from both database and txpool for id: " << each << ", in handle_alternative_block");
             flush_ntzpool();
           }
@@ -1674,6 +1677,7 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
             return false;
           }
           if (tx.version == (DPOW_NOTA_TX_VERSION)) {
+            nota_txs.push_back(tx);
             num_ntz_txs++;
           }
         }
@@ -1692,6 +1696,19 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
 
         if (is_block_notarized(bei.bl)) {
           MERROR_VER("Blockchain::handle_alternative_block >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
+          bvc.m_verifivation_failed = true;
+          return false;
+        }
+        std::vector<std::string> btc_hashes;
+        std::vector<uint64_t> heights;
+        std::vector<uint32_t> bad_idxs;
+        int32_t verify_ntz_txs = verify_embedded_ntz_data(nota_txs, btc_hashes, heights, bad_idxs);
+        if (verify_ntz_txs < 1)
+        {
+          if (verify_ntz_txs == 0)
+            MERROR("Mismatched heights in embedded data!");
+          else
+            MERROR("Something went wrong when verifying embedded ntz data!");
           bvc.m_verifivation_failed = true;
           return false;
         }
