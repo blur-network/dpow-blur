@@ -817,7 +817,8 @@ void BlockchainLMDB::remove_output(const uint64_t amount, const uint64_t& out_in
     throw0(DB_ERROR(lmdb_error(std::string("Error deleting amount for output index ").append(boost::lexical_cast<std::string>(out_index).append(": ")).c_str(), result).c_str()));
 }
 
-void BlockchainLMDB::add_spent_key(const crypto::key_image& k_image)
+void BlockchainLMDB::
+add_spent_key(const crypto::key_image& k_image)
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -831,6 +832,26 @@ void BlockchainLMDB::add_spent_key(const crypto::key_image& k_image)
       throw1(KEY_IMAGE_EXISTS("Attempting to add spent key image that's already in the db"));
     else
       throw1(DB_ERROR(lmdb_error("Error adding spent key image to db transaction: ", result).c_str()));
+  }
+}
+
+void BlockchainLMDB::remove_spent_key(const crypto::key_image& k_image)
+{
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  check_open();
+  mdb_txn_cursors *m_cursors = &m_wcursors;
+
+  CURSOR(spent_keys)
+
+  MDB_val k = {sizeof(k_image), (void *)&k_image};
+  auto result = mdb_cursor_get(m_cur_spent_keys, (MDB_val *)&zerokval, &k, MDB_GET_BOTH);
+  if (result != 0 && result != MDB_NOTFOUND)
+      throw1(DB_ERROR(lmdb_error("Error finding spent key to remove", result).c_str()));
+  if (!result)
+  {
+    result = mdb_cursor_del(m_cur_spent_keys, 0);
+    if (result)
+        throw1(DB_ERROR(lmdb_error("Error adding removal of key image to db transaction", result).c_str()));
   }
 }
 
@@ -853,23 +874,25 @@ void BlockchainLMDB::add_btc_tx(const crypto::hash& btc_txid, const uint64_t hei
   }
 }
 
-void BlockchainLMDB::remove_spent_key(const crypto::key_image& k_image)
+void BlockchainLMDB::remove_btc_tx(const crypto::hash& btc_txid, const uint64_t height)
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
   mdb_txn_cursors *m_cursors = &m_wcursors;
 
-  CURSOR(spent_keys)
+  CURSOR(btc_txids)
 
-  MDB_val k = {sizeof(k_image), (void *)&k_image};
-  auto result = mdb_cursor_get(m_cur_spent_keys, (MDB_val *)&zerokval, &k, MDB_GET_BOTH);
+  btcid_height btcid_h = { btc_txid, height };
+  MDB_val_set(k, btcid_h);
+
+  auto result = mdb_cursor_put(m_cur_btc_txids, (MDB_val *)&zerokval, &k, MDB_GET_BOTH);
   if (result != 0 && result != MDB_NOTFOUND)
-      throw1(DB_ERROR(lmdb_error("Error finding spent key to remove", result).c_str()));
+      throw1(DB_ERROR(lmdb_error("Error finding btc_txid to remove", result).c_str()));
   if (!result)
   {
-    result = mdb_cursor_del(m_cur_spent_keys, 0);
+    result = mdb_cursor_del(m_cur_btc_txids, 0);
     if (result)
-        throw1(DB_ERROR(lmdb_error("Error adding removal of key image to db transaction", result).c_str()));
+        throw1(DB_ERROR(lmdb_error("Error adding removal of btc_txid to db transaction", result).c_str()));
   }
 }
 
@@ -2216,6 +2239,41 @@ bool BlockchainLMDB::tx_exists(const crypto::hash& h, uint64_t& tx_id) const
     ret = true;
 
   return ret;
+}
+
+bool BlockchainLMDB::btc_txid_exists(const crypto::hash& btc_txid, const uint64_t height) const
+{
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  check_open();
+
+  TXN_PREFIX_RDONLY();
+  RCURSOR(btc_txids);
+
+  btcid_height btcid_h = { btc_txid, height };
+  MDB_val_set(key, btcid_h);
+  bool btc_txid_found = false;
+
+  TIME_MEASURE_START(time1);
+  auto get_result = mdb_cursor_get(m_cur_btc_txids, (MDB_val *)&zerokval, &key, MDB_GET_BOTH);
+  if (get_result == 0)
+    btc_txid_found = true;
+  else if (get_result != MDB_NOTFOUND)
+    throw0(DB_ERROR(lmdb_error(std::string("DB error attempting to fetch btcid_height from hash ") + epee::string_tools::pod_to_hex(btc_txid) + ": ", get_result).c_str()));
+
+  // This isn't needed as part of the check. we're not checking consistency of db.
+  // get_result = mdb_cursor_get(m_cur_txs, &val_tx_index, &result, MDB_SET);
+  TIME_MEASURE_FINISH(time1);
+  time_tx_exists += time1;
+
+  TXN_POSTFIX_RDONLY();
+
+  if (! btc_txid_found)
+  {
+    LOG_PRINT_L1("btc_txid with hash " << epee::string_tools::pod_to_hex(btc_txid) << " not found in db");
+    return false;
+  }
+
+  return true;
 }
 
 uint64_t BlockchainLMDB::get_tx_unlock_time(const crypto::hash& h) const

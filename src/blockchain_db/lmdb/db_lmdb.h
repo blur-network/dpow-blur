@@ -233,6 +233,8 @@ public:
   virtual bool tx_exists(const crypto::hash& h) const;
   virtual bool tx_exists(const crypto::hash& h, uint64_t& tx_index) const;
 
+  virtual bool btc_txid_exists(const crypto::hash& btc_txid, const uint64_t height) const;
+
   virtual uint64_t get_tx_unlock_time(const crypto::hash& h) const;
 
   virtual bool get_tx_blob(const crypto::hash& h, cryptonote::blobdata &tx) const;
@@ -358,9 +360,11 @@ private:
 
   virtual void add_spent_key(const crypto::key_image& k_image);
 
+  virtual void remove_spent_key(const crypto::key_image& k_image);
+
   virtual void add_btc_tx(const crypto::hash& btc_txid, const uint64_t height);
 
-  virtual void remove_spent_key(const crypto::key_image& k_image);
+  virtual void remove_btc_tx(const crypto::hash& btc_txid, const uint64_t height);
 
   uint64_t num_outputs() const;
 
