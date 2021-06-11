@@ -360,6 +360,16 @@ class KEY_IMAGE_EXISTS : public DB_EXCEPTION
     KEY_IMAGE_EXISTS(const char* s) : DB_EXCEPTION(s) { }
 };
 
+/**
+ * @brief thrown when a btc_txid exists, and we attempt to add a duplicate
+ */
+class BTC_TXID_EXISTS : public DB_EXCEPTION
+{
+  public:
+    BTC_TXID_EXISTS() : DB_EXCEPTION("The doublesha256 hash to be added already exists!") { }
+    BTC_TXID_EXISTS(const char* s) : DB_EXCEPTION(s) { }
+};
+
 /***********************************
  * End of Exception Definitions
  ***********************************/

@@ -842,10 +842,12 @@ void BlockchainLMDB::add_btc_tx(const crypto::hash& btc_txid, const uint64_t hei
 
   CURSOR(btc_txids)
 
-  MDB_val k = {sizeof(crypto::hash), (void *)&btc_txid};
+  btcid_height btcid_h = { btc_txid, height };
+  MDB_val_set(k, btcid_h);
+
   if (auto result = mdb_cursor_put(m_cur_btc_txids, (MDB_val *)&zerokval, &k, MDB_NODUPDATA)) {
     if (result == MDB_KEYEXIST)
-      throw1(KEY_IMAGE_EXISTS("Attempting to add a btc_txid that's already in the db"));
+      throw1(BTC_TXID_EXISTS("Attempting to add a btc_txid that's already in the db"));
     else
       throw1(DB_ERROR(lmdb_error("Error adding btc txid to db transaction: ", result).c_str()));
   }

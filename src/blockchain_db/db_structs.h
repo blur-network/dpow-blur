@@ -75,6 +75,11 @@ typedef struct blk_height {
     uint64_t bh_height;
 } blk_height;
 
+typedef struct btcid_height {
+    crypto::hash btc_hash;
+    uint64_t blk_height;
+} btcid_height;
+
 typedef struct txindex {
     crypto::hash key;
     tx_data_t data;
