@@ -817,8 +817,7 @@ void BlockchainLMDB::remove_output(const uint64_t amount, const uint64_t& out_in
     throw0(DB_ERROR(lmdb_error(std::string("Error deleting amount for output index ").append(boost::lexical_cast<std::string>(out_index).append(": ")).c_str(), result).c_str()));
 }
 
-void BlockchainLMDB::
-add_spent_key(const crypto::key_image& k_image)
+void BlockchainLMDB::add_spent_key(const crypto::key_image& k_image)
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -2253,17 +2252,11 @@ bool BlockchainLMDB::btc_txid_exists(const crypto::hash& btc_txid, const uint64_
   MDB_val_set(key, btcid_h);
   bool btc_txid_found = false;
 
-  TIME_MEASURE_START(time1);
   auto get_result = mdb_cursor_get(m_cur_btc_txids, (MDB_val *)&zerokval, &key, MDB_GET_BOTH);
   if (get_result == 0)
     btc_txid_found = true;
   else if (get_result != MDB_NOTFOUND)
     throw0(DB_ERROR(lmdb_error(std::string("DB error attempting to fetch btcid_height from hash ") + epee::string_tools::pod_to_hex(btc_txid) + ": ", get_result).c_str()));
-
-  // This isn't needed as part of the check. we're not checking consistency of db.
-  // get_result = mdb_cursor_get(m_cur_txs, &val_tx_index, &result, MDB_SET);
-  TIME_MEASURE_FINISH(time1);
-  time_tx_exists += time1;
 
   TXN_POSTFIX_RDONLY();
 
