@@ -208,6 +208,7 @@ uint64_t Blockchain::get_ntz_count(std::vector<std::tuple<crypto::hash,uint64_t,
 //------------------------------------------------------------------
 crypto::hash Blockchain::get_ntz_merkle(std::vector<std::pair<crypto::hash,uint64_t>> const& notarizations)
 {
+  // TODO: this function is incorrect
   crypto::hash merkle_root = crypto::null_hash;
   std::vector<crypto::hash> hashes;
   std::vector<cryptonote::block> blocks;

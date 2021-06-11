@@ -862,8 +862,9 @@ void BlockchainLMDB::add_btc_tx(const crypto::hash& btc_txid, const uint64_t hei
 
   CURSOR(btc_txids)
 
-  btcid_height btcid_h = { btc_txid, height };
-  MDB_val_set(k, btcid_h);
+  //btcid_height btcid_h = { btc_txid, height };
+  //MDB_val_set(k, btcid_h);
+  MDB_val k = {sizeof(crypto::hash), (void *)&btc_txid};
 
   if (auto result = mdb_cursor_put(m_cur_btc_txids, (MDB_val *)&zerokval, &k, MDB_NODUPDATA)) {
     if (result == MDB_KEYEXIST)
@@ -881,8 +882,10 @@ void BlockchainLMDB::remove_btc_tx(const crypto::hash& btc_txid, const uint64_t 
 
   CURSOR(btc_txids)
 
-  btcid_height btcid_h = { btc_txid, height };
-  MDB_val_set(k, btcid_h);
+  MDB_val k = {sizeof(crypto::hash), (void *)&btc_txid};
+
+  //btcid_height btcid_h = { btc_txid, height };
+  //MDB_val_set(k, btcid_h);
 
   auto result = mdb_cursor_put(m_cur_btc_txids, (MDB_val *)&zerokval, &k, MDB_GET_BOTH);
   if (result != 0 && result != MDB_NOTFOUND)
@@ -2248,8 +2251,10 @@ bool BlockchainLMDB::btc_txid_exists(const crypto::hash& btc_txid, const uint64_
   TXN_PREFIX_RDONLY();
   RCURSOR(btc_txids);
 
-  btcid_height btcid_h = { btc_txid, height };
-  MDB_val_set(key, btcid_h);
+  //btcid_height btcid_h = { btc_txid, height };
+  //MDB_val_set(key, btcid_h);
+
+  MDB_val key = {sizeof(crypto::hash), (void *)&btc_txid};
   bool btc_txid_found = false;
 
   auto get_result = mdb_cursor_get(m_cur_btc_txids, (MDB_val *)&zerokval, &key, MDB_GET_BOTH);

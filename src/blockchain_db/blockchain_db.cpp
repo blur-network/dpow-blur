@@ -138,6 +138,18 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const transacti
     tx_hash = *tx_hash_ptr;
   }
 
+  /*if (tx.version == 2)
+  {
+    crypto::hash btc_hash;
+    uint64_t height = 0;
+    if (verify_embedded_ntz_data(tx, btc_hash, height))
+    {
+      if (!btc_txid_exists(btc_hash, height)) {
+        add_btc_tx(btc_hash, height);
+      }
+    }
+  }*/
+
   for (const txin_v& tx_input : tx.vin)
   {
     if (tx_input.type() == typeid(txin_to_key))
