@@ -39,8 +39,8 @@
 #include "string_tools.h"
 #include "file_io_utils.h"
 #include "common/util.h"
-#include "cryptonote_basic/cryptonote_format_utils.h"
 #include "crypto/crypto.h"
+#include "cryptonote_basic/cryptonote_format_utils.h"
 #include "profile_tools.h"
 #include "ringct/rctOps.h"
 #include "blockchain_db/db_structs.h"
@@ -829,6 +829,23 @@ void BlockchainLMDB::add_spent_key(const crypto::key_image& k_image)
       throw1(KEY_IMAGE_EXISTS("Attempting to add spent key image that's already in the db"));
     else
       throw1(DB_ERROR(lmdb_error("Error adding spent key image to db transaction: ", result).c_str()));
+  }
+}
+
+void BlockchainLMDB::add_btc_tx(const crypto::hash& btc_txid, const uint64_t height)
+{
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  check_open();
+  mdb_txn_cursors *m_cursors = &m_wcursors;
+
+  CURSOR(btc_txids)
+
+  MDB_val k = {sizeof(crypto::hash), (void *)&btc_txid};
+  if (auto result = mdb_cursor_put(m_cur_btc_txids, (MDB_val *)&zerokval, &k, MDB_NODUPDATA)) {
+    if (result == MDB_KEYEXIST)
+      throw1(KEY_IMAGE_EXISTS("Attempting to add a btc_txid that's already in the db"));
+    else
+      throw1(DB_ERROR(lmdb_error("Error adding btc txid to db transaction: ", result).c_str()));
   }
 }
 

@@ -50,6 +50,7 @@
 #define KOMODO_NOTARIES_H
 
 #include <vector>
+#include "bitcoin/bitcoin.h"
 #include "cryptonote_core/cryptonote_core.h"
 #include "cryptonote_protocol/cryptonote_protocol_handler.h"
 #include "p2p/net_node.h"

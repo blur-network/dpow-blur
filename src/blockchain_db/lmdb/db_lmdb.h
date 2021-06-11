@@ -78,6 +78,7 @@ typedef struct mdb_txn_cursors
 #define m_cur_tx_indices	m_cursors->m_txc_tx_indices
 #define m_cur_tx_outputs	m_cursors->m_txc_tx_outputs
 #define m_cur_spent_keys	m_cursors->m_txc_spent_keys
+#define m_cur_btc_txids		m_cursors->m_txc_btc_txids
 #define m_cur_txpool_meta	m_cursors->m_txc_txpool_meta
 #define m_cur_txpool_blob	m_cursors->m_txc_txpool_blob
 #define m_cur_ntzpool_meta	m_cursors->m_txc_ntzpool_meta
@@ -97,6 +98,7 @@ typedef struct mdb_rflags
   bool m_rf_tx_indices;
   bool m_rf_tx_outputs;
   bool m_rf_spent_keys;
+  bool m_rf_btc_txids;
   bool m_rf_txpool_meta;
   bool m_rf_txpool_blob;
   bool m_rf_ntzpool_meta;
@@ -353,6 +355,8 @@ private:
   void remove_output(const uint64_t amount, const uint64_t& out_index);
 
   virtual void add_spent_key(const crypto::key_image& k_image);
+
+  virtual void add_btc_tx(const crypto::hash& btc_txid, const uint64_t height);
 
   virtual void remove_spent_key(const crypto::key_image& k_image);
 

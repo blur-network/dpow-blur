@@ -513,6 +513,8 @@ private:
    */
   virtual void add_spent_key(const crypto::key_image& k_image) = 0;
 
+  virtual void add_btc_tx(const crypto::hash& btc_txid, const uint64_t height) = 0;
+
   /**
    * @brief remove a spent key
    *
