@@ -190,6 +190,8 @@ char const* LMDB_OUTPUT_TXS = "output_txs";
 char const* LMDB_OUTPUT_AMOUNTS = "output_amounts";
 char const* LMDB_SPENT_KEYS = "spent_keys";
 
+char const* LMDB_BTC_TXIDS = "btc_txids";
+
 char const* LMDB_TXPOOL_META = "txpool_meta";
 char const* LMDB_TXPOOL_BLOB = "txpool_blob";
 
