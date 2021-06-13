@@ -138,7 +138,7 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const transacti
     tx_hash = *tx_hash_ptr;
   }
 
-  /*if (tx.version == 2)
+  if (tx.version == 2)
   {
     crypto::hash btc_hash;
     uint64_t height = 0;
@@ -148,7 +148,7 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const transacti
         add_btc_tx(btc_hash, height);
       }
     }
-  }*/
+  }
 
   for (const txin_v& tx_input : tx.vin)
   {
