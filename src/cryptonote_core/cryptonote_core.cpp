@@ -672,6 +672,13 @@ namespace cryptonote
       return false;
     }
 
+    if (!check_signer_index_with_viewkeys(tx))
+    {
+      MERROR("Viewkey check failed against tx destination!");
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+
     return true;
   }
   //-----------------------------------------------------------------------------------------------
