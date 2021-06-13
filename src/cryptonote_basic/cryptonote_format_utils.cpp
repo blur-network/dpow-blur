@@ -627,12 +627,11 @@ namespace cryptonote
 
   }
   //---------------------------------------------------------------
-  bool verify_embedded_ntz_data(cryptonote::transaction const& tx, crypto::hash& btc_hash, uint64_t& height)
+  bool verify_embedded_ntz_data(cryptonote::transaction const& tx, crypto::hash& btc_hash, uint64_t& height, int& ntz_signer_idx)
   {
     std::vector<uint8_t> new_extra, ntz_data;
     std::string ntz_blob, opreturn, btchash, srchash, desthash, symbol;
     uint64_t embed_height = 0;
-    int ntz_signer_idx = -1;
     remove_ntz_data_from_tx_extra(tx.extra, new_extra, ntz_data, ntz_blob, ntz_signer_idx);
     if (!extract_and_parse_opreturn(ntz_blob, opreturn, btchash, srchash, desthash, embed_height, symbol))
     {
@@ -683,6 +682,81 @@ namespace cryptonote
     // return 0 if we have mismatched hashes/heights
 
     return 1;
+  }
+  //---------------------------------------------------------------
+  bool check_signer_index_with_viewkeys(cryptonote::transaction const& tx_const)
+  {
+    std::vector<crypto::secret_key> notary_viewkeys;
+    cryptonote::transaction tx = tx_const;
+    if (!cryptonote::get_notary_secret_viewkeys(notary_viewkeys))
+    {
+      MERROR("Couldn't compute secret viewkeys for notaries");
+      return false;
+    }
+
+    std::vector<std::pair<crypto::public_key,crypto::public_key>> notaries_keys;
+    if (!cryptonote::get_notary_pubkeys(notaries_keys))
+    {
+      MERROR("Couldn't get public spendkeys from notaries!");
+      return false;
+    }
+    std::vector<crypto::public_key> notary_pub_spendkeys;
+    for (const auto& each : notaries_keys) {
+      notary_pub_spendkeys.push_back(each.second);
+    }
+
+    crypto::hash embed_hash = crypto::null_hash;
+    uint64_t height = 0;
+    int ntz_signer_idx = -1;
+    if (!verify_embedded_ntz_data(tx, embed_hash, height, ntz_signer_idx))
+    {
+      MERROR("Couldn't verify embedded ntz data!");
+      return false;
+    }
+    crypto::key_derivation recv_derivation;
+    std::vector<std::pair<crypto::public_key,size_t>> recv_outkeys;
+    size_t pk_index = 0;
+    crypto::secret_key viewkey = notary_viewkeys[ntz_signer_idx];
+
+    rct::rctSig &rv = tx.rct_signatures;
+    if (rv.outPk.size() != tx.vout.size())
+    {
+      MERROR("Failed to parse transaction from blob, bad outPk size in tx " << get_transaction_hash(tx));
+      return false;
+    }
+    for (size_t n = 0; n < tx.rct_signatures.outPk.size(); ++n)
+    {
+      if (tx.vout[n].target.type() != typeid(cryptonote::txout_to_key))
+      {
+        MERROR("Unsupported output type in tx " << get_transaction_hash(tx));
+        return false;
+      }
+      rv.outPk[n].dest = rct::pk2rct(boost::get<cryptonote::txout_to_key>(tx.vout[n].target).key);
+      std::pair<crypto::public_key,size_t> each = std::make_pair(reinterpret_cast<const crypto::public_key&>(rv.outPk[n].dest), n);
+      recv_outkeys.push_back(each);
+    }
+
+    crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index);
+    for (const auto& each : recv_outkeys)
+    {
+      crypto::key_derivation recv_derivation;
+      if (!generate_key_derivation(recv_tx_key, viewkey, recv_derivation))
+      {
+        MERROR("Failed to generate recv_derivation! recv_tx_key = " << recv_tx_key << ", notary_viewkey = " << epee::string_tools::pod_to_hex(viewkey));
+        return false;
+      }
+      else
+      {
+        LOG_PRINT_L1("Recv derivation = " << recv_derivation << ", for pk_index: " << std::to_string(pk_index));
+        crypto::public_key each_pubkey;
+        bool derive = derive_public_key(recv_derivation, each.second, notary_pub_spendkeys[ntz_signer_idx], each_pubkey);
+        if (epee::string_tools::pod_to_hex(each_pubkey) != epee::string_tools::pod_to_hex(each.first)) {
+           MERROR("derived key mismatch = " << epee::string_tools::pod_to_hex(each_pubkey) << ", recv_outkey: " << epee::string_tools::pod_to_hex(each.first));
+           return false;
+        }
+      }
+    }
+    return true;
   }
   //---------------------------------------------------------------
   bool parse_tx_extra(const std::vector<uint8_t>& full_tx_extra, std::vector<tx_extra_field>& tx_extra_fields)
