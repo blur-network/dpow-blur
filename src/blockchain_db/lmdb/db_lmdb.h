@@ -58,6 +58,7 @@ typedef struct mdb_txn_cursors
 
   MDB_cursor *m_txc_spent_keys;
 
+  MDB_cursor *m_txc_btc_indices;
   MDB_cursor *m_txc_btc_txids;
 
   MDB_cursor *m_txc_txpool_meta;
@@ -80,6 +81,7 @@ typedef struct mdb_txn_cursors
 #define m_cur_tx_indices	m_cursors->m_txc_tx_indices
 #define m_cur_tx_outputs	m_cursors->m_txc_tx_outputs
 #define m_cur_spent_keys	m_cursors->m_txc_spent_keys
+#define m_cur_btc_indices	m_cursors->m_txc_btc_indices
 #define m_cur_btc_txids		m_cursors->m_txc_btc_txids
 #define m_cur_txpool_meta	m_cursors->m_txc_txpool_meta
 #define m_cur_txpool_blob	m_cursors->m_txc_txpool_blob
@@ -100,6 +102,7 @@ typedef struct mdb_rflags
   bool m_rf_tx_indices;
   bool m_rf_tx_outputs;
   bool m_rf_spent_keys;
+  bool m_rf_btc_indices;
   bool m_rf_btc_txids;
   bool m_rf_txpool_meta;
   bool m_rf_txpool_blob;
@@ -233,13 +236,15 @@ public:
   virtual bool tx_exists(const crypto::hash& h) const;
   virtual bool tx_exists(const crypto::hash& h, uint64_t& tx_index) const;
 
-  virtual bool btc_txid_exists(const crypto::hash& btc_txid, const uint64_t height) const;
+  virtual bool btc_tx_exists(const crypto::hash& btc_hash, uint64_t& btc_index, uint64_t& height) const;
 
   virtual uint64_t get_tx_unlock_time(const crypto::hash& h) const;
 
   virtual bool get_tx_blob(const crypto::hash& h, cryptonote::blobdata &tx) const;
 
   virtual uint64_t get_tx_count() const;
+
+  virtual uint64_t get_btc_tx_count() const;
 
   virtual std::vector<transaction> get_tx_list(const std::vector<crypto::hash>& hlist) const;
 
@@ -362,9 +367,9 @@ private:
 
   virtual void remove_spent_key(const crypto::key_image& k_image);
 
-  virtual void add_btc_tx(const crypto::hash& btc_txid, const uint64_t height);
+  virtual uint64_t add_btc_tx(const crypto::hash& btc_hash);
 
-  virtual void remove_btc_tx(const crypto::hash& btc_txid, const uint64_t height);
+  virtual void remove_btc_tx_data(const crypto::hash& btc_hash);
 
   uint64_t num_outputs() const;
 
@@ -423,6 +428,7 @@ private:
 
   MDB_dbi m_spent_keys;
 
+  MDB_dbi m_btc_indices;
   MDB_dbi m_btc_txids;
 
   MDB_dbi m_txpool_meta;

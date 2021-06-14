@@ -523,8 +523,8 @@ private:
    */
   virtual void add_spent_key(const crypto::key_image& k_image) = 0;
 
-  virtual void add_btc_tx(const crypto::hash& btc_txid, const uint64_t height) = 0;
-  virtual void remove_btc_tx(const crypto::hash& btc_txid, const uint64_t height) = 0;
+  virtual uint64_t add_btc_tx(const crypto::hash& btc_hash) = 0;
+  virtual void remove_btc_tx_data(const crypto::hash& btc_hash) = 0;
 
   /**
    * @brief remove a spent key
@@ -1118,7 +1118,7 @@ public:
   virtual bool tx_exists(const crypto::hash& h) const = 0;
   virtual bool tx_exists(const crypto::hash& h, uint64_t& tx_id) const = 0;
 
-  virtual bool btc_txid_exists(const crypto::hash& btc_txid, const uint64_t height) const = 0;
+  virtual bool btc_tx_exists(const crypto::hash& btc_hash, uint64_t& btc_id, uint64_t& height) const = 0;
 
   // return unlock time of tx with hash <h>
   /**

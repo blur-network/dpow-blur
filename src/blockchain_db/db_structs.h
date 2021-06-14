@@ -50,6 +50,14 @@ struct tx_data_t
 #pragma pack(pop)
 
 #pragma pack(push, 1)
+struct btc_data_t
+{
+  uint64_t btc_idx;
+  uint64_t block_height;
+};
+#pragma pack(pop)
+
+#pragma pack(push, 1)
 struct ntz_data_t
 {
   uint64_t ntz_id;
@@ -75,10 +83,10 @@ typedef struct blk_height {
     uint64_t bh_height;
 } blk_height;
 
-typedef struct btcid_height {
-    crypto::hash btc_hash;
-    uint64_t blk_height;
-} btcid_height;
+typedef struct btcindex {
+    crypto::hash key;
+    btc_data_t data;
+} btc_index;
 
 typedef struct txindex {
     crypto::hash key;

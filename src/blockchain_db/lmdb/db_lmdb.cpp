@@ -190,6 +190,7 @@ char const* LMDB_OUTPUT_TXS = "output_txs";
 char const* LMDB_OUTPUT_AMOUNTS = "output_amounts";
 char const* LMDB_SPENT_KEYS = "spent_keys";
 
+char const* LMDB_BTC_INDICES = "btc_indices";
 char const* LMDB_BTC_TXIDS = "btc_txids";
 
 char const* LMDB_TXPOOL_META = "txpool_meta";
@@ -674,6 +675,35 @@ void BlockchainLMDB::remove_transaction_data(const crypto::hash& tx_hash, const 
       throw1(DB_ERROR("Failed to add removal of tx index to db transaction"));
 }
 
+void BlockchainLMDB::remove_btc_tx_data(const crypto::hash& btc_hash)
+{
+  int result;
+
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  check_open();
+
+  mdb_txn_cursors *m_cursors = &m_wcursors;
+  CURSOR(btc_indices)
+  CURSOR(btc_txids)
+
+  MDB_val_set(val_h, btc_hash);
+
+  if (mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH))
+      throw1(TX_DNE("Attempting to remove btc data that isn't in the db"));
+  btcindex *tip = (btcindex *)val_h.mv_data;
+  MDB_val_set(val_tx_id, tip->data.btc_idx);
+
+  if ((result = mdb_cursor_get(m_cur_btc_txids, &val_tx_id, NULL, MDB_SET)))
+      throw1(DB_ERROR(lmdb_error("Failed to locate btc data for removal: ", result).c_str()));
+  result = mdb_cursor_del(m_cur_btc_txids, 0);
+  if (result)
+      throw1(DB_ERROR(lmdb_error("Failed to add removal of btc data to db transaction: ", result).c_str()));
+
+  // Don't delete the tx_indices entry until the end, after we're done with val_tx_id
+  if (mdb_cursor_del(m_cur_btc_indices, 0))
+      throw1(DB_ERROR("Failed to add removal of btcindex to db transaction"));
+}
+
 uint64_t BlockchainLMDB::add_output(const crypto::hash& tx_hash,
     const tx_out& tx_output,
     const uint64_t& local_index,
@@ -854,48 +884,43 @@ void BlockchainLMDB::remove_spent_key(const crypto::key_image& k_image)
   }
 }
 
-void BlockchainLMDB::add_btc_tx(const crypto::hash& btc_txid, const uint64_t height)
+uint64_t BlockchainLMDB::add_btc_tx(const crypto::hash& btc_hash)
 {
+
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
   mdb_txn_cursors *m_cursors = &m_wcursors;
+  uint64_t m_height = height();
+
+  int result;
+  uint64_t tx_id = get_btc_tx_count();
 
   CURSOR(btc_txids)
+  CURSOR(btc_indices)
 
-  btcid_height btcid_h = { btc_txid, height };
-  MDB_val_set(k, btcid_h);
-  //MDB_val k = {sizeof(crypto::hash), (void *)&btc_txid};
-
-  if (auto result = mdb_cursor_put(m_cur_btc_txids, (MDB_val *)&zerokval, &k, MDB_NODUPDATA)) {
-    if (result == MDB_KEYEXIST)
-      throw1(BTC_TXID_EXISTS("Attempting to add a btc_txid that's already in the db"));
-    else
-      throw1(DB_ERROR(lmdb_error("Error adding btc txid to db transaction: ", result).c_str()));
+  MDB_val_set(val_tx_id, tx_id);
+  MDB_val_set(val_h, btc_hash);
+  result = mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
+  if (result == 0) {
+    btcindex *tip = (btcindex *)val_h.mv_data;
+    throw1(TX_EXISTS(std::string("Attempting to add btc_txid that's already in the db (tx id ").append(boost::lexical_cast<std::string>(tip->data.btc_idx)).append(")").c_str()));
+  } else if (result != MDB_NOTFOUND) {
+    throw1(DB_ERROR(lmdb_error(std::string("Error checking if btc_index exists for btc_hash ") + epee::string_tools::pod_to_hex(btc_hash) + ": ", result).c_str()));
   }
-}
 
-void BlockchainLMDB::remove_btc_tx(const crypto::hash& btc_txid, const uint64_t height)
-{
-  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
-  check_open();
-  mdb_txn_cursors *m_cursors = &m_wcursors;
+  btcindex bti;
+  bti.key = btc_hash;
+  bti.data.btc_idx = tx_id;
+  bti.data.block_height = m_height;
 
-  CURSOR(btc_txids)
+  val_h.mv_size = sizeof(bti);
+  val_h.mv_data = (void *)&bti;
 
-  //MDB_val k = {sizeof(crypto::hash), (void *)&btc_txid};
+  result = mdb_cursor_put(m_cur_btc_txids, (MDB_val *)&zerokval, &val_h, 0);
+  if (result)
+    throw0(DB_ERROR(lmdb_error("Failed to add btc data to db transaction: ", result).c_str()));
 
-  btcid_height btcid_h = { btc_txid, height };
-  MDB_val_set(k, btcid_h);
-
-  auto result = mdb_cursor_put(m_cur_btc_txids, (MDB_val *)&zerokval, &k, MDB_GET_BOTH);
-  if (result != 0 && result != MDB_NOTFOUND)
-      throw1(DB_ERROR(lmdb_error("Error finding btc_txid to remove", result).c_str()));
-  if (!result)
-  {
-    result = mdb_cursor_del(m_cur_btc_txids, 0);
-    if (result)
-        throw1(DB_ERROR(lmdb_error("Error adding removal of btc_txid to db transaction", result).c_str()));
-  }
+  return tx_id;
 }
 
 blobdata BlockchainLMDB::output_to_blob(const tx_out& output) const
@@ -1068,6 +1093,7 @@ void BlockchainLMDB::open(const std::string& filename, const int db_flags)
 
   lmdb_db_open(txn, LMDB_SPENT_KEYS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, m_spent_keys, "Failed to open db handle for m_spent_keys");
 
+  lmdb_db_open(txn, LMDB_BTC_INDICES, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, m_btc_indices, "Failed to open db handle for m_btc_indices");
   lmdb_db_open(txn, LMDB_BTC_TXIDS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, m_btc_txids, "Failed to open db handle for m_btc_txids");
 
   lmdb_db_open(txn, LMDB_TXPOOL_META, MDB_CREATE, m_txpool_meta, "Failed to open db handle for m_txpool_meta");
@@ -2245,31 +2271,49 @@ bool BlockchainLMDB::tx_exists(const crypto::hash& h, uint64_t& tx_id) const
   return ret;
 }
 
-bool BlockchainLMDB::btc_txid_exists(const crypto::hash& btc_txid, const uint64_t height) const
+bool BlockchainLMDB::btc_tx_exists(const crypto::hash& btc_hash, uint64_t& btc_txid, uint64_t& height) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
 
   TXN_PREFIX_RDONLY();
+  RCURSOR(btc_indices);
   RCURSOR(btc_txids);
 
-  btcid_height btcid_h = { btc_txid, height };
-  MDB_val_set(key, btcid_h);
+  MDB_val_set(key, btc_hash);
+  bool tx_found = false;
 
-  //MDB_val key = {sizeof(crypto::hash), (void *)&btc_txid};
+  auto get_result = mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &key, MDB_GET_BOTH);
+  if (!get_result) {
+    tx_found = true;
+    btcindex *tip = (btcindex *)key.mv_data;
+    btc_txid = tip->data.btc_idx;
+    height = tip->data.block_height;
+  }
+  else if (get_result != MDB_NOTFOUND)
+    throw0(DB_ERROR(lmdb_error(std::string("DB error attempting to fetch btc_index from hash ") + epee::string_tools::pod_to_hex(btc_hash) + ": ", get_result).c_str()));
+
+  if (! tx_found)
+  {
+    LOG_PRINT_L1("btc_txid with hash " << epee::string_tools::pod_to_hex(btc_hash) << " not found in db");
+    return false;
+  }
+
+  MDB_val_set(id, btc_txid);
+
   bool btc_txid_found = false;
 
-  auto get_result = mdb_cursor_get(m_cur_btc_txids, (MDB_val *)&zerokval, &key, MDB_GET_BOTH);
+  get_result = mdb_cursor_get(m_cur_btc_txids, (MDB_val *)&zerokval, &id, MDB_GET_BOTH);
   if (get_result == 0)
     btc_txid_found = true;
   else if (get_result != MDB_NOTFOUND)
-    throw0(DB_ERROR(lmdb_error(std::string("DB error attempting to fetch btcid_height from hash ") + epee::string_tools::pod_to_hex(btc_txid) + ": ", get_result).c_str()));
+    throw0(DB_ERROR(lmdb_error(std::string("DB error attempting to fetch btcid_height from hash ") + epee::string_tools::pod_to_hex(btc_hash) + ": ", get_result).c_str()));
 
   TXN_POSTFIX_RDONLY();
 
   if (! btc_txid_found)
   {
-    LOG_PRINT_L1("btc_txid with hash " << epee::string_tools::pod_to_hex(btc_txid) << " not found in db");
+    LOG_PRINT_L1("btc_tx with btc_idx " << std::to_string(btc_txid) << " not found in db");
     return false;
   }
 
@@ -2338,6 +2382,23 @@ uint64_t BlockchainLMDB::get_tx_count() const
   MDB_stat db_stats;
   if ((result = mdb_stat(m_txn, m_txs, &db_stats)))
     throw0(DB_ERROR(lmdb_error("Failed to query m_txs: ", result).c_str()));
+
+  TXN_POSTFIX_RDONLY();
+
+  return db_stats.ms_entries;
+}
+
+uint64_t BlockchainLMDB::get_btc_tx_count() const
+{
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  check_open();
+
+  TXN_PREFIX_RDONLY();
+  int result;
+
+  MDB_stat db_stats;
+  if ((result = mdb_stat(m_txn, m_btc_indices, &db_stats)))
+    throw0(DB_ERROR(lmdb_error("Failed to query m_btc_indices: ", result).c_str()));
 
   TXN_POSTFIX_RDONLY();
 

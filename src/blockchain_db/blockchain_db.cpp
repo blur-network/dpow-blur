@@ -145,8 +145,9 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const transacti
     int signer_idx = -1;
     if (verify_embedded_ntz_data(tx, btc_hash, height, signer_idx))
     {
-      if (!btc_txid_exists(btc_hash, height)) {
-        add_btc_tx(btc_hash, height);
+      uint64_t btc_id, blkheight;
+      if (!btc_tx_exists(btc_hash, btc_id, blkheight)) {
+        add_btc_tx(btc_hash);
       }
     }
   }
