@@ -345,7 +345,14 @@ namespace cryptonote
       return false;
     }
 
-    if(!check_inputs_types_supported(tx))
+    if (!check_signer_index_with_viewkeys(tx))
+    {
+      MERROR("Check against viewkey for embedded signer_idx failed!");
+      tvc.m_verifivation_failed = true;
+      return false;
+    }
+
+    if (!check_inputs_types_supported(tx))
     {
       tvc.m_verifivation_failed = true;
       tvc.m_invalid_input = true;

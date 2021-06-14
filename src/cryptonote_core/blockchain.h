@@ -155,6 +155,7 @@ namespace cryptonote
     void komodo_update();
     void update_raw_src_tx(std::string const& raw_src_tx);
     void fetch_raw_src_tx(std::string& raw_src_tx);
+    void clear_raw_src_tx();
 
     /**
      * @brief assign a set of blockchain checkpoint hashes
