@@ -288,7 +288,7 @@ void Blockchain::fetch_raw_src_tx(std::string& raw_src_tx)
 //------------------------------------------------------------------
 void Blockchain::clear_raw_src_tx()
 {
-  raw_src_tx.clear();
+  komodo::RAW_SRC_TX.clear();
 }
 //------------------------------------------------------------------
 void Blockchain::komodo_update()
