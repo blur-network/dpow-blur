@@ -1105,6 +1105,7 @@ void BlockchainLMDB::open(const std::string& filename, const int db_flags)
   mdb_set_dupsort(txn, m_spent_keys, compare_hash32);
   mdb_set_dupsort(txn, m_block_heights, compare_hash32);
   mdb_set_dupsort(txn, m_tx_indices, compare_hash32);
+  mdb_set_dupsort(txn, m_btc_indices, compare_hash32);
   mdb_set_dupsort(txn, m_output_amounts, compare_uint64);
   mdb_set_dupsort(txn, m_output_txs, compare_uint64);
   mdb_set_dupsort(txn, m_block_info, compare_uint64);
@@ -1197,6 +1198,8 @@ void BlockchainLMDB::reset()
     throw0(DB_ERROR(lmdb_error("Failed to drop m_txs: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_tx_indices, 0))
     throw0(DB_ERROR(lmdb_error("Failed to drop m_tx_indices: ", result).c_str()));
+  if (auto result = mdb_drop(txn, m_btc_indices, 0))
+    throw0(DB_ERROR(lmdb_error("Failed to drop m_btc_indices: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_tx_outputs, 0))
     throw0(DB_ERROR(lmdb_error("Failed to drop m_tx_outputs: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_output_txs, 0))
