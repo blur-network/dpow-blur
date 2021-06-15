@@ -1225,6 +1225,8 @@ public:
    */
   virtual uint64_t get_tx_block_height(const crypto::hash& h) const = 0;
 
+  virtual uint64_t get_btc_tx_block_height(const crypto::hash& h) const = 0;
+
   // returns the total number of outputs of amount <amount>
   /**
    * @brief fetches the number of outputs of a given amount

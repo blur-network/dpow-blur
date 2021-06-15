@@ -162,6 +162,8 @@ int compare_string(const MDB_val *a, const MDB_val *b)
  * tx_indices       txn hash     {txn ID, metadata}
  * tx_outputs       txn ID       [txn amount output indices]
  *
+ * btc_indices      btc hash     {btc txn ID, metadata}
+ *
  * output_txs       output ID    {txn hash, local index}
  * output_amounts   amount       [{amount output index, metadata}...]
  *
@@ -191,7 +193,6 @@ char const* LMDB_OUTPUT_AMOUNTS = "output_amounts";
 char const* LMDB_SPENT_KEYS = "spent_keys";
 
 char const* LMDB_BTC_INDICES = "btc_indices";
-char const* LMDB_BTC_TXIDS = "btc_txids";
 
 char const* LMDB_TXPOOL_META = "txpool_meta";
 char const* LMDB_TXPOOL_BLOB = "txpool_blob";
@@ -684,7 +685,6 @@ void BlockchainLMDB::remove_btc_tx_data(const crypto::hash& btc_hash)
 
   mdb_txn_cursors *m_cursors = &m_wcursors;
   CURSOR(btc_indices)
-  CURSOR(btc_txids)
 
   MDB_val_set(val_h, btc_hash);
 
@@ -692,12 +692,6 @@ void BlockchainLMDB::remove_btc_tx_data(const crypto::hash& btc_hash)
       throw1(TX_DNE("Attempting to remove btc data that isn't in the db"));
   btcindex *tip = (btcindex *)val_h.mv_data;
   MDB_val_set(val_tx_id, tip->data.btc_idx);
-
-  if ((result = mdb_cursor_get(m_cur_btc_txids, &val_tx_id, NULL, MDB_SET)))
-      throw1(DB_ERROR(lmdb_error("Failed to locate btc data for removal: ", result).c_str()));
-  result = mdb_cursor_del(m_cur_btc_txids, 0);
-  if (result)
-      throw1(DB_ERROR(lmdb_error("Failed to add removal of btc data to db transaction: ", result).c_str()));
 
   // Don't delete the tx_indices entry until the end, after we're done with val_tx_id
   if (mdb_cursor_del(m_cur_btc_indices, 0))
@@ -896,20 +890,17 @@ uint64_t BlockchainLMDB::add_btc_tx(const crypto::hash& btc_hash)
   uint64_t tx_id = get_btc_tx_count();
   MWARNING("BTC_TX_COUNT = " << std::to_string(tx_id));
 
-  CURSOR(btc_txids)
   CURSOR(btc_indices)
 
-  MDB_val_set(val_tx_id, tx_id);
   MDB_val_set(val_h, btc_hash);
 
-  result = mdb_cursor_get(m_cur_btc_txids, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
+  result = mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
   if (result == 0) {
     btcindex *tip = (btcindex *)val_h.mv_data;
     throw1(TX_EXISTS(std::string("Attempting to add btc_txid that's already in the db (tx id ").append(boost::lexical_cast<std::string>(tip->data.btc_idx)).append(")").c_str()));
   } else if (result != MDB_NOTFOUND) {
     throw1(DB_ERROR(lmdb_error(std::string("Error checking if btc_index exists for btc_hash ") + epee::string_tools::pod_to_hex(btc_hash) + ": ", result).c_str()));
   }
-  result = mdb_cursor_put(m_cur_btc_txids, (MDB_val *)&zerokval, &val_h, 0);
 
   btcindex bti;
   bti.key = btc_hash;
@@ -918,18 +909,6 @@ uint64_t BlockchainLMDB::add_btc_tx(const crypto::hash& btc_hash)
 
   val_h.mv_size = sizeof(bti);
   val_h.mv_data = (void *)&bti;
-
-  result = mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &val_tx_id, MDB_GET_BOTH);
-  if (result == 0) {
-    btcindex *tip = (btcindex *)val_tx_id.mv_data;
-    throw1(TX_EXISTS(std::string("Attempting to add btc_txid that's already in the db (tx id ").append(boost::lexical_cast<std::string>(tip->data.btc_idx)).append(")").c_str()));
-  } else if (result != MDB_NOTFOUND) {
-    throw1(DB_ERROR(lmdb_error(std::string("Error checking if btc_index exists for btc_hash ") + epee::string_tools::pod_to_hex(btc_hash) + ": ", result).c_str()));
-  }
-
-  result = mdb_cursor_put(m_cur_btc_indices, (MDB_val *)&zerokval, &val_tx_id, 0);
-  if (result)
-    throw0(DB_ERROR(lmdb_error("Failed to add btc data to db transaction: ", result).c_str()));
 
   return tx_id;
 }
@@ -1105,7 +1084,6 @@ void BlockchainLMDB::open(const std::string& filename, const int db_flags)
   lmdb_db_open(txn, LMDB_SPENT_KEYS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, m_spent_keys, "Failed to open db handle for m_spent_keys");
 
   lmdb_db_open(txn, LMDB_BTC_INDICES, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, m_btc_indices, "Failed to open db handle for m_btc_indices");
-  lmdb_db_open(txn, LMDB_BTC_TXIDS, MDB_INTEGERKEY | MDB_CREATE | MDB_DUPSORT | MDB_DUPFIXED, m_btc_txids, "Failed to open db handle for m_btc_txids");
 
   lmdb_db_open(txn, LMDB_TXPOOL_META, MDB_CREATE, m_txpool_meta, "Failed to open db handle for m_txpool_meta");
   lmdb_db_open(txn, LMDB_TXPOOL_BLOB, MDB_CREATE, m_txpool_blob, "Failed to open db handle for m_txpool_blob");
@@ -2289,36 +2267,11 @@ bool BlockchainLMDB::btc_tx_exists(const crypto::hash& btc_hash, uint64_t& btc_t
 
   TXN_PREFIX_RDONLY();
   RCURSOR(btc_indices);
-  RCURSOR(btc_txids);
 
-  MDB_val_set(id, btc_hash);
+  MDB_val_set(key, btc_hash);
 
-  bool btc_txid_found = false;
-
-  auto get_result = mdb_cursor_get(m_cur_btc_txids, (MDB_val *)&zerokval, &id, MDB_GET_BOTH);
-  if (get_result == 0) {
-    btc_txid_found = true;
-  }
-  else if (get_result != MDB_NOTFOUND)
-    throw0(DB_ERROR(lmdb_error(std::string("DB error attempting to fetch btcid_height from hash ") + epee::string_tools::pod_to_hex(btc_hash) + ": ", get_result).c_str()));
-
-  TXN_POSTFIX_RDONLY();
-  btcindex *tip;
-
-  if (! btc_txid_found)
-  {
-    MWARNING("btc_tx with btc_idx " << std::to_string(btc_txid) << " not found in db");
-    return false;
-  } else {
-    tip = (btcindex *)id.mv_data;
-    btc_txid = tip->data.btc_idx;
-    height = tip->data.block_height;
-  }
-
-  MDB_val_set(key, id);
   bool tx_found = false;
-
-  get_result = mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &key, MDB_GET_BOTH);
+  auto get_result = mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &key, MDB_GET_BOTH);
   if (!get_result) {
     tx_found = true;
   }
@@ -2452,6 +2405,29 @@ uint64_t BlockchainLMDB::get_tx_block_height(const crypto::hash& h) const
 
   txindex *tip = (txindex *)v.mv_data;
   uint64_t ret = tip->data.block_id;
+  TXN_POSTFIX_RDONLY();
+  return ret;
+}
+
+uint64_t BlockchainLMDB::get_btc_tx_block_height(const crypto::hash& h) const
+{
+  LOG_PRINT_L3("BlockchainLMDB::" << __func__);
+  check_open();
+
+  TXN_PREFIX_RDONLY();
+  RCURSOR(btc_indices);
+
+  MDB_val_set(v, h);
+  auto get_result = mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &v, MDB_GET_BOTH);
+  if (get_result == MDB_NOTFOUND)
+  {
+    throw1(TX_DNE(std::string("btcindex with hash ").append(epee::string_tools::pod_to_hex(h)).append(" not found in db").c_str()));
+  }
+  else if (get_result)
+    throw0(DB_ERROR(lmdb_error("DB error attempting to fetch tx height from hash", get_result).c_str()));
+
+  btcindex *tip = (btcindex *)v.mv_data;
+  uint64_t ret = tip->data.block_height;
   TXN_POSTFIX_RDONLY();
   return ret;
 }
