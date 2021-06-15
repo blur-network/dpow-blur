@@ -880,35 +880,36 @@ void BlockchainLMDB::remove_spent_key(const crypto::key_image& k_image)
 
 uint64_t BlockchainLMDB::add_btc_tx(const crypto::hash& btc_hash)
 {
-
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
   mdb_txn_cursors *m_cursors = &m_wcursors;
-  uint64_t m_height = height();
 
-  int result;
   uint64_t tx_id = get_btc_tx_count();
   MWARNING("BTC_TX_COUNT = " << std::to_string(tx_id));
 
-  CURSOR(btc_indices)
+  uint64_t m_height = height();
 
+  MDB_val_set(val_tx_id, tx_id);
   MDB_val_set(val_h, btc_hash);
-
-  result = mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
+  auto result = mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
   if (result == 0) {
     btcindex *tip = (btcindex *)val_h.mv_data;
-    throw1(TX_EXISTS(std::string("Attempting to add btc_txid that's already in the db (tx id ").append(boost::lexical_cast<std::string>(tip->data.btc_idx)).append(")").c_str()));
+    throw1(TX_EXISTS(std::string("Attempting to add btcindex that's already in the db (tx id ").append(boost::lexical_cast<std::string>(tip->data.btc_idx)).append(")").c_str()));
   } else if (result != MDB_NOTFOUND) {
-    throw1(DB_ERROR(lmdb_error(std::string("Error checking if btc_index exists for btc_hash ") + epee::string_tools::pod_to_hex(btc_hash) + ": ", result).c_str()));
+    throw1(DB_ERROR(lmdb_error(std::string("Error checking if btc index exists for tx hash ") + epee::string_tools::pod_to_hex(btc_hash) + ": ", result).c_str()));
   }
 
-  btcindex bti;
-  bti.key = btc_hash;
-  bti.data.btc_idx = tx_id;
-  bti.data.block_height = m_height;
+  btcindex ti;
+  ti.key = btc_hash;
+  ti.data.btc_idx = tx_id;
+  ti.data.block_height = m_height;
 
-  val_h.mv_size = sizeof(bti);
-  val_h.mv_data = (void *)&bti;
+  val_h.mv_size = sizeof(ti);
+  val_h.mv_data = (void *)&ti;
+
+  result = mdb_cursor_put(m_cur_btc_indices, (MDB_val *)&zerokval, &val_h, 0);
+  if (result)
+    throw0(DB_ERROR(lmdb_error("Failed to add btc tx data to db transaction: ", result).c_str()));
 
   return tx_id;
 }

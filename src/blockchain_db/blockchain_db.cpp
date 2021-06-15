@@ -148,6 +148,8 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const transacti
       uint64_t btc_id, blkheight;
       if (!btc_tx_exists(btc_hash, btc_id, blkheight)) {
         add_btc_tx(btc_hash);
+      //} else {
+      //  MWARNING("btc tx exists with hash: " << epee::string_tools::pod_to_hex(btc_hash) << ", blk_height = " << blkheight);
       }
     }
   }
@@ -283,6 +285,23 @@ bool BlockchainDB::is_open() const
 void BlockchainDB::remove_transaction(const crypto::hash& tx_hash)
 {
   transaction tx = get_tx(tx_hash);
+
+  if (tx.version == 2)
+  {
+    crypto::hash btc_hash = crypto::null_hash;
+    uint64_t height = 0;
+    int signer_idx = -1;
+    if (verify_embedded_ntz_data(tx, btc_hash, height, signer_idx))
+    {
+      uint64_t btc_id = 0;
+      uint64_t blkheight = 0;
+      if (btc_tx_exists(btc_hash, btc_id, blkheight)) {
+        remove_btc_tx_data(btc_hash);
+      //} else {
+      //  MWARNING("btc tx not found when popping blocks! hash: " << epee::string_tools::pod_to_hex(btc_hash));
+      }
+    }
+  }
 
   for (const txin_v& tx_input : tx.vin)
   {
