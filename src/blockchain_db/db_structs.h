@@ -57,15 +57,6 @@ struct btc_data_t
 };
 #pragma pack(pop)
 
-#pragma pack(push, 1)
-struct ntz_data_t
-{
-  uint64_t ntz_id;
-  uint64_t tx_id;
-  uint64_t block_id;
-};
-#pragma pack(pop)
-
 namespace cryptonote {
 
 typedef struct mdb_block_info
@@ -92,11 +83,6 @@ typedef struct txindex {
     crypto::hash key;
     tx_data_t data;
 } txindex;
-
-typedef struct ntzindex {
-    crypto::hash key;
-    ntz_data_t data;
-} ntzindex;
 
 typedef struct outkey {
     uint64_t amount_index;
