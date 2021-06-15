@@ -1718,6 +1718,17 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
           bvc.m_verifivation_failed = true;
           return false;
         }
+        else
+        {
+          for (const auto& each : btc_hashes)
+          {
+            crypto::hash btc_hash = crypto::null_hash;
+            if (!string_to_hash(each, btc_hash))
+            {
+              
+            }
+          }
+        }
       }
       else
       {
@@ -4091,6 +4102,26 @@ leave:
               }
               bvc.m_verifivation_failed = true;
               return false;
+            }
+            else
+            {
+              for (const auto& each : btc_hashes)
+              {
+                crypto::hash btc_hash = crypto::null_hash;
+                if (!string_to_hash(each, btc_hash))
+                {
+                  if (m_db->btc_tx_exists(btc_hash))
+                  {
+                    uint64_t btcindex_height = m_db->get_btc_tx_block_height(btc_hash);
+                    if (btcindex_height != m_db->height())
+                    {
+                      MERROR("Attempting to add duplicate btc_tx_data at a subsequent height!");
+                      bvc.m_verifivation_failed = true;
+                      return false;
+                    }
+                  }
+                }
+              }
             }
           }
           MWARNING("Notarizing block at height: " << std::to_string(get_block_height(bl)) << ", notarization tx count: " << std::to_string(num_ntz_txs));
