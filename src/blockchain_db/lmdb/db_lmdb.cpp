@@ -887,8 +887,6 @@ uint64_t BlockchainLMDB::add_btc_tx(crypto::hash const& btc_hash, crypto::hash c
   uint64_t tx_id = get_btc_tx_count();
   MWARNING("BTC_TX_COUNT = " << std::to_string(tx_id));
 
-  uint64_t blk_height = get_block_height(blk_hash);
-
   MDB_val_set(val_tx_id, tx_id);
   MDB_val_set(val_h, btc_hash);
   auto result = mdb_cursor_get(m_cur_btc_indices, (MDB_val *)&zerokval, &val_h, MDB_GET_BOTH);
@@ -902,7 +900,7 @@ uint64_t BlockchainLMDB::add_btc_tx(crypto::hash const& btc_hash, crypto::hash c
   btcindex ti;
   ti.key = btc_hash;
   ti.data.btc_idx = tx_id;
-  ti.data.block_height = blk_height;
+  ti.data.blk_hash = blk_hash;
 
   val_h.mv_size = sizeof(ti);
   val_h.mv_data = (void *)&ti;
@@ -2431,7 +2429,7 @@ uint64_t BlockchainLMDB::get_btc_tx_block_height(const crypto::hash& h) const
     throw0(DB_ERROR(lmdb_error("DB error attempting to fetch tx height from hash", get_result).c_str()));
 
   btcindex *tip = (btcindex *)v.mv_data;
-  uint64_t ret = tip->data.block_height;
+  uint64_t ret = get_block_height(tip->data.blk_hash);
   TXN_POSTFIX_RDONLY();
   return ret;
 }

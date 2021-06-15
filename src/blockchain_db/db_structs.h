@@ -53,7 +53,7 @@ struct tx_data_t
 struct btc_data_t
 {
   uint64_t btc_idx;
-  uint64_t block_height;
+  crypto::hash blk_hash;
 };
 #pragma pack(pop)
 
