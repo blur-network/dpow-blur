@@ -4110,10 +4110,14 @@ leave:
                 crypto::hash btc_hash = crypto::null_hash;
                 if (!string_to_hash(each, btc_hash))
                 {
-                  uint64_t btc_id, btc_ht;
-                  if (m_db->btc_tx_exists(btc_hash, btc_id, btc_ht))
+                  MERROR("Failed to convert string to hash!");
+                }
+                else
+                {
+                  if (m_db->btc_tx_exists(btc_hash))
                   {
                     uint64_t current_height = m_db->height();
+                    uint64_t btc_ht = m_db->get_btc_tx_block_height(btc_hash);
                     if (btc_ht != current_height)
                     {
                       MERROR("Attempting to add duplicate btc_tx_data at a subsequent height! btcindex height: " << btc_ht << ", current ht: " << current_height);

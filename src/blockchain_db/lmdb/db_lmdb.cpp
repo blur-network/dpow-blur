@@ -2262,7 +2262,7 @@ bool BlockchainLMDB::tx_exists(const crypto::hash& h, uint64_t& tx_id) const
   return ret;
 }
 
-bool BlockchainLMDB::btc_tx_exists(const crypto::hash& btc_hash, uint64_t& btc_txid, uint64_t& height) const
+bool BlockchainLMDB::btc_tx_exists(const crypto::hash& btc_hash) const
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();

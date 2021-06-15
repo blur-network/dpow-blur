@@ -1118,7 +1118,7 @@ public:
   virtual bool tx_exists(const crypto::hash& h) const = 0;
   virtual bool tx_exists(const crypto::hash& h, uint64_t& tx_id) const = 0;
 
-  virtual bool btc_tx_exists(const crypto::hash& btc_hash, uint64_t& btc_id, uint64_t& height) const = 0;
+  virtual bool btc_tx_exists(const crypto::hash& btc_hash) const = 0;
 
   // return unlock time of tx with hash <h>
   /**

@@ -145,8 +145,7 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const transacti
     int signer_idx = -1;
     if (verify_embedded_ntz_data(tx, btc_hash, height, signer_idx))
     {
-      uint64_t btc_id, blkheight;
-      if (!btc_tx_exists(btc_hash, btc_id, blkheight)) {
+      if (!btc_tx_exists(btc_hash)) {
         add_btc_tx(btc_hash, blk_hash);
       //} else {
       //  MWARNING("btc tx exists with hash: " << epee::string_tools::pod_to_hex(btc_hash) << ", blk_height = " << blkheight);
@@ -293,9 +292,7 @@ void BlockchainDB::remove_transaction(const crypto::hash& tx_hash)
     int signer_idx = -1;
     if (verify_embedded_ntz_data(tx, btc_hash, height, signer_idx))
     {
-      uint64_t btc_id = 0;
-      uint64_t blkheight = 0;
-      if (btc_tx_exists(btc_hash, btc_id, blkheight)) {
+      if (btc_tx_exists(btc_hash)) {
         remove_btc_tx_data(btc_hash);
       //} else {
       //  MWARNING("btc tx not found when popping blocks! hash: " << epee::string_tools::pod_to_hex(btc_hash));
