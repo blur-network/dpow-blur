@@ -366,9 +366,9 @@ private:
 
   virtual void remove_spent_key(const crypto::key_image& k_image);
 
-  virtual uint64_t add_btc_tx(const crypto::hash& btc_hash);
+  virtual uint64_t add_btc_tx(crypto::hash const& btc_hash, crypto::hash const& blk_hash);
 
-  virtual void remove_btc_tx_data(const crypto::hash& btc_hash);
+  virtual void remove_btc_tx_data(crypto::hash const& btc_hash);
 
   uint64_t num_outputs() const;
 

@@ -147,7 +147,7 @@ void BlockchainDB::add_transaction(const crypto::hash& blk_hash, const transacti
     {
       uint64_t btc_id, blkheight;
       if (!btc_tx_exists(btc_hash, btc_id, blkheight)) {
-        add_btc_tx(btc_hash);
+        add_btc_tx(btc_hash, blk_hash);
       //} else {
       //  MWARNING("btc tx exists with hash: " << epee::string_tools::pod_to_hex(btc_hash) << ", blk_height = " << blkheight);
       }

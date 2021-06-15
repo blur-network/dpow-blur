@@ -676,7 +676,7 @@ void BlockchainLMDB::remove_transaction_data(const crypto::hash& tx_hash, const 
       throw1(DB_ERROR("Failed to add removal of tx index to db transaction"));
 }
 
-void BlockchainLMDB::remove_btc_tx_data(const crypto::hash& btc_hash)
+void BlockchainLMDB::remove_btc_tx_data(crypto::hash const& btc_hash)
 {
   int result;
 
@@ -878,7 +878,7 @@ void BlockchainLMDB::remove_spent_key(const crypto::key_image& k_image)
   }
 }
 
-uint64_t BlockchainLMDB::add_btc_tx(const crypto::hash& btc_hash)
+uint64_t BlockchainLMDB::add_btc_tx(crypto::hash const& btc_hash, crypto::hash const& blk_hash)
 {
   LOG_PRINT_L3("BlockchainLMDB::" << __func__);
   check_open();
@@ -887,7 +887,7 @@ uint64_t BlockchainLMDB::add_btc_tx(const crypto::hash& btc_hash)
   uint64_t tx_id = get_btc_tx_count();
   MWARNING("BTC_TX_COUNT = " << std::to_string(tx_id));
 
-  uint64_t m_height = height();
+  uint64_t blk_height = get_block_height(blk_hash);
 
   MDB_val_set(val_tx_id, tx_id);
   MDB_val_set(val_h, btc_hash);
@@ -902,7 +902,7 @@ uint64_t BlockchainLMDB::add_btc_tx(const crypto::hash& btc_hash)
   btcindex ti;
   ti.key = btc_hash;
   ti.data.btc_idx = tx_id;
-  ti.data.block_height = m_height;
+  ti.data.block_height = blk_height;
 
   val_h.mv_size = sizeof(ti);
   val_h.mv_data = (void *)&ti;
