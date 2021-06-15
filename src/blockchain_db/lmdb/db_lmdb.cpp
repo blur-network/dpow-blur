@@ -2282,7 +2282,7 @@ bool BlockchainLMDB::btc_tx_exists(const crypto::hash& btc_hash) const
 
   if (! tx_found)
   {
-    MWARNING("btc_txid with hash " << epee::string_tools::pod_to_hex(btc_hash) << " not found in db");
+    LOG_PRINT_L2("btc_txid with hash " << epee::string_tools::pod_to_hex(btc_hash) << " not found in db");
     return false;
   }
 
