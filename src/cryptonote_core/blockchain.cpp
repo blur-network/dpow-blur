@@ -280,15 +280,37 @@ void Blockchain::update_raw_src_tx(std::string const& raw_src_tx)
   komodo::RAW_SRC_TX = raw_src_tx;
 }
 //------------------------------------------------------------------
-void Blockchain::fetch_raw_src_tx(std::string& raw_src_tx)
-{
-  raw_src_tx = komodo::RAW_SRC_TX;
-  MWARNING("---> in blockchain::fetch_raw_src_tx: \n" << raw_src_tx << "\n");
-}
-//------------------------------------------------------------------
 void Blockchain::clear_raw_src_tx()
 {
+  MWARNING("===== raw_src_tx cleared! =====");
   komodo::RAW_SRC_TX.clear();
+}
+//------------------------------------------------------------------
+void Blockchain::fetch_raw_src_tx(std::string& raw_src_tx)
+{
+  std::vector<uint8_t> src_tx_vchr, doublesha_vec;
+  src_tx_vchr = hex_to_bytes4096(komodo::RAW_SRC_TX);
+  crypto::hash btc_hash = crypto::null_hash;
+  uint64_t current_height = m_db->height();
+  if (!src_tx_vchr.empty())
+  {
+    bits256 bits = komodo::bits256_doublesha256(src_tx_vchr.data(), src_tx_vchr.size());
+    for (const auto& each : bits.bytes)
+      doublesha_vec.push_back(each);
+    std::string btc_hash_s = bytes256_to_hex(doublesha_vec);
+    MWARNING(">>> btc_hash = " << btc_hash_s << " <<<");
+    if (string_to_hash(btc_hash_s, btc_hash))
+    {
+      if (m_db->btc_tx_exists(btc_hash))
+      {
+        uint64_t btc_tx_height = m_db->get_btc_tx_block_height(btc_hash);
+        if (btc_tx_height < m_db->height())
+          clear_raw_src_tx();
+      }
+    }
+  }
+  raw_src_tx = komodo::RAW_SRC_TX;
+  MWARNING("---> in blockchain::fetch_raw_src_tx: \n" << raw_src_tx << "\n");
 }
 //------------------------------------------------------------------
 void Blockchain::komodo_update()
