@@ -4121,8 +4121,7 @@ leave:
                     if (btc_ht != current_height)
                     {
                       MERROR("Attempting to add duplicate btc_tx_data at a subsequent height! btcindex height: " << btc_ht << ", current ht: " << current_height);
-                      bvc.m_verifivation_failed = true;
-                      return false;
+                      goto leave;
                     }
                   }
                 }
