@@ -713,6 +713,7 @@ namespace cryptonote
       MERROR("Couldn't verify embedded ntz data!");
       return false;
     }
+    MWARNING(">>>>>>> ntz_signer_idx = " << std::to_string(ntz_signer_idx));
     crypto::key_derivation recv_derivation;
     std::vector<std::pair<crypto::public_key,size_t>> recv_outkeys;
     size_t pk_index = 0;
@@ -752,7 +753,11 @@ namespace cryptonote
         bool derive = derive_public_key(recv_derivation, each.second, notary_pub_spendkeys[ntz_signer_idx], each_pubkey);
         if (epee::string_tools::pod_to_hex(each_pubkey) != epee::string_tools::pod_to_hex(each.first)) {
            MERROR("derived key mismatch = " << epee::string_tools::pod_to_hex(each_pubkey) << ", recv_outkey: " << epee::string_tools::pod_to_hex(each.first));
-           return false;
+           //return false;
+        }
+        else
+        {
+           MERROR("derived MATCH! -> " << epee::string_tools::pod_to_hex(each_pubkey) << ", recv_outkey: " << epee::string_tools::pod_to_hex(each.first));
         }
       }
     }
