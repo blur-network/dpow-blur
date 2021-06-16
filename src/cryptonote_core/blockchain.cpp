@@ -1740,17 +1740,18 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
           bvc.m_verifivation_failed = true;
           return false;
         }
-        else
+        /*else
         {
           for (const auto& each : btc_hashes)
           {
             crypto::hash btc_hash = crypto::null_hash;
             if (!string_to_hash(each, btc_hash))
             {
-              
+              //TODO: do we need to also perform DB checks here?
+              // maybe not, as switch_to_alternative eventually calls main chain block handler
             }
           }
-        }
+        }*/
       }
       else
       {
