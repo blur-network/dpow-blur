@@ -736,8 +736,9 @@ namespace cryptonote
       std::pair<crypto::public_key,size_t> each = std::make_pair(reinterpret_cast<const crypto::public_key&>(rv.outPk[n].dest), n);
       recv_outkeys.push_back(each);
     }
-
+    size_t counter = 0;
     crypto::public_key recv_tx_key = get_tx_pub_key_from_extra(tx, pk_index);
+
     for (const auto& each : recv_outkeys)
     {
       crypto::key_derivation recv_derivation;
@@ -748,16 +749,15 @@ namespace cryptonote
       }
       else
       {
-        LOG_PRINT_L1("Recv derivation = " << recv_derivation << ", for pk_index: " << std::to_string(pk_index));
+        LOG_PRINT_L0("Counter [" << std::to_string(counter++) << "], Recv derivation = " << recv_derivation << ", for pk_index: " << std::to_string(pk_index));
         crypto::public_key each_pubkey;
-        bool derive = derive_public_key(recv_derivation, each.second, notary_pub_spendkeys[ntz_signer_idx], each_pubkey);
-        if (epee::string_tools::pod_to_hex(each_pubkey) != epee::string_tools::pod_to_hex(each.first)) {
-           MERROR("derived key mismatch = " << epee::string_tools::pod_to_hex(each_pubkey) << ", recv_outkey: " << epee::string_tools::pod_to_hex(each.first));
-           //return false;
-        }
-        else
+        for (size_t nn = 0; nn < 64; nn++)
         {
-           MERROR("derived MATCH! -> " << epee::string_tools::pod_to_hex(each_pubkey) << ", recv_outkey: " << epee::string_tools::pod_to_hex(each.first));
+          bool derive = derive_public_key(recv_derivation, each.second, notary_pub_spendkeys[nn], each_pubkey);
+          if (epee::string_tools::pod_to_hex(each_pubkey) == epee::string_tools::pod_to_hex(each.first))
+          {
+            LOG_PRINT_L1("Derived pubkey = " << epee::string_tools::pod_to_hex(each_pubkey) << ", recv_outkey: " << epee::string_tools::pod_to_hex(each.first) << ", for n = " << std::to_string(each.second) << ", and nn = " << std::to_string(nn));
+          }
         }
       }
     }
