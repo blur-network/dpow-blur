@@ -756,7 +756,7 @@ namespace cryptonote
           bool derive = derive_public_key(recv_derivation, each.second, notary_pub_spendkeys[nn], each_pubkey);
           if (epee::string_tools::pod_to_hex(each_pubkey) == epee::string_tools::pod_to_hex(each.first))
           {
-            LOG_PRINT_L1("Derived pubkey = " << epee::string_tools::pod_to_hex(each_pubkey) << ", recv_outkey: " << epee::string_tools::pod_to_hex(each.first) << ", for n = " << std::to_string(each.second) << ", and nn = " << std::to_string(nn));
+            LOG_PRINT_L0("Derived pubkey = " << epee::string_tools::pod_to_hex(each_pubkey) << ", recv_outkey: " << epee::string_tools::pod_to_hex(each.first) << ", for n = " << std::to_string(each.second) << ", and nn = " << std::to_string(nn));
           }
         }
       }
