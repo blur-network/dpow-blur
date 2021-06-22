@@ -665,8 +665,16 @@ namespace cryptonote
         heights.push_back(embed_height);
       }
     }
-    uint64_t max_height = *std::max_element(heights.begin(), heights.end());
+    uint64_t max_height = 0;
+    for (const auto& each : heights)
+    {
+      if (each > max_height)
+        max_height = each;
+    }
+    // TODO: return a non-fatal error code if max_height == 0
+
     MWARNING("max_height = " << max_height);
+
     uint32_t tx_idx = 0;
     for (const auto& each : heights)
     {
