@@ -310,7 +310,9 @@ void Blockchain::fetch_raw_src_tx(std::string& raw_src_tx)
     }
   }
   raw_src_tx = komodo::RAW_SRC_TX;
-  MWARNING("---> in blockchain::fetch_raw_src_tx: \n" << raw_src_tx << "\n");
+
+  if (!raw_src_tx.empty())
+    MWARNING("---> in blockchain::fetch_raw_src_tx: \n" << raw_src_tx << "\n");
 }
 //------------------------------------------------------------------
 void Blockchain::komodo_update()
