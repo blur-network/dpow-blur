@@ -673,7 +673,8 @@ namespace cryptonote
     }
     // TODO: return a non-fatal error code if max_height == 0
 
-    MWARNING("max_height = " << max_height);
+    if (max_height)
+      MWARNING("max_height = " << max_height);
 
     uint32_t tx_idx = 0;
     for (const auto& each : heights)
