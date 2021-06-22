@@ -1711,34 +1711,42 @@ bool Blockchain::handle_alternative_block(const block& b, const crypto::hash& id
             num_ntz_txs++;
           }
         }
-        if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK) {
+        if (num_ntz_txs > DPOW_MAX_NOTA_PER_BLOCK)
+        {
           MERROR_VER("Error: encountered more notarization txs in a single block than DPOW_SIG_COUNT!");
           bvc.m_verifivation_failed = true;
           return false;
-        } else if ((num_ntz_txs > 0) && (num_ntz_txs < DPOW_MAX_NOTA_PER_BLOCK)) {
+        }
+        else if ((num_ntz_txs > 0) && (num_ntz_txs < DPOW_MAX_NOTA_PER_BLOCK))
+        {
           MERROR_VER("Error: too few notarization txs in notarizing block!");
           bvc.m_verifivation_failed = true;
           return false;
-        } else if (num_ntz_txs == (DPOW_MAX_NOTA_PER_BLOCK)) {
+        }
+        else if (num_ntz_txs == (DPOW_MAX_NOTA_PER_BLOCK))
+        {
+          if (!nota_txs.empty())
+          {
+            std::vector<std::string> btc_hashes;
+            std::vector<uint64_t> heights;
+            std::vector<uint32_t> bad_idxs;
+            int32_t verify_ntz_txs = verify_embedded_ntz_data(nota_txs, btc_hashes, heights, bad_idxs);
+            if (verify_ntz_txs < 1)
+            {
+              if (verify_ntz_txs == 0)
+                MERROR("Mismatched heights in embedded data!");
+              else
+                MERROR("Something went wrong when verifying embedded ntz data!");
+              bvc.m_verifivation_failed = true;
+              return false;
+            }
+          }
           MWARNING("Notarizing ALTERNATIVE block at height = " << bei.height << ", with num_ntz_txs = " << num_ntz_txs);
           is_notarizing_block = true;
         }
 
         if (is_block_notarized(bei.bl)) {
           MERROR_VER("Blockchain::handle_alternative_block >> Attempting to add a block in previously notarized area, at block height: " << std::to_string(bei.height));
-          bvc.m_verifivation_failed = true;
-          return false;
-        }
-        std::vector<std::string> btc_hashes;
-        std::vector<uint64_t> heights;
-        std::vector<uint32_t> bad_idxs;
-        int32_t verify_ntz_txs = verify_embedded_ntz_data(nota_txs, btc_hashes, heights, bad_idxs);
-        if (verify_ntz_txs < 1)
-        {
-          if (verify_ntz_txs == 0)
-            MERROR("Mismatched heights in embedded data!");
-          else
-            MERROR("Something went wrong when verifying embedded ntz data!");
           bvc.m_verifivation_failed = true;
           return false;
         }
