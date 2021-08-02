@@ -38,11 +38,7 @@ Any value between `2` and `21` is valid for this constant (but above `21` will r
 <h2 id="compile"> Compile from Source and Chain-Build with Dependencies </h2>
 
 
-*Libhydrogen requires CMake 3.14+ to compile.  If your distribution does not include this in the package manager, you can download the latest release's source from here: <a href="https://github.com/Kitware/CMake/releases/download/v3.15.2/cmake-3.15.2.tar.gz">CMake 3.15.2 from Kitware's github</a>*
-
-Once Downloaded, run `./configure` or `./bootstrap`, then `make && sudo make install`
-
-Minimal Dependencies: `sudo apt-get install autotools-dev curl cmake build-essential`
+Minimal Dependencies: `sudo apt-get install autotools-dev curl cmake build-essential libtool`
 
 **The following will chain-build dependencies and then all binaries in source:** `make release-cross-linux-x86_64`
 
@@ -52,11 +48,7 @@ Minimal Dependencies: `sudo apt-get install autotools-dev curl cmake build-essen
 
 <h2 id="deps"> Dependencies </h2>
 
-Libhydrogen requires CMake 3.14+ to compile.  If your distribution does not include this in the package manager, you can download the latest release's source from here: <a href="https://github.com/Kitware/CMake/releases/download/v3.15.2/cmake-3.15.2.tar.gz">CMake 3.15.2 from Kitware's github</a>
-
 Both libbtc and the native blur files require GCC 8.3 or below to compile.  GCC 9+ will error out.
-
-Once that is extracted from the archive, building and installing is as simple as `./configure && make && sudo make install`
 
 Ubuntu/Debian One-Liner:
 
