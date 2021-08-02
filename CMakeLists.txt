@@ -200,7 +200,7 @@ if(NOT MANUAL_SUBMODULES)
 
     message(STATUS "Checking submodules")
 #    check_submodule(external/rapidjson)
-    check_submodule(external/libhydrogen)
+#    check_submodule(external/libhydrogen)
 #    check_submodule(external/libbtc)
   endif()
 endif()
@@ -474,8 +474,8 @@ link_directories(${EASYLOGGING_LIBRARY_DIRS})
 include_directories(${BITCOIN_INCLUDE})
 link_directories(${BITCOIN_LIBRARY})
 
-include_directories(${HYDROGEN_INCLUDE})
-link_directories(${HYDROGEN_LIBRARY_DIR})
+#include_directories(${HYDROGEN_INCLUDE})
+#link_directories(${HYDROGEN_LIBRARY_DIR})
 
 
 # Final setup for liblmdb

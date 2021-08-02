@@ -29,7 +29,6 @@
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
 #define context "accounts"
-#define hydro_kdf_KEYBYTES 32
 #include <fstream>
 
 #include "include_base_utils.h"
@@ -43,7 +42,7 @@ extern "C"
 }
 #include "cryptonote_basic_impl.h"
 #include "cryptonote_format_utils.h"
-#include "libhydrogen/hydrogen.h"
+//#include "libhydrogen/hydrogen.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "account"
@@ -52,7 +51,9 @@ using namespace std;
 
 DISABLE_VS_WARNINGS(4244 4345)
 
-  namespace cryptonote
+//#define hydro_kdf_KEYBYTES 32
+
+namespace cryptonote
 {
 
   //-----------------------------------------------------------------
@@ -84,13 +85,18 @@ DISABLE_VS_WARNINGS(4244 4345)
   //-----------------------------------------------------------------
   crypto::secret_key account_base::generate_secret() const
   {
-    if (hydro_init() < 0)
+    /*if (hydro_init() < 0)
     {
       MWARNING("Libhydrogen not initialized! Do not use the generated secret!");
     }
     uint8_t buf[32];
     hydro_random_buf(buf, sizeof buf);
-    const crypto::secret_key ret =  *reinterpret_cast<const crypto::secret_key*>(buf);
+
+    const crypto::secret_key ret =  *reinterpret_cast<const crypto::secret_key*>(buf);*/
+    crypto::public_key dummy_pub = crypto::null_pkey;
+    crypto::secret_key dummy_recov = crypto::null_skey;
+    crypto::secret_key ret = crypto::null_skey;
+    ret = generate_keys(dummy_pub, ret, dummy_recov, false);
     return ret;
   }
   //-----------------------------------------------------------------

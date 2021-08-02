@@ -74,7 +74,7 @@ using namespace epee;
 #include "common/base58.h"
 #include "ringct/rctSigs.h"
 #include "ringdb.h"
-#include "libhydrogen/hydrogen.h"
+//#include "libhydrogen/hydrogen.h"
 
 extern "C"
 {
@@ -518,9 +518,9 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
       crypto::secret_key viewkey_sec;
       crypto::secret_key rngview = crypto::generate_keys(viewkey_pub, viewkey_sec, btc_pubkey_secret, true);
 
-      if (hydro_init() < 0) {
-        MERROR("Libhydrogen not initialized!");
-      }
+      //if (hydro_init() < 0) {
+      //  MERROR("Libhydrogen not initialized!");
+      //}
       crypto::secret_key recovkey = m_account->generate_secret();
 
       crypto::public_key spendkey_pub;
@@ -546,11 +546,11 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
       }
       wallet->generate(field_filename, field_password, address, spendkey_sec, viewkey_sec, true);
       // zero sensitive info
-      hydro_memzero(&viewkey_sec, sizeof(viewkey_sec));
-      hydro_memzero(&spendkey_sec, sizeof(spendkey_sec));
-      hydro_memzero(&recovkey, sizeof(recovkey));
-      hydro_memzero(&rngspend, sizeof(rngspend));
-      hydro_memzero(&rngview, sizeof(rngview));
+      memwipe(&viewkey_sec, sizeof(viewkey_sec));
+      memwipe(&spendkey_sec, sizeof(spendkey_sec));
+      memwipe(&recovkey, sizeof(recovkey));
+      memwipe(&rngspend, sizeof(rngspend));
+      memwipe(&rngview, sizeof(rngview));
     }
     return true;
   };

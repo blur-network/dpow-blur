@@ -57,7 +57,7 @@
 #include "cryptonote_basic/komodo_notaries.h"
 #include "ringct/rctSigs.h"
 #include "common/perf_timer.h"
-#include "libhydrogen/hydrogen.h"
+//#include "libhydrogen/hydrogen.h"
 #if defined(PER_BLOCK_CHECKPOINT)
 #include "blocks/blocks.h"
 #endif

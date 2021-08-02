@@ -75,7 +75,7 @@ target_link_libraries(cryptonote_basic
     cncrypto
     checkpoints
     device
-    hydrogen
+#    hydrogen
     ${Boost_DATE_TIME_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_SERIALIZATION_LIBRARY}
