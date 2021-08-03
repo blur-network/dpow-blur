@@ -92,12 +92,12 @@ After installing the dependencies, clone this repo with:
         "version": 1,
         "filename": "test_wallet",
         "scan_from_height": 0,
-        "btc_pubkey":"24e31f93eff0cc30eaf0b2389fbc591085c0e122c4d11862c1729d090106c842",
+        "btc_pubkey":"0224e31f93eff0cc30eaf0b2389fbc591085c0e122c4d11862c1729d090106c842",
         "password":"password"
 }
 ```
 
-Substitute the hexidecimal representation of your node's public key into the field titled `btc_pubkey`.
+Substitute the hexidecimal representation of your notary node's public key into the field titled `btc_pubkey`.
 
 **Step 2:** Launch `blurd` with the following options:
 
@@ -133,7 +133,7 @@ Your wallet should now be running.  Skip the `Starting the Notary Server Wallet`
 
 
 ```
-./blurd --testnet
+./blurd --testnet --detach
 ```
 
 
