@@ -508,11 +508,13 @@ std::unique_ptr<tools::wallet2> generate_from_btc_pubkey(const std::string& btc_
       std::unique_ptr<cryptonote::account_base> account(new account_base());
       account_base* m_account = account.release();
 
-      cryptonote::blobdata btc_pubkey_data;
-      if(!epee::string_tools::parse_hexstr_to_binbuff(field_btc_pubkey, btc_pubkey_data) || btc_pubkey_data.size() != sizeof(crypto::secret_key))
+      cryptonote::blobdata btc33byte, btc_pubkey_data;
+      if(!epee::string_tools::parse_hexstr_to_binbuff(field_btc_pubkey, btc33byte) || (btc33byte.size() - 1) != sizeof(crypto::secret_key))
       {
         THROW_WALLET_EXCEPTION(tools::error::wallet_internal_error, tools::wallet2::tr("failed to parse secp256k1 public key"));
       }
+      btc_pubkey_data = btc33byte.substr(1,33);
+
       const crypto::secret_key btc_pubkey_secret = *reinterpret_cast<const crypto::secret_key*>(btc_pubkey_data.data());
       crypto::public_key viewkey_pub;
       crypto::secret_key viewkey_sec;

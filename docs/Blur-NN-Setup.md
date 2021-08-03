@@ -61,16 +61,20 @@ The resulting binaries will be located in `dpow-blur/build/release/bin`.
 ```
 
 Example:
- 
 
-![](https://i.ibb.co/BswkG8r/nn-4.png)
-
+```
+{
+        "version": 1,
+        "filename": "testerwallet",
+        "scan_from_height": 0,
+        "btc_pubkey":"0224e31f93eff0cc30eaf0b2389fbc591085c0e122c4d11862c1729d090106c842",
+        "password":"password"
+}
+```
 
 **Step 2.)** You must replace `YOUR_WALLET_NAME` with your desired wallet filename. This will become the name of your wallet file located in binaries directory. 
 
-**Step 3.)** Replace `YOUR_SECP256K1_PUBLIC_KEY` with your public key from this table, omitting the leading `02` or `03`.  In the following picture, the characters necessary are boxed in red.  This should be 64 characters in length. 
-
-Example: ![](https://i.ibb.co/ScDYfb6/nn-1.png) 
+**Step 3.)** Replace `YOUR_SECP256K1_PUBLIC_KEY` with your notary node public key.
 
 **Step 4.)** Replace `YOUR_SUPER_SECRET_PASSWORD` with a super secret password of your choice.  Do not share this with anyone!  Write this password down, for offline storage. 
 
