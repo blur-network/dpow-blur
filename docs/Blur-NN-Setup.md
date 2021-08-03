@@ -91,12 +91,12 @@ You should see the following in your terminal:
 
 **Step 3.)** Copy and paste your `public spendkey` somewhere, and send it to Biz, along with your NN pubkey. 
 
-**Step 4.)** Close the wallet with a `ctrl + C`, and kill daemon with: `pkill -15 blurd`
+**Step 4.)** Close the notary wallet with a `ctrl + C`
 
 
 ## Saving Your Secret Keys
 
-**Step 1.)** Open the `blur-wallet-cli` with `./blur-wallet-cli`. 
+**Step 1.)** Open the `blur-wallet-cli` with `./blur-wallet-cli --testnet`. 
 
 **Step 2.)** Once prompted, enter the name of your wallet file, and hit `enter`.  This should match `YOUR_WALLET_NAME` in `btc.json`. 
 
@@ -109,4 +109,8 @@ You should see the following in your terminal:
 **Step 6.)** Tuck that paper away and never show it to anyone. 
 
 
-Congratulations! You are now ready to go for testnet notarizations on BLUR. 
+**Congratulations! You are now ready to go for testnet notarizations on BLUR.**
+
+Once you have finished these steps, kill your wallet and daemon and wait for this repository to be updated with your information.
+
+After any new set of pubkeys has been added to `komodo_notaries.cpp`, you will need to recompile your Blur binaries.  
