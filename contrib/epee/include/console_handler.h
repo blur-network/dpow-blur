@@ -64,7 +64,7 @@ namespace epee
     ~async_stdin_reader()
     {
       try { stop(); }
-      catch (...) { /* ignore */ }
+      catch (std::exception& e) { LOG_ERROR("Exception in async_stdin_reader destructor: \n"); LOG_ERROR(e.what()); }
     }
 
 #ifdef HAVE_READLINE
