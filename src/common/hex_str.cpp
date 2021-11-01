@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2020, Blur Network
+// Copyright (c) 2018-2022, Blur Network
 //
 // All rights reserved.
 //
@@ -26,7 +26,7 @@
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "../contrib/epee/include/span.h"
+#include "span.h"
 
 #include <iostream>
 #include <string>

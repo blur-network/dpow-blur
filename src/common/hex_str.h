@@ -1,4 +1,4 @@
-// Copyright (c) 2019-2010, Blur Network
+// Copyright (c) 2018-2022, Blur Network
 //
 // All rights reserved.
 //
@@ -25,8 +25,6 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-#include "../contrib/epee/include/span.h"
 
   std::string bytes256_to_hex(std::vector<uint8_t> &input);
   std::vector<uint8_t> hex_to_bytes256(const std::string &input);
