@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2022, Blur Network
 // Copyright (c) 2014-2018, The Monero Project
 // 
 // All rights reserved.
@@ -30,8 +31,12 @@
 
 #include <unistd.h>
 #include <cstdio>
-#include <boost/thread.hpp>
-#include "include_base_utils.h"
+
+#ifdef __GLIBC__
+#include <gnu/libc-version.h>
+#endif
+
+#include "misc_log_ex.h"
 #include "file_io_utils.h"
 #include "wipeable_string.h"
 using namespace epee;
@@ -615,7 +620,17 @@ std::string get_nix_version_display_string()
 
     sanitize_locale();
 
+#ifdef __GLIBC__
+    const char *ver = gnu_get_libc_version();
+    if (!strcmp(ver, "2.25"))
+      MCLOG_RED(el::Level::Warning, "global", "Running with glibc " << ver << ", hangs may occur - change glibc version if possible");
+#endif
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000 || defined(LIBRESSL_VERSION_TEXT)
     SSL_library_init();
+#else
+    OPENSSL_init_ssl(0, NULL);
+#endif
  return true;
 }
   void set_strict_default_file_permissions(bool strict)

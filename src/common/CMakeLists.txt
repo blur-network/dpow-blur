@@ -1,3 +1,4 @@
+# Copyright (c) 2018-2022, Blur Network
 # Copyright (c) 2014-2018, The Monero Project
 #
 # All rights reserved.
@@ -33,8 +34,8 @@ set(common_sources
   command_line.cpp
   error.cpp
   expect.cpp
-  hex_str.cpp
   util.cpp
+  hex_str.cpp
   i18n.cpp
   password.cpp
   perf_timer.cpp
@@ -86,5 +87,5 @@ target_link_libraries(common
     ${OPENSSL_LIBRARIES}
     ${EXTRA_LIBRARIES})
 
-monero_install_headers(common
-  ${common_headers})
+#monero_install_headers(common
+#  ${common_headers})
