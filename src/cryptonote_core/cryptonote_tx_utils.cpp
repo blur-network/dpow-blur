@@ -32,7 +32,7 @@
 
 #include <unordered_set>
 #include <random>
-#include "include_base_utils.h"
+#include "misc_log_ex.h"
 #include "string_tools.h"
 using namespace epee;
 
@@ -44,7 +44,6 @@ using namespace epee;
 #include "crypto/hash.h"
 #include "ringct/rctSigs.h"
 #include "multisig/multisig.h"
-//#include "libhydrogen/hydrogen.h"
 #include "common/hex_str.h"
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "cryptonote_basic/komodo_notaries.h"

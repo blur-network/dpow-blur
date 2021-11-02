@@ -30,8 +30,7 @@ set(cryptonote_core_sources
   blockchain.cpp
   cryptonote_core.cpp
   tx_pool.cpp
-  cryptonote_tx_utils.cpp
-  core_instanciations.cpp)
+  cryptonote_tx_utils.cpp)
 
 set(cryptonote_core_headers)
 
@@ -62,9 +61,6 @@ target_link_libraries(cryptonote_core
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_SYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
-    ${OPENSSL_LIBRARIES}
   PRIVATE
-    p2p
-    cryptonote_protocol
     ${EXTRA_LIBRARIES})
 
