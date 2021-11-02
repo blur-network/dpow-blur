@@ -47,7 +47,7 @@
 #include "sodium.h"
 #include "daemon/command_line_args.h"
 #include "blockchain_db/db_types.h"
-#include "bitcoin_spv.h"
+//#include "bitcoin_spv.h"
 #include "version.h"
 
 #undef MONERO_DEFAULT_LOG_CATEGORY

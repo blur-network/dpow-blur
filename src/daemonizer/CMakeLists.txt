@@ -64,12 +64,10 @@ monero_add_library(daemonizer
   ${daemonizer_sources}
   ${daemonizer_headers}
   ${daemonizer_private_headers})
+add_dependencies(daemonizer daemon_rpc_server cryptonote_core)
 target_link_libraries(daemonizer
   PUBLIC
     common
-#    ${BTC_LIBRARY}
-#    ${SECP256K1_LIBRARY}
-#    ${EVENT_LIBRARIES}
     ${Boost_CHRONO_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

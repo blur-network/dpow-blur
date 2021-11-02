@@ -41,8 +41,6 @@
 
 namespace daemonize
 {
-  std::string const t_executor::NAME = "Blur Network Daemon";
-
   void t_executor::init_options(
       boost::program_options::options_description & configurable_options
     )
@@ -50,9 +48,10 @@ namespace daemonize
     t_daemon::init_options(configurable_options);
   }
 
-  std::string const & t_executor::name()
+  std::string const t_executor::name()
   {
-    return NAME;
+    std::string const ret = "Blur Network Daemon";
+    return ret;
   }
 
   t_daemon t_executor::create_daemon(

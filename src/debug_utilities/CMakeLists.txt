@@ -43,7 +43,6 @@ target_link_libraries(cn_deserialize
     ringct
     p2p
     epee
-    cryptonote_protocol
     ${CMAKE_THREAD_LIBS_INIT})
 
 set_property(TARGET cn_deserialize
@@ -65,7 +64,6 @@ target_link_libraries(object_sizes
     blockchain_db
     p2p
     epee
-    cryptonote_protocol
     ${CMAKE_THREAD_LIBS_INIT})
 
 set_property(TARGET object_sizes
