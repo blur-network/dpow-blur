@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2022, Blur Network
 // Copyright (c) 2014-2018, The Monero Project
 // 
 // All rights reserved.
@@ -44,6 +45,7 @@
 #include "daemon/command_server.h"
 #include "daemon/command_server.h"
 #include "daemon/command_line_args.h"
+#include "version.h"
 
 using namespace epee;
 

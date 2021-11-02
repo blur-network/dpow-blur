@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2022, Blur Network
 // Copyright (c) 2014-2018, The Monero Project
 //
 // All rights reserved.
@@ -176,7 +177,7 @@ namespace nodetool
     bool idle_worker();
     bool handle_remote_peerlist(const std::list<peerlist_entry>& peerlist, time_t local_time, const epee::net_utils::connection_context_base& context);
     bool get_local_node_data(basic_node_data& node_data);
-   // bool get_local_handshake_data(handshake_data& hshd);
+    //bool get_local_handshake_data(handshake_data& hshd);
 
     bool merge_peerlist_with_local(const std::list<peerlist_entry>& bs);
     bool fix_time_delta(std::list<peerlist_entry>& local_peerlist, time_t local_time, int64_t& delta);

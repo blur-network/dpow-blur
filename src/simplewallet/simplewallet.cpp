@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2022, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 // 
@@ -63,8 +64,7 @@
 #include "multisig/multisig.h"
 #include "wallet/wallet_args.h"
 #include <stdexcept>
-
-
+#include "version.h"
 #ifdef WIN32
 #include <boost/locale.hpp>
 #include <boost/filesystem.hpp>
@@ -255,13 +255,13 @@ namespace
 
   const struct
   {
-    const char *name;
+    char const* name;
     tools::wallet2::RefreshType refresh_type;
   } refresh_type_names[] =
   {
     { "full", tools::wallet2::RefreshFull },
     { "no-coinbase", tools::wallet2::RefreshNoCoinbase },
-    { "default", tools::wallet2::RefreshDefault },
+    { "default", tools::wallet2::RefreshDefault }
   };
 
   bool parse_refresh_type(const std::string &s, tools::wallet2::RefreshType &refresh_type)
@@ -1889,6 +1889,7 @@ bool simple_wallet::help(const std::vector<std::string> &args/* = std::vector<st
 {
   if(args.empty())
   {
+    success_msg_writer() << "Blur Network '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << std::endl;
     success_msg_writer() << get_commands_str();
   }
   else
@@ -2027,7 +2028,7 @@ simple_wallet::simple_wallet()
                                   "  Set the default ring size (default and minimum is 5).\n "
                                   "auto-refresh <1|0>\n "
                                   "  Whether to automatically synchronize new blocks from the daemon.\n "
-                                  "refresh-type <full|optimize-coinbase|no-coinbase|default>\n "
+                                  "refresh-type <full|no-coinbase|default>\n "
                                   "  Set the wallet's refresh behaviour.\n "
                                   "priority [0|1|2|3]\n "
                                   "  Set the fee too default/low/medium/high.\n "
@@ -2292,7 +2293,7 @@ bool simple_wallet::set_variable(const std::vector<std::string> &args)
     CHECK_SIMPLE_VARIABLE("print-ring-members", set_print_ring_members, tr("0 or 1"));
     CHECK_SIMPLE_VARIABLE("store-tx-info", set_store_tx_info, tr("0 or 1"));
     CHECK_SIMPLE_VARIABLE("auto-refresh", set_auto_refresh, tr("0 or 1"));
-    CHECK_SIMPLE_VARIABLE("refresh-type", set_refresh_type, tr("full (slowest, no assumptions); optimize-coinbase (fast, assumes the whole coinbase is paid to a single address); no-coinbase (fastest, assumes we receive no coinbase transaction), default (same as optimize-coinbase)"));
+    CHECK_SIMPLE_VARIABLE("refresh-type", set_refresh_type, tr("full (slowest, no assumptions); no-coinbase (fastest, assumes we receive no coinbase transaction), default (same as full)"));
     CHECK_SIMPLE_VARIABLE("priority", set_default_priority, tr("0, 1, 2, or 3"));
     CHECK_SIMPLE_VARIABLE("confirm-missing-payment-id", set_confirm_missing_payment_id, tr("0 or 1"));
     CHECK_SIMPLE_VARIABLE("ask-password", set_ask_password, tr("0 or 1"));
@@ -3678,16 +3679,13 @@ void simple_wallet::on_money_received(uint64_t height, const crypto::hash &txid,
     print_money(amount) << ", " <<
     tr("idx ") << subaddr_index;
 
-  const uint64_t warn_height = m_wallet->nettype() == TESTNET ? 1 : m_wallet->nettype() == STAGENET ? 1 : 380000;
+  const uint64_t warn_height = m_wallet->nettype() == TESTNET ? 1 : m_wallet->nettype() == STAGENET ? 1 : 1;
   if (height >= warn_height)
   {
     std::vector<tx_extra_field> tx_extra_fields;
     parse_tx_extra(tx.extra, tx_extra_fields); // failure ok
     tx_extra_nonce extra_nonce;
   }
-  if (m_auto_refresh_refreshing)
-    m_cmd_binder.print_prompt();
-  else
     m_refresh_progress_reporter.update(height, true);
 }
 //----------------------------------------------------------------------------------------------------
@@ -3703,9 +3701,6 @@ void simple_wallet::on_money_spent(uint64_t height, const crypto::hash &txid, co
     tr("txid ") << txid << ", " <<
     tr("spent ") << print_money(amount) << ", " <<
     tr("idx ") << subaddr_index;
-  if (m_auto_refresh_refreshing)
-    m_cmd_binder.print_prompt();
-  else
     m_refresh_progress_reporter.update(height, true);
 }
 //----------------------------------------------------------------------------------------------------
@@ -6688,8 +6683,9 @@ bool simple_wallet::wallet_info(const std::vector<std::string> &args)
   else
     type = tr("Normal");
   message_writer() << tr("Type: ") << type;
-  message_writer() << tr("Network type: ") << ((m_wallet->nettype() == cryptonote::TESTNET) ?
-      tr("Testnet") : (m_wallet->nettype() == cryptonote::STAGENET) ? tr("Stagenet") :  tr("Mainnet"));
+  message_writer() << tr("Network type: ") << (
+    m_wallet->nettype() == (cryptonote::TESTNET) ? tr("Testnet") :
+    (m_wallet->nettype() == cryptonote::STAGENET) ? tr("Stagenet") : tr("Mainnet"));
   return true;
 }
 //----------------------------------------------------------------------------------------------------
@@ -7241,6 +7237,46 @@ int main(int argc, char* argv[])
   }
   else
   {
+    tools::signal_handler::install([&w](int type) {
+
+      if (tools::password_container::is_prompting.load())
+
+      {
+
+        // must be prompting for password so return and let the signal stop prompt
+
+        return;
+
+      }
+
+#ifdef WIN32
+
+      if (type == CTRL_C_EVENT)
+
+#else
+
+      if (type == SIGINT)
+
+#endif
+
+      {
+
+        // if we're pressing ^C when refreshing, just stop refreshing
+
+        w.interrupt();
+
+      }
+
+      else
+
+      {
+
+        w.stop();
+
+      }
+
+    });
+
     w.run();
 
     w.deinit();
