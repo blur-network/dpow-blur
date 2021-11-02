@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2019, Blur Network
+// Copyright (c) 2018-2022, Blur Network
 // Copyright (c) 2014-2018, The Monero Project
 //
 // All rights reserved.
@@ -42,7 +42,7 @@
 #include "cryptonote_basic/cryptonote_format_utils.h"
 #include "serialization/binary_utils.h" // dump_binary(), parse_binary()
 #include "serialization/json_utils.h" // dump_json()
-#include "include_base_utils.h"
+#include "misc_log_ex.h"
 #include "blockchain_db/db_types.h"
 #include "cryptonote_core/cryptonote_core.h"
 #include "cryptonote_basic/komodo_notaries.h"
@@ -646,7 +646,7 @@ int main(int argc, char* argv[])
 
   if (command_line::get_arg(vm, command_line::arg_help))
   {
-    std::cout << "Blur Network '" << cryptonote::MONERO_RELEASE_NAME << "' (v" << cryptonote::MONERO_VERSION_FULL << ")" << ENDL << ENDL;
+    std::cout << "Blur Network '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL << ENDL;
     std::cout << desc_options << std::endl;
     return 1;
   }

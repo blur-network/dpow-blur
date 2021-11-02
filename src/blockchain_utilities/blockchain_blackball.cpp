@@ -210,7 +210,7 @@ int main(int argc, char* argv[])
 
   if (command_line::get_arg(vm, command_line::arg_help))
   {
-    std::cout << "BLUR '" << cryptonote::MONERO_RELEASE_NAME << "' (v" << cryptonote::MONERO_VERSION_FULL << ")" << ENDL << ENDL;
+    std::cout << "BLUR '" << MONERO_RELEASE_NAME << "' (v" << MONERO_VERSION_FULL << ")" << ENDL << ENDL;
     std::cout << desc_options << std::endl;
     return 1;
   }
@@ -283,7 +283,6 @@ int main(int argc, char* argv[])
       LOG_PRINT_L0("Error opening database: " << e.what());
       return 1;
     }
-
     r = core_storage[n]->init(db, net_type);
 
     CHECK_AND_ASSERT_MES(r, 1, "Failed to initialize source blockchain storage");
