@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2022, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 //
@@ -29,7 +30,7 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-#include "include_base_utils.h"
+#include "misc_log_ex.h"
 using namespace epee;
 
 #include "cryptonote_basic_impl.h"
@@ -88,7 +89,8 @@ namespace cryptonote {
     const int emission_speed_factor = EMISSION_SPEED_FACTOR_PER_MINUTE - (target_minutes-1);
 
     const uint64_t premine = 360000000000000000U;
-     if (version < 2 && median_size > 0 && already_generated_coins < premine) {
+
+     if ((version < 2) && (median_size > 0) && (already_generated_coins < premine)) {
        reward = premine;
        return true;
      }

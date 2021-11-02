@@ -1,4 +1,4 @@
-// Copyright (c) 2018-2022, The Blur Network
+// Copyright (c) 2018-2022, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
 //
@@ -30,7 +30,7 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-#include "include_base_utils.h"
+#include "misc_log_ex.h"
 using namespace epee;
 
 #include <atomic>
@@ -38,6 +38,7 @@ using namespace epee;
 #include <iostream>
 #include <sstream>
 #include <stdio.h>
+#include "common/int-util.h"
 #include "wipeable_string.h"
 #include "string_tools.h"
 #include "serialization/string.h"
@@ -1447,47 +1448,46 @@ namespace cryptonote
   {
     blobdata bd = get_block_hashing_blob(b);
     const int cn_variant = b.major_version >= 5 ? ( b.major_version >= 8 ? 2 : 1 ) : 0;
-    int cn_iters = b.major_version >= 6 ? ( b.major_version >= 7 ? 0x40000 : 0x20000 ) : 0x80000;
+    uint32_t cn_iters = b.major_version >= 6 ? (b.major_version >= 7 ? 0x40000 :  0x20000) : 0x80000;
+    uint64_t its = 0;
 
       if (b.major_version <= 7)
       {
-        cn_iters += ((height + 1) & 0x3FF);
-        cn_iters <<= 1;
+        its = add(cn_iters, (add(height, 1) & 0x3FF));
+        its <<= 1;
       }
       else if (b.major_version <= 8)
       {
-        cn_iters <<= 1;
+        its = add(cn_iters, (add(height, 1) & 0x3FF));
+        if (height < 185856) {
+        its <<= 1;
+        }
       }
       else if (b.major_version == 9)
       {
         const uint64_t stamp = b.timestamp;
-        cn_iters += (((stamp % height) + (height + 1))  & 0xFFF);
+        const uint64_t stampheight = stamp % height;
+        its = add(cn_iters, add(stampheight, add(height, 1))  & 0xFFF);
       }
       else if (b.major_version >= 10)
       {
-        std::string hash_alpha = string_tools::pod_to_hex(b.prev_id);
-        std::string subhash = hash_alpha.substr(0,6);
-        unsigned int id_num = std::stoul(subhash, nullptr, 16);
+        uint32_t id_num = 0;
+        uint8_t bytes_span[3] = { 0, 0, 0 };
 
-//        LOG_PRINT_L2("\nPRNG from previous block ID : " << id_num);
+        // get 6 char from previous hash as varint
+        for (size_t i = 0; i < 3; i++) {
+          memset(&bytes_span[i], (int)(b.prev_id.data[i]), sizeof(b.prev_id.data[i]));
+          id_num |= bytes_span[i] << (24 - (8*(i+1)));
+        }
 
-        if (id_num < 1) { // guard against small probability of zero case
-          id_num = 1; }   // in previous hash's first 6 characters
+        // guard against zero case
+        id_num = (id_num < 1) ? 1 : id_num;
 
-        uint64_t m_stamp = b.timestamp;
-        const uint64_t stamp = m_stamp;
-        bool two = 0;
-        two = id_num && !(id_num & (id_num - 1));
-
-        if (two) {
-          cn_iters += ((( stamp & (id_num - 1)) + height) & 0x7FFF);  }
-        else if (!two) {
-          cn_iters += (((stamp % id_num) + height) & 0x7FFF);  }
-
-//        LOG_PRINT_L2("\nIterations : "<< cn_iters);
-
-       }
-    crypto::cn_slow_hash(bd.data(), bd.size(), res, cn_variant, cn_iters);
+        // rest is just ((b.timestamp % id_num) + height) % 32768
+        // ordered by branch most commonly taken
+        its = add(cn_iters, (add((b.timestamp % id_num), height) & 0x7FFF));
+   }
+    crypto::cn_slow_hash(bd.data(), bd.size(), res, cn_variant, its);
     return true;
   }
   //---------------------------------------------------------------

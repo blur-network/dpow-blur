@@ -35,7 +35,7 @@
 #include "cryptonote_basic_impl.h"
 #include "account.h"
 #include "subaddress_index.h"
-#include "include_base_utils.h"
+#include "misc_log_ex.h"
 #include "crypto/crypto.h"
 #include "crypto/hash.h"
 #include <unordered_map>
@@ -49,6 +49,8 @@ namespace cryptonote
 {
   union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4];};
   typedef union _bits256 bits256;
+  union _subhash { uint8_t bytes[3]; uint32_t uint; };
+  typedef union _subhash subhash;
   //---------------------------------------------------------------
   void get_transaction_prefix_hash(const transaction_prefix& tx, crypto::hash& h);
   crypto::hash get_transaction_prefix_hash(const transaction_prefix& tx);

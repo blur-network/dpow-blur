@@ -1,3 +1,4 @@
+// Copyright (c) 2018-2022, Blur Network
 // Copyright (c) 2014-2018, The Monero Project
 // 
 // All rights reserved.
@@ -60,7 +61,6 @@ namespace cryptonote
     epee::copyable_atomic m_callback_request_count; //in debug purpose: problem with double callback rise
     crypto::hash m_last_known_hash;
     //size_t m_score;  TODO: add score calculations
-    static epee::net_utils::connection_context_base context;
   };
 
   inline std::string get_protocol_state_string(cryptonote_connection_context::state s)
@@ -81,4 +81,5 @@ namespace cryptonote
       return "unknown";
     }    
   }
+
 }
