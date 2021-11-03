@@ -32,13 +32,6 @@ set(blockchain_db_sources
   lmdb/db_lmdb.cpp
   )
 
-if (BERKELEY_DB)
-  set(blockchain_db_sources
-  ${blockchain_db_sources}
-  )
-endif()
-
-
 set(blockchain_db_headers)
 
 set(blockchain_db_private_headers

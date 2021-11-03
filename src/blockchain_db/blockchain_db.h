@@ -580,7 +580,6 @@ protected:
    */
   void add_transaction(const crypto::hash& blk_hash, const transaction& tx, const crypto::hash* tx_hash_ptr = NULL);
 
-
   mutable uint64_t time_tx_exists = 0;  //!< a performance metric
   uint64_t time_commit1 = 0;  //!< a performance metric
   bool m_auto_remove_logs = true;  //!< whether or not to automatically remove old logs
@@ -623,7 +622,7 @@ public:
    * This function opens an existing database or creates it if it
    * does not exist.
    *
-;   * The subclass implementing this will handle all file opening/creation,
+   * The subclass implementing this will handle all file opening/creation,
    * and is responsible for maintaining its state.
    *
    * The parameter <filename> may not refer to a file name, necessarily, but
