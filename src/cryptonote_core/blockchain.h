@@ -40,7 +40,6 @@
 #include <boost/multi_index/member.hpp>
 #include <atomic>
 #include <functional>
-#include <memory>
 #include <unordered_map>
 #include <unordered_set>
 

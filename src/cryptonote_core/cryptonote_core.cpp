@@ -1,4 +1,3 @@
-
 // Copyright (c) 2018-2022, Blur Network
 // Copyright (c) 2017-2018, The Masari Project
 // Copyright (c) 2014-2018, The Monero Project
@@ -466,7 +465,6 @@ namespace cryptonote
       LOG_ERROR("Error opening database: " << e.what());
       return false;
     }
-
 
     m_blockchain_storage.set_user_options(blocks_threads,
         blocks_per_sync, sync_mode, fast_sync);

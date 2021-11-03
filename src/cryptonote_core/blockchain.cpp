@@ -32,11 +32,10 @@
 
 #include <algorithm>
 #include <cstdio>
-#include <memory>
 #include <boost/filesystem.hpp>
 #include <boost/range/adaptor/reversed.hpp>
 
-#include "include_base_utils.h"
+#include "misc_log_ex.h"
 #include "cryptonote_basic/cryptonote_basic_impl.h"
 #include "tx_pool.h"
 #include "blockchain.h"
@@ -57,10 +56,10 @@
 #include "cryptonote_basic/komodo_notaries.h"
 #include "ringct/rctSigs.h"
 #include "common/perf_timer.h"
-//#include "libhydrogen/hydrogen.h"
 #if defined(PER_BLOCK_CHECKPOINT)
 #include "blocks/blocks.h"
 #endif
+
 #undef MONERO_DEFAULT_LOG_CATEGORY
 #define MONERO_DEFAULT_LOG_CATEGORY "blockchain"
 
@@ -4543,6 +4542,7 @@ void Blockchain::block_longhash_worker(uint64_t height, const std::vector<block>
 //------------------------------------------------------------------
 bool Blockchain::cleanup_handle_incoming_blocks(bool force_sync)
 {
+
   bool success = false;
 
   MTRACE("Blockchain::" << __func__);
@@ -4727,6 +4727,7 @@ uint64_t Blockchain::prevalidate_block_hashes(uint64_t height, const std::list<c
 //    keys.
 bool Blockchain::prepare_handle_incoming_blocks(const std::list<block_complete_entry> &blocks_entry)
 {
+
   MTRACE("Blockchain::" << __func__);
   TIME_MEASURE_START(prepare);
   bool stop_batch;
@@ -5371,6 +5372,3 @@ bool Blockchain::for_all_outputs(uint64_t amount, std::function<bool(uint64_t he
 namespace cryptonote {
 template bool Blockchain::get_transactions(const std::vector<crypto::hash>&, std::list<transaction>&, std::list<crypto::hash>&) const;
 }
-
-
-
