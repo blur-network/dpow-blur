@@ -59,6 +59,11 @@ using namespace epee;
 #define MAX_RESTRICTED_FAKE_OUTS_COUNT 40
 #define MAX_RESTRICTED_GLOBAL_FAKE_OUTS_COUNT 5000
 
+#define P2PK_LENGTH "21"
+// above is 0x21
+#define OP_CHECKSIG "ac"
+// above is 0xac
+
 
 namespace
 {
@@ -118,7 +123,7 @@ namespace cryptonote
     m_btc_pubkey = command_line::get_arg(vm, arg_btc_pubkey);
     if (!m_btc_pubkey.empty())
     {
-      komodo::SCRIPTPUBKEY = ("21" + m_btc_pubkey + "ac");
+      komodo::SCRIPTPUBKEY = (P2PK_LENGTH + m_btc_pubkey + OP_CHECKSIG);
     }
 
     if (!m_bootstrap_daemon_address.empty())
@@ -236,6 +241,53 @@ namespace cryptonote
       boost::shared_lock<boost::shared_mutex> lock(m_bootstrap_daemon_mutex);
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
+    return true;
+  }
+  //-----------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_write_varint(const COMMAND_RPC_WRITE_VARINT::request& req, COMMAND_RPC_WRITE_VARINT::response& res)
+  {
+    std::string const data = req.data;
+
+    if (data.empty()) {
+      res.status = "Failure: input data must not be empty!";
+      res.varint = "ERROR";
+      return true;
+    } else if (data.length() > 20) {
+      res.status = "Failure: length of input data cannot be greater than 20 characters";
+      res.varint = "ERROR";
+      return true;
+    }
+
+    for (size_t i = 0; i < data.length(); i++) {
+      if (!std::isdigit(req.data[i])) {
+        res.status = "Failure: data must be a number, represented in decimal";
+        res.varint = "ERROR";
+        return true;
+      }
+    }
+
+    if (data.length() == 20) {
+      std::string first_ten, last_ten;
+      first_ten = data.substr(0,10);
+      last_ten = data.substr(10,10);
+      uint64_t first, last;
+      first = strtoull(first_ten.c_str(), 0, 10);
+      last = strtoull(last_ten.c_str(), 0, 10);
+      if (first >= 1844674407) {
+        if (last > 3709551615) {
+          // need to make sure we do not overflow amount for strtoull
+          res.status = "Failure: value of input too large for 64-bit unsigned integer";
+          res.varint = "ERROR";
+          return true;
+        }
+      }
+    }
+
+    size_t data_as_integer = std::strtoull(data.c_str(), 0, 10);
+    std::string varint_blob = tools::get_varint_data(data_as_integer);
+    std::string const varint = epee::string_tools::buff_to_hex_nodelimer(varint_blob);
+    res.varint = varint;
+    res.status = "OK";
     return true;
   }
   //-----------------------------------------------------------------------------------------------------------------
