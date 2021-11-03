@@ -86,7 +86,46 @@ namespace nodetool
   {
 
     TRY_ENTRY();
-    make_default_config();
+    std::string state_file_path = m_config_folder + "/" + P2P_NET_DATA_FILENAME;
+    std::ifstream p2p_data;
+    p2p_data.open( state_file_path , std::ios_base::binary | std::ios_base::in);
+    if(!p2p_data.fail())
+    {
+      try
+      {
+        // first try reading in portable mode
+        boost::archive::portable_binary_iarchive a(p2p_data);
+        a >> *this;
+      }
+      catch (...)
+      {
+        // if failed, try reading in unportable mode
+        boost::filesystem::copy_file(state_file_path, state_file_path + ".unportable", boost::filesystem::copy_option::overwrite_if_exists);
+        p2p_data.close();
+        p2p_data.open( state_file_path , std::ios_base::binary | std::ios_base::in);
+        if(!p2p_data.fail())
+        {
+          try
+          {
+            boost::archive::binary_iarchive a(p2p_data);
+            a >> *this;
+          }
+          catch (const std::exception &e)
+          {
+            MWARNING("Failed to load p2p config file, falling back to default config");
+            m_peerlist = peerlist_manager(); // it was probably half clobbered by the failed load
+            make_default_config();
+          }
+        }
+        else
+        {
+          make_default_config();
+        }
+      }
+    }else
+    {
+      make_default_config();
+    }
 
     // always recreate a new peer id
     make_default_peer_id();
@@ -169,7 +208,7 @@ namespace nodetool
     for (const auto &c: conns)
       m_net_server.get_config_object().close(c);
 
-    MCLOG_CYAN(el::Level::Info, "global", "Host " << addr.host_str() << " blocked.");
+    MCLOG_CYAN(el::Level::Info, "global", "Host " << addr.host_str() << " blocked due to host being found on block list.");
     return true;
   }
   //-----------------------------------------------------------------------------------
@@ -195,8 +234,10 @@ namespace nodetool
     {
       auto it = m_host_fails_score.find(address.host_str());
       CHECK_AND_ASSERT_MES(it != m_host_fails_score.end(), false, "internal error");
-      if ((it->second) >= 9)
+      if ((it->second) >= 9) {
         block_host(address);
+        MCLOG_CYAN(el::Level::Info, "global", "Host " << address.host_str() << " added to block list. Failed to connect after at least 9 attempts."); 
+      }
     }
     return true;
   }
@@ -426,6 +467,20 @@ namespace nodetool
     res = m_peerlist.init(m_allow_local_ip);
     CHECK_AND_ASSERT_MES(res, false, "Failed to init peerlist.");
 
+    // if we are on mainnet, and have neither exclusive nor priority nodes specified
+    if ((m_nettype == cryptonote::MAINNET) && ((m_priority_peers.size() == 0) && (m_exclusive_peers.size() == 0))) {
+      std::vector<std::string> seed_peers = SEED_NODE_PEERS;
+      for (const auto& each: seed_peers) {
+        nodetool::peerlist_entry pe = AUTO_VAL_INIT(pe);
+        pe.id = crypto::rand<uint64_t>();
+        const uint16_t default_port = cryptonote::get_config(m_nettype).P2P_DEFAULT_PORT;
+        bool r = parse_peer_from_string(pe.adr, each, default_port);
+        if (r)
+        {
+          m_command_line_peers.push_back(pe);
+        }
+      }
+    }
 
     for(auto& p: m_command_line_peers)
       m_peerlist.append_with_peer_white(p);
@@ -1105,22 +1160,23 @@ namespace nodetool
     {
       if(conn_count < expected_white_connections)
       {
-        //start from anchor list
-        if(!make_expected_connections_count(anchor, P2P_DEFAULT_ANCHOR_CONNECTIONS_COUNT))
-          return false;
-        //then do white list
+        //start from white list
         if(!make_expected_connections_count(white, expected_white_connections))
+          return false;
+        //then do anchor list
+        if(!make_expected_connections_count(anchor, P2P_DEFAULT_ANCHOR_CONNECTIONS_COUNT))
           return false;
         //then do grey list
         if(!make_expected_connections_count(gray, m_config.m_net_config.max_out_connection_count))
           return false;
-      }else
+      }
+      else
       {
-        //start from grey list
-        if(!make_expected_connections_count(gray, m_config.m_net_config.max_out_connection_count))
-          return false;
-        //and then do white list
+        //start from white list
         if(!make_expected_connections_count(white, m_config.m_net_config.max_out_connection_count))
+          return false;
+        //then do grey list
+        if(!make_expected_connections_count(gray, m_config.m_net_config.max_out_connection_count))
           return false;
       }
     }
@@ -1154,11 +1210,11 @@ namespace nodetool
       if(m_net_server.is_stop_signal_sent())
         return false;
 
-      if (peer_type == anchor && !make_new_connection_from_anchor_peerlist(apl)) {
+      if (peer_type == white && !make_new_connection_from_peerlist(true)) {
         break;
       }
 
-      if (peer_type == white && !make_new_connection_from_peerlist(true)) {
+      if (peer_type == anchor && !make_new_connection_from_anchor_peerlist(apl)) {
         break;
       }
 
@@ -1670,7 +1726,7 @@ namespace nodetool
   bool node_server<t_payload_net_handler>::set_max_out_peers(const boost::program_options::variables_map& vm, int64_t max)
   {
     if(max == -1) {
-      m_config.m_net_config.max_out_connection_count = -1;
+      m_config.m_net_config.max_out_connection_count = 9999;
       return true;
     }
     m_config.m_net_config.max_out_connection_count = max;

@@ -95,7 +95,6 @@ target_link_libraries(rpc_base
   PUBLIC
     common
     epee
-    cryptonote_protocol
     ${Boost_REGEX_LIBRARY}
     ${Boost_THREAD_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}

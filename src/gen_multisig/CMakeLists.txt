@@ -31,23 +31,23 @@ set(gen_multisig_sources
 
 monero_add_executable(gen_multisig
   ${gen_multisig_sources})
+add_dependencies(gen_multisig multisig wallet)
 target_link_libraries(gen_multisig
   PRIVATE
     wallet
     cryptonote_core
-    cryptonote_protocol
     cncrypto
     common
     epee
     ${EPEE_READLINE}
+    ${READLINE_LIBRARIES} 
     ${Boost_CHRONO_LIBRARY}
     ${Boost_PROGRAM_OPTIONS_LIBRARY}
     ${Boost_FILESYSTEM_LIBRARY}
     ${Boost_THREAD_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${READLINE_LIBRARIES}
-    ${EXTRA_LIBRARIES}
-    ${OPENSSL_LIBRARIES})
+    ${OPENSSL_LIBRARIES}
+    ${EXTRA_LIBRARIES})
 set_property(TARGET gen_multisig
   PROPERTY
     OUTPUT_NAME "blur-gen-trusted-multisig")

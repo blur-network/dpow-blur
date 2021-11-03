@@ -42,6 +42,7 @@ monero_add_library(multisig
   ${multisig_headers}
   ${multisig_private_headers})
 
+
 target_link_libraries(multisig
   PUBLIC
     ringct

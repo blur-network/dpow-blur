@@ -30,10 +30,9 @@
 //
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-#include "include_base_utils.h"
+#include "misc_log_ex.h"
 #include "string_tools.h"
-#include "span.h"
-
+#include "string_coding.h"
 using namespace epee;
 
 #include "core_rpc_server.h"
@@ -237,7 +236,6 @@ namespace cryptonote
       boost::shared_lock<boost::shared_mutex> lock(m_bootstrap_daemon_mutex);
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
-    res.version = MONERO_VERSION;
     return true;
   }
   //-----------------------------------------------------------------------------------------------------------------
@@ -275,6 +273,9 @@ namespace cryptonote
   bool core_rpc_server::on_get_blocks(const COMMAND_RPC_GET_BLOCKS_FAST::request& req, COMMAND_RPC_GET_BLOCKS_FAST::response& res)
   {
     PERF_TIMER(on_get_blocks);
+    bool r;
+    if (use_bootstrap_daemon_if_necessary<COMMAND_RPC_GET_BLOCKS_FAST>(invoke_http_mode::BIN, "/getblocks.bin", req, res, r))
+      return r;
 
     std::list<std::pair<cryptonote::blobdata, std::list<cryptonote::blobdata> > > bs;
 
@@ -2141,6 +2142,7 @@ namespace cryptonote
     response.block_size = m_core.get_blockchain_storage().get_db().get_block_size(height);
     response.num_txes = blk.tx_hashes.size();
     response.pow_hash = string_tools::pod_to_hex(get_block_longhash(blk, height));
+    response.tx_prefix_hash = string_tools::pod_to_hex(get_transaction_prefix_hash(blk.miner_tx));
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -2494,7 +2496,6 @@ namespace cryptonote
       boost::shared_lock<boost::shared_mutex> lock(m_bootstrap_daemon_mutex);
       res.was_bootstrap_ever_used = m_was_bootstrap_ever_used;
     }
-    res.version = MONERO_VERSION;
     return true;
   }
   //------------------------------------------------------------------------------------------------------------------------------
@@ -2805,6 +2806,29 @@ namespace cryptonote
     return true;
   }*/
   //------------------------------------------------------------------------------------------------------------------------------
+  bool core_rpc_server::on_base64_encode(const COMMAND_RPC_BASE64_ENCODE::request& req, COMMAND_RPC_BASE64_ENCODE::response& res, epee::json_rpc::error& error_resp)
+  {
+
+    unsigned char const bytes = req.bytes;
+
+    if (sizeof(bytes) < 1) {
+      res.status = "Minimum length of 1 byte needed to encode to base 64";
+      return false;
+    }
+
+    std::string base_64_string = epee::string_encoding::base64_encode(&bytes, sizeof(bytes));
+    res.base_64_string = base_64_string;
+
+    bool r = base_64_string.empty();
+    if (r) {
+      res.status = "Error encoding to base64 string";
+      return false;
+    }
+
+    res.status = CORE_RPC_STATUS_OK;
+    return true;
+  }
+  //------------------------------------------------------------------------------------------------------------------------------
   bool core_rpc_server::on_flush_txpool(const COMMAND_RPC_FLUSH_TRANSACTION_POOL::request& req, COMMAND_RPC_FLUSH_TRANSACTION_POOL::response& res, epee::json_rpc::error& error_resp)
   {
     PERF_TIMER(on_flush_txpool);
@@ -2843,8 +2867,8 @@ namespace cryptonote
     }
     if (!m_core.get_blockchain_storage().flush_txes_from_pool(txids))
     {
-        res.status = "Failed to remove one or more tx(es)";
-        return false;
+      res.status = "Failed to remove one or more tx(es)";
+      return false;
     }
 
     if (failed)
