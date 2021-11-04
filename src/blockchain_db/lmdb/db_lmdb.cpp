@@ -1196,7 +1196,6 @@ void BlockchainLMDB::reset()
   if (auto result = mdb_drop(txn, m_tx_indices, 0))
     throw0(DB_ERROR(lmdb_error("Failed to drop m_tx_indices: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_btc_indices, 0))
-//TODO: drop ntzpool-related entries here too
     throw0(DB_ERROR(lmdb_error("Failed to drop m_btc_indices: ", result).c_str()));
   if (auto result = mdb_drop(txn, m_tx_outputs, 0))
     throw0(DB_ERROR(lmdb_error("Failed to drop m_tx_outputs: ", result).c_str()));
