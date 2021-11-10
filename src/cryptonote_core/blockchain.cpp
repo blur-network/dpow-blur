@@ -188,20 +188,20 @@ uint64_t Blockchain::get_ntz_count(std::vector<std::pair<crypto::hash,uint64_t>>
   // return value is total count
   LOG_PRINT_L3("Blockchain::" << __func__);
   uint64_t count = 0;
-  std::vector<std::pair<crypto::hash,uint64_t>> hash_height_index;
-  for_all_transactions([this, &hash_height_index, &count](const crypto::hash &hash, const cryptonote::transaction &tx)->bool
+  std::vector<std::pair<crypto::hash,uint64_t>> hash_height;
+  for_all_transactions([this, &hash_height, &count](const crypto::hash &hash, const cryptonote::transaction &tx)->bool
   {
     if ((tx.version == (DPOW_NOTA_TX_VERSION)) && (tx.vin[0].type() != typeid(txin_gen))) {
       uint64_t ntz_index = count;
       const uint64_t height = m_db->get_tx_block_height(hash);
       auto each = std::make_pair(hash,height);
-      hash_height_index.push_back(each);
+      hash_height.push_back(each);
       count += 1;
     }
     return true;
   });
 
-  ret = hash_height_index;
+  ret = hash_height;
   if (count % (DPOW_SIG_COUNT) == 0)
   {
     return (count/(DPOW_SIG_COUNT));
