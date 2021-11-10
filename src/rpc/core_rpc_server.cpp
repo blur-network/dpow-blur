@@ -797,33 +797,29 @@ namespace cryptonote
   bool core_rpc_server::on_get_notarizations(const COMMAND_RPC_GET_NOTARIZATIONS::request& req, COMMAND_RPC_GET_NOTARIZATIONS::response& res)
   {
     std::vector<crypto::hash> vh;
-    std::vector<std::tuple<crypto::hash,uint64_t,uint64_t>> ntz_hash_height_index;
-    uint64_t ntz_count = m_core.get_blockchain_storage().get_ntz_count(ntz_hash_height_index);
+    std::vector<std::pair<crypto::hash,uint64_t>> ntz_hash_height;
+    uint64_t ntz_count = m_core.get_blockchain_storage().get_ntz_count(ntz_hash_height);
     std::vector<std::string> ntz_hexs;
-    std::vector<std::pair<std::string,uint64_t>> ntz_hexs_index;
-    for (const auto& each : ntz_hash_height_index) {
-      if (!req.txs_hashes.empty()) {
-        for (const auto& req_each : req.txs_hashes) {
-          std::string ntz_hashstr = epee::string_tools::pod_to_hex(std::get<0>(each));
-          if (ntz_hashstr == req_each) {
-            uint64_t ntz_index = std::get<2>(each);
-            std::pair<std::string,uint64_t> ntz_hi;
-            ntz_hi.first = ntz_hashstr;
-            ntz_hi.second = ntz_index;
-            ntz_hexs_index.push_back(ntz_hi);
+    std::vector<std::pair<std::string,uint64_t>> ntz_hexs_height;
+    for (const auto& each : ntz_hash_height)
+    {
+      if (!req.txs_hashes.empty())
+      {
+        for (const auto& req_each : req.txs_hashes)
+        {
+          std::string ntz_hashstr = epee::string_tools::pod_to_hex(each.first);
+          if (ntz_hashstr == req_each)
+          {
+            ntz_hexs_height.push_back(std::make_pair(ntz_hashstr,each.second));
             ntz_hexs.push_back(ntz_hashstr);
           }
         }
       } else {
-        uint64_t ntz_index = std::get<2>(each);
-        std::pair<std::string,uint64_t> ntz_hi;
-        ntz_hi.first = epee::string_tools::pod_to_hex(std::get<0>(each));
-        ntz_hi.second = ntz_index;
-        ntz_hexs_index.push_back(ntz_hi);
-        ntz_hexs.push_back(epee::string_tools::pod_to_hex(std::get<0>(each)));
+        ntz_hexs_height.push_back(std::make_pair(epee::string_tools::pod_to_hex(each.first),each.second));
+        ntz_hexs.push_back(epee::string_tools::pod_to_hex(each.first));
       }
     }
-    for(const auto& tx_hex_str: ntz_hexs_index)
+    for(const auto& tx_hex_str: ntz_hexs_height)
     {
       blobdata b;
       if(!string_tools::parse_hexstr_to_binbuff(tx_hex_str.first, b))
@@ -912,7 +908,6 @@ namespace cryptonote
     std::vector<crypto::hash>::const_iterator vhi = vh.begin();
     for(auto& tx: txs)
     {
-      uint64_t ntz_index = 1;
       if (tx.version != 2) {
 
       } else {
@@ -920,13 +915,7 @@ namespace cryptonote
         COMMAND_RPC_GET_NOTARIZATIONS::entry &e = res.txs.back();
 
         crypto::hash tx_hash = *vhi++;
-        for (const auto& each : ntz_hexs_index) {
-          if (epee::string_tools::pod_to_hex(tx_hash) == each.first) {
-            e.notarization_index = each.second;
-          }
-        }
         e.ntz_tx_hash = *txhi++;
-        // TODO: Change below to grab an index, not count. Placeholder for now
         blobdata blob = t_serializable_object_to_blob(tx);
         e.as_hex = string_tools::buff_to_hex_nodelimer(blob);
         if (req.decode_as_json)
