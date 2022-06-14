@@ -668,7 +668,7 @@ namespace tools
   bool notary_server::on_get_account_tags(const notary_rpc::COMMAND_RPC_GET_ACCOUNT_TAGS::request& req, notary_rpc::COMMAND_RPC_GET_ACCOUNT_TAGS::response& res, epee::json_rpc::error& er)
   {
     const std::pair<std::map<std::string, std::string>, std::vector<std::string>> account_tags = m_wallet->get_account_tags();
-    for (const std::pair<std::string, std::string>& p : account_tags.first)
+    for (const std::pair<const std::string, std::string>& p : account_tags.first)
     {
       res.account_tags.resize(res.account_tags.size() + 1);
       auto& info = res.account_tags.back();
@@ -1355,7 +1355,7 @@ pool_recheck:
       }
       sig_count = ntzpool_txs[best.second].sig_count;
       std::vector<std::pair<std::string,std::string>> removals;
-      for (const auto each : ntzpool_txs) {
+      for (const auto& each : ntzpool_txs) {
         if (prior_tx_hash != each.id_hash) {
           std::pair<std::string,std::string> hash_pr;
           hash_pr.first = each.id_hash;
