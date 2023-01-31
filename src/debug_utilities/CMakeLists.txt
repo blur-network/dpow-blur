@@ -58,13 +58,24 @@ monero_add_executable(object_sizes
   ${object_sizes_sources}
   ${object_sizes_private_headers})
 
-target_link_libraries(object_sizes
-  LINK_PRIVATE
-    cryptonote_core
-    blockchain_db
-    p2p
-    epee
-    ${CMAKE_THREAD_LIBS_INIT})
+if (BUILD_SHARED_LIBS)
+  target_link_libraries(object_sizes
+    LINK_PRIVATE
+      cryptonote_core
+      blockchain_db
+      p2p
+      epee
+      ${CMAKE_THREAD_LIBS_INIT}
+      ${OPENSSL_LIBRARIES})
+else()
+  target_link_libraries(object_sizes
+    LINK_PRIVATE
+      cryptonote_core
+      blockchain_db
+      p2p
+      epee
+      ${CMAKE_THREAD_LIBS_INIT})
+endif()
 
 set_property(TARGET object_sizes
 	PROPERTY

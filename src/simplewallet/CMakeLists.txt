@@ -35,30 +35,58 @@ set(simplewallet_headers)
 set(simplewallet_private_headers
   simplewallet.h)
 
-monero_private_headers(simplewallet
-  ${simplewallet_private_headers})
-monero_add_executable(simplewallet
-  ${simplewallet_sources}
-  ${simplewallet_headers}
-  ${simplewallet_private_headers})
-target_link_libraries(simplewallet
-  PRIVATE
-    wallet
-    rpc_base
-    cryptonote_core
-    cncrypto
-    common
-    mnemonics
-    ${EPEE_READLINE}
-    ${Boost_CHRONO_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_LOCALE_LIBRARY}
-    ${ICU_LIBRARIES}
-    ${Boost_THREAD_LIBRARY}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${READLINE_LIBRARIES}
-    ${EXTRA_LIBRARIES})
+if(BUILD_SHARED_LIBS)
+  monero_private_headers(simplewallet
+    ${simplewallet_private_headers})
+  monero_add_executable(simplewallet
+    ${simplewallet_sources}
+    ${simplewallet_headers}
+    ${simplewallet_private_headers})
+  target_link_libraries(simplewallet
+    PRIVATE
+      wallet
+      rpc_base
+      cryptonote_core
+      cncrypto
+      common
+      mnemonics
+      ${EPEE_READLINE}
+      ${Boost_CHRONO_LIBRARY}
+      ${Boost_PROGRAM_OPTIONS_LIBRARY}
+      ${Boost_FILESYSTEM_LIBRARY}
+      ${Boost_LOCALE_LIBRARY}
+      ${ICU_LIBRARIES}
+      ${Boost_THREAD_LIBRARY}
+      ${CMAKE_THREAD_LIBS_INIT}
+      ${READLINE_LIBRARIES}
+      ${OPENSSL_LIBRARIES}
+      ${EXTRA_LIBRARIES})
+else()
+  monero_private_headers(simplewallet
+    ${simplewallet_private_headers})
+  monero_add_executable(simplewallet
+    ${simplewallet_sources}
+    ${simplewallet_headers}
+    ${simplewallet_private_headers})
+  target_link_libraries(simplewallet
+    PRIVATE
+      wallet
+      rpc_base
+      cryptonote_core
+      cncrypto
+      common
+      mnemonics
+      ${EPEE_READLINE}
+      ${Boost_CHRONO_LIBRARY}
+      ${Boost_PROGRAM_OPTIONS_LIBRARY}
+      ${Boost_FILESYSTEM_LIBRARY}
+      ${Boost_LOCALE_LIBRARY}
+      ${ICU_LIBRARIES}
+      ${Boost_THREAD_LIBRARY}
+      ${CMAKE_THREAD_LIBS_INIT}
+      ${READLINE_LIBRARIES}
+      ${EXTRA_LIBRARIES})
+endif()
 set_property(TARGET simplewallet
   PROPERTY
     OUTPUT_NAME "blur-wallet-cli")

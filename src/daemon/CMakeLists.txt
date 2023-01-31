@@ -40,27 +40,28 @@ if(PER_BLOCK_CHECKPOINT)
 endif()
 
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-set(daemon_sources
-  command_parser_executor.cpp
-  command_server.cpp
-  daemon.cpp
-  executor.cpp
-  main.cpp
-  rpc_command_executor.cpp
+  set(daemon_sources
+    command_parser_executor.cpp
+    command_server.cpp
+    daemon.cpp
+    executor.cpp
+    main.cpp
+    rpc_command_executor.cpp
 #  bitcoin_spv.cpp
-  ../../external/backward/backward.cpp
-)
+    ../../external/backward/backward.cpp
+  )
 else()
-set(daemon_sources
-  command_parser_executor.cpp
-  command_server.cpp
-  daemon.cpp
-  executor.cpp
-  main.cpp
-  rpc_command_executor.cpp
-#  bitcoin_spv.cpp
-)
+  set(daemon_sources
+    command_parser_executor.cpp
+    command_server.cpp
+    daemon.cpp
+    executor.cpp
+    main.cpp
+    rpc_command_executor.cpp
+#    bitcoin_spv.cpp
+    )
 endif()
+
 set(daemon_headers)
 
 set(daemon_private_headers
@@ -109,62 +110,65 @@ else()
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-target_link_libraries(daemon
-  PRIVATE
-    rpc
-    blockchain_db
-    cryptonote_core
-    cncrypto
-    common
-    p2p
-    cryptonote_protocol
-    daemonizer
-    serialization
-    daemon_rpc_server
-    epee
-#    ${EVENT_LIBRARIES}
-#    ${SECP256K1_LIBRARY}
-#    ${BTC_LIBRARY}
-    ${EPEE_READLINE}
-    ${Boost_CHRONO_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${Boost_REGEX_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${GNU_READLINE_LIBRARY}
-    ${SODIUM_LIBRARY}
-    ${EXTRA_LIBRARIES}
-    ${BACKWARD_LIBRARIES}
-    ${UNWIND_LIBRARY}
-    ${UNWIND_LIBRARIES})
+  target_link_libraries(daemon
+    PRIVATE
+      rpc
+      blockchain_db
+      cryptonote_core
+      cncrypto
+      common
+      p2p
+      cryptonote_protocol
+      daemonizer
+      serialization
+      daemon_rpc_server
+      epee
+#      ${EVENT_LIBRARIES}
+#      ${SECP256K1_LIBRARY}
+#      ${BTC_LIBRARY}
+      ${EPEE_READLINE}
+      ${Boost_CHRONO_LIBRARY}
+      ${Boost_FILESYSTEM_LIBRARY}
+      ${Boost_PROGRAM_OPTIONS_LIBRARY}
+      ${Boost_REGEX_LIBRARY}
+      ${Boost_SYSTEM_LIBRARY}
+      ${CMAKE_THREAD_LIBS_INIT}
+      ${GNU_READLINE_LIBRARY}
+      ${SODIUM_LIBRARY}
+      ${EXTRA_LIBRARIES}
+      ${BACKWARD_LIBRARIES}
+      ${OPENSSL_LIBRARIES}
+      ${UNWIND_LIBRARY}
+      ${UNWIND_LIBRARIES})
 else()
-target_link_libraries(daemon
-  PRIVATE
-    rpc
-    blockchain_db
-    cryptonote_core
-    cncrypto
-    common
-    p2p
-    cryptonote_protocol
-    daemonizer
-    serialization
-    daemon_rpc_server
-    epee
-#    ${EVENT_LIBRARIES}
-#    ${SECP256K1_LIBRARY}
-#    ${BTC_LIBRARY}
-    ${EPEE_READLINE}
-    ${Boost_CHRONO_LIBRARY}
-    ${Boost_FILESYSTEM_LIBRARY}
-    ${Boost_PROGRAM_OPTIONS_LIBRARY}
-    ${Boost_REGEX_LIBRARY}
-    ${Boost_SYSTEM_LIBRARY}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${GNU_READLINE_LIBRARY}
-    ${SODIUM_LIBRARY}
-    ${EXTRA_LIBRARIES})
+  target_link_libraries(daemon
+    PRIVATE
+      rpc
+      blockchain_db
+      cryptonote_core
+      cncrypto
+      common
+      p2p
+      cryptonote_protocol
+      daemonizer
+      serialization
+      daemon_rpc_server
+      epee
+#      ${EVENT_LIBRARIES}
+#      ${SECP256K1_LIBRARY}
+#      ${BTC_LIBRARY}
+      ${EPEE_READLINE}
+      ${Boost_CHRONO_LIBRARY}
+      ${Boost_FILESYSTEM_LIBRARY}
+      ${Boost_PROGRAM_OPTIONS_LIBRARY}
+      ${Boost_REGEX_LIBRARY}
+      ${Boost_SYSTEM_LIBRARY}
+      ${CMAKE_THREAD_LIBS_INIT}
+      ${GNU_READLINE_LIBRARY}
+      ${SODIUM_LIBRARY}
+      ${OPENSSL_LIBRARIES}
+# note, above not necessary to link in static builds.. but this file is getting too messy already to accomodate
+      ${EXTRA_LIBRARIES})
 endif()
 
 set_property(TARGET daemon
