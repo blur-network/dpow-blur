@@ -48,21 +48,19 @@ Minimal Dependencies: `sudo apt-get install autotools-dev curl cmake build-essen
 
 <h2 id="deps"> Dependencies </h2>
 
-Both libbtc and the native blur files require GCC 8.3 or below to compile.  GCC 9+ will error out.
-
 Ubuntu/Debian One-Liner:
 
 `sudo apt install build-essential pkg-config libssl-dev libunwind-dev libevent-dev libsodium-dev binutils-dev libboost-all-dev autoconf libreadline-dev`
 
-Arch Linux One-Liner: 
+Arch Linux One-Liner:
 
 `sudo pacman -S base-devel boost openssl libsodium libunwind binutils libevent autoconf readline`
 
-Fedora One-Liner: 
+Fedora One-Liner:
 
 `sudo dnf install boost-devel openssl-devel sodium-devel libunwind-devel binutils-devel libevent-devel autoconf readline-devel`
 
-After installing the dependencies, clone this repo with: 
+After installing the dependencies, clone this repo with:
 
 > `git clone https://github.com/blur-network/dpow-blur.git`
 
