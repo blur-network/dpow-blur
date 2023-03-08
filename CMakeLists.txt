@@ -31,7 +31,9 @@
 list(INSERT CMAKE_MODULE_PATH 0
   "${CMAKE_SOURCE_DIR}/cmake")
 
-list(APPEND CMAKE_MODULE_PATH external/backward)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  list(APPEND CMAKE_MODULE_PATH external/backward)
+endif()
 
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
@@ -917,13 +919,13 @@ if(CMAKE_C_COMPILER_ID STREQUAL "Clang" AND ARCH_WIDTH EQUAL "32" AND NOT IOS AN
 endif()
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-find_library(ELF_LIBRARY elf)
-if(ELF_LIBRARY)
-  set(ELF_LIBRARY ${ELF_LIBRARY})
-  message(STATUS "Using libelf located at: ${ELF_LIBRARY}")
-endif()
+  find_library(ELF_LIBRARY elf)
+  if(ELF_LIBRARY)
+    set(ELF_LIBRARY ${ELF_LIBRARY})
+    message(STATUS "Using libelf located at: ${ELF_LIBRARY}")
+  endif()
 
-find_package(DWARF)
+  find_package(DWARF)
   if(LIBDWARF_LIBRARIES AND BACKWARD_HAS_DWARF)
     set(LIBDWARF_LIBRARIES "${LIBDWARF_LIBRARIES}")
     message(STATUS "Using LIBDWARF_LIBRARIES located at ${LIBDWARF_LIBRARIES}")
@@ -952,8 +954,8 @@ find_package(DWARF)
     set(BACKWARD_LIBRARIES "${BACKWARD_LIBRARIES} ${LIBDW_LIBRARIES}")
   endif()
 
-include_directories(BACKWARD_INCLUDE_DIRS ${BACKWARD_INCLUDE_DIRS})
-link_directories(BACKWARD_LIBRARIES ${BACKWARD_LIBRARIES})
+  include_directories(BACKWARD_INCLUDE_DIRS ${BACKWARD_INCLUDE_DIRS})
+  link_directories(BACKWARD_LIBRARIES ${BACKWARD_LIBRARIES})
 endif()
 
 

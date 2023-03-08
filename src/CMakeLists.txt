@@ -29,7 +29,9 @@
 #
 # Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 
-find_package(Backward)
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
+  find_package(Backward)
+endif()
 
 if (WIN32 OR STATIC)
   add_definitions(-DSTATICLIB)
@@ -132,4 +134,3 @@ endif()
 
 add_subdirectory(device)
 
-find_package(Backward)
