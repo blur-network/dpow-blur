@@ -22,7 +22,10 @@
 #endif
 
 #include <boost/archive/basic_archive.hpp>
-#include <boost/detail/endian.hpp>
+#include <boost/predef/other/endian.h>
+
+//#include <boost/detail/endian.hpp>
+// deprecated in boost 1.74, leaving here for reference
 
 #include <boost/archive/impl/archive_serializer_map.ipp>
 
