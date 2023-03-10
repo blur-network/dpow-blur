@@ -39,7 +39,8 @@
 #include <boost/serialization/list.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/deque.hpp>
-#if BOOST_VERSION == 107400
+#include <boost/serialization/version.hpp>
+#if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 == 74
 #include <boost/serialization/library_version_type.hpp>
 #endif
 #include <atomic>
