@@ -207,8 +207,8 @@ if(NOT MANUAL_SUBMODULES)
   endif()
 endif()
 
-#set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
-#set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
+set(CMAKE_C_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
+set(CMAKE_CXX_FLAGS_RELEASE "-DNDEBUG ${OPT_FLAGS_RELEASE}")
 
 # set this to 0 if per-block checkpoint needs to be disabled
 set(PER_BLOCK_CHECKPOINT 0)
@@ -292,8 +292,12 @@ if(MSVC OR MINGW)
 else()
   set(DEFAULT_STATIC false)
 endif()
+option(STATIC "Link libraries statically" ${DEFAULT_STATIC})
 
-#option(STATIC "Link libraries statically" ${DEFAULT_STATIC})
+# This is a CMake built-in switch that concerns internal libraries
+if (NOT DEFINED BUILD_SHARED_LIBS AND NOT STATIC AND CMAKE_BUILD_TYPE_LOWER STREQUAL "debug")
+    set(BUILD_SHARED_LIBS ON)
+endif()
 
 if (BUILD_SHARED_LIBS)
   message(STATUS "Building internal libraries with position independent code")
@@ -567,7 +571,7 @@ else()
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${ARCH_FLAG}")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${ARCH_FLAG}")
 
-  set(WARNINGS "-Wall -Wextra -Wpointer-arith -Wundef -Wvla -Wwrite-strings -Wno-error=extra -Wno-error=stringop-overflow -Wno-error=unused-function -Wno-error=format -Wno-format -Wno-error=sign-compare -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-unused-variable -Wno-error=unused-variable -Wno-error=undef -Wno-error=uninitialized")
+  set(WARNINGS "-Wall -Wextra -Wpointer-arith -Wundef -Wvla -Wwrite-strings -Wno-error=stringop-overflow -Wno-error=unused-function -Wno-error=format -Wno-format -Wno-error=sign-compare -Wno-error=deprecated-declarations -Wno-unused-parameter -Wno-unused-variable -Wno-error=unused-variable -Wno-error=undef -Wno-error=uninitialized")
   if(NOT MINGW)
     set(WARNINGS_AS_ERRORS_FLAG "-Werror")
   endif()
