@@ -39,14 +39,14 @@
 
 // - apt-get install libdw-dev ...
 // - g++/clang++ -ldw ...
-#ifndef BACKWARD_HAS_DW
-#define BACKWARD_HAS_DW 1
-#endif
+//#ifndef BACKWARD_HAS_DW
+//#define BACKWARD_HAS_DW 1
+//#endif
 // - apt-get install binutils-dev ...
 // - g++/clang++ -lbfd ...
-//#ifndef BACKWARD_HAS_DWARF
-//#define BACKWARD_HAS_DWARF 1
-//#endif
+#ifndef BACKWARD_HAS_BFD
+#define BACKWARD_HAS_BFD 1
+#endif
 #include "backward.hpp"
 
 namespace backward {
