@@ -152,7 +152,7 @@ clean:
         read -r -p "This will destroy the build directory, continue (y/N)?: " CONTINUE; \
 	[ $$CONTINUE = "y" ] || [ $$CONTINUE = "Y" ] || (echo "Exiting."; exit 1;)
 	rm -rf build
-    rm -rf external/backward/build
+	rm -rf external/backward/build
 
 tags:
 	ctags -R --sort=1 --c++-kinds=+p --fields=+iaS --extra=+q src contrib tests/gtest
