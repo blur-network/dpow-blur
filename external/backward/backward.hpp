@@ -1234,12 +1234,12 @@ private:
 	{
 		if (result.found) return;
 
-		if ((bfd_get_section_flags(fobj.handle.get(), section)
+		if ((bfd_section_flags(section)
 					& SEC_ALLOC) == 0)
 			return; // a debug section is never loaded automatically.
 
-		bfd_vma sec_addr = bfd_get_section_vma(fobj.handle.get(), section);
-		bfd_size_type size = bfd_get_section_size(section);
+		bfd_vma sec_addr = bfd_section_vma(section);
+		bfd_size_type size = bfd_section_size(section);
 
 		// are we in the boundaries of the section?
 		if (addr < sec_addr || addr >= sec_addr + size) {
