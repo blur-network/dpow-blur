@@ -53,7 +53,7 @@ debug-static-all:
 debug-cross-linux:
 	cd contrib/depends && ${MAKE} -j4 HOST=x86_64-gnu-linux
 	mkdir -p build/debug
-	cd build/debug && cmake -D CMAKE_BUILD_TYPE="Debug" -D CMAKE_TOOLCHAIN_FILE=${PWD}/contrib/depends/x86_64-gnu-linux/share/toolchain.cmake ../.. && ${MAKE}
+	cd build/debug && cmake -D CMAKE_BUILD_TYPE="Debug" -D STATIC=OFF -D BUILD_SHARED_LIBS=ON -D CMAKE_TOOLCHAIN_FILE=${PWD}/contrib/depends/x86_64-gnu-linux/share/toolchain.cmake ../.. && ${MAKE}
 
 cmake-release:
 	mkdir -p build/release
