@@ -1,6 +1,6 @@
 # Set the system name, either Darwin, Linux, or Windows
 SET(CMAKE_SYSTEM_NAME @depends@)
-SET(CMAKE_BUILD_TYPE release)
+#SET(CMAKE_BUILD_TYPE release)
 
 SET(STATIC true)
 
