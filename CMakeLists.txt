@@ -201,7 +201,7 @@ if(NOT MANUAL_SUBMODULES)
     endfunction ()
 
     message(STATUS "Checking submodules")
-#    check_submodule(external/rapidjson)
+    check_submodule(external/rapidjson)
 #    check_submodule(external/libhydrogen)
 #    check_submodule(external/libbtc)
   endif()
