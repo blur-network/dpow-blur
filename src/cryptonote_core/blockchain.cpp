@@ -652,8 +652,8 @@ bool Blockchain::init(BlockchainDB* db, const network_type nettype, bool offline
       if (num_popped_blocks > 0)
       {
         MINFO("Initial popping done, top block: " << top_id << ", top height: " << top_height << ", block version: " << (uint64_t)top_block.major_version);
-        break;
       }
+      break;
     }
     else
     {
