@@ -54,7 +54,7 @@
 
 #define NET_MAKE_IP(b1,b2,b3,b4)  ((LPARAM)(((DWORD)(b1)<<24)+((DWORD)(b2)<<16)+((DWORD)(b3)<<8)+((DWORD)(b4))))
 
-#define MIN_WANTED_SEED_NODES 12
+#define MIN_WANTED_SEED_NODES 3
 
 namespace nodetool
 {
@@ -392,14 +392,11 @@ namespace nodetool
     std::set<std::string> full_addrs;
     if (nettype == cryptonote::TESTNET)
     {
+      full_addrs.insert("149.56.240.66:11111");
+      full_addrs.insert("144.217.65.10:11111");
+      full_addrs.insert("158.69.225.109:11111");
       full_addrs.insert("149.56.13.160:11111");
-      full_addrs.insert("51.79.50.205:11111");
-      full_addrs.insert("51.79.50.224:11111");
-      full_addrs.insert("51.79.50.222:11111");
-      full_addrs.insert("51.79.50.181:11111");
-      full_addrs.insert("51.79.50.176:11111");
-      full_addrs.insert("51.79.50.177:11111");
-      full_addrs.insert("51.79.50.178:11111");
+      full_addrs.insert("51.222.159.244:11111");
     }
     else if (nettype == cryptonote::STAGENET)
     {
