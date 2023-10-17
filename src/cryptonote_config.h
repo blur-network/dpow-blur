@@ -43,6 +43,8 @@
 #define DPOW_NOTARIZATION_WINDOW                        25
 #define DPOW_SYMBOL                                     "BLUR"
 
+#define DISABLE_BTC_TX_CHECKS				1
+
 //#define ENABLE_DPOWCONFS                                1
 /* sets 'confirmations = 1' until block is notarized */
 
