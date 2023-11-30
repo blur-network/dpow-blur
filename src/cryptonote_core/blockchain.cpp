@@ -4170,8 +4170,8 @@ leave:
                     if (btc_ht != current_height)
                     {
                       MWARNING("Attempting to add duplicate btc_tx_data at a subsequent height! btcindex height: " << btc_ht << ", current ht: " << current_height);
-                      MWARNING("Normally, this breaks consensus, continuing for testing sake");
-                      //goto leave;
+                      //MWARNING("Normally, this breaks consensus, continuing for testing sake");
+                      goto leave;
                     }
                   }
                 }
